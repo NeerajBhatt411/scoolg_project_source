@@ -1,77 +1,131 @@
+import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
+import { useRef } from 'react';
+
+function SpotlightCard({ children, className = "" }) {
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    function handleMouseMove({ currentTarget, clientX, clientY }) {
+        const { left, top } = currentTarget.getBoundingClientRect();
+        mouseX.set(clientX - left);
+        mouseY.set(clientY - top);
+    }
+
+    return (
+        <div
+            className={`group relative overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900 ${className}`}
+            onMouseMove={handleMouseMove}
+        >
+            <motion.div
+                className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100"
+                style={{
+                    background: useMotionTemplate`
+                        radial-gradient(
+                          450px circle at ${mouseX}px ${mouseY}px,
+                          rgba(45, 108, 223, 0.15),
+                          transparent 80%
+                        )
+                    `
+                }}
+            />
+            <div className="relative h-full">{children}</div>
+        </div>
+    );
+}
+
 export default function Features() {
     const features = [
         {
             icon: "fact_check",
-            title: "Attendance",
-            desc: "Automated tracking for students and staff with biometric integration options."
+            title: "Automated Attendance",
+            desc: "Biometric integration & one-tap marking.",
+            colSpan: "md:col-span-2",
+            bg: "bg-blue-50 dark:bg-blue-900/10"
         },
         {
             icon: "calendar_month",
-            title: "Timetable",
-            desc: "Dynamic scheduling for classes, teachers, and exams with ease."
+            title: "Smart Timetable",
+            desc: "Conflict-free scheduling algorithm.",
+            colSpan: "md:col-span-1",
+            bg: "bg-purple-50 dark:bg-purple-900/10"
         },
         {
             icon: "menu_book",
-            title: "Homework",
-            desc: "Manage assignments, project work, and daily homework seamlessly."
+            title: "Digital Homework",
+            desc: "Share notes, assignments & feedback instantly.",
+            colSpan: "md:col-span-1",
+            bg: "bg-green-50 dark:bg-green-900/10"
         },
         {
             icon: "payments",
-            title: "Fee Payments",
-            desc: "Secure online fee collection with automated invoicing and reminders."
+            title: "Fee Management",
+            desc: "Automated invoices, reminders & online collections.",
+            colSpan: "md:col-span-2",
+            bg: "bg-orange-50 dark:bg-orange-900/10"
         },
         {
             icon: "quiz",
-            title: "Exams & Results",
-            desc: "Comprehensive exam management and automated report card generation."
+            title: "Exam Intelligence",
+            desc: "Analytics-driven report cards & success tracking.",
+            colSpan: "md:col-span-3 lg:col-span-1",
+            bg: "bg-pink-50 dark:bg-pink-900/10"
         },
         {
             icon: "notifications_active",
-            title: "Smart Notifications",
-            desc: "Instant alerts for parents regarding attendance, results, and events."
+            title: "Instant Alerts",
+            desc: "Real-time SMS & Push notifications for parents.",
+            colSpan: "md:col-span-3 lg:col-span-2",
+            bg: "bg-indigo-50 dark:bg-indigo-900/10"
         },
     ];
 
     return (
-        <section id="features" className="py-24 bg-slate-50 relative overflow-hidden transition-colors duration-300 dark:bg-slate-950 scroll-mt-20">
+        <section id="features" className="py-24 bg-gray-50 dark:bg-slate-950 relative overflow-hidden scroll-mt-20 px-4">
             {/* Subtle background pattern for depth */}
-            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-20 dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] dark:opacity-40"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] opacity-30 dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] dark:opacity-20 pointer-events-none"></div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center mb-16">
-                    <span className="text-blue-600 font-bold tracking-wider uppercase text-xs bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100 shadow-sm dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-                        Core Capabilities
+            <div className="max-w-6xl mx-auto relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-center mb-10"
+                >
+                    <span className="text-blue-600 font-bold tracking-wider uppercase text-xs bg-blue-100/50 px-4 py-1.5 rounded-full border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                        Powerhouse Features
                     </span>
-                    <h2 className="mt-6 text-4xl font-display font-bold text-gray-900 tracking-tight sm:text-5xl dark:text-white">
-                        Everything you need to <br className="hidden md:block" /> run your school
+                    <h2 className="mt-6 text-4xl font-display font-bold text-gray-900 sm:text-5xl dark:text-white">
+                        Everything in <span className="text-primary italic">One Place</span>
                     </h2>
-                    <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 leading-relaxed dark:text-gray-400">
-                        A unified platform that streamlines administrative tasks, allowing you to focus on what matters most: excellence in education.
-                    </p>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {features.map((feature, index) => (
-                        <div key={index} className="bg-white rounded-[2rem] p-10 border border-gray-200 shadow-card hover:shadow-premium hover:border-primary/20 hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden dark:bg-slate-900 dark:border-slate-800 dark:hover:border-blue-700/50">
-                            {/* Inner border ring for premium feel */}
-                            <div className="absolute inset-2 rounded-[1.5rem] border border-gray-100 pointer-events-none dark:border-slate-800/10"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {features.map((feature, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true, amount: 0.1, margin: "-50px" }}
+                            transition={{ duration: 0.5, delay: i * 0.1 }}
+                            className={`${feature.colSpan} h-full`}
+                        >
+                            <SpotlightCard className="h-full transition-shadow duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                                <div className={`p-8 h-full flex flex-col justify-between relative`}>
+                                    <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-40 pointer-events-none ${feature.bg}`}></div>
 
-                            {/* Hover Glow Effect */}
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-40 h-40 bg-blue-50/50 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 dark:bg-blue-900/10"></div>
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-sm flex items-center justify-center mb-6 dark:from-slate-800 dark:to-slate-900 dark:border-slate-700">
+                                        <span className="material-symbols-outlined text-primary text-2xl dark:text-blue-400">{feature.icon}</span>
+                                    </div>
 
-                            <div className="relative z-10">
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-white border border-blue-100/50 text-blue-600 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 dark:from-blue-900/40 dark:to-slate-800 dark:border-blue-800 dark:text-blue-400">
-                                    <span className="material-symbols-outlined text-3xl">{feature.icon}</span>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-2 dark:text-white">{feature.title}</h3>
+                                        <p className="text-gray-500 text-sm font-medium leading-relaxed dark:text-gray-400">{feature.desc}</p>
+                                    </div>
                                 </div>
-                                <h3 className="text-xl font-display font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors dark:text-white dark:group-hover:text-blue-400">{feature.title}</h3>
-                                <p className="text-gray-500 leading-relaxed text-sm dark:text-gray-400 font-medium">
-                                    {feature.desc}
-                                </p>
-                            </div>
-                        </div>
+                            </SpotlightCard>
+                        </motion.div>
                     ))}
                 </div>
-
             </div>
         </section>
     );
