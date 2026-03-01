@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LightModeIcon, DarkModeIcon, MenuIcon, CloseIcon } from './Icons';
 
 export default function Header({ isDarkMode, toggleTheme }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,15 +25,16 @@ export default function Header({ isDarkMode, toggleTheme }) {
                         <a className="text-primary font-medium hover:text-primary-hover px-4 dark:text-blue-400 dark:hover:text-blue-300" href="#">Log In</a>
                         <a className="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow-lg shadow-primary/30" href="#">Get Started</a>
 
-                        {/* Desktop Theme Toggle - Repositioned */}
+                        {/* Desktop Theme Toggle */}
                         <button
                             onClick={toggleTheme}
                             className="p-2 rounded-lg bg-gray-50 text-gray-600 transition-all hover:bg-gray-100 hover:scale-110 active:scale-95 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
                             aria-label="Toggle Theme"
                         >
-                            <span className="material-symbols-outlined text-xl block">
-                                {isDarkMode ? 'light_mode' : 'dark_mode'}
-                            </span>
+                            {isDarkMode
+                                ? <LightModeIcon className="w-5 h-5" />
+                                : <DarkModeIcon className="w-5 h-5" />
+                            }
                         </button>
                     </div>
 
@@ -43,17 +45,19 @@ export default function Header({ isDarkMode, toggleTheme }) {
                             className="p-2 rounded-lg bg-gray-50 text-gray-600 transition-all dark:bg-slate-800 dark:text-gray-300"
                             aria-label="Toggle Theme"
                         >
-                            <span className="material-symbols-outlined text-2xl leading-none">
-                                {isDarkMode ? 'light_mode' : 'dark_mode'}
-                            </span>
+                            {isDarkMode
+                                ? <LightModeIcon className="w-6 h-6" />
+                                : <DarkModeIcon className="w-6 h-6" />
+                            }
                         </button>
                         <button
                             className="p-2 text-gray-600 hover:text-primary transition-colors focus:outline-none dark:text-gray-300"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                         >
-                            <span className="material-symbols-outlined text-3xl">
-                                {isMenuOpen ? 'close' : 'menu'}
-                            </span>
+                            {isMenuOpen
+                                ? <CloseIcon className="w-7 h-7" />
+                                : <MenuIcon className="w-7 h-7" />
+                            }
                         </button>
                     </div>
                 </div>

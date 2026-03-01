@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { useRef, useEffect } from 'react';
+import { TrendingUpIcon, BoltIcon } from './Icons';
 
 export default function Hero() {
     const sectionRef = useRef(null);
@@ -174,7 +175,7 @@ export default function Hero() {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-500/30">
-                                        <span className="material-symbols-outlined font-bold text-lg">trending_up</span>
+                                        <TrendingUpIcon className="w-5 h-5 font-bold" />
                                     </div>
                                     <div>
                                         <div className="text-xl font-black text-gray-900 dark:text-white">99.2%</div>
@@ -189,7 +190,7 @@ export default function Hero() {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
-                                        <span className="material-symbols-outlined font-bold text-lg">bolt</span>
+                                        <BoltIcon className="w-5 h-5 font-bold" />
                                     </div>
                                     <div>
                                         <div className="text-lg font-bold leading-tight">Instant Sync</div>

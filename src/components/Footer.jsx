@@ -1,3 +1,5 @@
+import { MailIcon, CallIcon, LocationOnIcon } from './Icons';
+
 export default function Footer({ isDarkMode }) {
     return (
         <footer className={`pt-20 pb-10 border-t border-white/5 transition-colors duration-300 bg-[#0F0D0B] text-gray-400`}>
@@ -31,15 +33,15 @@ export default function Footer({ isDarkMode }) {
                         <h4 className="font-bold mb-6 text-white">Contact</h4>
                         <ul className="space-y-4 text-sm font-medium text-gray-400">
                             <li className="flex items-center gap-3 hover:text-primary transition-colors cursor-pointer">
-                                <span className="material-symbols-outlined text-primary text-lg">mail</span>
+                                <MailIcon className="text-primary w-5 h-5" />
                                 hello@scoolg.com
                             </li>
                             <li className="flex items-center gap-3 hover:text-primary transition-colors cursor-pointer">
-                                <span className="material-symbols-outlined text-primary text-lg">call</span>
+                                <CallIcon className="text-primary w-5 h-5" />
                                 +91 76988 10025, 80108 55140
                             </li>
                             <li className="flex items-center gap-3 hover:text-primary transition-colors cursor-pointer">
-                                <span className="material-symbols-outlined text-primary text-lg">location_on</span>
+                                <LocationOnIcon className="text-primary w-5 h-5" />
                                 Noida, Uttar Pradesh
                             </li>
                         </ul>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -11,9 +11,16 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Poppins:wght@500;600;700&amp;display=swap"
     rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
+  <script>
+    // Instant dark mode — runs before any paint, prevents flash
+    (function () {
+      var theme = localStorage.getItem('theme');
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+      }
+      // else: keep 'dark' class that's already on <html>
+    })();
+  </script>
 </head>
 
 <body>
