@@ -1,5 +1,6 @@
 import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { useRef } from 'react';
+import Icon from './Icons';
 
 function SpotlightCard({ children, className = "" }) {
     const mouseX = useMotionValue(0);
@@ -114,7 +115,7 @@ export default function Features() {
                                     <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-40 pointer-events-none ${feature.bg}`}></div>
 
                                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-gray-50 border border-gray-100 shadow-sm flex items-center justify-center mb-6 dark:from-slate-800 dark:to-slate-900 dark:border-slate-700">
-                                        <span className="material-symbols-outlined text-primary text-2xl dark:text-blue-400">{feature.icon}</span>
+                                        <Icon name={feature.icon} className="text-primary w-6 h-6 dark:text-blue-400" />
                                     </div>
 
                                     <div>

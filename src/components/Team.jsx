@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { CodeIcon } from './Icons';
 import neerajImg from '../assets/neeraj.png';
 import navdeepImg from '../assets/navdeep.png';
 
@@ -55,7 +56,7 @@ export default function Team() {
                                             <img src={member.image} alt={member.name} className="w-full h-full object-cover object-top" />
                                         </div>
                                         <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-sm dark:bg-slate-800 z-10">
-                                            <span className="material-symbols-outlined text-primary text-sm font-bold dark:text-blue-400">code</span>
+                                            <CodeIcon className="text-primary w-4 h-4 dark:text-blue-400" />
                                         </div>
                                     </div>
                                     <div>
