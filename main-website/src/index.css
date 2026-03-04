@@ -79,6 +79,13 @@
   animation: meshDrift 20s ease-in-out infinite;
 }
 
+@media (max-width: 768px) {
+  .animate-mesh {
+    animation: none;
+    transform: none;
+  }
+}
+
 /* Smooth Scrolling for the whole page */
 html {
   scroll-behavior: smooth;

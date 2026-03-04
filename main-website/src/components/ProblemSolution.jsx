@@ -13,16 +13,15 @@ export default function ProblemSolution() {
     const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20, mass: 0.5 });
 
     // Scene 1: Chaos (0% - 40%)
-    const chaosOpacity = useTransform(smoothProgress, [0, 0.35], [1, 0]);
-    const chaosScale = useTransform(smoothProgress, [0, 0.35], [1, 1.5]);
-    const chaosBlur = useTransform(smoothProgress, [0, 0.35], ["0px", "20px"]);
-    const chaosY = useTransform(smoothProgress, [0, 0.35], ["0%", "-20%"]);
+    const chaosOpacity = useTransform(smoothProgress, [0, 0.3], [1, 0]);
+    const chaosScale = useTransform(smoothProgress, [0, 0.3], [1, 1.2]);
+    const chaosY = useTransform(smoothProgress, [0, 0.3], ["0%", "-10%"]);
 
     // Scene 2: Harmony (40% - 100%)
     // Trigger opacity much earlier and keep it visible longer for mobile safety
-    const harmonyOpacity = useTransform(smoothProgress, [0.4, 0.5], [0, 1]);
-    const harmonyScale = useTransform(smoothProgress, [0.4, 0.6], [0.8, 1]);
-    const harmonyRotateX = useTransform(smoothProgress, [0.4, 0.6], [30, 0]);
+    const harmonyOpacity = useTransform(smoothProgress, [0.35, 0.5], [0, 1]);
+    const harmonyScale = useTransform(smoothProgress, [0.35, 0.5], [0.9, 1]);
+    // Removed harmonyRotateX for performance
 
     // Background Color Transition
     const bgColor = useTransform(smoothProgress, [0.3, 0.5], ["#f8fafc", "#ffffff"]);
@@ -50,34 +49,31 @@ export default function ProblemSolution() {
 
                 {/* SCENE 1: CHAOS (Explodes outwards) */}
                 <motion.div
-                    style={{ opacity: chaosOpacity, scale: chaosScale, filter: chaosBlur, y: chaosY }}
+                    style={{ opacity: chaosOpacity, scale: chaosScale, y: chaosY }}
                     className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4"
                 >
-                    <h2 className="text-4xl md:text-8xl font-black text-gray-200 dark:text-gray-800 uppercase tracking-tighter mb-12 text-center relative z-10">
+                    <h2 className="text-4xl md:text-8xl font-black text-gray-200 dark:text-gray-800 uppercase tracking-tighter mb-12 text-center relative z-10 w-full px-2">
                         The Old Way <br /><span className="text-red-500/50">Is Broken</span>
                     </h2>
 
-                    {/* Floating Debris Field */}
-                    <div className="absolute inset-0 overflow-hidden">
+                    {/* Floating Debris Field - optimized for mobile (fewer, tighter spread) */}
+                    <div className="absolute inset-0 overflow-hidden hidden md:block w-full">
                         {problems.map((p, i) => {
-                            // Pseudo-random positioning based on index
-                            const xOffset = (i % 3 - 1) * 35; // Reduced spread for mobile
-                            const yOffset = (Math.floor(i / 3) - 1) * 25;
-                            const delay = i * 0.1;
+                            const xOffset = (i % 3 - 1) * 20; // Tighter spread
+                            const yOffset = (Math.floor(i / 3) - 1) * 20;
 
                             return (
                                 <motion.div
                                     key={i}
                                     style={{
-                                        x: useTransform(smoothProgress, [0, 0.3], [`${xOffset}%`, `${xOffset * 2.5}%`]),
-                                        y: useTransform(smoothProgress, [0, 0.3], [`${yOffset}%`, `${yOffset * 2.5}%`]),
-                                        rotate: useTransform(smoothProgress, [0, 0.3], [0, (i % 2 === 0 ? 1 : -1) * 45]),
-                                        opacity: useTransform(smoothProgress, [0, 0.25], [1, 0]) // Fade out faster
+                                        x: useTransform(smoothProgress, [0, 0.3], [`${xOffset}%`, `${xOffset * 1.5}%`]),
+                                        y: useTransform(smoothProgress, [0, 0.3], [`${yOffset}%`, `${yOffset * 1.5}%`]),
+                                        opacity: useTransform(smoothProgress, [0, 0.2], [1, 0])
                                     }}
-                                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-40 md:w-48 p-3 md:p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-red-50 dark:border-red-900/20 flex flex-col items-center gap-2"
+                                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120px] md:w-48 p-2 md:p-4 bg-white dark:bg-slate-800 rounded-xl shadow-md md:shadow-lg border border-red-50 dark:border-red-900/20 flex flex-col items-center gap-1 md:gap-2 will-change-transform"
                                 >
-                                    <AlertCircle className="text-red-400 w-5 h-5 md:w-6 md:h-6" />
-                                    <span className="text-[10px] md:text-xs font-bold text-gray-600 dark:text-gray-400 text-center">{p}</span>
+                                    <AlertCircle className="text-red-400 w-4 h-4 md:w-6 md:h-6" />
+                                    <span className="text-[9px] md:text-xs font-bold text-gray-600 dark:text-gray-400 text-center leading-tight">{p}</span>
                                 </motion.div>
                             );
                         })}
@@ -87,7 +83,7 @@ export default function ProblemSolution() {
 
                 {/* SCENE 2: HARMONY (Assembles from center) */}
                 <motion.div
-                    style={{ opacity: harmonyOpacity, scale: harmonyScale, rotateX: harmonyRotateX }}
+                    style={{ opacity: harmonyOpacity, scale: harmonyScale }}
                     className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto"
                 >
                     <motion.div
@@ -124,16 +120,15 @@ export default function ProblemSolution() {
                     </motion.div>
 
                     {/* Solution Cards Assembling */}
-                    <div className="flex flex-wrap justify-center content-center gap-3 md:gap-6 max-w-6xl w-full perspective-1000">
+                    <div className="flex flex-wrap justify-center content-center gap-3 md:gap-6 max-w-6xl w-full">
                         {solutions.map((s, i) => (
                             <motion.div
                                 key={i}
                                 style={{
-                                    y: useTransform(smoothProgress, [0.4, 0.6], [100 + i * 50, 0]),
-                                    opacity: useTransform(smoothProgress, [0.4 + i * 0.05, 0.6], [0, 1]),
-                                    rotateX: useTransform(smoothProgress, [0.4, 0.6], [90, 0])
+                                    y: useTransform(smoothProgress, [0.35, 0.5], [50 + i * 20, 0]),
+                                    opacity: useTransform(smoothProgress, [0.35 + i * 0.03, 0.5], [0, 1])
                                 }}
-                                className="w-full max-w-[320px] md:w-48 p-3 md:p-4 bg-white dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-800 flex flex-row items-center gap-4 shadow-xl shadow-gray-200/50 dark:shadow-none hover:scale-105 transition-transform duration-300 md:flex-col md:text-center md:h-40 md:justify-center"
+                                className="w-full max-w-[280px] md:w-48 p-3 md:p-4 bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800 flex flex-row items-center gap-4 shadow-sm md:shadow-xl shadow-gray-200/50 dark:shadow-none hover:scale-105 transition-transform duration-300 md:flex-col md:text-center md:h-40 md:justify-center will-change-transform"
                             >
                                 <div className="shrink-0 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                                     <s.icon className="w-5 h-5 md:w-6 md:h-6 text-primary dark:text-blue-400" />

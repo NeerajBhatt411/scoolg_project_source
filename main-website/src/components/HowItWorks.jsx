@@ -6,12 +6,12 @@ const Card = ({ step, index, progress, range, targetScale }) => {
     const scale = useTransform(progress, range, [1, targetScale]);
 
     return (
-        <div className="h-screen sticky top-0 flex items-center justify-center">
+        <div className="md:h-screen sticky top-0 flex items-center justify-center pt-8 md:pt-0">
             <motion.div
                 style={{ scale, top: `calc(10% + ${index * 25}px)` }}
-                className="relative w-full max-w-5xl h-[60vh] md:h-[70vh] bg-white rounded-[3rem] p-8 md:p-12 border border-blue-100 shadow-2xl origin-top overflow-hidden dark:bg-slate-900 dark:border-slate-800"
+                className="relative w-full max-w-5xl h-auto md:h-[70vh] min-h-[500px] bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 border border-blue-100 shadow-xl md:shadow-2xl origin-top overflow-hidden dark:bg-slate-900 dark:border-slate-800 will-change-transform"
             >
-                <div className="h-full flex flex-col md:flex-row gap-12">
+                <div className="h-full flex flex-col md:flex-row gap-6 md:gap-12">
                     {/* Content Side */}
                     <div className="flex-1 flex flex-col justify-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 w-fit rounded-full text-blue-600 text-xs font-bold uppercase tracking-widest mb-6 dark:bg-blue-900/20 dark:text-blue-400">

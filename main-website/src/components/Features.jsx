@@ -18,7 +18,7 @@ function SpotlightCard({ children, className = "" }) {
             onMouseMove={handleMouseMove}
         >
             <motion.div
-                className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100"
+                className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100 hidden md:block"
                 style={{
                     background: useMotionTemplate`
                         radial-gradient(
