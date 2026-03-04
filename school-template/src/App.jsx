@@ -1,35 +1,357 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import * as Icons from 'lucide-react';
+import { schoolData } from './data/mockData';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const { hero, leadership, about, levels, academics, notices, gallery, pricing, contact } = schoolData;
+  const [currentPage, setCurrentPage] = useState('home');
+  const [activeTab, setActiveTab] = useState('home');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleNavClick = (page, tab) => {
+    setCurrentPage(page);
+    setActiveTab(tab);
+    setIsMenuOpen(false);
+  };
+
+  const navLinks = (
+    <div className={`nav-links ${isMenuOpen ? 'open' : ''}`} style={{ flex: 1, justifyContent: 'center' }}>
+      <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => handleNavClick('home', 'home')}>Home</button>
+      <a href="#about" className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('home', 'about')}>About Us</a>
+      <button className={`nav-item ${activeTab === 'fees' ? 'active' : ''}`} onClick={() => handleNavClick('fees', 'fees')}>Fees Structure</button>
+      <a href="#contact" className={`nav-item ${activeTab === 'contact' ? 'active' : ''}`} onClick={() => handleNavClick(currentPage, 'contact')}>Contact</a>
+    </div>
+  );
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div style={{ position: 'relative' }}>
+      <div className="top-bg-gradient"></div>
 
-export default App
+      {/* Header */}
+      <header>
+        <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+          <div className="logo" style={{ width: '150px' }}>
+            <img src="https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true" alt="Logo" style={{ height: '40px', borderRadius: '10px' }} />
+            Logo
+          </div>
+
+          {navLinks}
+
+          <div style={{ width: '150px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <Icons.X size={28} /> : <Icons.Menu size={28} />}
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      {currentPage === 'home' ? (
+        <>
+          {/* Hero Section */}
+          <section className="hero">
+            <div className="hero-text">
+              <span className="badge">{hero.badge}</span>
+              <h1>{hero.title}</h1>
+              <p className="hero-description">{hero.description}</p>
+              <div className="hero-buttons">
+                <button className="btn btn-primary">{hero.ctaPrimary}</button>
+                <button className="btn btn-secondary">{hero.ctaSecondary}</button>
+              </div>
+            </div>
+            <div className="hero-image-container">
+              <img src={hero.mainImage} alt="School Main View" className="hero-image-main" />
+              <div className="hero-tag">
+                <div style={{ background: '#FFF8D6', borderRadius: '12px', padding: '12px', display: 'flex' }}>
+                  <Icons.School size={24} color="#D97706" />
+                </div>
+                <div>
+                  <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--text-dark)', lineHeight: 1.2 }}>{hero.floatingStats.value}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{hero.floatingStats.sub}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Leadership Section */}
+          <section id="leadership" style={{ background: '#FAFAFA' }}>
+            <div className="section-title">
+              <span className="badge blue">Our Team</span>
+              <h2>Our Leadership</h2>
+              <p>Meet the visionary leaders driving excellence at our institution with decades of pedagogical experience.</p>
+            </div>
+            <div className="card-grid-3">
+              {leadership.map(member => (
+                <div key={member.id} className="gray-card" style={{ background: 'var(--white)' }}>
+                  <img src={member.image} alt={member.name} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', marginBottom: 20 }} />
+                  <h3 className="card-title">{member.name}</h3>
+                  <p className="card-subtitle">{member.title}</p>
+                  <p className="card-desc" style={{ fontStyle: 'italic' }}>{member.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* About Section */}
+          <section id="about">
+            <div className="section-title">
+              <span className="badge blue" style={{ background: '#F0F9FF', color: '#0369A1' }}>Learn More</span>
+              <h2>{about.title}</h2>
+              <p>{about.description}</p>
+            </div>
+            <div className="card-grid">
+              {about.cards.map((card, idx) => (
+                <div key={idx} className="gray-card" style={{ display: 'flex', gap: '25px', alignItems: 'center', textAlign: 'left', background: 'var(--white)' }}>
+                  <div className="icon-box" style={{ background: idx === 0 ? '#FCE7F3' : '#FEF3C7', color: 'inherit' }}>
+                    {(() => {
+                      const IconComponent = Icons[card.icon];
+                      return IconComponent ? <IconComponent size={24} /> : null;
+                    })()}
+                  </div>
+                  <div>
+                    <h3 className="card-title" style={{ marginBottom: '5px' }}>{card.title}</h3>
+                    <p className="card-desc">{card.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Our Levels Section */}
+          <section style={{ background: '#FAFAFA' }}>
+            <div className="section-title">
+              <span className="badge blue">Programs</span>
+              <h2>Our Levels</h2>
+              <p>Structured academic phases designed to accommodate cognitive and emotional growth.</p>
+            </div>
+            <div className="card-grid-3">
+              {levels.map(level => (
+                <div key={level.id} className="gray-card" style={{ textAlign: 'left', background: 'var(--white)' }}>
+                  <div className="icon-box" style={{ background: level.id === 1 ? '#DCFCE7' : level.id === 2 ? '#DBEAFE' : '#FCE7F3' }}>
+                    {(() => {
+                      const IconComponent = Icons[level.icon];
+                      return IconComponent ? <IconComponent size={24} /> : null;
+                    })()}
+                  </div>
+                  <h3 className="card-title">{level.title}</h3>
+                  <p className="card-desc" style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: 15 }}>{level.grade}</p>
+                  <p className="card-desc">{level.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Academics Section */}
+          <section>
+            <div className="section-title">
+              <span className="badge blue">Curriculum</span>
+              <h2>Academics</h2>
+              <p>Providing a robust educational framework tailored to empower the students of tomorrow.</p>
+            </div>
+            <div className="card-grid-3">
+              {academics.map(acad => (
+                <div key={acad.id} className="gray-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'var(--white)' }}>
+                  <div className="icon-box" style={{ background: '#F3F4F6' }}>
+                    {(() => {
+                      const IconComponent = Icons[acad.icon];
+                      return IconComponent ? <IconComponent size={24} /> : null;
+                    })()}
+                  </div>
+                  <h3 className="card-title">{acad.title}</h3>
+                  <p className="card-desc">{acad.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Notices Section */}
+          <section style={{ background: '#FAFAFA' }}>
+            <div className="section-title" style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="badge">Latest News</span>
+                <h2 style={{ marginBottom: 0 }}>Latest Notices</h2>
+              </div>
+              <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', fontSize: '1rem' }}>View All &rarr;</button>
+            </div>
+
+            <div className="card-grid notice-grid">
+              <div className="notice-featured" style={{ borderLeft: '6px solid var(--primary)' }}>
+                <span className="badge blue" style={{ background: 'var(--primary)', color: 'white', letterSpacing: 0.5, fontSize: '0.7rem' }}>FEATURED</span>
+                <h2 style={{ fontSize: '2.5rem', margin: '20px 0', color: 'var(--primary)', lineHeight: 1.2 }}>{notices.featured.title}</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '40px', fontSize: '1.1rem' }}>{notices.featured.excerpt}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: '600', color: 'var(--text-dark)' }}>{notices.featured.date}</span>
+                  <button className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '99px' }}>Read More</button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {notices.list.map(notice => (
+                  <div key={notice.id} className="notice-list-item">
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                      <div style={{ background: '#EEF2FF', padding: '15px', borderRadius: '12px', color: 'var(--primary)' }}>
+                        <Icons.FileText size={20} />
+                      </div>
+                      <div>
+                        <h4 style={{ marginBottom: '5px', fontSize: '1.05rem', color: 'var(--text-dark)' }}>{notice.title}</h4>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{notice.date}</span>
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px', background: '#F9FAFB', borderRadius: '50%', color: 'var(--primary)', cursor: 'pointer', border: '1px solid #E5E7EB' }}>&rarr;</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Gallery Section */}
+          <section id="gallery">
+            <div className="section-title">
+              <span className="badge blue">Our Campus</span>
+              <h2>Campus Gallery</h2>
+            </div>
+
+            <div className="gallery-grid">
+              <div className="gallery-img-container gallery-grid-left">
+                <img src={gallery[0].url} alt="Large View" className="gallery-img" />
+              </div>
+              <div className="gallery-grid-right">
+                {gallery.slice(1, 5).map(img => (
+                  <div key={img.id} className="gallery-img-container">
+                    <img src={img.url} alt={img.category} className="gallery-img" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          {/* Fee Structure Page View */}
+          <section style={{ paddingTop: '100px', paddingBottom: '100px', minHeight: '60vh' }}>
+            <div className="section-title">
+              <span className="badge blue">Plans</span>
+              <h2>Fee Structure</h2>
+              <p>Investment in education is the best investment for your child's future. Transparent and inclusive fee structure.</p>
+            </div>
+            <div className="card-grid-3" style={{ alignItems: 'center' }}>
+              {pricing.map((plan, idx) => (
+                <div key={idx} className={`pricing-card ${plan.isFeatured ? 'featured' : ''}`} style={{ textAlign: 'center' }}>
+                  {plan.isFeatured &&
+                    <div style={{ position: 'absolute', top: -15, right: 30, background: 'var(--secondary)', color: 'var(--text-dark)', padding: '6px 16px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 800 }}>
+                      POPULAR
+                    </div>
+                  }
+                  <h3 style={{ fontSize: '1.4rem', marginBottom: 20 }}>{plan.level}</h3>
+                  <div style={{ margin: '30px 0' }}>
+                    <span style={{ fontSize: '3.5rem', fontWeight: '800' }}>${plan.price}</span>
+                    <span style={{ opacity: plan.isFeatured ? 0.8 : 0.5, fontSize: '1rem', fontWeight: 500 }}>{plan.period}</span>
+                  </div>
+                  <ul style={{ listStyle: 'none', marginBottom: '40px', textAlign: 'left' }}>
+                    {plan.features.map((feat, i) => (
+                      <li key={i} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '15px', color: plan.isFeatured ? 'rgba(255,255,255,0.9)' : 'var(--text-muted)' }}>
+                        <span style={{ color: plan.isFeatured ? 'var(--secondary)' : 'var(--primary)', fontWeight: 'bold' }}>✓</span> {feat}
+                      </li>
+                    ))}
+                  </ul>
+                  <button className={`btn ${plan.isFeatured ? '' : 'btn-secondary'}`} style={{ width: '100%', background: plan.isFeatured ? 'white' : '', color: plan.isFeatured ? 'var(--primary)' : '' }}>Register Now</button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Common Contact Section for both pages */}
+      <section id="contact" style={{ background: currentPage === 'fees' ? '#FAFAFA' : 'var(--white)' }}>
+        <div className="section-title" style={{ textAlign: 'left' }}>
+          <span className="badge blue">Get in Touch</span>
+          <h2 style={{ marginBottom: 10 }}>Contact Us</h2>
+        </div>
+
+        <div className="contact-container">
+          <div>
+            <div style={{ background: '#FAFAFA', padding: '40px', borderRadius: '24px', height: '100%', border: '1px solid #E5E7EB' }}>
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+                <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.MapPin size={20} /></div>
+                <div>
+                  <h4 style={{ marginBottom: 5 }}>Address</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>{contact.address}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+                <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.Phone size={20} /></div>
+                <div>
+                  <h4 style={{ marginBottom: 5 }}>Call Us</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>{contact.phone}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.Mail size={20} /></div>
+                <div>
+                  <h4 style={{ marginBottom: 5 }}>Email</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>{contact.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="form-group">
+              <label>Your Name</label>
+              <input type="text" className="form-control" placeholder="John Doe" />
+            </div>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input type="email" className="form-control" placeholder="john@example.com" />
+            </div>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input type="text" className="form-control" placeholder="+1 234 567 890" />
+            </div>
+            <div className="form-group">
+              <label>Message</label>
+              <textarea className="form-control" placeholder="How can we help you?"></textarea>
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '16px' }}>Send Message</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer>
+        <div className="footer-grid">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
+              <img src="https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true" alt="Logo" style={{ height: '50px', borderRadius: '12px' }} />
+              Logo
+            </div>
+            <p style={{ opacity: 0.8, maxWidth: 400 }}>Empowering students to achieve excellence and shaping the visionary leaders of tomorrow through holistic education paradigms.</p>
+          </div>
+          <div>
+            <h4 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Navigation</h4>
+            <ul style={{ listStyle: 'none', lineHeight: 2.2, opacity: 0.8 }}>
+              <li><button onClick={() => handleNavClick('home', 'home')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>Home</button></li>
+              <li><button onClick={() => handleNavClick('home', 'about')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>About Us</button></li>
+              <li><button onClick={() => handleNavClick('fees', 'fees')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>Fees Structure</button></li>
+              <li><a href="#contact" onClick={() => handleNavClick(currentPage, 'contact')} style={{ color: 'white', textDecoration: 'none' }}>Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Legal</h4>
+            <ul style={{ listStyle: 'none', lineHeight: 2.2, opacity: 0.8 }}>
+              <li>Privacy Policy</li>
+              <li>Terms of Service</li>
+              <li>Cookie Policy</li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 30, opacity: 0.6, fontSize: '0.9rem' }}>
+          &copy; 2026 ScoolG Educational Group. All rights reserved.
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
