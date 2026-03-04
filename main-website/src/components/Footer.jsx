@@ -48,7 +48,7 @@ export default function Footer({ isDarkMode }) {
                     </div>
                 </div>
                 <div className={`border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-6 border-white/5`}>
-                    <p className="text-sm font-medium">© 2024 SCoolG Inc. All rights reserved.</p>
+                    <p className="text-sm font-medium">© 2026 SCoolG Inc. All rights reserved.</p>
                     <div className="flex gap-8 text-sm font-medium">
                         <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
                         <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
