@@ -4,7 +4,7 @@ dotenv.config();
 // Import Express and CORS packages
 import express from 'express';
 import cors from 'cors';
-import connectDB from './config/db.js'; 
+import { connectDB } from './config/db.js'; 
 
 // Initialize Express Engine
 const app = express();
@@ -22,4 +22,4 @@ app.get('/api/health', (req, res) => {
 });
 
 // Export app for use in server.js or serverless.js
-export default app;
+export { app };

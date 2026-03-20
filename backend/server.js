@@ -1,5 +1,5 @@
 // Import the Express app engine
-import app from './src/app.js';
+import { app } from './src/app.js';
 
 // Get PORT from environment variables or use 5000 as default
 const PORT = process.env.PORT || 5000;
