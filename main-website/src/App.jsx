@@ -9,8 +9,10 @@ import MobileApps from './components/MobileApps';
 import CTA from './components/CTA';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import SchoolOnboarding from './components/SchoolOnboarding';
 
 function App() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'dark' || (!savedTheme);
@@ -41,15 +43,22 @@ function App() {
         className="fixed top-0 left-0 right-0 h-1 bg-primary z-[100] origin-left"
         style={{ scaleX }}
       />
-      <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
-      <Hero />
-      <HowItWorks />
-      <Features />
-      <Team />
-      <MobileApps />
-      <CTA />
-      <Contact />
-      <Footer isDarkMode={isDarkMode} />
+      
+      {showOnboarding ? (
+        <SchoolOnboarding />
+      ) : (
+        <>
+          <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} onGetStartedClick={() => setShowOnboarding(true)} />
+          <Hero onGetStartedClick={() => setShowOnboarding(true)} />
+          <HowItWorks />
+          <Features />
+          <Team />
+          <MobileApps />
+          <CTA onGetStartedClick={() => setShowOnboarding(true)} />
+          <Contact />
+          <Footer isDarkMode={isDarkMode} />
+        </>
+      )}
     </div>
   );
 }

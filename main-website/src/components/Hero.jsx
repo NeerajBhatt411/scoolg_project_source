@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'fram
 import { useRef, useEffect } from 'react';
 import { TrendingUpIcon, BoltIcon } from './Icons';
 
-export default function Hero() {
+export default function Hero({ onGetStartedClick }) {
     const sectionRef = useRef(null);
     const { scrollYProgress } = useScroll({
         target: sectionRef,
@@ -144,6 +144,7 @@ export default function Hero() {
 
                         <motion.div variants={charVariants} className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start pt-6">
                             <motion.button
+                                onClick={onGetStartedClick}
                                 whileHover={{ scale: 1.05, boxShadow: "0 25px 50px -12px rgba(45, 108, 223, 0.5)" }}
                                 whileTap={{ scale: 0.95 }}
                                 className="bg-primary text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-primary/30 transition-all text-lg relative overflow-hidden group"
