@@ -4,6 +4,7 @@ const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [schoolId, setSchoolId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   // --- Safe URL Builder --- 
   const API_BASE_URL = 'https://scoolg-backend.netlify.app/api'; 
@@ -182,6 +183,7 @@ const SchoolOnboarding = () => {
 
   const handleSendOtp = async () => { 
     if (!formData.email) return;
+    setIsSendingOtp(true);
     try {
       const url = joinURL(API_BASE_URL, '/onboarding/start');
       const res = await fetch(url, {
@@ -190,16 +192,20 @@ const SchoolOnboarding = () => {
         body: JSON.stringify({ email: formData.email })
       });
       const data = await res.json();
-      if (data.schoolId) {
+      if (res.ok && data.schoolId) {
         setSchoolId(data.schoolId);
         setOtpSent(true);
-        // If draft found, we could sync formData here
-        if (data.formData && data.schoolName) {
+        if (data.formData && data.formData.schoolName) {
            setFormData(data.formData);
+           setCurrentStep(data.currentStep);
         }
+      } else {
+        alert(data.error || "Email delivery failed. Please check GMAIL credentials.");
       }
     } catch (err) {
-      alert("Backend connection failed. Make sure server is running on port 5001.");
+      alert("Failed to reach server. Check backend URL!");
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
@@ -331,10 +337,15 @@ const SchoolOnboarding = () => {
                     {!isEmailVerified && (
                       <button
                         onClick={handleSendOtp}
-                        disabled={!formData.email || otpSent}
-                        className="absolute right-2 px-4 py-2 bg-blue-600 text-white text-[13px] font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!formData.email || isSendingOtp}
+                        className="absolute right-2 px-4 py-2 bg-blue-600 text-white text-[13px] font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                       >
-                        {otpSent ? 'OTP Sent' : 'Verify'}
+                        {isSendingOtp ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Sending
+                          </>
+                        ) : otpSent ? 'Resend OTP' : 'Verify'}
                       </button>
                     )}
                     {isEmailVerified && (

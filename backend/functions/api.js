@@ -51,8 +51,17 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// --- Health Check & Test Endpoints ---
-router.get('/health', (req, res) => res.json({ status: "Scoolg Backend is Online! ✨", timestamp: new Date() }));
+// --- Health Check & Debug ---
+router.get('/health', (req, res) => res.json({ status: "Scoolg Backend Online! ✨", timestamp: new Date() }));
+router.get('/debug', (req, res) => {
+    res.json({
+        STATUS: "Backend Debug Info 🔍",
+        MONGO_READY: !!process.env.MONGODB_URI,
+        EMAIL_READY: !!process.env.GMAIL_USER,
+        PASS_READY: !!process.env.GMAIL_PASS,
+        NODE_ENV: process.env.NODE_ENV || 'not set'
+    });
+});
 router.get('/test', (req, res) => res.json({ message: "Test Successful! 🚀" }));
 
 // --- API Endpoints ---
@@ -67,12 +76,18 @@ router.post('/onboarding/start', async (req, res) => {
         global.TMP_OTPS = global.TMP_OTPS || {};
         global.TMP_OTPS[email] = otp;
 
-        await transporter.sendMail({
-            from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: "Your Scoolg School Verification Code",
-            text: `Welcome to Scoolg! Your 6-digit verification code is: ${otp}.`
-        });
+        try {
+            await transporter.sendMail({
+                from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
+                to: email,
+                subject: "Your Scoolg School Verification Code",
+                text: `Welcome to Scoolg! Your 6-digit verification code is: ${otp}.`
+            });
+            console.log(`✅ OTP Sent to ${email}: ${otp}`);
+        } catch (err) { 
+            console.error("❌ Email failed:", err.message);
+            return res.status(500).json({ error: "Email delivery failed. Check your Gmail App Password and 2-Step Verification.", details: err.message });
+        }
 
         let school = await School.findOne({ email });
         if (!school) {
