@@ -4,7 +4,63 @@ import { schoolData } from './data/mockData';
 import './index.css';
 
 const App = () => {
-  const { hero, leadership, about, levels, academics, notices, gallery, pricing, contact } = schoolData;
+  const [currentOnboardingData] = useState(() => {
+    const saved = localStorage.getItem('onboardingData');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const getMergedData = () => {
+    if (!currentOnboardingData) return schoolData;
+
+    const data = currentOnboardingData;
+    return {
+      ...schoolData,
+      hero: {
+        ...schoolData.hero,
+        title: data.schoolName || schoolData.hero.title,
+        description: data.schoolDescription || schoolData.hero.description,
+        mainImage: data.coverImage || schoolData.hero.mainImage,
+        floatingStats: {
+          ...schoolData.hero.floatingStats,
+          value: data.schoolStrength || schoolData.hero.floatingStats.value
+        }
+      },
+      about: {
+        ...schoolData.about,
+        description: `Established in ${data.establishedYear}. ${data.schoolDescription}`,
+        cards: [
+          { ...schoolData.about.cards[0], description: data.mission || schoolData.about.cards[0].description },
+          { ...schoolData.about.cards[1], description: data.vision || schoolData.about.cards[1].description }
+        ]
+      },
+      leadership: data.leadership ? data.leadership.map((member, i) => ({
+        id: i + 1,
+        image: schoolData.leadership[i]?.image || `https://ui-avatars.com/api/?name=${member.name?.charAt(0) || 'M'}&background=random&color=fff&bold=true`,
+        name: member.name || 'Leadership Member',
+        role: member.role || 'Board Member',
+        description: member.message || (i === 0 ? 'Leading with vision and excellence.' : 'Dedicated to student success and academic growth.')
+      })) : schoolData.leadership,
+      gallery: data.gallery && data.gallery.length > 0 
+        ? data.gallery.map((url, i) => ({ id: i + 1, url, category: 'Campus', isLarge: i === 0 }))
+        : schoolData.gallery,
+      pricing: [
+        { ...schoolData.pricing[0], price: data.fees?.primary || schoolData.pricing[0].price },
+        { ...schoolData.pricing[1], price: data.fees?.secondary || schoolData.pricing[1].price },
+        { ...schoolData.pricing[2], price: data.fees?.seniorSecondary || schoolData.pricing[2].price }
+      ],
+      contact: {
+        address: `${data.address}, ${data.city}, ${data.state} - ${data.pincode}`,
+        phone: data.phone || schoolData.contact.phone,
+        email: data.email || schoolData.contact.email,
+        social: data.socialMedia || {}
+      },
+      logo: data.logo
+    };
+  };
+
+  const finalData = getMergedData();
+  const { hero, leadership, about, levels, academics, notices, gallery, pricing, contact, logo, facilities, otherFacilities } = finalData;
+
   const [currentPage, setCurrentPage] = useState('home');
   const [activeTab, setActiveTab] = useState('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,9 +87,9 @@ const App = () => {
       {/* Header */}
       <header>
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-          <div className="logo" style={{ width: '150px' }}>
-            <img src="https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true" alt="Logo" style={{ height: '40px', borderRadius: '10px' }} />
-            Logo
+          <div className="logo" style={{ minWidth: '150px' }}>
+            <img src={logo || "https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true"} alt="Logo" style={{ height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+            <span style={{ marginLeft: '10px' }}>{hero.title.split(' ')[0]}</span>
           </div>
 
           {navLinks}
@@ -164,7 +220,39 @@ const App = () => {
             </div>
           </section>
 
-          {/* Notices Section */}
+          {/* Facilities Section */}
+      <section className="section" id="facilities" style={{ background: 'var(--surface)' }}>
+        <div className="container">
+          <div className="section-header">
+            <span className="badge">Campus Life</span>
+            <h2 className="section-title">Premium Facilities</h2>
+            <p className="section-subtitle">Discover the state-of-the-art infrastructure we provide for our students' holistic growth.</p>
+          </div>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
+            {/* Display Standard Facilities */}
+            {facilities?.filter(f => f !== 'OTHER').map((f, i) => (
+              <div key={i} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
+                  <LucideIcon name="CheckCircle" size={24} />
+                </div>
+                <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f}</h4>
+              </div>
+            ))}
+            {/* Display Other Facilities (Split by comma) */}
+            {otherFacilities?.split(',').filter(f => f.trim()).map((f, i) => (
+              <div key={`other-${i}`} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
+                  <LucideIcon name="PlusCircle" size={24} />
+                </div>
+                <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f.trim()}</h4>
+              </div>
+            ))}
+            {(!facilities?.length && !otherFacilities) && (
+              <p style={{ color: '#94a3b8', textAlign: 'center', width: '100%', fontStyle: 'italic' }}>Please complete the onboarding to showcase your premier facilities here.</p>
+            )}
+          </div>
+        </div>
+      </section>
           <section style={{ background: '#FAFAFA' }}>
             <div className="section-title" style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -323,8 +411,8 @@ const App = () => {
         <div className="footer-grid">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
-              <img src="https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true" alt="Logo" style={{ height: '50px', borderRadius: '12px' }} />
-              Logo
+              <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '50px', borderRadius: '12px', objectFit: 'contain' }} />
+              {hero.title.split(' ')[0]}
             </div>
             <p style={{ opacity: 0.8, maxWidth: 400 }}>Empowering students to achieve excellence and shaping the visionary leaders of tomorrow through holistic education paradigms.</p>
           </div>
