@@ -24,6 +24,9 @@ app.use(express.json());
 const SchoolSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
+    otp: { type: String },
+    password: { type: String }, // Auto-generated password
+    isPasswordChanged: { type: Boolean, default: false }, // For first-time login
     status: { type: String, default: "PENDING" },
     currentStep: { type: Number, default: 1 },
     formData: { type: mongoose.Schema.Types.Mixed, default: {} }
@@ -175,10 +178,16 @@ router.patch('/onboarding/update/:id', async (req, res) => {
 
         school.formData = { ...school.formData, ...formData };
         school.currentStep = currentStep || school.currentStep;
-        if (currentStep === 8) school.status = "COMPLETED";
+        
+        // Generate password if completing onboarding (Step 8)
+        if (currentStep === 8 && !school.password) {
+            const randomCode = Math.random().toString(36).slice(-6).toUpperCase();
+            school.password = `SCOOLG-${randomCode}`;
+            school.status = "COMPLETED";
+        }
 
         await school.save();
-        res.json({ message: "Saved!", data: school });
+        res.json({ message: "Saved!", data: school, password: school.password });
     } catch (err) {
         res.status(500).json({ error: "Save failed", details: err.message });
     }
