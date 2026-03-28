@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1774699503717",
+    "email": "neeraj.bhatt@ongraph.com",
+    "status": "PENDING",
+    "currentStep": 1,
+    "formData": {
+      "email": "neeraj.bhatt@ongraph.com",
+      "schoolName": "",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "pincode": "",
+      "schoolStrength": "",
+      "establishedYear": "",
+      "schoolDescription": "",
+      "mission": "",
+      "vision": "",
+      "leadership": [
+        {
+          "name": "",
+          "role": "",
+          "message": ""
+        },
+        {
+          "name": "",
+          "role": "",
+          "message": ""
+        },
+        {
+          "name": "",
+          "role": "",
+          "message": ""
+        }
+      ],
+      "facilities": [],
+      "fees": {
+        "primary": "",
+        "secondary": "",
+        "seniorSecondary": ""
+      },
+      "socialMedia": {
+        "instagram": "",
+        "facebook": ""
+      },
+      "gallery": []
+    }
+  }
+]
