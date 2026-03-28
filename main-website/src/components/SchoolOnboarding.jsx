@@ -154,7 +154,7 @@ const SchoolOnboarding = () => {
     if (schoolId) {
       setIsSaving(true);
       try {
-        await fetch(`http://localhost:5001/api/onboarding/update/${schoolId}`, {
+        await fetch(`https://scoolg-backend.netlify.app/api/onboarding/update/${schoolId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formData, currentStep: currentStep + 1 })
@@ -173,7 +173,7 @@ const SchoolOnboarding = () => {
   const handleSendOtp = async () => { 
     if (!formData.email) return;
     try {
-      const res = await fetch('http://localhost:5001/api/onboarding/start', {
+      const res = await fetch('https://scoolg-backend.netlify.app/api/onboarding/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
@@ -196,7 +196,7 @@ const SchoolOnboarding = () => {
     const otpCode = otp.join('');
     if (otpCode.length === 6) {
       try {
-        const res = await fetch('http://localhost:5001/api/onboarding/verify', {
+        const res = await fetch('https://scoolg-backend.netlify.app/api/onboarding/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: formData.email, otp: otpCode })

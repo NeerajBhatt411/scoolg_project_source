@@ -1,22 +1,27 @@
 import express from 'express';
+import serverless from 'serverless-http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import mongoose from 'mongoose';
-import School from './models/School.js';
+import School from '../models/School.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = 5001;
+const router = express.Router();
 
 app.use(cors());
 app.use(express.json());
 
-// --- MongoDB Connection (Local & Global) ---
-mongoose.connect(process.env.MONGODB_URI)
-.then(() => console.log("✅ MongoDB Connected Successfully to Atlas!"))
-.catch(err => console.error("❌ MongoDB Connection Error:", err));
+// --- Persistent Connection Helper (Important for Netlify) ---
+let cachedDb = null;
+const connectToDB = async () => {
+    if (cachedDb) return cachedDb;
+    const db = await mongoose.connect(process.env.MONGODB_URI);
+    cachedDb = db;
+    return db;
+};
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -26,16 +31,17 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const TMP_OTPS = {};
-
 // --- API Endpoints ---
 
-app.post('/api/onboarding/start', async (req, res) => {
+router.post('/onboarding/start', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
+    await connectToDB();
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    TMP_OTPS[email] = otp;
+    // (Suggestion: Use a separate OTP collection or Redis for verification in real prod)
+    global.TMP_OTPS = global.TMP_OTPS || {};
+    global.TMP_OTPS[email] = otp;
 
     try {
         await transporter.sendMail({
@@ -65,20 +71,21 @@ app.post('/api/onboarding/start', async (req, res) => {
         });
         await school.save();
     }
-    res.json({ message: "OTP sent", schoolId: school.id, currentStep: school.currentStep, formData: school.formData });
+    res.json({ message: "OTP sent successfully", schoolId: school.id, currentStep: school.currentStep, formData: school.formData });
 });
 
-app.post('/api/onboarding/verify', (req, res) => {
+router.post('/onboarding/verify', (req, res) => {
     const { email, otp } = req.body;
-    if (TMP_OTPS[email] === otp) {
-        delete TMP_OTPS[email];
-        res.json({ message: "Verified!" });
+    if (global.TMP_OTPS && global.TMP_OTPS[email] === otp) {
+        delete global.TMP_OTPS[email];
+        res.json({ message: "Verified successfully!" });
     } else { res.status(401).json({ error: "Invalid OTP." }); }
 });
 
-app.patch('/api/onboarding/update/:id', async (req, res) => {
+router.patch('/onboarding/update/:id', async (req, res) => {
     const { id } = req.params;
     const { formData, currentStep } = req.body;
+    await connectToDB();
 
     const school = await School.findOne({ id });
     if (!school) return res.status(404).json({ error: "Profile not found" });
@@ -86,16 +93,20 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
     school.formData = { ...school.formData, ...formData };
     school.currentStep = currentStep || school.currentStep;
     if (currentStep === 8) school.status = "COMPLETED";
-
+    
     await school.save();
     res.json({ message: "Saved!", data: school });
 });
 
-app.get('/api/onboarding/:id', async (req, res) => {
+router.get('/onboarding/:id', async (req, res) => {
     const { id } = req.params;
+    await connectToDB();
     const school = await School.findOne({ id });
     if (!school) return res.status(404).json({ error: "Not found" });
     res.json(school.formData);
 });
 
-app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
+// App Config for Netlify
+app.use('/.netlify/functions/api', router);
+
+export const handler = serverless(app);

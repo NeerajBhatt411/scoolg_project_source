@@ -1,10 +1,8 @@
 [build]
   command = "npm install"
-  functions = "."       # Treats all .js files in this dir as potential functions
-  publish = "."
+  functions = "functions"
 
 [[redirects]]
-  # Redirect all traffic (like /api/...) to the running serverless express app
-  from = "/*"
-  to = "/.netlify/functions/serverless/:splat"
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
   status = 200
