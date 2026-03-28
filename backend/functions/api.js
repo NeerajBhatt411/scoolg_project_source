@@ -18,7 +18,8 @@ const app = express();
 const router = express.Router();
 
 app.use(cors());
-app.use(express.json());
+// Increase Express body limit for base64 images
+app.use(express.json({ limit: '15mb' }));
 
 // --- Inline School Model (For Netlify stability) ---
 const SchoolSchema = new mongoose.Schema({
@@ -63,8 +64,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Increase Express body limit for large images
-app.use(express.json({ limit: '10mb' }));
+// (limit already set above)
 
 // --- Health Check ---
 router.get('/health', (req, res) => res.json({ status: "Scoolg Backend Online! ✨", timestamp: new Date() }));
