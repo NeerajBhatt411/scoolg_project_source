@@ -4,6 +4,15 @@ const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [schoolId, setSchoolId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Safe URL Builder --- 
+  const API_BASE_URL = 'https://scoolg-backend.netlify.app/api'; 
+  
+  const joinURL = (base, endpoint) => {
+    const cleanBase = base.replace(/\/+$/, ''); // Remove trailing slash
+    const cleanEndpoint = endpoint.replace(/^\/+/, ''); // Remove leading slash
+    return `${cleanBase}/${cleanEndpoint}`;
+  };
   const [formData, setFormData] = useState({
     schoolName: '',
     email: '',
@@ -154,7 +163,8 @@ const SchoolOnboarding = () => {
     if (schoolId) {
       setIsSaving(true);
       try {
-        await fetch(`https://scoolg-backend.netlify.app/api/onboarding/update/${schoolId}`, {
+        const url = joinURL(API_BASE_URL, `/onboarding/update/${schoolId}`);
+        await fetch(url, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formData, currentStep: currentStep + 1 })
@@ -173,7 +183,8 @@ const SchoolOnboarding = () => {
   const handleSendOtp = async () => { 
     if (!formData.email) return;
     try {
-      const res = await fetch('https://scoolg-backend.netlify.app/api/onboarding/start', {
+      const url = joinURL(API_BASE_URL, '/onboarding/start');
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
@@ -196,7 +207,8 @@ const SchoolOnboarding = () => {
     const otpCode = otp.join('');
     if (otpCode.length === 6) {
       try {
-        const res = await fetch('https://scoolg-backend.netlify.app/api/onboarding/verify', {
+        const url = joinURL(API_BASE_URL, '/onboarding/verify');
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: formData.email, otp: otpCode })
