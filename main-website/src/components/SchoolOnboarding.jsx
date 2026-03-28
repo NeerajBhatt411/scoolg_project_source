@@ -200,10 +200,10 @@ const SchoolOnboarding = () => {
            setCurrentStep(data.currentStep);
         }
       } else {
-        alert(data.error || "Email delivery failed. Please check GMAIL credentials.");
+        alert(`${data.error || "Failed"} : ${data.details || "Check logs"}`);
       }
     } catch (err) {
-      alert("Failed to reach server. Check backend URL!");
+      alert("Network Error: Could not hit the backend!");
     } finally {
       setIsSendingOtp(false);
     }
