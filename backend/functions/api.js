@@ -4,8 +4,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import mongoose from 'mongoose';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 const router = express.Router();
@@ -53,8 +60,32 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// --- Health Check & Debug ---
+// Increase Express body limit for large images
+app.use(express.json({ limit: '10mb' }));
+
+// --- Health Check ---
 router.get('/health', (req, res) => res.json({ status: "Scoolg Backend Online! ✨", timestamp: new Date() }));
+
+// --- API Router ---
+router.post('/upload', async (req, res) => {
+    try {
+        const { file, folder, schoolName } = req.body;
+        if (!file) return res.status(400).json({ error: "No file provided" });
+
+        const uploadPath = `Scoolg/${schoolName || 'General'}/${folder || 'Other'}`;
+        console.log(`📸 Uploading to: ${uploadPath}`);
+
+        const uploadResponse = await cloudinary.uploader.upload(file, {
+            folder: uploadPath,
+            resource_type: "auto"
+        });
+
+        res.json({ url: uploadResponse.secure_url });
+    } catch (err) {
+        console.error("❌ Upload failed:", err.message);
+        res.status(500).json({ error: "Image upload failed", details: err.message });
+    }
+});
 router.get('/debug', (req, res) => {
     res.json({
         STATUS: "Backend Debug Info 🔍",

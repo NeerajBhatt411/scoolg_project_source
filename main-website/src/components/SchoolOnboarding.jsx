@@ -5,6 +5,7 @@ const SchoolOnboarding = () => {
   const [schoolId, setSchoolId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // --- Safe URL Builder --- 
   const API_BASE_URL = 'https://scoolg-backend.netlify.app/api'; 
@@ -32,9 +33,9 @@ const SchoolOnboarding = () => {
     selectedClasses: [],
     selectedSchoolType: '',
     leadership: [
-      { name: '', role: '', message: '' },
-      { name: '', role: '', message: '' },
-      { name: '', role: '', message: '' }
+      { name: '', role: '', message: '', photo: '' },
+      { name: '', role: '', message: '', photo: '' },
+      { name: '', role: '', message: '', photo: '' }
     ],
     facilities: [],
     otherFacilities: '',
@@ -84,7 +85,7 @@ const SchoolOnboarding = () => {
   const addLeadershipMember = () => {
     setFormData(prev => ({
       ...prev,
-      leadership: [...prev.leadership, { name: '', role: '', message: '' }]
+      leadership: [...prev.leadership, { name: '', role: '', message: '', photo: '' }]
     }));
   };
 
@@ -98,15 +99,18 @@ const SchoolOnboarding = () => {
     }
   };
 
-  const handleGalleryUpload = (e) => {
+  const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files);
-    if (formData.gallery.length + files.length > 10) {
-      alert("Maximum 10 images allowed in gallery.");
-      return;
+    for (const file of files) {
+      if (formData.gallery.length >= 10) break;
+      const url = await uploadToCloudinary(file, 'Gallery');
+      if (url) {
+        setFormData(prev => ({
+          ...prev,
+          gallery: [...prev.gallery, url]
+        }));
+      }
     }
-    // In a real app, you'd create URLs or base64
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setFormData(prev => ({ ...prev, gallery: [...prev.gallery, ...newImages] }));
   };
 
   const toggleBoard = (board) => {
@@ -257,12 +261,21 @@ const SchoolOnboarding = () => {
 
           {/* Logo - Left aligned on Desktop, Center on Mobile */}
           <div className="flex items-center gap-2.5 w-full md:w-[200px] justify-center md:justify-start shrink-0">
-            <div className="bg-blue-600 w-9 h-9 rounded-lg flex items-center justify-center shadow-md">
+            <div className="bg-blue-600 w-9 h-9 rounded-lg flex items-center justify-center shadow-md relative">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
                 <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z" />
               </svg>
+              {isUploading && (
+                <div className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </div>
+              )}
             </div>
-            <span className="text-[20px] font-black tracking-tight text-gray-900">SCOOLG</span>
+            <span className="text-[20px] font-black tracking-tight text-gray-900 flex items-center gap-2">
+                SCOOLG
+                {isUploading && <span className="text-[10px] text-blue-600 animate-pulse font-bold bg-blue-50 px-2 py-0.5 rounded ml-2">UPLOADING...</span>}
+            </span>
           </div>
 
           {/* Stepper - Perfectly Centered, No Scroll on Desktop */}
@@ -632,37 +645,68 @@ const SchoolOnboarding = () => {
                       >Remove</button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>Full Name</label>
-                      <input
-                        type="text"
-                        value={member.name}
-                        onChange={(e) => handleLeadershipChange(index, 'name', e.target.value)}
-                        placeholder="e.g. Dr. John Wick"
-                        className={inputClass}
-                      />
+                  <div className="flex flex-col md:flex-row gap-6 items-start">
+                    {/* Member Photo - NEW & OPTIONAL */}
+                    <div className="w-full md:w-[120px] shrink-0">
+                      <label className="text-[12px] font-bold text-gray-500 mb-2 block uppercase">Photo</label>
+                      <div className="relative w-20 h-20 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center hover:border-blue-400 transition-all cursor-pointer overflow-hidden group">
+                        {member.photo ? (
+                          <img src={member.photo} alt="Leader" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-gray-300 group-hover:text-blue-400"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" /></svg></div>
+                        )}
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                          onChange={async (e) => {
+                            const url = await uploadToCloudinary(e.target.files[0], 'Leadership');
+                            if (url) {
+                              const newLeadership = [...formData.leadership];
+                              newLeadership[index].photo = url;
+                              setFormData({ ...formData, leadership: newLeadership });
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className={labelClass}>Designation / Role</label>
-                      <input
-                        type="text"
-                        value={member.role}
-                        onChange={(e) => handleLeadershipChange(index, 'role', e.target.value)}
-                        placeholder="e.g. Principal, Founder"
-                        className={inputClass}
-                      />
+
+                    <div className="flex-1 space-y-4 w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          value={member.name}
+                          onChange={(e) => {
+                            const newLeadership = [...formData.leadership];
+                            newLeadership[index].name = e.target.value;
+                            setFormData({ ...formData, leadership: newLeadership });
+                          }}
+                          placeholder="Full Name"
+                          className={inputClass}
+                        />
+                        <input
+                          type="text"
+                          value={member.role}
+                          onChange={(e) => {
+                            const newLeadership = [...formData.leadership];
+                            newLeadership[index].role = e.target.value;
+                            setFormData({ ...formData, leadership: newLeadership });
+                          }}
+                          placeholder="Role (e.g. Principal)"
+                          className={inputClass}
+                        />
+                      </div>
+                      <textarea
+                        rows="2"
+                        value={member.message}
+                        onChange={(e) => {
+                          const newLeadership = [...formData.leadership];
+                          newLeadership[index].message = e.target.value;
+                          setFormData({ ...formData, leadership: newLeadership });
+                        }}
+                        placeholder="Message / Vision snippet..."
+                        className={`${inputClass} resize-none`}
+                      ></textarea>
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <label className={labelClass}>Leadership Message / Bio</label>
-                    <textarea
-                      rows="3"
-                      value={member.message}
-                      onChange={(e) => handleLeadershipChange(index, 'message', e.target.value)}
-                      placeholder={`Write a personal message or bio for Member ${index + 1}...`}
-                      className={`${inputClass} !mt-1 resize-none shadow-sm`}
-                    ></textarea>
                   </div>
                 </div>
               ))}
@@ -745,7 +789,10 @@ const SchoolOnboarding = () => {
                         <p className="text-[12px] font-semibold text-gray-500 text-center">Upload Logo</p>
                       </div>
                     )}
-                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={(e) => handleInputChange('logo', URL.createObjectURL(e.target.files[0]))} />
+                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={async (e) => {
+                      const url = await uploadToCloudinary(e.target.files[0], 'Logo');
+                      if (url) handleInputChange('logo', url);
+                    }} />
                   </div>
                 </div>
                 <div>
@@ -759,7 +806,10 @@ const SchoolOnboarding = () => {
                         <p className="text-[12px] font-semibold text-gray-500">Add Hero Cover</p>
                       </div>
                     )}
-                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={(e) => handleInputChange('coverImage', URL.createObjectURL(e.target.files[0]))} />
+                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={async (e) => {
+                      const url = await uploadToCloudinary(e.target.files[0], 'Hero_Cover');
+                      if (url) handleInputChange('coverImage', url);
+                    }} />
                   </div>
                 </div>
               </div>
