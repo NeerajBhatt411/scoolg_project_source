@@ -135,5 +135,9 @@ router.get('/onboarding/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Fetch failed" }); }
 });
 
-app.use('/.netlify/functions/api', router);
+// App Config for Netlify - Root mounting for flexibility
+app.use('/', router);
+app.use('/api', router); // Legacy support
+app.use('/.netlify/functions/api', router); // Direct function call support
+
 export const handler = serverless(app);
