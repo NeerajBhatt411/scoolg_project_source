@@ -28,6 +28,10 @@ const transporter = nodemailer.createTransport({
 
 const TMP_OTPS = {};
 
+// --- Health Check & Test ---
+app.get('/api/health', (req, res) => res.json({ status: "Scoolg Local Backend Online! ✨" }));
+app.get('/api/test', (req, res) => res.json({ message: "Local Test Success! 🚀" }));
+
 // --- API Endpoints ---
 
 app.post('/api/onboarding/start', async (req, res) => {
