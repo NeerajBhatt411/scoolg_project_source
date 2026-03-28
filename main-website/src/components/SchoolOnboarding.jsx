@@ -6,6 +6,7 @@ const SchoolOnboarding = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState(null);
 
   // --- Safe URL Builder --- 
   const API_BASE_URL = 'https://scoolg-backend.netlify.app/api'; 
@@ -169,18 +170,22 @@ const SchoolOnboarding = () => {
       setIsSaving(true);
       try {
         const url = joinURL(API_BASE_URL, `/onboarding/update/${schoolId}`);
-        await fetch(url, {
+        const res = await fetch(url, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formData, currentStep: currentStep + 1 })
         });
-      } catch (err) {
-        console.error("Failed to autosave step:", err);
-      } finally {
-        setIsSaving(false);
-      }
+        const data = await res.json();
+        if (res.ok) {
+          if (data.password) setGeneratedPassword(data.password);
+          setCurrentStep(prev => prev + 1);
+          window.scrollTo(0, 0); 
+        }
+      } catch (err) { alert("Save failed!"); }
+      finally { setIsSaving(false); }
+    } else {
+      setCurrentStep(prev => Math.min(prev + 1, 8));
     }
-    setCurrentStep(prev => Math.min(prev + 1, 8));
   };
 
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -876,14 +881,34 @@ const SchoolOnboarding = () => {
             </div>
           )}
 
-          {/* STEP 8 */}
           {currentStep === 8 && (
-            <div className="animate-fade-in-up text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-                <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="animate-fade-in-up text-center py-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="text-2xl font-extrabold text-gray-900 mb-2">You're All Set!</h3>
-              <p className="text-[15px] font-medium text-gray-500 mb-6 max-w-sm mx-auto">Confirm your data to generate your school website's premium template.</p>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Registration Successful! ✨</h3>
+              <p className="text-[14px] font-medium text-gray-500 mb-8 max-w-sm mx-auto">Your school profile is now ready. Use these credentials to login to your Scoolg Admin Panel.</p>
+              
+              <div className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-6 max-w-sm mx-auto space-y-4 shadow-inner">
+                <div className="text-left">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Admin Email</label>
+                  <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl font-bold text-gray-700">{formData.email}</div>
+                </div>
+                <div className="text-left">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Temporary Password</label>
+                  <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl font-mono text-[16px] font-black text-blue-600 flex justify-between items-center tracking-wider">
+                    {generatedPassword || "••••••••"}
+                    <button onClick={() => { navigator.clipboard.writeText(generatedPassword); alert("Password Copied!"); }} className="text-gray-300 hover:text-blue-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100 inline-flex items-center gap-3">
+                 <div className="w-5 h-5 bg-amber-100 flex items-center justify-center rounded text-amber-600 font-bold text-[10px]">!</div>
+                 <p className="text-[12px] text-amber-800 font-bold">You will be asked to change this password on your first login.</p>
+              </div>
             </div>
           )}
 
