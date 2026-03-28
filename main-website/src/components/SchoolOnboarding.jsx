@@ -8,14 +8,27 @@ const SchoolOnboarding = () => {
   const [uploadingCount, setUploadingCount] = useState(0);
   const [generatedPassword, setGeneratedPassword] = useState(null);
   const isUploading = uploadingCount > 0;
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
+  const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
 
   // --- Safe URL Builder --- 
   const API_BASE_URL = 'https://scoolg-backend.netlify.app/api';
+  const ADMIN_PANEL_URL = import.meta.env.VITE_ADMIN_PANEL_URL || '';
+  const SCHOOL_WEBSITE_URL = import.meta.env.VITE_SCHOOL_WEBSITE_URL || '';
 
   const joinURL = (base, endpoint) => {
     const cleanBase = base.replace(/\/+$/, ''); // Remove trailing slash
     const cleanEndpoint = endpoint.replace(/^\/+/, ''); // Remove leading slash
     return `${cleanBase}/${cleanEndpoint}`;
+  };
+
+  const openInfoModal = (title, message) => {
+    setInfoModal({ open: true, title, message });
+  };
+
+  const closeInfoModal = () => {
+    setInfoModal({ open: false, title: '', message: '' });
   };
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -96,8 +109,19 @@ const SchoolOnboarding = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
+  const clearError = (key) => {
+    setErrors(prev => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    clearError(field);
+    if (formError) setFormError('');
   };
 
   const handleFeesChange = (field, value) => {
@@ -118,6 +142,8 @@ const SchoolOnboarding = () => {
     const newLeadership = [...formData.leadership];
     newLeadership[index][field] = value;
     setFormData(prev => ({ ...prev, leadership: newLeadership }));
+    clearError(`leadership.${index}.${field}`);
+    if (formError) setFormError('');
   };
 
   const addLeadershipMember = () => {
@@ -151,11 +177,59 @@ const SchoolOnboarding = () => {
     });
   };
 
+  const fieldClass = (key) => `${inputClass} ${errors[key] ? 'border-red-500 focus:ring-red-500' : ''}`;
+
+  const validateStep = () => {
+    const nextErrors = {};
+    if (currentStep === 1) {
+      if (!formData.schoolName.trim()) nextErrors.schoolName = 'School name is required.';
+      if (!formData.email.trim()) nextErrors.email = 'Email is required.';
+      if (!isEmailVerified) nextErrors.emailVerified = 'Email verification is required.';
+      if (!formData.establishedYear.trim()) nextErrors.establishedYear = 'Established year is required.';
+      if (!formData.schoolStrength.trim()) nextErrors.schoolStrength = 'School strength is required.';
+      if (!formData.schoolDescription.trim()) nextErrors.schoolDescription = 'Description is required.';
+    }
+    if (currentStep === 2) {
+      if (!formData.phone.trim()) nextErrors.phone = 'Phone number is required.';
+      if (!formData.address.trim()) nextErrors.address = 'Address is required.';
+      if (!formData.city.trim()) nextErrors.city = 'City is required.';
+      if (!formData.state) nextErrors.state = 'State is required.';
+      if (!formData.pincode.trim()) nextErrors.pincode = 'Pincode is required.';
+    }
+    if (currentStep === 3) {
+      if (!formData.selectedBoards.length) nextErrors.selectedBoards = 'Select at least one board.';
+      if (formData.selectedBoards.includes('OTHER') && !formData.otherBoardName.trim()) {
+        nextErrors.otherBoardName = 'Please specify other board.';
+      }
+      if (!formData.selectedSchoolType) nextErrors.selectedSchoolType = 'Select school type.';
+      if (!formData.selectedClasses.length) nextErrors.selectedClasses = 'Select at least one class group.';
+      if (!formData.mission.trim()) nextErrors.mission = 'Mission is required.';
+      if (!formData.vision.trim()) nextErrors.vision = 'Vision is required.';
+    }
+    if (currentStep === 4) {
+      const leader = formData.leadership[0] || {};
+      if (!leader.name?.trim()) nextErrors['leadership.0.name'] = 'Name is required.';
+      if (!leader.role?.trim()) nextErrors['leadership.0.role'] = 'Role is required.';
+      if (!leader.message?.trim()) nextErrors['leadership.0.message'] = 'Message is required.';
+    }
+    if (currentStep === 5) {
+      if (!formData.facilities.length) nextErrors.facilities = 'Select at least one facility.';
+    }
+    if (currentStep === 6) {
+      if (!formData.logo) nextErrors.logo = 'Logo is required.';
+      if (!formData.coverImage) nextErrors.coverImage = 'Cover image is required.';
+      if (!formData.gallery.length) nextErrors.gallery = 'At least one gallery image is required.';
+    }
+    return nextErrors;
+  };
+
   const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files || []).filter(isImageFile);
     const remainingSlots = Math.max(0, 10 - formData.gallery.length);
     const filesToUpload = files.slice(0, remainingSlots);
     if (filesToUpload.length === 0) return;
+    clearError('gallery');
+    if (formError) setFormError('');
     for (const file of filesToUpload) {
       const tempUrl = URL.createObjectURL(file);
       setFormData(prev => ({
@@ -183,6 +257,9 @@ const SchoolOnboarding = () => {
         ? prev.selectedBoards.filter(b => b !== board)
         : [...prev.selectedBoards, board]
     }));
+    clearError('selectedBoards');
+    if (board !== 'OTHER') clearError('otherBoardName');
+    if (formError) setFormError('');
   };
 
   const toggleClass = (cls) => {
@@ -192,6 +269,8 @@ const SchoolOnboarding = () => {
         ? prev.selectedClasses.filter(c => c !== cls)
         : [...prev.selectedClasses, cls]
     }));
+    clearError('selectedClasses');
+    if (formError) setFormError('');
   };
 
   const toggleFacility = (facility) => {
@@ -201,6 +280,8 @@ const SchoolOnboarding = () => {
         ? prev.facilities.filter(f => f !== facility)
         : [...prev.facilities, facility]
     }));
+    clearError('facilities');
+    if (formError) setFormError('');
   };
 
   const steps = [
@@ -221,7 +302,35 @@ const SchoolOnboarding = () => {
   ];
 
   const handleNext = async () => {
+    if (isUploading) {
+      setFormError('Please wait for uploads to finish.');
+      return;
+    }
+    const nextErrors = validateStep();
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      setFormError('Please fill all required fields marked with *.');
+      return;
+    }
+
     if (currentStep === 8) {
+      if (schoolId) {
+        setIsSaving(true);
+        try {
+          const url = joinURL(API_BASE_URL, `/onboarding/update/${schoolId}`);
+          const res = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ formData, currentStep: 8 })
+          });
+          const data = await res.json();
+          if (res.ok && data.password) setGeneratedPassword(data.password);
+        } catch (err) {
+          alert("Save failed!");
+        } finally {
+          setIsSaving(false);
+        }
+      }
       localStorage.setItem('onboardingData', JSON.stringify(formData));
       alert('School Profile Created Successfully!');
       return;
@@ -292,6 +401,8 @@ const SchoolOnboarding = () => {
         });
         if (res.ok) {
           setIsEmailVerified(true);
+          clearError('emailVerified');
+          if (formError) setFormError('');
         } else {
           alert("Invalid OTP. Try again!");
         }
@@ -328,10 +439,12 @@ const SchoolOnboarding = () => {
 
           {/* Logo - Left aligned on Desktop, Center on Mobile */}
           <div className="flex items-center gap-2.5 w-full md:w-[200px] justify-center md:justify-start shrink-0">
-            <div className="bg-blue-600 w-9 h-9 rounded-lg flex items-center justify-center shadow-md relative">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
-                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z" />
-              </svg>
+            <div className="bg-white border border-gray-200 w-9 h-9 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden">
+              <img
+                src="/logo.png"
+                alt="ScoolG Logo"
+                className="w-full h-full object-contain"
+              />
               {isUploading && (
                 <div className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -391,20 +504,21 @@ const SchoolOnboarding = () => {
           {currentStep === 1 && (
             <div className="space-y-6">
               <div>
-                <label className={labelClass}>School Full Name</label>
+                <label className={labelClass}>School Full Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formData.schoolName}
                   onChange={(e) => handleInputChange('schoolName', e.target.value)}
                   placeholder="e.g. St. Xavier's International School"
-                  className={inputClass}
+                  className={fieldClass('schoolName')}
                 />
+                {errors.schoolName && <p className="text-[12px] text-red-500 mt-1">{errors.schoolName}</p>}
               </div>
 
               {/* Email Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Official Email Address</label>
+                  <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
                   <div className="relative flex items-center">
                     <input
                       type="email"
@@ -412,7 +526,7 @@ const SchoolOnboarding = () => {
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       readOnly={isEmailVerified}
                       placeholder="contact@schoolname.edu"
-                      className={`${inputClass} pr-28 ${isEmailVerified ? 'border-gray-200 bg-white text-gray-900 ring-0 focus:ring-0' : ''}`}
+                      className={`${fieldClass('email')} pr-28 ${isEmailVerified ? 'border-gray-200 bg-white text-gray-900 ring-0 focus:ring-0' : ''}`}
                     />
                     {!isEmailVerified && (
                       <button
@@ -434,30 +548,35 @@ const SchoolOnboarding = () => {
                       </div>
                     )}
                   </div>
+                  {(errors.email || errors.emailVerified) && (
+                    <p className="text-[12px] text-red-500 mt-1">{errors.email || errors.emailVerified}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className={labelClass}>Established Year</label>
+                  <label className={labelClass}>Established Year <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.establishedYear}
                     onChange={(e) => handleInputChange('establishedYear', e.target.value)}
                     placeholder="YYYY"
-                    className={inputClass}
+                    className={fieldClass('establishedYear')}
                   />
+                  {errors.establishedYear && <p className="text-[12px] text-red-500 mt-1">{errors.establishedYear}</p>}
                 </div>
               </div>
 
               {/* School Strength Field - NEW */}
               <div>
-                <label className={labelClass}>School Strength (Total Students)</label>
+                <label className={labelClass}>School Strength (Total Students) <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formData.schoolStrength}
                   onChange={(e) => handleInputChange('schoolStrength', e.target.value)}
                   placeholder="e.g. 2,500+"
-                  className={inputClass}
+                  className={fieldClass('schoolStrength')}
                 />
+                {errors.schoolStrength && <p className="text-[12px] text-red-500 mt-1">{errors.schoolStrength}</p>}
               </div>
 
               {/* Revamped High-End OTP Dialog - Ultra Clean */}
@@ -492,14 +611,15 @@ const SchoolOnboarding = () => {
               )}
 
               <div>
-                <label className={labelClass}>Brief Description</label>
+                <label className={labelClass}>Brief Description <span className="text-red-500">*</span></label>
                 <textarea
                   rows="4"
                   value={formData.schoolDescription}
                   onChange={(e) => handleInputChange('schoolDescription', e.target.value)}
                   placeholder="Tell us about your school's vision, mission, or history..."
-                  className={`${inputClass} resize-none`}
+                  className={`${fieldClass('schoolDescription')} resize-none`}
                 ></textarea>
+                {errors.schoolDescription && <p className="text-[12px] text-red-500 mt-1">{errors.schoolDescription}</p>}
               </div>
             </div>
           )}
@@ -510,64 +630,69 @@ const SchoolOnboarding = () => {
 
               {/* Contact Line */}
               <div>
-                <label className={labelClass}>Phone Number</label>
+                <label className={labelClass}>Phone Number <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                   placeholder="+91 98765 43210"
-                  className={inputClass}
+                  className={fieldClass('phone')}
                 />
+                {errors.phone && <p className="text-[12px] text-red-500 mt-1">{errors.phone}</p>}
               </div>
 
               {/* Address Line */}
               <div>
-                <label className={labelClass}>Full School Address</label>
+                <label className={labelClass}>Full School Address <span className="text-red-500">*</span></label>
                 <textarea
                   rows="3"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   placeholder="Enter complete street address..."
-                  className={`${inputClass} resize-none`}
+                  className={`${fieldClass('address')} resize-none`}
                 ></textarea>
+                {errors.address && <p className="text-[12px] text-red-500 mt-1">{errors.address}</p>}
               </div>
 
               {/* Location Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>City</label>
+                  <label className={labelClass}>City <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
                     placeholder="City name"
-                    className={inputClass}
+                    className={fieldClass('city')}
                   />
+                  {errors.city && <p className="text-[12px] text-red-500 mt-1">{errors.city}</p>}
                 </div>
 
                 {/* State Dropdown - Grouped logically with City and Pincode */}
                 <div>
-                  <label className={labelClass}>State / Province</label>
+                  <label className={labelClass}>State / Province <span className="text-red-500">*</span></label>
                   <select
                     value={formData.state}
                     onChange={(e) => handleInputChange('state', e.target.value)}
-                    className={`${inputClass} cursor-pointer appearance-none px-4`}>
+                    className={`${fieldClass('state')} cursor-pointer appearance-none px-4`}>
                     <option value="" disabled>Select state</option>
                     {["Andaman & Nicobar", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra & Nagar Haveli", "Daman & Diu", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"].map(state => (
                       <option key={state} value={state}>{state}</option>
                     ))}
                   </select>
+                  {errors.state && <p className="text-[12px] text-red-500 mt-1">{errors.state}</p>}
                 </div>
 
                 <div>
-                  <label className={labelClass}>Pincode</label>
+                  <label className={labelClass}>Pincode <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.pincode}
                     onChange={(e) => handleInputChange('pincode', e.target.value)}
                     placeholder="Postal code"
-                    className={inputClass}
+                    className={fieldClass('pincode')}
                   />
+                  {errors.pincode && <p className="text-[12px] text-red-500 mt-1">{errors.pincode}</p>}
                 </div>
               </div>
 
@@ -601,7 +726,7 @@ const SchoolOnboarding = () => {
           {currentStep === 3 && (
             <div className="space-y-8 animate-fade-in-up">
               <div>
-                <label className={labelClass}>Board Affiliation (Select Multiple)</label>
+                <label className={labelClass}>Board Affiliation (Select Multiple) <span className="text-red-500">*</span></label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {['CBSE', 'ICSE', 'OTHER'].map(board => {
                     const isSelected = formData.selectedBoards.includes(board);
@@ -615,22 +740,24 @@ const SchoolOnboarding = () => {
                     );
                   })}
                 </div>
+                {errors.selectedBoards && <p className="text-[12px] text-red-500 mt-2">{errors.selectedBoards}</p>}
                 {formData.selectedBoards.includes('OTHER') && (
                   <div className="mt-4 animate-fade-in-up">
-                    <label className={labelClass}>Please specify Other Board</label>
+                    <label className={labelClass}>Please specify Other Board <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formData.otherBoardName}
                       onChange={(e) => handleInputChange('otherBoardName', e.target.value)}
                       placeholder="e.g. State Board, IB"
-                      className={inputClass}
+                      className={fieldClass('otherBoardName')}
                     />
+                    {errors.otherBoardName && <p className="text-[12px] text-red-500 mt-1">{errors.otherBoardName}</p>}
                   </div>
                 )}
               </div>
 
               <div>
-                <label className={labelClass}>School Type</label>
+                <label className={labelClass}>School Type <span className="text-red-500">*</span></label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {['Private', 'Government', 'Government-Aided', 'Trust / NGO'].map(type => {
                     const isSelected = formData.selectedSchoolType === type;
@@ -644,10 +771,11 @@ const SchoolOnboarding = () => {
                     );
                   })}
                 </div>
+                {errors.selectedSchoolType && <p className="text-[12px] text-red-500 mt-2">{errors.selectedSchoolType}</p>}
               </div>
 
               <div>
-                <label className={labelClass}>Classes Available</label>
+                <label className={labelClass}>Classes Available <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                   {['Primary (1-5)', 'Middle (6-10)', 'Secondary (11-12)'].map((cls) => {
                     const isSelected = formData.selectedClasses.includes(cls);
@@ -664,29 +792,32 @@ const SchoolOnboarding = () => {
                     );
                   })}
                 </div>
+                {errors.selectedClasses && <p className="text-[12px] text-red-500 mt-2">{errors.selectedClasses}</p>}
               </div>
 
               {/* MISSION & VISION */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                 <div>
-                  <label className={labelClass}>School Mission</label>
+                  <label className={labelClass}>School Mission <span className="text-red-500">*</span></label>
                   <textarea
                     rows="3"
                     value={formData.mission}
                     onChange={(e) => handleInputChange('mission', e.target.value)}
                     placeholder="Briefly state your school's mission..."
-                    className={`${inputClass} resize-none`}
+                    className={`${fieldClass('mission')} resize-none`}
                   ></textarea>
+                  {errors.mission && <p className="text-[12px] text-red-500 mt-1">{errors.mission}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>School Vision</label>
+                  <label className={labelClass}>School Vision <span className="text-red-500">*</span></label>
                   <textarea
                     rows="3"
                     value={formData.vision}
                     onChange={(e) => handleInputChange('vision', e.target.value)}
                     placeholder="Briefly state your school's vision..."
-                    className={`${inputClass} resize-none`}
+                    className={`${fieldClass('vision')} resize-none`}
                   ></textarea>
+                  {errors.vision && <p className="text-[12px] text-red-500 mt-1">{errors.vision}</p>}
                 </div>
               </div>
             </div>
@@ -752,9 +883,11 @@ const SchoolOnboarding = () => {
                             const newLeadership = [...formData.leadership];
                             newLeadership[index].name = e.target.value;
                             setFormData({ ...formData, leadership: newLeadership });
+                            clearError(`leadership.${index}.name`);
+                            if (formError) setFormError('');
                           }}
-                          placeholder="Full Name"
-                          className={inputClass}
+                          placeholder="Full Name *"
+                          className={`${inputClass} ${errors[`leadership.${index}.name`] ? 'border-red-500 focus:ring-red-500' : ''}`}
                         />
                         <input
                           type="text"
@@ -763,10 +896,18 @@ const SchoolOnboarding = () => {
                             const newLeadership = [...formData.leadership];
                             newLeadership[index].role = e.target.value;
                             setFormData({ ...formData, leadership: newLeadership });
+                            clearError(`leadership.${index}.role`);
+                            if (formError) setFormError('');
                           }}
-                          placeholder="Role (e.g. Principal)"
-                          className={inputClass}
+                          placeholder="Role (e.g. Principal) *"
+                          className={`${inputClass} ${errors[`leadership.${index}.role`] ? 'border-red-500 focus:ring-red-500' : ''}`}
                         />
+                        {errors[`leadership.${index}.name`] && (
+                          <p className="text-[12px] text-red-500 -mt-2 md:col-span-2">{errors[`leadership.${index}.name`]}</p>
+                        )}
+                        {errors[`leadership.${index}.role`] && (
+                          <p className="text-[12px] text-red-500 -mt-2 md:col-span-2">{errors[`leadership.${index}.role`]}</p>
+                        )}
                       </div>
                       <textarea
                         rows="2"
@@ -775,10 +916,15 @@ const SchoolOnboarding = () => {
                           const newLeadership = [...formData.leadership];
                           newLeadership[index].message = e.target.value;
                           setFormData({ ...formData, leadership: newLeadership });
+                          clearError(`leadership.${index}.message`);
+                          if (formError) setFormError('');
                         }}
-                        placeholder="Message / Vision snippet..."
-                        className={`${inputClass} resize-none`}
+                        placeholder="Message / Vision snippet... *"
+                        className={`${inputClass} resize-none ${errors[`leadership.${index}.message`] ? 'border-red-500 focus:ring-red-500' : ''}`}
                       ></textarea>
+                      {errors[`leadership.${index}.message`] && (
+                        <p className="text-[12px] text-red-500 -mt-2">{errors[`leadership.${index}.message`]}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -798,7 +944,7 @@ const SchoolOnboarding = () => {
           {currentStep === 5 && (
             <div className="animate-fade-in-up space-y-8">
               <div>
-                <label className={labelClass}>Choose Popular Campus Facilities</label>
+                <label className={labelClass}>Choose Popular Campus Facilities <span className="text-red-500">*</span></label>
                 <div className="flex flex-wrap gap-2.5 mt-2">
                   {['Library', 'Science Lab', 'Computer Lab', 'Smart Classrooms', 'Sports Ground', 'Auditorium', 'Transport', 'Hostel', 'Cafeteria', 'Medical Room'].map((facility) => {
                     const isSelected = formData.facilities.includes(facility);
@@ -813,6 +959,7 @@ const SchoolOnboarding = () => {
                     );
                   })}
                 </div>
+                {errors.facilities && <p className="text-[12px] text-red-500 mt-2">{errors.facilities}</p>}
               </div>
 
               <div>
@@ -852,7 +999,7 @@ const SchoolOnboarding = () => {
             <div className="space-y-8 animate-fade-in-up">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>School Logo</label>
+                  <label className={labelClass}>School Logo <span className="text-red-500">*</span></label>
                   <div className="relative mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
                     {formData.logo ? (
                       <img src={formData.logo} alt="Logo" className="w-16 h-16 object-contain rounded-lg shadow-sm" />
@@ -876,9 +1023,10 @@ const SchoolOnboarding = () => {
                       }
                     }} />
                   </div>
+                  {errors.logo && <p className="text-[12px] text-red-500 mt-2">{errors.logo}</p>}
                 </div>
                 <div>
-                  <label className={labelClass}>Cover Image</label>
+                  <label className={labelClass}>Cover Image <span className="text-red-500">*</span></label>
                   <div className="relative mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
                     {formData.coverImage ? (
                       <img src={formData.coverImage} alt="Cover" className="w-full h-16 object-cover rounded-lg shadow-sm" />
@@ -902,11 +1050,12 @@ const SchoolOnboarding = () => {
                       }
                     }} />
                   </div>
+                  {errors.coverImage && <p className="text-[12px] text-red-500 mt-2">{errors.coverImage}</p>}
                 </div>
               </div>
 
               <div>
-                <label className={labelClass}>Campus Gallery (Max 10 Images)</label>
+                <label className={labelClass}>Campus Gallery (Max 10 Images) <span className="text-red-500">*</span></label>
                 <div className="mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
                   <div className="flex flex-wrap gap-3 mb-4 justify-center">
                     {formData.gallery.map((img, idx) => (
@@ -921,6 +1070,7 @@ const SchoolOnboarding = () => {
                   </div>
                   <p className="text-[13px] font-medium text-gray-500">Click to add photos of Lab, Classroom, Library, etc.</p>
                 </div>
+                {errors.gallery && <p className="text-[12px] text-red-500 mt-2">{errors.gallery}</p>}
               </div>
             </div>
           )}
@@ -983,7 +1133,7 @@ const SchoolOnboarding = () => {
                 <div className="text-left">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Temporary Password</label>
                   <div className="bg-white border border-gray-200 px-4 py-3 rounded-xl font-mono text-[16px] font-black text-blue-600 flex justify-between items-center tracking-wider">
-                    {generatedPassword || "••••••••"}
+                    {generatedPassword || "Not generated yet"}
                     <button onClick={() => { navigator.clipboard.writeText(generatedPassword); alert("Password Copied!"); }} className="text-gray-300 hover:text-blue-500 transition-colors">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     </button>
@@ -995,34 +1145,85 @@ const SchoolOnboarding = () => {
                 <div className="w-5 h-5 bg-amber-100 flex items-center justify-center rounded text-amber-600 font-bold text-[10px]">!</div>
                 <p className="text-[12px] text-amber-800 font-bold">You will be asked to change this password on your first login.</p>
               </div>
+
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={() => openInfoModal('Admin Panel', 'Admin panel coming soon. We are working on it.')}
+                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-bold text-[14px] rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+                >
+                  Login to Admin Panel
+                </button>
+                <button
+                  onClick={() => openInfoModal('School Website', 'We are working on your website. We will call you once your website is live.')}
+                  className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-[14px] rounded-xl hover:bg-gray-100 transition-all shadow-sm"
+                >
+                  View My School Website
+                </button>
+              </div>
+
             </div>
           )}
 
         </div>
 
+        {formError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold rounded-lg">
+            {formError}
+          </div>
+        )}
+
         {/* Unified Bottom Footer Buttons - With Saving Indicator */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-          {currentStep > 1 ? (
+          {currentStep > 1 && currentStep < 8 ? (
             <button onClick={handleBack} className="px-6 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold text-[14px] rounded-xl hover:bg-gray-100 transition-all shadow-sm">
               Back
             </button>
           ) : <div />}
 
-          <div className="flex items-center gap-4">
-            {isSaving && <span className="text-[12px] text-blue-500 font-bold animate-pulse">Autosaving...</span>}
-            <button
-              onClick={handleNext}
-              disabled={(currentStep === 1 && !isEmailVerified) || isSaving}
-              className={`font-bold py-3.5 px-8 rounded-xl transition-all shadow-sm flex items-center gap-2 text-[14px]
-                  ${(currentStep === 1 && !isEmailVerified) || isSaving ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100'}`}
-            >
-              {currentStep === 8 ? 'Build My Website' : (currentStep === 1 && !isEmailVerified) ? 'Verify Email' : 'Next Step'}
-              {isSaving ? <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
-            </button>
-          </div>
+          {currentStep < 8 && (
+            <div className="flex items-center gap-4">
+              {isSaving && <span className="text-[12px] text-blue-500 font-bold animate-pulse">Autosaving...</span>}
+              <button
+                onClick={handleNext}
+                disabled={(currentStep === 1 && !isEmailVerified) || isSaving || isUploading}
+                className={`font-bold py-3.5 px-8 rounded-xl transition-all shadow-sm flex items-center gap-2 text-[14px]
+                  ${(currentStep === 1 && !isEmailVerified) || isSaving || isUploading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100'}`}
+              >
+                {(currentStep === 1 && !isEmailVerified) ? 'Verify Email' : 'Next Step'}
+                {isSaving ? <svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
+              </button>
+            </div>
+          )}
         </div>
 
       </main>
+
+      {infoModal.open && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 max-w-md w-full p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[18px] font-extrabold text-gray-900">{infoModal.title}</h3>
+                <p className="text-[14px] text-gray-600 mt-2">{infoModal.message}</p>
+              </div>
+              <button
+                onClick={closeInfoModal}
+                className="text-gray-400 hover:text-gray-600 font-bold text-[18px]"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeInfoModal}
+                className="px-5 py-2.5 bg-blue-600 text-white font-bold text-[14px] rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
