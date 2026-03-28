@@ -5,16 +5,53 @@ const SchoolOnboarding = () => {
   const [schoolId, setSchoolId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [generatedPassword, setGeneratedPassword] = useState(null);
+  const isUploading = uploadingCount > 0;
 
   // --- Safe URL Builder --- 
-  const API_BASE_URL = 'https://scoolg-backend.netlify.app/api'; 
-  
+  const API_BASE_URL = 'https://scoolg-backend.netlify.app/api';
+
   const joinURL = (base, endpoint) => {
     const cleanBase = base.replace(/\/+$/, ''); // Remove trailing slash
     const cleanEndpoint = endpoint.replace(/^\/+/, ''); // Remove leading slash
     return `${cleanBase}/${cleanEndpoint}`;
+  };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+
+  const uploadToCloudinary = async (file, folder) => {
+    if (!file) return null;
+    try {
+      setUploadingCount((count) => count + 1);
+      const base64 = await fileToBase64(file);
+      const url = joinURL(API_BASE_URL, '/upload');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file: base64,
+          folder,
+          schoolName: formData.schoolName || 'General'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
+      }
+      return data.url;
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert(`Image upload failed: ${err.message || 'Please try again.'}`);
+      return null;
+    } finally {
+      setUploadingCount((count) => Math.max(0, count - 1));
+    }
   };
   const [formData, setFormData] = useState({
     schoolName: '',
@@ -100,18 +137,43 @@ const SchoolOnboarding = () => {
     }
   };
 
+  const isImageFile = (file) => {
+    if (!file) return false;
+    if (file.type) return file.type.startsWith('image/');
+    return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name || '');
+  };
+
+  const setLeadershipPhoto = (index, url) => {
+    setFormData(prev => {
+      const next = [...prev.leadership];
+      next[index] = { ...next[index], photo: url };
+      return { ...prev, leadership: next };
+    });
+  };
+
   const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    for (const file of files) {
-      if (formData.gallery.length >= 10) break;
+    const files = Array.from(e.target.files || []).filter(isImageFile);
+    const remainingSlots = Math.max(0, 10 - formData.gallery.length);
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (filesToUpload.length === 0) return;
+    for (const file of filesToUpload) {
+      const tempUrl = URL.createObjectURL(file);
+      setFormData(prev => ({
+        ...prev,
+        gallery: [...prev.gallery, tempUrl]
+      }));
       const url = await uploadToCloudinary(file, 'Gallery');
       if (url) {
-        setFormData(prev => ({
-          ...prev,
-          gallery: [...prev.gallery, url]
-        }));
+        setFormData(prev => {
+          const updated = prev.gallery
+            .map((item) => (item === tempUrl ? url : item))
+            .filter(Boolean);
+          return { ...prev, gallery: updated };
+        });
+        URL.revokeObjectURL(tempUrl);
       }
     }
+    e.target.value = '';
   };
 
   const toggleBoard = (board) => {
@@ -179,7 +241,7 @@ const SchoolOnboarding = () => {
         if (res.ok) {
           if (data.password) setGeneratedPassword(data.password);
           setCurrentStep(prev => prev + 1);
-          window.scrollTo(0, 0); 
+          window.scrollTo(0, 0);
         }
       } catch (err) { alert("Save failed!"); }
       finally { setIsSaving(false); }
@@ -190,7 +252,7 @@ const SchoolOnboarding = () => {
 
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-  const handleSendOtp = async () => { 
+  const handleSendOtp = async () => {
     if (!formData.email) return;
     setIsSendingOtp(true);
     try {
@@ -205,8 +267,8 @@ const SchoolOnboarding = () => {
         setSchoolId(data.schoolId);
         setOtpSent(true);
         if (data.formData && data.formData.schoolName) {
-           setFormData(data.formData);
-           setCurrentStep(data.currentStep);
+          setFormData(data.formData);
+          setCurrentStep(data.currentStep);
         }
       } else {
         alert(`${data.error || "Failed"} : ${data.details || "Check logs"}`);
@@ -218,7 +280,7 @@ const SchoolOnboarding = () => {
     }
   };
 
-  const handleVerifyOtp = async () => { 
+  const handleVerifyOtp = async () => {
     const otpCode = otp.join('');
     if (otpCode.length === 6) {
       try {
@@ -278,8 +340,8 @@ const SchoolOnboarding = () => {
               )}
             </div>
             <span className="text-[20px] font-black tracking-tight text-gray-900 flex items-center gap-2">
-                SCOOLG
-                {isUploading && <span className="text-[10px] text-blue-600 animate-pulse font-bold bg-blue-50 px-2 py-0.5 rounded ml-2">UPLOADING...</span>}
+              SCOOLG
+              {isUploading && <span className="text-[10px] text-blue-600 animate-pulse font-bold bg-blue-50 px-2 py-0.5 rounded ml-2">UPLOADING...</span>}
             </span>
           </div>
 
@@ -660,15 +722,21 @@ const SchoolOnboarding = () => {
                         ) : (
                           <div className="text-gray-300 group-hover:text-blue-400"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" /></svg></div>
                         )}
-                        <input 
-                          type="file" 
-                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={async (e) => {
-                            const url = await uploadToCloudinary(e.target.files[0], 'Leadership');
+                            const file = e.target.files && e.target.files[0];
+                            if (!isImageFile(file)) return;
+                            const tempUrl = URL.createObjectURL(file);
+                            setLeadershipPhoto(index, tempUrl);
+                            const url = await uploadToCloudinary(file, 'Leadership');
                             if (url) {
-                              const newLeadership = [...formData.leadership];
-                              newLeadership[index].photo = url;
-                              setFormData({ ...formData, leadership: newLeadership });
+                              setLeadershipPhoto(index, url);
+                              URL.revokeObjectURL(tempUrl);
+                            } else {
+                              // Keep temp preview on failure
                             }
                           }}
                         />
@@ -785,7 +853,7 @@ const SchoolOnboarding = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>School Logo</label>
-                  <div className="mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
+                  <div className="relative mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
                     {formData.logo ? (
                       <img src={formData.logo} alt="Logo" className="w-16 h-16 object-contain rounded-lg shadow-sm" />
                     ) : (
@@ -794,15 +862,24 @@ const SchoolOnboarding = () => {
                         <p className="text-[12px] font-semibold text-gray-500 text-center">Upload Logo</p>
                       </div>
                     )}
-                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={async (e) => {
-                      const url = await uploadToCloudinary(e.target.files[0], 'Logo');
-                      if (url) handleInputChange('logo', url);
+                    <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
+                      const file = e.target.files && e.target.files[0];
+                      if (!isImageFile(file)) return;
+                      const tempUrl = URL.createObjectURL(file);
+                      handleInputChange('logo', tempUrl);
+                      const url = await uploadToCloudinary(file, 'Logo');
+                      if (url) {
+                        handleInputChange('logo', url);
+                        URL.revokeObjectURL(tempUrl);
+                      } else {
+                        // Keep temp preview on failure
+                      }
                     }} />
                   </div>
                 </div>
                 <div>
                   <label className={labelClass}>Cover Image</label>
-                  <div className="mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
+                  <div className="relative mt-1 border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
                     {formData.coverImage ? (
                       <img src={formData.coverImage} alt="Cover" className="w-full h-16 object-cover rounded-lg shadow-sm" />
                     ) : (
@@ -811,9 +888,18 @@ const SchoolOnboarding = () => {
                         <p className="text-[12px] font-semibold text-gray-500">Add Hero Cover</p>
                       </div>
                     )}
-                    <input type="file" className="absolute opacity-0 cursor-pointer" onChange={async (e) => {
-                      const url = await uploadToCloudinary(e.target.files[0], 'Hero_Cover');
-                      if (url) handleInputChange('coverImage', url);
+                    <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
+                      const file = e.target.files && e.target.files[0];
+                      if (!isImageFile(file)) return;
+                      const tempUrl = URL.createObjectURL(file);
+                      handleInputChange('coverImage', tempUrl);
+                      const url = await uploadToCloudinary(file, 'Hero_Cover');
+                      if (url) {
+                        handleInputChange('coverImage', url);
+                        URL.revokeObjectURL(tempUrl);
+                      } else {
+                        // Keep temp preview on failure
+                      }
                     }} />
                   </div>
                 </div>
@@ -829,7 +915,7 @@ const SchoolOnboarding = () => {
                     {formData.gallery.length < 10 && (
                       <div className="w-14 h-14 bg-white border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 relative">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" /></svg>
-                        <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleGalleryUpload} />
+                        <input type="file" accept="image/*" multiple className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleGalleryUpload} />
                       </div>
                     )}
                   </div>
@@ -888,7 +974,7 @@ const SchoolOnboarding = () => {
               </div>
               <h3 className="text-2xl font-black text-gray-900 mb-2">Registration Successful! ✨</h3>
               <p className="text-[14px] font-medium text-gray-500 mb-8 max-w-sm mx-auto">Your school profile is now ready. Use these credentials to login to your Scoolg Admin Panel.</p>
-              
+
               <div className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-6 max-w-sm mx-auto space-y-4 shadow-inner">
                 <div className="text-left">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Admin Email</label>
@@ -904,10 +990,10 @@ const SchoolOnboarding = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100 inline-flex items-center gap-3">
-                 <div className="w-5 h-5 bg-amber-100 flex items-center justify-center rounded text-amber-600 font-bold text-[10px]">!</div>
-                 <p className="text-[12px] text-amber-800 font-bold">You will be asked to change this password on your first login.</p>
+                <div className="w-5 h-5 bg-amber-100 flex items-center justify-center rounded text-amber-600 font-bold text-[10px]">!</div>
+                <p className="text-[12px] text-amber-800 font-bold">You will be asked to change this password on your first login.</p>
               </div>
             </div>
           )}
