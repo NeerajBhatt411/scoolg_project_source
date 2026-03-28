@@ -30,10 +30,7 @@ let cachedDb = null;
 const connectToDB = async () => {
     if (cachedDb) return cachedDb;
     try {
-        const db = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        const db = await mongoose.connect(process.env.MONGODB_URI);
         cachedDb = db;
         console.log("✅ MongoDB Connected");
         return db;
