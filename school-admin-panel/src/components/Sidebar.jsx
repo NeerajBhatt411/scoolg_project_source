@@ -1,10 +1,8 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, Image, LogOut, Settings, HelpCircle, ShieldCheck } from 'lucide-react';
 
 const Sidebar = () => {
     const navigate = useNavigate();
-    const schoolName = localStorage.getItem('scoolg_school_name') || 'School Admin';
 
     const handleLogout = () => {
         localStorage.removeItem('scoolg_token');
@@ -14,72 +12,56 @@ const Sidebar = () => {
     };
 
     const navItems = [
-        { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-        { name: 'School Profile', icon: <User size={20} />, path: '/profile' },
-        { name: 'Media Gallery', icon: <Image size={20} />, path: '/gallery' },
-        { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
+        { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
+        { name: 'Students', icon: 'group', path: '/students' },
+        { name: 'Teachers', icon: 'school', path: '/teachers' },
+        { name: 'Classes', icon: 'class', path: '/classes' },
+        { name: 'Timetable', icon: 'calendar_today', path: '/timetable' },
+        { name: 'Attendance', icon: 'fact_check', path: '/attendance' },
+        { name: 'Exams', icon: 'description', path: '/exams' },
+        { name: 'Notices', icon: 'campaign', path: '/notices' },
+        { name: 'Roles', icon: 'verified_user', path: '/roles' },
+        { name: 'Settings', icon: 'settings', path: '/settings' },
     ];
 
     return (
-        <div className="glass-dark sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '24px', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', padding: '0 8px' }}>
-                <div style={{ background: '#2563eb', padding: '8px', borderRadius: '10px' }}>
-                    <ShieldCheck size={24} color="#fff" />
-                </div>
-                <h1 style={{ fontSize: '20px', fontWeight: '800', letterSpacing: '-0.5px' }}>SCOOLG</h1>
+        <aside className="w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-4 z-50">
+            <div className="mb-10 px-4">
+                <h1 className="text-xl font-extrabold text-[#191c1e] flex items-center gap-2">
+                    <span className="text-2xl">🛡️</span> SCOOLG
+                </h1>
+                <p className="text-[11px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">School ERP</p>
             </div>
-
-            <div style={{ flex: 1 }}>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px', marginBottom: '16px', paddingLeft: '12px' }}>Menu</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.name}
-                            to={item.path}
-                            style={({ isActive }) => ({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '12px 16px',
-                                borderRadius: '12px',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                color: isActive ? '#fff' : 'rgba(255,255,255,0.6)',
-                                background: isActive ? 'rgba(37, 99, 235, 0.2)' : 'transparent',
-                                transition: 'all 0.2s',
-                                border: isActive ? '1px solid rgba(37, 99, 235, 0.2)' : '1px solid transparent'
-                            })}
-                        >
-                            {item.icon}
-                            {item.name}
-                        </NavLink>
-                    ))}
-                </div>
+            <nav className="flex-1 space-y-1">
+                {navItems.map((item) => (
+                    <NavLink
+                        key={item.name}
+                        to={item.path}
+                        className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 rounded-xl scale-98 active:scale-95 transition-all duration-200 ${isActive
+                                ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
+                                : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`
+                        }
+                    >
+                        <span className="material-symbols-outlined">{item.icon}</span>
+                        <span className="text-[0.875rem]">{item.name}</span>
+                    </NavLink>
+                ))}
+            </nav>
+            <div className="mt-auto pt-6 border-t border-[#e0e7ff] space-y-1">
+                <button className="w-full flex items-center gap-3 px-4 py-3 text-[#64748b] font-medium hover:bg-[#f2f4f6] transition-colors rounded-xl">
+                    <span className="material-symbols-outlined">help</span>
+                    <span className="text-[0.875rem]">Support</span>
+                </button>
+                <button
+                    className="w-full flex items-center gap-3 px-4 py-3 text-error font-bold hover:bg-error-container/20 transition-colors rounded-xl mt-2"
+                    onClick={handleLogout}
+                >
+                    <span className="material-symbols-outlined">logout</span>
+                    <span className="text-[0.875rem]">Logout</span>
+                </button>
             </div>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '24px', marginTop: 'auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', paddingLeft: '8px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(45deg, #2563eb, #6366f1)', display: 'flex', alignItems: 'center', justifyCenter: 'center', color: '#fff', fontSize: '18px', fontWeight: '700' }}>
-                        {schoolName[0]}
-                    </div>
-                    <div style={{ overflow: 'hidden' }}>
-                        <p style={{ fontSize: '14px', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{schoolName}</p>
-                        <p style={{ fontSize: '12px', opacity: 0.5 }}>Active Plan</p>
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <button style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.6)', background: 'transparent', fontSize: '15px', fontWeight: '600' }}>
-                        <HelpCircle size={20} />
-                        Support
-                    </button>
-                    <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', fontSize: '15px', fontWeight: '600' }}>
-                        <LogOut size={20} />
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </div>
+        </aside>
     );
 };
 
