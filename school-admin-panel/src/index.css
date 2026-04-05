@@ -27,6 +27,7 @@ body {
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -65,12 +66,30 @@ button {
 }
 
 .main-content {
-  margin-left: 260px;
-  padding: 28px 32px 48px;
-  width: 100%;
+  padding: 16px 12px 32px;
   min-height: 100vh;
   background: #f7f9fb;
+  transition: all 0.3s ease;
 }
+
+@media (min-width: 768px) {
+  .main-content {
+    padding: 28px 32px 48px;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+
+
+
 
 /* Sidebar */
 .sidebar {
@@ -648,45 +667,60 @@ button {
 
 .form-input-minimal {
   width: 100%;
-  height: 56px;
-  padding: 12px 18px;
-  border-radius: 16px;
-  border: 1.5px solid #edf2f7;
-  background-color: #ffffff;
-  font-size: 16px;
+  height: 54px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 2px solid #f1f5f9;
+  background-color: #f8fafc;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+}
+
+.form-input-minimal::placeholder {
+  color: #94a3b8;
   font-weight: 500;
-  color: #0f172a;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .form-input-minimal:focus {
   border-color: #2563eb;
   background-color: #ffffff;
   outline: none;
-  box-shadow:
-    0 10px 15px -3px rgba(37, 99, 235, 0.05),
-    0 4px 6px -4px rgba(37, 99, 235, 0.05);
+  box-shadow: 
+    0 0 0 4px rgba(37, 99, 235, 0.1),
+    0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
+
 
 .btn-minimal-login {
   width: 100%;
   height: 56px;
-  background-color: #2563eb;
+  background: linear-gradient(135deg, #0245bc 0%, #2563eb 100%);
   color: white;
-  border-radius: 16px;
+  border-radius: 14px;
   font-weight: 700;
   font-size: 16px;
   border: none;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin-top: 12px;
-  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3);
 }
 
 .btn-minimal-login:hover {
-  background-color: #1d4ed8;
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2.5px);
+  box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+}
+
+.btn-minimal-login:active {
+  transform: translateY(0);
 }
 
 .btn-minimal-login:active {

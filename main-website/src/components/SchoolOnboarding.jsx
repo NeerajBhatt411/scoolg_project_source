@@ -376,7 +376,7 @@ const SchoolOnboarding = () => {
         body: JSON.stringify({ email: formData.email })
       });
       const data = await res.json();
-      
+
       if (res.status === 409) {
         setFormError('Account already exists for this email. Please go to the Login page.');
         return;
@@ -418,9 +418,9 @@ const SchoolOnboarding = () => {
           setOtpSent(false); // Hide OTP field
           clearError('emailVerified');
           if (resumeStep > 1) {
-             setCurrentStep(resumeStep);
-             setFormError(`Welcome back! Resuming from step ${resumeStep}.`);
-             setTimeout(() => setFormError(''), 3000);
+            setCurrentStep(resumeStep);
+            setFormError(`Welcome back! Resuming from step ${resumeStep}.`);
+            setTimeout(() => setFormError(''), 3000);
           }
           if (formError) setFormError('');
         } else {
@@ -572,7 +572,7 @@ const SchoolOnboarding = () => {
 
                   {/* OTP Section directly below email - Now perfectly blended */}
                   {otpSent && !isEmailVerified && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-4 space-y-4"
@@ -592,7 +592,7 @@ const SchoolOnboarding = () => {
                           />
                         ))}
                       </div>
-                      <button 
+                      <button
                         onClick={handleVerifyOtp}
                         className="w-full py-3 bg-blue-600 text-white font-bold text-[13px] rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all"
                       >

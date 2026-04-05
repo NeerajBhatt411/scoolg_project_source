@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
 
 dotenv.config();
 
@@ -221,6 +224,113 @@ router.patch('/onboarding/update/:id', async (req, res) => {
     }
 });
 
+// --- Admin Panel Endpoints ---
+
+// Login
+router.post('/admin/login', async (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    console.log("🔥 Login Request Received:", req.body);
+    
+    let { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Email & Password required" });
+
+    email = email.toLowerCase().trim();
+
+    try {
+        await connectToDB();
+        console.log(`🔍 Searching for school with email: ${email}`);
+        
+        const school = await School.findOne({
+            $or: [
+                { email: email },
+                { "formData.email": email }
+            ]
+        });
+        
+        if (!school) {
+            console.log(`❌ No account found for email: ${email}`);
+            return res.status(401).json({ error: "No account found with this email" });
+        }
+
+        console.log(`✅ School record located: ${school.id}`);
+        
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, school.password);
+            if (!isMatch) {
+                isMatch = (password === school.password);
+            }
+        } catch (e) {
+            isMatch = (password === school.password);
+        }
+
+        console.log(`🔑 Verification Result: ${isMatch ? "SUCCESS" : "FAILED"}`);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: "Incorrect password" });
+        }
+
+        const token = jwt.sign(
+            { id: school.id, email: school.email }, 
+            process.env.JWT_SECRET || 'scoolg_secret_99', 
+            { expiresIn: '7d' }
+        );
+
+        res.json({ 
+            token, 
+            schoolId: school.id, 
+            schoolName: school.formData.schoolName,
+            isPasswordChanged: school.isPasswordChanged 
+        });
+    } catch (err) {
+        console.error("❌ Authentication Server Error:", err);
+        res.status(500).json({ error: "Internal Authentication Error" });
+    }
+});
+
+// Change Password
+router.post('/admin/change-password', async (req, res) => {
+    const { schoolId, newPassword } = req.body;
+    try {
+        await connectToDB();
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const salt = await bcrypt.genSalt(10);
+        school.password = await bcrypt.hash(newPassword, salt);
+        school.isPasswordChanged = true;
+        await school.save();
+
+        res.json({ message: "Password updated successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: "Password change failed" });
+    }
+});
+
+// Get/Update Profile
+router.get('/admin/profile/:id', async (req, res) => {
+    try {
+        await connectToDB();
+        const school = await School.findOne({ id: req.params.id });
+        if (!school) return res.status(404).json({ error: "School not found" });
+        res.json(school.formData);
+    } catch (err) { res.status(500).json({ error: "Fetch failed" }); }
+});
+
+router.patch('/admin/profile/:id', async (req, res) => {
+    try {
+        await connectToDB();
+        const school = await School.findOne({ id: req.params.id });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        school.formData = { ...school.formData, ...req.body };
+        await school.save();
+        res.json({ message: "Profile updated successfully!", data: school.formData });
+    } catch (err) {
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
 router.get('/onboarding/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -230,6 +340,7 @@ router.get('/onboarding/:id', async (req, res) => {
         res.json(school.formData);
     } catch (err) { res.status(500).json({ error: "Fetch failed" }); }
 });
+
 
 // App Config for Netlify - Root mounting for flexibility
 app.use('/', router);
