@@ -15,9 +15,9 @@ const ProtectedRoute = ({ children }) => {
     }
 
     return (
-        <div className="admin-layout">
+        <div className="bg-background text-on-surface min-h-screen flex">
             <Sidebar />
-            <main className="main-content">
+            <main className="flex-1 ml-[280px] min-h-screen bg-surface-container-low">
                 {children}
             </main>
         </div>
@@ -44,6 +44,38 @@ function App() {
                 <Route
                     path="/gallery"
                     element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Gallery Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/students"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Students Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/teachers"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Teachers Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/classes"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Classes Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/timetable"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Timetable Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/attendance"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Attendance Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/exams"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Exams Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/notices"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Notices Module Coming Soon</h2></div></ProtectedRoute>}
+                />
+                <Route
+                    path="/roles"
+                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Roles Module Coming Soon</h2></div></ProtectedRoute>}
                 />
                 <Route
                     path="/settings"
