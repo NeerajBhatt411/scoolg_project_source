@@ -119,7 +119,7 @@ const Dashboard = () => {
                             <span>Admit Student</span>
                         </button>
                         <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 scale-98 active:scale-95 transition-all">
-                            <span className="material-symbols-outlined text-primary">person_add_alt_1</span>
+                            <span className="material-symbols-outlined text-primary">person_add_alt</span>
                             <span>Add Teacher</span>
                         </button>
                         <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 scale-98 active:scale-95 transition-all">

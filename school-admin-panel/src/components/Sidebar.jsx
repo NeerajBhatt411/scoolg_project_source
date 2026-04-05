@@ -28,8 +28,10 @@ const Sidebar = () => {
         <aside className="w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-4 z-50">
             <div className="mb-10 px-4">
                 <h1 className="text-xl font-extrabold text-[#191c1e] flex items-center gap-2">
-                    <span className="text-2xl">🛡️</span> SCOOLG
+                    <img src="/logo.png" alt="Scoolg" className="h-8 w-auto rounded-lg" />
+                    SCOOLG
                 </h1>
+
                 <p className="text-[11px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">School ERP</p>
             </div>
             <nav className="flex-1 space-y-1">
