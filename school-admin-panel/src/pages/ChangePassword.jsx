@@ -25,7 +25,8 @@ const ChangePassword = () => {
         setLoading(true);
         try {
             const schoolId = localStorage.getItem('scoolg_school_id');
-            await axios.post('http://localhost:5001/api/admin/change-password', {
+            await axios.post('https://scoolg-backend.netlify.app/api/admin/change-password', {
+
                 schoolId,
                 newPassword
             });

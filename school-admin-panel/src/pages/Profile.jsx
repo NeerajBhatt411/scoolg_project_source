@@ -10,7 +10,8 @@ const Profile = () => {
     const [message, setMessage] = useState('');
 
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const API_BASE_URL = 'http://localhost:5001/api/admin';
+    const API_BASE_URL = 'https://scoolg-backend.netlify.app/api/admin';
+
 
     useEffect(() => {
         fetchProfile();

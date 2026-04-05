@@ -3,6 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Mail, Lock, CheckCircle2, LayoutDashboard, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import logo from '../assets/logo.png';
+import loginBg from '../assets/login-bg.png';
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -12,7 +15,8 @@ const Login = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const API_BASE_URL = 'http://localhost:5001/api/admin';
+    const API_BASE_URL = 'https://scoolg-backend.netlify.app/api/admin';
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -44,15 +48,17 @@ const Login = () => {
             <div className="login-wide-card">
                 {/* Properly adjusted 3D Graphic side */}
                 <div className="login-card-graphic">
-                    <img src="/login-bg.png" alt="School Management" />
+                    <img src={loginBg} alt="School Management" />
+
                 </div>
 
                 {/* Clean, Simple Login side */}
                 <div className="login-card-form">
                     <div style={{ marginBottom: '40px' }}>
-                        <img 
-                            src="/logo.png" 
-                            alt="ScoolG Logo" 
+                        <img
+                            src={logo}
+
+                            alt="ScoolG Logo"
                             style={{ height: '42px', width: 'auto', marginBottom: '24px' }}
                         />
                         <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>
@@ -72,29 +78,29 @@ const Login = () => {
                     <form onSubmit={handleLogin}>
                         <div className="input-group-premium">
                             <label className="form-label-minimal">Email Address</label>
-                            <input 
-                                type="email" 
-                                className="form-input-minimal" 
+                            <input
+                                type="email"
+                                className="form-input-minimal"
                                 placeholder="name@school.edu"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                required 
+                                required
                             />
                         </div>
 
                         <div className="input-group-premium" style={{ marginBottom: '32px' }}>
                             <label className="form-label-minimal">Password</label>
                             <div style={{ position: 'relative' }}>
-                                <input 
-                                    type={showPassword ? "text" : "password"} 
-                                    className="form-input-minimal" 
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="form-input-minimal"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    required 
+                                    required
                                 />
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
                                 >
@@ -103,9 +109,9 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <button 
-                            type="submit" 
-                            className="btn-minimal-login" 
+                        <button
+                            type="submit"
+                            className="btn-minimal-login"
                             disabled={loading}
                         >
                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login to Dashboard'}

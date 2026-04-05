@@ -11,7 +11,6 @@ import ChangePassword from './pages/ChangePassword';
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('scoolg_token');
     const location = useLocation();
-
     if (!token) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
@@ -19,17 +18,20 @@ const ProtectedRoute = ({ children }) => {
     return (
         <div className="bg-background text-on-surface min-h-screen flex">
             <Sidebar />
-            <main className="flex-1 ml-[280px] min-h-screen bg-surface-container-low">
+            <main className="w-full pl-16 md:pl-[280px] min-h-screen bg-surface-container-low overflow-x-hidden">
                 {children}
             </main>
+
+
         </div>
     );
 };
 
 function App() {
     return (
-        <Router>
+        <Router basename="/admin">
             <Routes>
+
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/change-password" element={<ChangePassword />} />
