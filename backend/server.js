@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import School from './models/School.js';
 
 dotenv.config();
@@ -35,41 +37,68 @@ app.get('/api/test', (req, res) => res.json({ message: "Local Test Success! 🚀
 // --- API Endpoints ---
 
 app.post('/api/onboarding/start', async (req, res) => {
-    const { email } = req.body;
+    let { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    TMP_OTPS[email] = otp;
+    email = email.toLowerCase().trim();
 
     try {
-        await transporter.sendMail({
-            from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: "Your Scoolg School Verification Code",
-            text: `Welcome to Scoolg! Your 6-digit verification code is: ${otp}.`
-        });
-        console.log(`✅ OTP Sent to ${email}: ${otp}`);
-    } catch (err) { console.error("❌ Email failed:", err.message); }
+        const school = await School.findOne({ email });
 
-    let school = await School.findOne({ email });
-    if (!school) {
-        school = new School({
-            id: Date.now().toString(),
-            email,
-            status: "PENDING",
-            currentStep: 1,
-            formData: {
-                email: email, schoolName: "", phone: "", address: "", city: "", state: "", pincode: "",
-                schoolStrength: "", establishedYear: "", schoolDescription: "",
-                mission: "", vision: "",
-                leadership: [{ name: '', role: '', message: '' }, { name: '', role: '', message: '' }, { name: '', role: '', message: '' }],
-                facilities: [], fees: { primary: "", secondary: "", seniorSecondary: "" },
-                socialMedia: { instagram: "", facebook: "" }, gallery: []
-            }
-        });
-        await school.save();
+        // CASE 1: Already fully onboarded
+        if (school && school.status === "COMPLETED") {
+            return res.status(409).json({ 
+                error: "Account already exists for this email.", 
+                type: "ALREADY_ONBOARDED" 
+            });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        try {
+            await transporter.sendMail({
+                from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
+                to: email,
+                subject: "Your Scoolg Onboarding OTP",
+                text: `Welcome! Your 6-digit verification code is: ${otp}.`
+            });
+            console.log(`✅ OTP Sent to ${email}: ${otp}`);
+        } catch (err) {
+            console.error("❌ Email failed:", err.message);
+            return res.status(500).json({ error: "Email delivery failed.", details: err.message });
+        }
+
+        if (!school) {
+            // CASE 2: New account
+            const newSchool = new School({
+                id: Date.now().toString(),
+                email,
+                otp: otp,
+                currentStep: 1,
+                formData: { email: email }
+            });
+            await newSchool.save();
+            return res.json({ 
+                message: "OTP sent", 
+                schoolId: newSchool.id, 
+                currentStep: 1, 
+                formData: newSchool.formData,
+                isNewAccount: true 
+            });
+        } else {
+            // CASE 3: Resuming pending account
+            school.otp = otp;
+            await school.save();
+            return res.json({ 
+                message: "OTP sent to resume your session", 
+                schoolId: school.id, 
+                currentStep: school.currentStep, 
+                formData: school.formData,
+                isNewAccount: false 
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Server Error", details: err.message });
     }
-    res.json({ message: "OTP sent", schoolId: school.id, currentStep: school.currentStep, formData: school.formData });
 });
 
 app.post('/api/onboarding/verify', (req, res) => {
@@ -84,15 +113,140 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
     const { id } = req.params;
     const { formData, currentStep } = req.body;
 
-    const school = await School.findOne({ id });
-    if (!school) return res.status(404).json({ error: "Profile not found" });
+    try {
+        const school = await School.findOne({ id });
+        if (!school) return res.status(404).json({ error: "Profile not found" });
 
-    school.formData = { ...school.formData, ...formData };
-    school.currentStep = currentStep || school.currentStep;
-    if (currentStep === 8) school.status = "COMPLETED";
+        school.formData = { ...school.formData, ...formData };
+        if (currentStep) school.currentStep = currentStep;
 
-    await school.save();
-    res.json({ message: "Saved!", data: school });
+        let generatedPassword = null;
+        if (currentStep === 8 && school.status !== "COMPLETED") {
+            school.status = "COMPLETED";
+            // Generate a random 8-char password
+            // Branded Password generation (e.g. SCOOLG-XY12AB)
+            const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+            generatedPassword = `SCOOLG-${randomSuffix}`;
+            const salt = await bcrypt.genSalt(10);
+            school.password = await bcrypt.hash(generatedPassword, salt);
+            school.isPasswordChanged = false; // Reset to false for new passwords
+        }
+
+        await school.save();
+        res.json({ 
+            message: "Saved!", 
+            data: school,
+            password: generatedPassword 
+        });
+    } catch (err) {
+        console.error("❌ Update error:", err);
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
+// --- Admin Panel Endpoints ---
+
+// Login
+app.post('/api/admin/login', async (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    console.log("🔥 Login Request Received:", req.body);
+    
+    let { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Email & Password required" });
+
+    email = email.toLowerCase().trim(); // Normalize email for search
+
+    try {
+        console.log(`🔍 Searching for school with email: ${email}`);
+        
+        // Search in both top-level email and formData email
+        const school = await School.findOne({
+            $or: [
+                { email: email },
+                { "formData.email": email }
+            ]
+        });
+        
+        if (!school) {
+            console.log(`❌ No account found for email: ${email}`);
+            return res.status(401).json({ error: "No account found with this email" });
+        }
+
+        console.log(`✅ School record located: ${school.id} (${school.formData.schoolName})`);
+        
+        // Final password match check
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, school.password);
+            if (!isMatch) {
+                // Secondary check for plain text legacy/manual passwords
+                isMatch = (password === school.password);
+                if (isMatch) console.log("⚠️ Plain text match detected");
+            }
+        } catch (e) {
+            isMatch = (password === school.password);
+        }
+
+        console.log(`🔑 Verification Result: ${isMatch ? "SUCCESS" : "FAILED"}`);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: "Incorrect password" });
+        }
+
+        const token = jwt.sign(
+            { id: school.id, email: school.email }, 
+            process.env.JWT_SECRET || 'scoolg_secret_99', 
+            { expiresIn: '7d' }
+        );
+
+        res.json({ 
+            token, 
+            schoolId: school.id, 
+            schoolName: school.formData.schoolName,
+            isPasswordChanged: school.isPasswordChanged 
+        });
+    } catch (err) {
+        console.error("❌ Authentication Server Error:", err);
+        res.status(500).json({ error: "Internal Authentication Error" });
+    }
+});
+
+// Change Password
+app.post('/api/admin/change-password', async (req, res) => {
+    const { schoolId, newPassword } = req.body;
+    try {
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const salt = await bcrypt.genSalt(10);
+        school.password = await bcrypt.hash(newPassword, salt);
+        school.isPasswordChanged = true;
+        await school.save();
+
+        res.json({ message: "Password updated successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: "Password change failed" });
+    }
+});
+
+// Get/Update Profile (Protected logic can be added later)
+app.get('/api/admin/profile/:id', async (req, res) => {
+    const school = await School.findOne({ id: req.params.id });
+    if (!school) return res.status(404).json({ error: "School not found" });
+    res.json(school.formData);
+});
+
+app.patch('/api/admin/profile/:id', async (req, res) => {
+    try {
+        const school = await School.findOne({ id: req.params.id });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        school.formData = { ...school.formData, ...req.body };
+        await school.save();
+        res.json({ message: "Profile updated successfully!", data: school.formData });
+    } catch (err) {
+        res.status(500).json({ error: "Update failed" });
+    }
 });
 
 app.get('/api/onboarding/:id', async (req, res) => {

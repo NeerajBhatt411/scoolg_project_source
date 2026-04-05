@@ -111,39 +111,67 @@ router.get('/db-test', async (req, res) => {
 // --- API Endpoints ---
 
 router.post('/onboarding/start', async (req, res) => {
-    const { email } = req.body;
+    let { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
+    email = email.toLowerCase().trim();
 
     try {
         await connectToDB();
+        const school = await School.findOne({ email });
+
+        // CASE 1: Already fully onboarded
+        if (school && school.status === "COMPLETED") {
+            return res.status(409).json({ 
+                error: "Account already exists for this email.", 
+                type: "ALREADY_ONBOARDED" 
+            });
+        }
+
+        // Generate and send OTP for both new and pending accounts
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         try {
             await transporter.sendMail({
                 from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
                 to: email,
-                subject: "Your Scoolg School Verification Code",
-                text: `Welcome to Scoolg! Your 6-digit verification code is: ${otp}.`
+                subject: "Your Scoolg Onboarding OTP",
+                text: `Welcome! Your 6-digit verification code is: ${otp}.`
             });
             console.log(`✅ OTP Sent to ${email}: ${otp}`);
         } catch (err) {
             console.error("❌ Email failed:", err.message);
-            return res.status(500).json({ error: "Email delivery failed. Check your Gmail App Password.", details: err.message });
+            return res.status(500).json({ error: "Email delivery failed.", details: err.message });
         }
 
-        let school = await School.findOne({ email });
         if (!school) {
-            school = new School({
+            // CASE 2: New account
+            const newSchool = new School({
                 id: Date.now().toString(),
                 email,
                 otp: otp,
+                currentStep: 1,
                 formData: { email: email }
             });
+            await newSchool.save();
+            return res.json({ 
+                message: "OTP sent", 
+                schoolId: newSchool.id, 
+                currentStep: 1, 
+                formData: newSchool.formData,
+                isNewAccount: true 
+            });
         } else {
-            school.otp = otp; // Update OTP in DB
+            // CASE 3: Resuming pending account
+            school.otp = otp;
+            await school.save();
+            return res.json({ 
+                message: "OTP sent to resume your session", 
+                schoolId: school.id, 
+                currentStep: school.currentStep, 
+                formData: school.formData,
+                isNewAccount: false 
+            });
         }
-        await school.save();
-        res.json({ message: "OTP sent successfully", schoolId: school.id, currentStep: school.currentStep, formData: school.formData });
     } catch (err) {
         res.status(500).json({ error: "Server Error", details: err.message });
     }
