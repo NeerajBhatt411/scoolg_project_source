@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
+import Students from './pages/Students';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import ChangePassword from './pages/ChangePassword';
@@ -47,7 +48,7 @@ function App() {
                 />
                 <Route
                     path="/students"
-                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Students Module Coming Soon</h2></div></ProtectedRoute>}
+                    element={<ProtectedRoute><Students /></ProtectedRoute>}
                 />
                 <Route
                     path="/teachers"
