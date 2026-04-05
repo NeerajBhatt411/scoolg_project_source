@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -55,12 +56,14 @@ const SchoolOnboarding = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        throw new Error(data.error || 'Upload failed');
+        throw new Error(data.error || 'The image file might be too large or invalid.');
       }
       return data.url;
     } catch (err) {
-      console.error('Upload error:', err);
-      alert(`Image upload failed: ${err.message || 'Please try again.'}`);
+      console.error('📸 Upload error details:', err);
+      // Don't alert here to avoid spamming the user during multiple uploads
+      setFormError(`Image upload failed: ${err.message}. Please retry.`);
+      setTimeout(() => setFormError(''), 5000);
       return null;
     } finally {
       setUploadingCount((count) => Math.max(0, count - 1));
@@ -364,6 +367,7 @@ const SchoolOnboarding = () => {
   const handleSendOtp = async () => {
     if (!formData.email) return;
     setIsSendingOtp(true);
+    setFormError('');
     try {
       const url = joinURL(API_BASE_URL, '/onboarding/start');
       const res = await fetch(url, {
@@ -372,22 +376,32 @@ const SchoolOnboarding = () => {
         body: JSON.stringify({ email: formData.email })
       });
       const data = await res.json();
+      
+      if (res.status === 409) {
+        setFormError('Account already exists for this email. Please go to the Login page.');
+        return;
+      }
+
       if (res.ok && data.schoolId) {
         setSchoolId(data.schoolId);
         setOtpSent(true);
-        if (data.formData && data.formData.schoolName) {
-          setFormData(data.formData);
-          setCurrentStep(data.currentStep);
+        // Save the resume step and data in a temp way
+        if (data.formData) {
+          setFormData(prev => ({ ...prev, ...data.formData }));
+          // We don't change step yet, we wait for OTP verification
+          setResumeStep(data.currentStep || 1);
         }
       } else {
-        alert(`${data.error || "Failed"} : ${data.details || "Check logs"}`);
+        setFormError(data.error || "Failed to send OTP. Please check your email.");
       }
     } catch (err) {
-      alert("Network Error: Could not hit the backend!");
+      setFormError("Network Error: Could not connect to the server.");
     } finally {
       setIsSendingOtp(false);
     }
   };
+
+  const [resumeStep, setResumeStep] = useState(1);
 
   const handleVerifyOtp = async () => {
     const otpCode = otp.join('');
@@ -401,10 +415,16 @@ const SchoolOnboarding = () => {
         });
         if (res.ok) {
           setIsEmailVerified(true);
+          setOtpSent(false); // Hide OTP field
           clearError('emailVerified');
+          if (resumeStep > 1) {
+             setCurrentStep(resumeStep);
+             setFormError(`Welcome back! Resuming from step ${resumeStep}.`);
+             setTimeout(() => setFormError(''), 3000);
+          }
           if (formError) setFormError('');
         } else {
-          alert("Invalid OTP. Try again!");
+          setFormError("Invalid OTP. Please check your email again.");
         }
       } catch (err) {
         alert("Verification failed.");
@@ -497,9 +517,7 @@ const SchoolOnboarding = () => {
           <p className="text-[16px] text-gray-500 font-medium">{stepTitles[currentStep - 1].desc}</p>
         </div>
 
-        {/* Unified Card Container */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-10 mb-6 relative z-10">
-
           {/* STEP 1 */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -551,6 +569,37 @@ const SchoolOnboarding = () => {
                   {(errors.email || errors.emailVerified) && (
                     <p className="text-[12px] text-red-500 mt-1">{errors.email || errors.emailVerified}</p>
                   )}
+
+                  {/* OTP Section directly below email - Now perfectly blended */}
+                  {otpSent && !isEmailVerified && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-4 space-y-4"
+                    >
+                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 px-1">Verification Code</label>
+                      <div className="flex gap-2 mb-4 justify-between">
+                        {otp.map((data, index) => (
+                          <input
+                            key={index}
+                            type="text"
+                            maxLength="1"
+                            value={data}
+                            onChange={e => handleOtpChange(e.target, index)}
+                            onKeyDown={e => handleOtpKeyDown(e, index)}
+                            onFocus={e => e.target.select()}
+                            className="w-[14%] aspect-[4/5] text-center text-[20px] font-bold rounded-xl border-2 border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all shadow-sm"
+                          />
+                        ))}
+                      </div>
+                      <button 
+                        onClick={handleVerifyOtp}
+                        className="w-full py-3 bg-blue-600 text-white font-bold text-[13px] rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all"
+                      >
+                        Verify OTP
+                      </button>
+                    </motion.div>
+                  )}
                 </div>
 
                 <div>
@@ -578,37 +627,6 @@ const SchoolOnboarding = () => {
                 />
                 {errors.schoolStrength && <p className="text-[12px] text-red-500 mt-1">{errors.schoolStrength}</p>}
               </div>
-
-              {/* Revamped High-End OTP Dialog - Ultra Clean */}
-              {otpSent && !isEmailVerified && (
-                <div className="mt-2 bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
-                  <h4 className="text-[16px] font-bold text-gray-900 mb-1">Enter Verification Code</h4>
-                  <p className="text-[14px] text-gray-500 mb-5">We've sent a 6-digit code to <b className="text-gray-800">{formData.email}</b></p>
-
-                  <div className="flex gap-2 sm:gap-3 mb-6 w-full justify-between sm:justify-start px-0.5">
-                    {otp.map((data, index) => (
-                      <input
-                        key={index}
-                        type="text"
-                        maxLength="1"
-                        value={data}
-                        onChange={e => handleOtpChange(e.target, index)}
-                        onKeyDown={e => handleOtpKeyDown(e, index)}
-                        onFocus={e => e.target.select()}
-                        className="w-[14%] sm:w-[50px] aspect-[4/5] sm:h-[60px] text-center text-[22px] font-bold rounded-lg border border-gray-500 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={handleVerifyOtp}
-                    disabled={otp.join('').length !== 6}
-                    className="px-6 py-3 bg-blue-600 text-white text-[14px] font-bold rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-200 disabled:text-gray-400 shadow-sm"
-                  >
-                    Confirm Code
-                  </button>
-                </div>
-              )}
 
               <div>
                 <label className={labelClass}>Brief Description <span className="text-red-500">*</span></label>
@@ -1148,16 +1166,16 @@ const SchoolOnboarding = () => {
 
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
-                  onClick={() => openInfoModal('Admin Panel', 'Admin panel coming soon. We are working on it.')}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-bold text-[14px] rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+                  onClick={() => window.open('http://localhost:5174/login', '_blank')}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 text-white font-black text-[15px] rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 flex items-center justify-center gap-2"
                 >
-                  Login to Admin Panel
+                  🚀 Login to Admin Panel
                 </button>
                 <button
                   onClick={() => openInfoModal('School Website', 'We are working on your website. We will call you once your website is live.')}
-                  className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-[14px] rounded-xl hover:bg-gray-100 transition-all shadow-sm"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-white border-2 border-gray-100 text-gray-800 font-bold text-[15px] rounded-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                 >
-                  View My School Website
+                  🌐 View My School Website
                 </button>
               </div>
 
