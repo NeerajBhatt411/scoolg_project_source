@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
+
 const Sidebar = () => {
     const navigate = useNavigate();
 
@@ -32,7 +33,7 @@ const Sidebar = () => {
 
                 <div className="hidden md:block">
                     <h1 className="text-xl font-extrabold text-[#191c1e] flex items-center gap-2">SCOOLG</h1>
-                    <p className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider mt-1">School ERP</p>
+                    <p className="text-[11px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">School ERP</p>
                 </div>
             </div>
             <nav className="flex-1 space-y-1">
@@ -57,7 +58,7 @@ const Sidebar = () => {
                     <span className="text-[0.875rem] hidden md:inline">Support</span>
                 </button>
                 <button
-                    className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 text-red-500 font-bold hover:bg-red-50 transition-colors rounded-xl mt-2"
+                    className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 text-error font-bold hover:bg-error-container/20 transition-colors rounded-xl mt-2"
                     onClick={handleLogout}
                 >
                     <span className="material-symbols-outlined">logout</span>
