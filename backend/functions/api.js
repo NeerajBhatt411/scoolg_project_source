@@ -470,6 +470,102 @@ router.put('/admin/students/:id', async (req, res) => {
     }
 });
 
+// --- Student Mobile App Endpoints ---
+
+// 1. Verify Campus Code
+router.get('/student/verify-campus/:code', async (req, res) => {
+    try {
+        await connectToDB();
+        const code = req.params.code.toLowerCase();
+        // Since we store campus code in school's formData as schoolName conventionally or we can just regex search AppIDs.
+        // Wait, did we store campusCode explicitly in School?
+        // Let's find a school where the generated campus code string matches. Or simply try to find one student that matches.
+        // Let's find any school where formData.campusCode matches. But formData might not be strongly typed.
+        // Searching for any school:
+        const schools = await School.find({});
+        const targetSchool = schools.find(s => {
+            const scCode = (s.campusCode || (s.formData && s.formData.campusCode) || 'sch').toLowerCase().replace(/[^a-z0-9]/g, '');
+            return scCode === code || scCode === code.replace(/[^a-z0-9]/g, '');
+        });
+
+        if (!targetSchool) return res.status(404).json({ error: "Invalid Campus Code" });
+
+        res.json({
+            schoolId: targetSchool.id,
+            schoolName: targetSchool.formData?.schoolName || 'School Name',
+            logo: targetSchool.formData?.logo || null
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Verification Failed" });
+    }
+});
+
+// 2. Student Login
+router.post('/student/login', async (req, res) => {
+    try {
+        await connectToDB();
+        let { studentAppId, password } = req.body;
+        if (!studentAppId || !password) return res.status(400).json({ error: "Credentials required" });
+
+        studentAppId = studentAppId.toLowerCase().trim();
+
+        const student = await Student.findOne({ studentAppId });
+        if (!student) return res.status(401).json({ error: "Invalid App ID" });
+
+        if (student.status === 'Inactive') return res.status(403).json({ error: "Your portal access is frozen. Contact administrator." });
+
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, student.password);
+            if (!isMatch) {
+                isMatch = (password === student.password);
+            }
+        } catch (e) {
+            isMatch = (password === student.password);
+        }
+
+        if (!isMatch) return res.status(401).json({ error: "Incorrect Password" });
+
+        const token = jwt.sign(
+            { id: student._id, schoolId: student.schoolId }, 
+            process.env.JWT_SECRET || 'scoolg_secret_99', 
+            { expiresIn: '30d' }
+        );
+
+        res.json({ token, studentId: student._id });
+    } catch (err) {
+        res.status(500).json({ error: "Login failed" });
+    }
+});
+
+// 3. Get Student Profile
+router.get('/student/me', async (req, res) => {
+    try {
+        await connectToDB();
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+
+        const student = await Student.findById(decoded.id).select('-password');
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        if (student.status === 'Inactive') return res.status(403).json({ error: "Access frozen." });
+
+        const schoolObj = await School.findById(student.schoolId);
+        
+        res.json({
+            student,
+            school: {
+                name: schoolObj?.formData?.schoolName || 'Your School',
+                logo: schoolObj?.formData?.logo || null
+            }
+        });
+    } catch (err) {
+        res.status(401).json({ error: "Session expired or invalid token" });
+    }
+});
+
 // App Config for Netlify - Root mounting for flexibility
 app.use('/', router);
 app.use('/api', router); // Legacy support
