@@ -447,6 +447,29 @@ router.get('/admin/students', async (req, res) => {
     }
 });
 
+router.put('/admin/students/:id', async (req, res) => {
+    try {
+        await connectToDB();
+        const studentId = req.params.id;
+        const updateData = req.body;
+        
+        const updatedStudent = await Student.findByIdAndUpdate(
+            studentId,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedStudent) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        res.json({ message: "Student updated successfully", student: updatedStudent });
+    } catch (err) {
+        console.error("❌ Update student error:", err);
+        res.status(500).json({ error: "Failed to update student", details: err.message });
+    }
+});
+
 // App Config for Netlify - Root mounting for flexibility
 app.use('/', router);
 app.use('/api', router); // Legacy support
