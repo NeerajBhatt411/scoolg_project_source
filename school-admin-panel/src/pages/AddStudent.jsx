@@ -32,6 +32,7 @@ const AddStudent = () => {
         class: '',
         section: '',
         admissionNumber: '',
+        rollNumber: '',
         dateOfAdmission: '',
         profileImageUrl: ''
     });
@@ -335,6 +336,10 @@ const AddStudent = () => {
                                             <input type="text" value={formData.section} onChange={e=>handleInputChange('section', e.target.value)} placeholder="e.g. A" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
                                         </div>
                                         <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.rollNumber} onChange={e=>handleInputChange('rollNumber', e.target.value)} placeholder="e.g. 01" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Admission Number</label>
                                             <input type="text" value={formData.admissionNumber} onChange={e=>handleInputChange('admissionNumber', e.target.value)} placeholder="0000000 (Optional)" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
                                         </div>
@@ -356,6 +361,7 @@ const AddStudent = () => {
                                         <div className="grid grid-cols-2 gap-4 text-sm font-medium">
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Name</span>{formData.firstName} {formData.lastName}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Class & Sec</span>{formData.class} - {formData.section}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Roll Number</span>{formData.rollNumber}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Aadhaar</span>{formData.aadhaarNumber || 'N/A'}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Admission Date</span>{formData.dateOfAdmission || 'N/A'}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Father</span>{formData.fatherName}</div>
