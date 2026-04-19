@@ -1,367 +1,254 @@
 import React, { useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
+import { 
+  Users, 
+  GraduationCap, 
+  QrCode, 
+  BookOpen, 
+  Search, 
+  Bell, 
+  Zap, 
+  Plus, 
+  Send, 
+  Calendar,
+  TrendingUp,
+  Key,
+  Copy,
+  ArrowRight,
+  ClipboardList
+} from 'lucide-react';
 
 const Dashboard = () => {
     const { stats, loadingStats, refreshStats } = useAdmin();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
 
     useEffect(() => {
-        // Refresh silently in background when landing on dashboard
         refreshStats(true);
     }, []);
 
     const Shimmer = ({ className }) => (
-        <div className={`animate-pulse bg-slate-200 rounded ${className}`}></div>
+        <div className={`animate-pulse bg-slate-100 rounded ${className}`}></div>
     );
 
-
     return (
-        <>
-            {/* TopNavBar Shell */}
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center justify-between w-full md:w-auto">
-                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Dashboard</h2>
-                    <div className="flex md:hidden items-center gap-3">
-                        <button className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
-                            <span className="material-symbols-outlined text-[20px] text-[#434655]">notifications</span>
-                        </button>
-                        <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                            <img
-                                alt="User Avatar"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                            />
-                        </div>
-                    </div>
+        <div className="animate-fade-in">
+            {/* Header Area */}
+            <header className="h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-4 md:px-10">
+                <div className="flex flex-col">
+                    <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Dashboard</h2>
+                    <p className="hidden md:block text-[11px] font-bold text-slate-400 uppercase tracking-widest">Academic Overview</p>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64 group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+
+                <div className="flex items-center gap-4">
+                    <div className="relative group hidden sm:block">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
-                            className="w-full h-10 pl-10 pr-4 rounded-xl border-none bg-surface-container-high focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all text-xs font-semibold"
+                            className="h-10 w-64 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/10 transition-all text-xs font-semibold outline-none"
                             placeholder="Quick search..."
                             type="text"
                         />
                     </div>
-                    <div className="hidden md:flex items-center gap-3">
-                        <button className="hover:bg-[#e6e8ea] rounded-full p-2 transition-all active:scale-95">
-                            <span className="material-symbols-outlined text-[#434655]">notifications</span>
-                        </button>
-                        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer">
-                            <img
-                                alt="User Avatar"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                            />
-                        </div>
+                    <button className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl text-slate-500 hover:bg-white hover:text-indigo-600 transition-all shadow-sm">
+                        <Bell size={18} />
+                    </button>
+                    <div className="h-10 w-10 rounded-xl overflow-hidden border-2 border-white shadow-md cursor-pointer">
+                        <img
+                            alt="Avatar"
+                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                        />
                     </div>
                 </div>
             </header>
 
-
-            <div className="p-4 sm:p-8 space-y-8 max-w-full">
-                {/* Welcome Section */}
-                <section className="max-w-full overflow-hidden flex flex-col gap-2">
-                    <h3 className="text-[20px] sm:text-[28px] font-[800] text-on-surface tracking-tight leading-tight truncate sm:whitespace-normal" title={schoolName}>
-                        Welcome back, {schoolName}!
-                    </h3>
-                    <p className="text-on-surface-variant font-medium text-xs sm:text-sm">
-                        Snapshot of today's academic metrics.
+            <main className="p-4 md:p-10 space-y-10 max-w-7xl mx-auto">
+                {/* Welcome Message */}
+                <section className="flex flex-col gap-1">
+                    <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                        Elevating Education, <span className="text-indigo-600">{schoolName}</span>
+                    </h1>
+                    <p className="text-slate-500 font-medium text-sm md:text-base">
+                        Here's your school's current standing for today.
                     </p>
                 </section>
 
-
-
-                {/* Stat Cards Bento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-primary">
-
-                        <div>
-                            <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                Total Students
-                            </p>
-                            {loadingStats && !stats ? (
-                                <div className="h-8 w-20 bg-slate-200 animate-pulse rounded-lg mt-1"></div>
-                            ) : (
-                                <h4 className="text-2xl font-extrabold text-on-surface">{stats?.students?.toLocaleString() || 0}</h4>
-                            )}
-                            <div className="flex items-center gap-1 mt-2 text-primary font-bold text-xs">
-                                <span className="material-symbols-outlined text-sm">trending_up</span>
-                                <span>Real-time data</span>
+                {/* Primary Stats Bento */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Stat Card: Students */}
+                    <div className="bento-card p-6 border-l-4 border-indigo-500">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600">
+                                <Users size={24} />
+                            </div>
+                            <div className="flex items-center gap-1 text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full">
+                                <TrendingUp size={10} />
+                                <span>+2%</span>
                             </div>
                         </div>
-                        <div className="p-3 bg-primary-container/10 rounded-xl text-primary">
-                            <span className="material-symbols-outlined text-3xl">group</span>
-                        </div>
+                        <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-1">Total Students</p>
+                        {loadingStats && !stats ? (
+                            <Shimmer className="h-8 w-24 mb-2" />
+                        ) : (
+                            <h4 className="text-3xl font-black text-slate-800 tracking-tight">{stats?.students || 0}</h4>
+                        )}
+                        <p className="text-[11px] font-bold text-slate-500 mt-2">Active enrollments</p>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-secondary">
 
-                        <div>
-                            <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                Teachers
-                            </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">48</h4>
-                            <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Active across 14 wings</span>
+                    {/* Stat Card: Teachers */}
+                    <div className="bento-card p-6 border-l-4 border-rose-500">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-2.5 bg-rose-50 rounded-xl text-rose-600">
+                                <GraduationCap size={24} />
                             </div>
                         </div>
-                        <div className="p-3 bg-secondary-container/10 rounded-xl text-secondary">
-                            <span className="material-symbols-outlined text-3xl">school</span>
-                        </div>
+                        <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-1">Elite Faculty</p>
+                        <h4 className="text-3xl font-black text-slate-800 tracking-tight">48</h4>
+                        <p className="text-[11px] font-bold text-slate-500 mt-2">Specialists & Mentors</p>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-tertiary">
-                        {/* Calculate unique code: first 3 of name + last 4 of ID */}
+
+                    {/* Stat Card: School Code */}
+                    <div className="bento-card p-6 border-l-4 border-amber-500">
                         {(() => {
                             const sid = localStorage.getItem('scoolg_school_id') || "";
                             const suffix = sid.slice(-4);
                             const code = (schoolName.substring(0,3) + suffix).toLowerCase();
                             return (
-                                <div>
-                                    <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                        School Code
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
+                                <>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-2.5 bg-amber-50 rounded-xl text-amber-600">
+                                            <QrCode size={24} />
+                                        </div>
                                         <button 
                                             onClick={() => navigator.clipboard.writeText(code)}
-                                            title="Copy Code" 
-                                            className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
+                                            className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all active:scale-90"
                                         >
-                                            <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                            <Copy size={14} />
                                         </button>
                                     </div>
-                                    <div className="flex items-center gap-1 mt-2 text-tertiary font-bold text-xs">
-                                        <span className="material-symbols-outlined text-sm">vpn_key</span>
-                                        <span>Used for student app</span>
+                                    <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-1">Campus Code</p>
+                                    <h4 className="text-3xl font-black text-slate-800 tracking-tight uppercase">{code}</h4>
+                                    <div className="flex items-center gap-1.5 mt-2 text-amber-600 font-bold text-[10px]">
+                                        <Key size={10} />
+                                        <span>Portal Access Key</span>
                                     </div>
-                                </div>
+                                </>
                             );
                         })()}
-                        <div className="p-3 bg-tertiary-container/10 rounded-xl text-tertiary">
-                            <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
-                        </div>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-outline">
 
-                        <div>
-                            <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                Classes
-                            </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">14</h4>
-                            <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Standard 1 to 12</span>
+                    {/* Stat Card: Classes */}
+                    <div className="bento-card p-6 border-l-4 border-emerald-500">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600">
+                                <BookOpen size={24} />
                             </div>
                         </div>
-                        <div className="p-3 bg-surface-container-high rounded-xl text-outline">
-                            <span className="material-symbols-outlined text-3xl">class</span>
-                        </div>
+                        <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-1">Classrooms</p>
+                        <h4 className="text-3xl font-black text-slate-800 tracking-tight">14</h4>
+                        <p className="text-[11px] font-bold text-slate-500 mt-2">Active learning hubs</p>
                     </div>
                 </div>
 
-                {/* Quick Actions Grid */}
-                <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
-                    <h5 className="text-lg sm:text-2xl text-on-surface font-bold mb-5 sm:mb-6 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">bolt</span>
-                        Quick Administrative Actions
-                    </h5>
-
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <button className="primary-gradient text-on-primary font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all shadow-lg shadow-primary/20 overflow-hidden">
-                            <span className="material-symbols-outlined text-[20px] sm:text-[24px]">person_add</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Add Student</span>
-                        </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">person_add_alt</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Add Teacher</span>
-                        </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">send</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Send Notice</span>
-                        </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">event_note</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Timetable</span>
-                        </button>
+                {/* Quick Actions Panel */}
+                <section className="bento-card p-6 md:p-8 bg-slate-900 text-white border-none shadow-2xl shadow-indigo-200">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center">
+                            <Zap size={20} className="fill-white" />
+                        </div>
+                        <h3 className="text-xl font-bold tracking-tight">Command Center</h3>
                     </div>
 
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button className="group flex items-center justify-center gap-3 p-4 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl transition-all font-bold text-sm border border-white/10 hover:border-white shadow-lg active:scale-95">
+                            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                            Admission
+                        </button>
+                        <button className="group flex items-center justify-center gap-3 p-4 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl transition-all font-bold text-sm border border-white/10 hover:border-white shadow-lg active:scale-95">
+                            <Plus size={18} />
+                            Add Teacher
+                        </button>
+                        <button className="group flex items-center justify-center gap-3 p-4 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl transition-all font-bold text-sm border border-white/10 hover:border-white shadow-lg active:scale-95">
+                            <Send size={18} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                            Broadcasting
+                        </button>
+                        <button className="group flex items-center justify-center gap-3 p-4 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl transition-all font-bold text-sm border border-white/10 hover:border-white shadow-lg active:scale-95">
+                            <Calendar size={18} />
+                            Timetable
+                        </button>
+                    </div>
+                </section>
 
-                </div>
-
-                {/* Middle Row: Charts & Notices */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                    {/* Attendance Chart */}
-                    <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
-                        <div className="flex justify-between items-center mb-6 sm:mb-8">
-                            <h5 className="text-title-md text-on-surface font-bold">Class Attendance</h5>
-                            <button className="text-primary font-bold text-sm hover:underline">View Analytics</button>
+                {/* Bottom Insights */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Activity Feed */}
+                    <div className="lg:col-span-2 bento-card flex flex-col">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-black text-slate-800 flex items-center gap-2">
+                                <ClipboardList size={18} className="text-indigo-500" />
+                                Operation Log
+                            </h3>
+                            <button className="text-indigo-600 text-[11px] font-bold uppercase tracking-wider hover:underline">Full Log</button>
                         </div>
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 1</span>
-                                    <span className="text-primary">96%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '96%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 2</span>
-                                    <span className="text-primary">88%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '88%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 3</span>
-                                    <span className="text-primary">92%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '92%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 4</span>
-                                    <span className="text-primary">79%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-error/80 rounded-full" style={{ width: '79%' }} />
-                                </div>
-                            </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50/50">
+                                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-[0.1em]">
+                                        <th className="px-6 py-4 text-left">Action Item</th>
+                                        <th className="px-6 py-4 text-left">Admin</th>
+                                        <th className="px-6 py-4 text-left">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    <tr className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-5">
+                                            <p className="text-sm font-bold text-slate-800">New Admission</p>
+                                            <p className="text-[11px] text-slate-500">Rahul Kumar added manually</p>
+                                        </td>
+                                        <td className="px-6 py-5 text-sm font-semibold text-slate-600">Admin Sarah</td>
+                                        <td className="px-6 py-5">
+                                            <span className="status-pill status-pill-success">Processed</span>
+                                        </td>
+                                    </tr>
+                                    <tr className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-5">
+                                            <p className="text-sm font-bold text-slate-800">Notice Published</p>
+                                            <p className="text-[11px] text-slate-500">Parent Teacher Meeting</p>
+                                        </td>
+                                        <td className="px-6 py-5 text-sm font-semibold text-slate-600">System Bot</td>
+                                        <td className="px-6 py-5">
+                                            <span className="status-pill status-pill-success">Broadcasted</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    {/* Recent Notices */}
-                    <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
-                        <div className="flex justify-between items-center mb-6 sm:mb-8">
-                            <h5 className="text-title-md text-on-surface font-bold">Recent Notices</h5>
-                            <button className="bg-surface-container-low hover:bg-surface-container-high p-2 rounded-lg transition-colors">
-                                <span className="material-symbols-outlined text-on-surface-variant text-xl">open_in_new</span>
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary">
-                                    <span className="material-symbols-outlined">groups</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">PTM on 15 Apr</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">Parent Teacher Meeting for Grade 5-10</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">2h ago</span>
-                            </div>
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-tertiary-container/10 flex items-center justify-center text-tertiary">
-                                    <span className="material-symbols-outlined">celebration</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">Holiday: Holi</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">School will remain closed on 25th March</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">1d ago</span>
-                            </div>
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-secondary-container/10 flex items-center justify-center text-secondary">
-                                    <span className="material-symbols-outlined">sports_basketball</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">Sports Day</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">Annual sports meet registration is open</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">3d ago</span>
+                    {/* Announcement Preview */}
+                    <div className="bento-card bg-indigo-50/30 border-indigo-100 flex flex-col p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-black text-slate-800">Alerts</h3>
+                            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                                <Megaphone size={14} />
                             </div>
                         </div>
+                        <div className="space-y-4 flex-1">
+                            <div className="p-4 bg-white rounded-2xl shadow-sm border border-indigo-100/50">
+                                <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">Faculty Update</p>
+                                <p className="text-sm font-bold text-slate-800 leading-snug">New teacher onboarding for Physics completed.</p>
+                            </div>
+                            <div className="p-4 bg-white rounded-2xl shadow-sm border border-indigo-100/50">
+                                <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">System</p>
+                                <p className="text-sm font-bold text-slate-800 leading-snug">Monthly database optimization successful.</p>
+                            </div>
+                        </div>
+                        <button className="mt-8 w-full py-3 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group">
+                            Global Newsroom
+                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
                     </div>
                 </div>
-
-                {/* Bottom Card: Recent Activity */}
-                <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden">
-                    <div className="px-4 sm:px-8 py-5 sm:py-6 border-b border-surface-container">
-                        <h5 className="text-title-md text-on-surface font-bold">Recent Activity</h5>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="text-[11px] uppercase font-bold text-on-surface-variant tracking-widest">
-                                    <th className="px-4 sm:px-8 py-4">Activity</th>
-                                    <th className="px-4 sm:px-8 py-4">Subject</th>
-                                    <th className="px-4 sm:px-8 py-4">Performed By</th>
-                                    <th className="px-4 sm:px-8 py-4">Time</th>
-                                    <th className="px-4 sm:px-8 py-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-surface-container/50">
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                                <span className="material-symbols-outlined text-sm">person_add</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">New Admission</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Rahul Kumar added</td>
-
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Admin Sarah</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Just Now</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-green-600 px-3 py-1 rounded-full status-aura-success w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-green-600"></span>
-                                            Success
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                <span className="material-symbols-outlined text-sm">update</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">Timetable Update</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Class 8-B timetable updated</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Registrar Office</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">45 mins ago</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-blue-600 px-3 py-1 rounded-full bg-blue-50 w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                                            Updated
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                                                <span className="material-symbols-outlined text-sm">campaign</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">Notice Published</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Annual Sports Day Announcement</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Admin Sarah</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">2 hours ago</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-orange-600 px-3 py-1 rounded-full bg-orange-50 w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-orange-600"></span>
-                                            Public
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-4 sm:px-8 py-5 sm:py-6 bg-surface-container-low/30 border-t border-surface-container text-center">
-                        <button className="text-primary font-bold text-[0.875rem] hover:underline">View All Activities</button>
-                    </div>
-                </div>
-            </div>
-
-        </>
-
+            </main>
+        </div>
     );
 };
 
