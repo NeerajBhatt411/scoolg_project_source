@@ -15,6 +15,7 @@ import ComingSoon from './components/ComingSoon';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import ChangePassword from './pages/ChangePassword';
+import StudentProfile from './pages/StudentProfile';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('scoolg_token');
@@ -64,6 +65,10 @@ function App() {
                 <Route
                     path="/students/add"
                     element={<ProtectedRoute><AddStudent /></ProtectedRoute>}
+                />
+                <Route
+                    path="/students/profile"
+                    element={<ProtectedRoute><StudentProfile /></ProtectedRoute>}
                 />
                 <Route
                     path="/teachers"

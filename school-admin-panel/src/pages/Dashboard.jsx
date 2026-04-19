@@ -47,11 +47,11 @@ const Dashboard = () => {
 
             <div className="p-4 sm:p-8 space-y-8 max-w-full">
                 {/* Welcome Section */}
-                <section className="max-w-full overflow-hidden">
+                <section className="max-w-full overflow-hidden flex flex-col gap-2">
                     <h3 className="text-[20px] sm:text-[28px] font-[800] text-on-surface tracking-tight leading-tight truncate sm:whitespace-normal" title={schoolName}>
                         Welcome back, {schoolName}!
                     </h3>
-                    <p className="text-on-surface-variant font-medium mt-1 text-xs sm:text-sm">
+                    <p className="text-on-surface-variant font-medium text-xs sm:text-sm">
                         Snapshot of today's academic metrics.
                     </p>
                 </section>
@@ -95,16 +95,25 @@ const Dashboard = () => {
 
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                Attendance
+                                School Code
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">94%</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-2xl font-extrabold text-on-surface uppercase">{schoolName.substring(0,3).toLowerCase()}</h4>
+                                <button 
+                                    onClick={() => navigator.clipboard.writeText(schoolName.substring(0,3).toLowerCase())}
+                                    title="Copy Code" 
+                                    className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                </button>
+                            </div>
                             <div className="flex items-center gap-1 mt-2 text-tertiary font-bold text-xs">
-                                <span className="material-symbols-outlined text-sm">check_circle</span>
-                                <span>Above target average</span>
+                                <span className="material-symbols-outlined text-sm">vpn_key</span>
+                                <span>Used for student app</span>
                             </div>
                         </div>
                         <div className="p-3 bg-tertiary-container/10 rounded-xl text-tertiary">
-                            <span className="material-symbols-outlined text-3xl">fact_check</span>
+                            <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
                         </div>
                     </div>
                     <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-outline">
