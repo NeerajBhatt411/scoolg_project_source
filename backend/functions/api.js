@@ -342,6 +342,102 @@ router.get('/onboarding/:id', async (req, res) => {
 });
 
 
+// --- Inline Student Model ---
+const StudentSchema = new mongoose.Schema({
+    schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true, index: true },
+    studentAppId: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    isPasswordChanged: { type: Boolean, default: false },
+    admissionNumber: { type: String },
+    rollNumber: { type: String },
+    class: { type: String, required: true },
+    section: { type: String, required: true },
+    academicYear: { type: String, default: "2023-2024" },
+    dateOfAdmission: { type: Date, default: Date.now },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    dateOfBirth: { type: Date, required: true },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
+    bloodGroup: { type: String },
+    aadhaarNumber: { type: String },
+    religionOrCategory: { type: String },
+    profileImageUrl: { type: String, default: "" },
+    fatherName: { type: String, required: true },
+    motherName: { type: String, required: true },
+    primaryContact: { type: String, required: true },
+    parentEmail: { type: String },
+    currentAddress: { type: String, required: true },
+    permanentAddress: { type: String },
+    status: { type: String, enum: ['Active', 'Inactive', 'Transferred'], default: 'Active' }
+}, { timestamps: true });
+
+StudentSchema.pre('save', function(next) {
+    if (!this.admissionNumber) {
+        const randomPart = Math.floor(1000 + Math.random() * 9000);
+        this.admissionNumber = `ADM-${new Date().getFullYear()}-${randomPart}`;
+    }
+    next();
+});
+
+const Student = mongoose.models.Student || mongoose.model('Student', StudentSchema);
+
+// --- Students API ---
+router.post('/admin/students', async (req, res) => {
+    try {
+        await connectToDB();
+        const { schoolId } = req.body;
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const count = await Student.countDocuments({ schoolId: school._id });
+        const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1001}`;
+        
+        const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const plainPassword = `PASS-${randomSuffix}`;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+        const newStudent = new Student({
+            ...req.body,
+            schoolId: school._id,
+            studentAppId,
+            password: hashedPassword
+        });
+
+        await newStudent.save();
+
+        res.status(201).json({
+            message: "Student added successfully",
+            student: newStudent,
+            appCredentials: {
+                studentAppId,
+                password: plainPassword
+            }
+        });
+    } catch (err) {
+        console.error("❌ Add student error:", err);
+        res.status(500).json({ error: "Failed to add student", details: err.message });
+    }
+});
+
+router.get('/admin/students', async (req, res) => {
+    try {
+        await connectToDB();
+        const { schoolId } = req.query;
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const students = await Student.find({ schoolId: school._id }).sort({ createdAt: -1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch students" });
+    }
+});
+
 // App Config for Netlify - Root mounting for flexibility
 app.use('/', router);
 app.use('/api', router); // Legacy support
