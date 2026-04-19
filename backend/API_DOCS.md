@@ -57,7 +57,61 @@ Fetches fully merged data to render on the generated website.
 
 ---
 
-## 2. Future APIs (In-Progress)
+## 2. Student Mobile App APIs
+These endpoints are dedicated strictly to the Student Mobile/Web Portal.
+
+### A. Verify School Code
+Checks if the School Code matches any school and returns branding details.
+- **Endpoint:** `/api/student/verify-campus/:code`
+- **Method:** `GET`
+- **Response (200 OK):**
+  ```json
+  {
+    "schoolId": "65e...",
+    "schoolName": "St. Andrews School",
+    "logo": "https://..."
+  }
+  ```
+
+---
+
+### B. Student Login
+Authenticates a student using their unique ID and Password (default: DOB).
+- **Endpoint:** `/api/student/login`
+- **Method:** `POST`
+- **Body:**
+  ```json
+  {
+    "studentAppId": "gaj40001001",
+    "password": "DDMMYYYY"
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "token": "JWT_TOKEN_HERE",
+    "studentId": "65f..."
+  }
+  ```
+
+---
+
+### C. Get Student Profile
+Fetches the authenticated student's data and school branding info.
+- **Endpoint:** `/api/student/me`
+- **Method:** `GET`
+- **Headers:** `Authorization: Bearer <TOKEN>`
+- **Response (200 OK):**
+  ```json
+  {
+    "student": { "firstName": "Rahul", "class": "10", ... },
+    "school": { "name": "St. Andrews", "logo": "..." }
+  }
+  ```
+
+---
+
+## 3. Future APIs (In-Progress)
 - `POST /media/upload` - Logic for Logos & Gallery (S3 Integration).
 - `GET /admin/schools` - Listing of all schools (Super Admin).
 
@@ -65,4 +119,4 @@ Fetches fully merged data to render on the generated website.
 
 ## 🛠️ Global Headers
 - `Content-Type: application/json`
-- (Future) `Authorization: Bearer <JWT_TOKEN>`
+- `Authorization: Bearer <JWT_TOKEN>` (For Admin & Student 'me' routes)

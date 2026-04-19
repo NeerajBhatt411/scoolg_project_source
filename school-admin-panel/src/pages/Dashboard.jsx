@@ -1,7 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Dashboard = () => {
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
+    const schoolId = localStorage.getItem('scoolg_school_id');
+    
+    const [stats, setStats] = useState({ students: 0, teachers: 0, classes: 0, activeNotices: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (!schoolId) return;
+            try {
+                const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/dashboard-stats/${schoolId}`);
+                setStats(res.data);
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, [schoolId]);
+
+    const Shimmer = ({ className }) => (
+        <div className={`animate-pulse bg-slate-200 rounded ${className}`}></div>
+    );
+
 
     return (
         <>
@@ -66,10 +91,14 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Total Students
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">2,450</h4>
+                            {loading ? (
+                                <div className="h-8 w-20 bg-slate-200 animate-pulse rounded-lg mt-1"></div>
+                            ) : (
+                                <h4 className="text-2xl font-extrabold text-on-surface">{stats.students?.toLocaleString()}</h4>
+                            )}
                             <div className="flex items-center gap-1 mt-2 text-primary font-bold text-xs">
                                 <span className="material-symbols-outlined text-sm">trending_up</span>
-                                <span>12% from last term</span>
+                                <span>Real-time data</span>
                             </div>
                         </div>
                         <div className="p-3 bg-primary-container/10 rounded-xl text-primary">
