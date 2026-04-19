@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import ChangePassword from './pages/ChangePassword';
 import StudentProfile from './pages/StudentProfile';
+import { AdminProvider } from './context/AdminContext';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('scoolg_token');
@@ -38,80 +39,79 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
     return (
-        <Router basename="/admin">
-            <Routes>
+        <AdminProvider>
+            <Router basename="/admin">
+                <Routes>
+                    {/* ... routes remain same ... */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/change-password" element={<ChangePassword />} />
 
-                {/* Auth Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/change-password" element={<ChangePassword />} />
+                    <Route
+                        path="/dashboard"
+                        element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/profile"
+                        element={<ProtectedRoute><Profile /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/gallery"
+                        element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Gallery Coming Soon</h2></div></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/students"
+                        element={<ProtectedRoute><Students /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/students/add"
+                        element={<ProtectedRoute><AddStudent /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/students/profile"
+                        element={<ProtectedRoute><StudentProfile /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/teachers"
+                        element={<ProtectedRoute><Teachers /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/teachers/add"
+                        element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/classes"
+                        element={<ProtectedRoute><Classes /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/timetable"
+                        element={<ProtectedRoute><Timetable /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/attendance"
+                        element={<ProtectedRoute><Attendance /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/exams"
+                        element={<ProtectedRoute><Exams /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/notices"
+                        element={<ProtectedRoute><Notices /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/roles"
+                        element={<ProtectedRoute><ComingSoon title="Roles" subtitle="We are working on roles & permissions." /></ProtectedRoute>}
+                    />
+                    <Route
+                        path="/settings"
+                        element={<ProtectedRoute><ComingSoon title="Settings" subtitle="We are working on settings." /></ProtectedRoute>}
+                    />
 
-                {/* Dashboard & Profile Routes */}
-                <Route
-                    path="/dashboard"
-                    element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-                />
-                <Route
-                    path="/profile"
-                    element={<ProtectedRoute><Profile /></ProtectedRoute>}
-                />
-                <Route
-                    path="/gallery"
-                    element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Gallery Coming Soon</h2></div></ProtectedRoute>}
-                />
-                <Route
-                    path="/students"
-                    element={<ProtectedRoute><Students /></ProtectedRoute>}
-                />
-                <Route
-                    path="/students/add"
-                    element={<ProtectedRoute><AddStudent /></ProtectedRoute>}
-                />
-                <Route
-                    path="/students/profile"
-                    element={<ProtectedRoute><StudentProfile /></ProtectedRoute>}
-                />
-                <Route
-                    path="/teachers"
-                    element={<ProtectedRoute><Teachers /></ProtectedRoute>}
-                />
-                <Route
-                    path="/teachers/add"
-                    element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
-                />
-                <Route
-                    path="/classes"
-                    element={<ProtectedRoute><Classes /></ProtectedRoute>}
-                />
-                <Route
-                    path="/timetable"
-                    element={<ProtectedRoute><Timetable /></ProtectedRoute>}
-                />
-                <Route
-                    path="/attendance"
-                    element={<ProtectedRoute><Attendance /></ProtectedRoute>}
-                />
-                <Route
-                    path="/exams"
-                    element={<ProtectedRoute><Exams /></ProtectedRoute>}
-                />
-                <Route
-                    path="/notices"
-                    element={<ProtectedRoute><Notices /></ProtectedRoute>}
-                />
-                <Route
-                    path="/roles"
-                    element={<ProtectedRoute><ComingSoon title="Roles" subtitle="We are working on roles & permissions." /></ProtectedRoute>}
-                />
-                <Route
-                    path="/settings"
-                    element={<ProtectedRoute><ComingSoon title="Settings" subtitle="We are working on settings." /></ProtectedRoute>}
-                />
-
-                {/* Redirects */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-        </Router>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+            </Router>
+        </AdminProvider>
     );
 }
 
