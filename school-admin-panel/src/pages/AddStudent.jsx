@@ -124,6 +124,17 @@ const AddStudent = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    const isStepValid = (step) => {
+        if (step === 1) {
+            return formData.firstName && formData.lastName && formData.dateOfBirth && formData.gender;
+        } else if (step === 2) {
+            return formData.fatherName && formData.motherName && formData.primaryContact;
+        } else if (step === 3) {
+            return formData.class && formData.section && formData.rollNumber && formData.dateOfAdmission && formData.currentAddress;
+        }
+        return true;
+    };
+
     const handleNext = async () => {
         if (currentStep < 4) {
             if (validateStep(currentStep)) {
@@ -421,9 +432,13 @@ const AddStudent = () => {
                                 Back
                             </button>
                             <button 
-                                className={`flex items-center gap-2 px-8 py-3 text-white font-bold text-sm rounded-xl hover:shadow-lg transition-all active:scale-95 ${currentStep === 4 ? 'bg-green-600 hover:shadow-green-500/30' : 'bg-[#2563eb] hover:shadow-blue-500/30'}`}
+                                className={`flex items-center gap-2 px-8 py-3 text-white font-bold text-sm rounded-xl transition-all active:scale-95 ${
+                                    !isStepValid(currentStep) 
+                                    ? 'bg-slate-300 cursor-not-allowed opacity-70' 
+                                    : (currentStep === 4 ? 'bg-green-600 hover:shadow-green-500/30 hover:shadow-lg' : 'bg-[#2563eb] hover:shadow-blue-500/30 hover:shadow-lg')
+                                }`}
                                 onClick={handleNext}
-                                disabled={isLoading}
+                                disabled={isLoading || !isStepValid(currentStep)}
                             >
                                 {isLoading ? 'Processing...' : (currentStep === 4 ? 'Confirm & Admit' : 'Next Step')}
                                 {!isLoading && <span className="material-symbols-outlined text-[18px]">{currentStep === 4 ? 'check' : 'arrow_forward'}</span>}
