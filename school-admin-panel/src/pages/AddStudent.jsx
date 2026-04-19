@@ -38,6 +38,7 @@ const AddStudent = () => {
     });
 
     const [previewPhoto, setPreviewPhoto] = useState(null);
+    const [errors, setErrors] = useState({});
 
     const steps = [
         { id: 1, title: 'Personal' },
@@ -48,6 +49,14 @@ const AddStudent = () => {
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        // Clear error when user types
+        if (errors[field]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
     };
 
     const handlePhotoUpload = (e) => {
@@ -92,9 +101,37 @@ const AddStudent = () => {
         }
     };
 
+    const validateStep = (step) => {
+        const newErrors = {};
+        if (step === 1) {
+            if (!formData.firstName) newErrors.firstName = true;
+            if (!formData.lastName) newErrors.lastName = true;
+            if (!formData.dateOfBirth) newErrors.dateOfBirth = true;
+            if (!formData.gender) newErrors.gender = true;
+        } else if (step === 2) {
+            if (!formData.fatherName) newErrors.fatherName = true;
+            if (!formData.motherName) newErrors.motherName = true;
+            if (!formData.primaryContact) newErrors.primaryContact = true;
+        } else if (step === 3) {
+            if (!formData.class) newErrors.class = true;
+            if (!formData.section) newErrors.section = true;
+            if (!formData.rollNumber) newErrors.rollNumber = true;
+            if (!formData.dateOfAdmission) newErrors.dateOfAdmission = true;
+            if (!formData.currentAddress) newErrors.currentAddress = true;
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleNext = async () => {
         if (currentStep < 4) {
-            setCurrentStep(currentStep + 1);
+            if (validateStep(currentStep)) {
+                setCurrentStep(currentStep + 1);
+            } else {
+                // Flash error or alert
+                alert("Please fill all required fields marked with *");
+            }
         } else {
             // Step 4 = Submit
             if (!schoolId) {
@@ -256,21 +293,21 @@ const AddStudent = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">First Name <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input value={formData.firstName} onChange={e=>handleInputChange('firstName', e.target.value)} type="text" placeholder="John" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input value={formData.firstName} onChange={e=>handleInputChange('firstName', e.target.value)} type="text" placeholder="John" className={`w-full h-12 px-4 rounded-xl border ${errors.firstName ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Last Name <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input value={formData.lastName} onChange={e=>handleInputChange('lastName', e.target.value)} type="text" placeholder="Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input value={formData.lastName} onChange={e=>handleInputChange('lastName', e.target.value)} type="text" placeholder="Doe" className={`w-full h-12 px-4 rounded-xl border ${errors.lastName ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date Of Birth <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="date" value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="date" value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfBirth ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <select value={formData.gender} onChange={e=>handleInputChange('gender', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none">
+                                            <select value={formData.gender} onChange={e=>handleInputChange('gender', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.gender ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}>
                                                 <option value="" disabled>Select Gender</option>
                                                 <option value="Male">Male</option>
                                                 <option value="Female">Female</option>
@@ -305,16 +342,16 @@ const AddStudent = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Father's Full Name <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.fatherName} onChange={e=>handleInputChange('fatherName', e.target.value)} placeholder="Robert Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="text" value={formData.fatherName} onChange={e=>handleInputChange('fatherName', e.target.value)} placeholder="Robert Doe" className={`w-full h-12 px-4 rounded-xl border ${errors.fatherName ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Mother's Full Name <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.motherName} onChange={e=>handleInputChange('motherName', e.target.value)} placeholder="Jane Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="text" value={formData.motherName} onChange={e=>handleInputChange('motherName', e.target.value)} placeholder="Jane Doe" className={`w-full h-12 px-4 rounded-xl border ${errors.motherName ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Primary Phone Number <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="tel" value={formData.primaryContact} onChange={e=>handleInputChange('primaryContact', e.target.value)} placeholder="+91 999 999 9999" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="tel" value={formData.primaryContact} onChange={e=>handleInputChange('primaryContact', e.target.value)} placeholder="+91 999 999 9999" className={`w-full h-12 px-4 rounded-xl border ${errors.primaryContact ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
@@ -329,15 +366,15 @@ const AddStudent = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Class/Grade <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.class} onChange={e=>handleInputChange('class', e.target.value)} placeholder="e.g. 10" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="text" value={formData.class} onChange={e=>handleInputChange('class', e.target.value)} placeholder="e.g. 10" className={`w-full h-12 px-4 rounded-xl border ${errors.class ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Section <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.section} onChange={e=>handleInputChange('section', e.target.value)} placeholder="e.g. A" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="text" value={formData.section} onChange={e=>handleInputChange('section', e.target.value)} placeholder="e.g. A" className={`w-full h-12 px-4 rounded-xl border ${errors.section ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.rollNumber} onChange={e=>handleInputChange('rollNumber', e.target.value)} placeholder="e.g. 01" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="text" value={formData.rollNumber} onChange={e=>handleInputChange('rollNumber', e.target.value)} placeholder="e.g. 01" className={`w-full h-12 px-4 rounded-xl border ${errors.rollNumber ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Admission Number</label>
@@ -345,11 +382,11 @@ const AddStudent = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date of Admission <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="date" value={formData.dateOfAdmission} onChange={e=>handleInputChange('dateOfAdmission', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="date" value={formData.dateOfAdmission} onChange={e=>handleInputChange('dateOfAdmission', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfAdmission ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2 md:col-span-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Current Address <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <textarea value={formData.currentAddress} onChange={e=>handleInputChange('currentAddress', e.target.value)} rows="3" placeholder="Full residential physical address" className="w-full p-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none resize-none"></textarea>
+                                            <textarea value={formData.currentAddress} onChange={e=>handleInputChange('currentAddress', e.target.value)} rows="3" placeholder="Full residential physical address" className={`w-full p-4 rounded-xl border ${errors.currentAddress ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none resize-none`}></textarea>
                                         </div>
                                     </>
                                 )}
