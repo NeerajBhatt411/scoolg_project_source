@@ -385,9 +385,10 @@ router.post('/admin/students', async (req, res) => {
 
         const count = await Student.countDocuments({ schoolId: school._id });
         
-        // Format ID like: gaj15611001
+        // Format ID like: gaj15611001 (prefix + last 4 digits of school ID + rank)
+        const schoolSuffix = (school.id || "").slice(-4);
         const fallbackCode = (school.formData?.schoolName || 'sch').substring(0,3);
-        const campusStr = (school.campusCode || school.formData?.campusCode || fallbackCode).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const campusStr = (school.campusCode || school.formData?.campusCode || `${fallbackCode}${schoolSuffix}`).toLowerCase().replace(/[^a-z0-9]/g, '');
         const studentAppId = `${campusStr}${count + 1001}`;
         
         // Default password = DDMMYYYY
@@ -485,8 +486,9 @@ router.get('/student/verify-campus/:code', async (req, res) => {
         // Searching for any school:
         const schools = await School.find({});
         const targetSchool = schools.find(s => {
+            const schoolSuffix = (s.id || "").slice(-4);
             const fallbackCode = (s.formData?.schoolName || 'sch').substring(0,3);
-            const scCode = (s.campusCode || s.formData?.campusCode || fallbackCode).toLowerCase().replace(/[^a-z0-9]/g, '');
+            const scCode = (s.campusCode || s.formData?.campusCode || `${fallbackCode}${schoolSuffix}`).toLowerCase().replace(/[^a-z0-9]/g, '');
             return scCode === code || scCode === code.replace(/[^a-z0-9]/g, '');
         });
 

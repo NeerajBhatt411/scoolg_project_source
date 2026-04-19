@@ -92,26 +92,33 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-tertiary">
-
-                        <div>
-                            <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                School Code
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <h4 className="text-2xl font-extrabold text-on-surface uppercase">{schoolName.substring(0,3).toLowerCase()}</h4>
-                                <button 
-                                    onClick={() => navigator.clipboard.writeText(schoolName.substring(0,3).toLowerCase())}
-                                    title="Copy Code" 
-                                    className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-1 mt-2 text-tertiary font-bold text-xs">
-                                <span className="material-symbols-outlined text-sm">vpn_key</span>
-                                <span>Used for student app</span>
-                            </div>
-                        </div>
+                        {/* Calculate unique code: first 3 of name + last 4 of ID */}
+                        {(() => {
+                            const sid = localStorage.getItem('scoolg_school_id') || "";
+                            const suffix = sid.slice(-4);
+                            const code = (schoolName.substring(0,3) + suffix).toLowerCase();
+                            return (
+                                <div>
+                                    <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
+                                        School Code
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
+                                        <button 
+                                            onClick={() => navigator.clipboard.writeText(code)}
+                                            title="Copy Code" 
+                                            className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-2 text-tertiary font-bold text-xs">
+                                        <span className="material-symbols-outlined text-sm">vpn_key</span>
+                                        <span>Used for student app</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         <div className="p-3 bg-tertiary-container/10 rounded-xl text-tertiary">
                             <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
                         </div>

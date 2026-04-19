@@ -26,7 +26,7 @@ const CampusVerify = () => {
             }));
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid Campus Code');
+            setError(err.response?.data?.error || 'Invalid School Code');
         } finally {
             setLoading(false);
         }
