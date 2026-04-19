@@ -432,10 +432,10 @@ const AddStudent = () => {
                                 Back
                             </button>
                             <button 
-                                className={`flex items-center gap-2 px-8 py-3 text-white font-bold text-sm rounded-xl transition-all active:scale-95 ${
+                                className={`flex items-center gap-2 px-8 py-3 font-bold text-sm rounded-xl transition-all active:scale-95 ${
                                     !isStepValid(currentStep) 
-                                    ? 'bg-slate-300 cursor-not-allowed opacity-70' 
-                                    : (currentStep === 4 ? 'bg-green-600 hover:shadow-green-500/30 hover:shadow-lg' : 'bg-[#2563eb] hover:shadow-blue-500/30 hover:shadow-lg')
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                                    : (currentStep === 4 ? 'bg-green-600 text-white hover:shadow-green-500/30 hover:shadow-lg' : 'bg-[#2563eb] text-white hover:shadow-blue-500/30 hover:shadow-lg')
                                 }`}
                                 onClick={handleNext}
                                 disabled={isLoading || !isStepValid(currentStep)}
