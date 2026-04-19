@@ -449,6 +449,28 @@ router.get('/admin/students', async (req, res) => {
     }
 });
 
+// New Endpoint: Dashboard Stats
+router.get('/admin/dashboard-stats/:schoolId', async (req, res) => {
+    try {
+        await connectToDB();
+        const school = await School.findOne({ id: req.params.schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const studentCount = await Student.countDocuments({ schoolId: school._id });
+        
+        // Mocking teachers and classes counts for now as they are coming in next modules
+        // But making student count REAL
+        res.json({
+            students: studentCount,
+            teachers: 12, // Placeholder
+            classes: 8,   // Placeholder
+            activeNotices: 4
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch stats" });
+    }
+});
+
 router.put('/admin/students/:id', async (req, res) => {
     try {
         await connectToDB();

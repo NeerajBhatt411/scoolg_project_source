@@ -147,9 +147,26 @@ const Students = () => {
                             </thead>
                             <tbody className="divide-y divide-outline-variant/10">
                                 {isLoading ? (
-                                    <tr><td colSpan="6" className="text-center py-10 font-bold text-slate-400">Loading Students...</td></tr>
+                                    [...Array(5)].map((_, i) => (
+                                        <tr key={i}>
+                                            <td className="px-6 py-5 hidden sm:table-cell"><div className="h-4 w-4 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse"></div>
+                                                    <div className="space-y-2">
+                                                        <div className="h-3 w-32 bg-slate-100 animate-pulse rounded"></div>
+                                                        <div className="h-2 w-16 bg-slate-100 animate-pulse rounded"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5"><div className="h-3 w-16 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5 hidden lg:table-cell"><div className="h-3 w-28 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5 hidden md:table-cell"><div className="h-3 w-24 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5"><div className="h-3 w-20 bg-slate-100 animate-pulse rounded mx-auto"></div></td>
+                                        </tr>
+                                    ))
                                 ) : filteredStudents.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center py-10 font-bold text-slate-400">No students found</td></tr>
+                                    <tr><td colSpan="6" className="text-center py-10 font-bold text-slate-400 font-bold">No students found</td></tr>
                                 ) : (
                                     filteredStudents.map((student, index) => (
                                         <tr 
