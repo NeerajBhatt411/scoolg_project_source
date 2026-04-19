@@ -1,48 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAdmin } from '../context/AdminContext';
 
 const Students = () => {
     const navigate = useNavigate();
-    const [students, setStudents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { students, loadingStudents, stats, refreshStudents } = useAdmin();
     
     // Filters
     const [classFilter, setClassFilter] = useState('All');
     const [sectionFilter, setSectionFilter] = useState('All');
-    
-    // Summary states
-    const [stats, setStats] = useState({ total: 0, male: 0, female: 0 });
 
     useEffect(() => {
-        const fetchStudents = async () => {
-            const schoolId = localStorage.getItem('scoolg_school_id');
-            if (!schoolId) {
-                console.error("No school ID found");
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/students?schoolId=${schoolId}`);
-                const data = res.data;
-                setStudents(data);
-                
-                // Calculate quick stats
-                setStats({
-                    total: data.length,
-                    male: data.filter(s => s.gender?.toLowerCase() === 'male').length,
-                    female: data.filter(s => s.gender?.toLowerCase() === 'female').length
-                });
-
-            } catch (err) {
-                console.error("Failed to fetch students", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchStudents();
+        // Silent refresh every time we land here
+        refreshStudents(true);
     }, []);
 
     const filteredStudents = students.filter(student => {
@@ -146,7 +116,7 @@ const Students = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-outline-variant/10">
-                                {isLoading ? (
+                                {loadingStudents && students.length === 0 ? (
                                     [...Array(5)].map((_, i) => (
                                         <tr key={i}>
                                             <td className="px-6 py-5 hidden sm:table-cell"><div className="h-4 w-4 bg-slate-100 animate-pulse rounded"></div></td>
