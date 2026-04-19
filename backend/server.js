@@ -130,6 +130,13 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
             const salt = await bcrypt.genSalt(10);
             school.password = await bcrypt.hash(generatedPassword, salt);
             school.isPasswordChanged = false; // Reset to false for new passwords
+
+            // Generate unique Campus Code (No dashes, e.g. GAJ1561)
+            const schoolNamePrefix = school.formData?.schoolName 
+                ? school.formData.schoolName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'SCH') 
+                : 'SCH';
+            const randomCode = Math.floor(1000 + Math.random() * 9000);
+            school.campusCode = `${schoolNamePrefix}${randomCode}`;
         }
 
         await school.save();
@@ -255,5 +262,67 @@ app.get('/api/onboarding/:id', async (req, res) => {
     if (!school) return res.status(404).json({ error: "Not found" });
     res.json(school.formData);
 });
+
+// --- Students API ---
+
+// Import Student model at top, but since we are modifying here we will just dynamically import or we should have imported it.
+// I will add the import at the top of the file in another call, here I'll use it assuming it's imported.
+import Student from './models/Student.js';
+
+app.post('/api/admin/students', async (req, res) => {
+    try {
+        const { schoolId } = req.body; // In real app, get from JWT token middleware
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        // Generate App ID and Password
+        const count = await Student.countDocuments({ schoolId: school._id });
+        const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1001}`;
+        
+        const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const plainPassword = `PASS-${randomSuffix}`;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+        const newStudent = new Student({
+            ...req.body,
+            schoolId: school._id,
+            studentAppId,
+            password: hashedPassword
+        });
+
+        await newStudent.save();
+
+        res.status(201).json({
+            message: "Student added successfully",
+            student: newStudent,
+            appCredentials: {
+                studentAppId,
+                password: plainPassword // Send back once so admin can print/save it
+            }
+        });
+    } catch (err) {
+        console.error("❌ Add student error:", err);
+        res.status(500).json({ error: "Failed to add student", details: err.message });
+    }
+});
+
+app.get('/api/admin/students', async (req, res) => {
+    try {
+        const { schoolId } = req.query; // Real app: from JWT
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const students = await Student.find({ schoolId: school._id }).sort({ createdAt: -1 });
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch students" });
+    }
+});
+
 
 app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
