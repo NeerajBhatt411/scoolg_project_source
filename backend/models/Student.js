@@ -42,14 +42,4 @@ const StudentSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// Pre-save hook to ensure admissionNumber exists
-StudentSchema.pre('save', function(next) {
-    if (!this.admissionNumber) {
-        // If admission number is empty, generate a fallback one using timestamp or UUID-like logic.
-        const randomPart = Math.floor(1000 + Math.random() * 9000);
-        this.admissionNumber = `ADM-${new Date().getFullYear()}-${randomPart}`;
-    }
-    next();
-});
-
 export default mongoose.model('Student', StudentSchema);

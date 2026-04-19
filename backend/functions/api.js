@@ -371,14 +371,6 @@ const StudentSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive', 'Transferred'], default: 'Active' }
 }, { timestamps: true });
 
-StudentSchema.pre('save', function(next) {
-    if (!this.admissionNumber) {
-        const randomPart = Math.floor(1000 + Math.random() * 9000);
-        this.admissionNumber = `ADM-${new Date().getFullYear()}-${randomPart}`;
-    }
-    next();
-});
-
 const Student = mongoose.models.Student || mongoose.model('Student', StudentSchema);
 
 // --- Students API ---
