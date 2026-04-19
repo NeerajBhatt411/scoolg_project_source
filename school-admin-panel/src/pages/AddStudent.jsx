@@ -1,19 +1,94 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AddStudent = () => {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
+    const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
+    const schoolId = localStorage.getItem('scoolg_school_id'); // Ensure login saves this
+    
+    // Check if missing
+    if (!schoolId) {
+        console.warn("scoolg_school_id not found in localStorage. Submission may fail.");
+    }
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [successData, setSuccessData] = useState(null);
+
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        dateOfBirth: '',
+        gender: '',
+        bloodGroup: '',
+        aadhaarNumber: '',
+        religionOrCategory: '',
+        fatherName: '',
+        motherName: '',
+        primaryContact: '',
+        parentEmail: '',
+        currentAddress: '',
+        class: '',
+        section: '',
+        admissionNumber: '',
+        dateOfAdmission: '',
+        profileImageUrl: ''
+    });
+
+    const [previewPhoto, setPreviewPhoto] = useState(null);
 
     const steps = [
         { id: 1, title: 'Personal' },
         { id: 2, title: 'Parents' },
         { id: 3, title: 'Academic' },
-        { id: 4, title: 'Address' }
+        { id: 4, title: 'Review' }
     ];
 
-    const handleNext = () => {
-        if (currentStep < 4) setCurrentStep(currentStep + 1);
+    const handleInputChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setPreviewPhoto(URL.createObjectURL(file));
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, profileImageUrl: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleNext = async () => {
+        if (currentStep < 4) {
+            setCurrentStep(currentStep + 1);
+        } else {
+            // Step 4 = Submit
+            if (!schoolId) {
+                alert("School ID is missing. Please log in again.");
+                return;
+            }
+            setIsLoading(true);
+            try {
+                // Ensure we use the proper API BASE URL 
+                const API_URL = 'https://scoolg-backend.netlify.app/api/admin/students';
+                const res = await axios.post(API_URL, {
+                    ...formData,
+                    schoolId
+                });
+                if (res.data && res.data.appCredentials) {
+                    setSuccessData(res.data);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to register student. Check console or make sure all required * fields are filled.");
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     const handleBack = () => {
@@ -32,30 +107,15 @@ const AddStudent = () => {
                     <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-[#1e293b] tracking-tight">New Student Admission</h2>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-                    <div className="relative group hidden sm:block">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-                        <input
-                            className="w-48 xl:w-64 h-10 pl-10 pr-4 rounded-xl border-none bg-slate-100 focus:ring-2 focus:ring-[#2563eb]/40 focus:bg-white transition-all text-xs font-semibold placeholder-slate-400"
-                            placeholder="Global Search..."
-                            type="text"
-                        />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button className="h-10 w-10 flex items-center justify-center bg-transparent hover:bg-slate-100 transition-colors rounded-full text-slate-600">
-                            <span className="material-symbols-outlined text-[20px]">notifications</span>
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[11px] font-bold text-slate-800">Admin Portal</p>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Super Admin</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-slate-200 shadow-sm cursor-pointer">
-                                <img
-                                    alt="Admin Avatar"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-[11px] font-bold text-slate-800" title={schoolName}>
+                                {schoolName.length > 20 ? schoolName.substring(0, 18) + '...' : schoolName}
+                            </p>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">School Admin</p>
+                        </div>
+                        <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-slate-500">
+                            <span className="material-symbols-outlined text-xl">account_circle</span>
                         </div>
                     </div>
                 </div>
@@ -70,7 +130,7 @@ const AddStudent = () => {
                         {/* Connecting Line behind steps */}
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-slate-200 z-0"></div>
                         
-                        {steps.map((step, index) => {
+                        {steps.map((step) => {
                             const isCompleted = step.id < currentStep;
                             const isActive = step.id === currentStep;
 
@@ -100,126 +160,205 @@ const AddStudent = () => {
 
                 <div className="h-6"></div> {/* Spacer for step titles */}
 
-                {/* Form Card content */}
-                <div className="bg-white rounded-[24px] p-6 lg:p-10 premium-shadow">
-                    <div className="flex flex-col lg:flex-row gap-10">
-                        {/* Left Profile Upload Area */}
-                        <div className="flex flex-col items-center mx-auto lg:mx-0 w-full lg:w-[220px] shrink-0 pt-4">
-                            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#f8fafc] flex flex-col items-center justify-center border-2 border-dashed border-[#94a3b8] group cursor-pointer hover:bg-slate-50 transition-colors">
-                                <span className="material-symbols-outlined text-4xl text-[#3b82f6] mb-1 group-hover:scale-110 transition-transform disabled">add_a_photo</span>
-                                <span className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-wider">Upload</span>
-                                <button className="absolute bottom-1 right-1 md:bottom-2 md:right-2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#2563eb] text-white flex items-center justify-center border-[3px] border-white shadow-md hover:scale-105 transition-transform z-10">
-                                    <span className="material-symbols-outlined text-[16px] md:text-[20px]">edit</span>
-                                </button>
+                {/* SUCCESS MESSAGE UI */}
+                {successData ? (
+                    <div className="bg-white rounded-[24px] p-6 lg:p-12 premium-shadow text-center">
+                        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span className="material-symbols-outlined text-4xl">check_circle</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Student Admitted Successfully!</h2>
+                        <p className="text-slate-500 font-medium mb-8">The student portal credentials have been generated automatically.</p>
+                        
+                        <div className="max-w-sm mx-auto bg-slate-50 border border-slate-200 p-6 rounded-2xl text-left shadow-inner">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Portal Credentials</h4>
+                            
+                            <div className="mb-4">
+                                <span className="text-[10px] text-slate-500 font-bold block mb-1">APP ID / LOGIN ID</span>
+                                <div className="text-lg font-black text-slate-800 tracking-wider font-mono">{successData.appCredentials.studentAppId}</div>
                             </div>
-                            <div className="text-center mt-6">
-                                <h4 className="text-[15px] font-black text-slate-800">Student Photo</h4>
-                                <p className="text-[10px] font-semibold text-slate-500 mt-1 leading-relaxed">JPG, PNG up to 2MB<br/>(1:1 Ratio Preferred)</p>
+                            
+                            <div className="mb-2">
+                                <span className="text-[10px] text-slate-500 font-bold block mb-1">PASSWORD</span>
+                                <div className="text-lg font-black text-blue-600 tracking-wider font-mono">{successData.appCredentials.password}</div>
                             </div>
                         </div>
 
-                        {/* Right Input Form Grid */}
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
-                                <input type="text" placeholder="John Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date Of Birth</label>
-                                <div className="relative">
-                                    <input type="text" placeholder="mm/dd/yyyy" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender</label>
-                                <div className="relative">
-                                    <select className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 appearance-none outline-none">
-                                        <option value="" disabled selected className="text-slate-400">Select Gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Blood Group</label>
-                                <div className="relative">
-                                    <select className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-400 appearance-none outline-none">
-                                        <option value="" disabled selected>Select Group</option>
-                                        <option value="A+">A+</option>
-                                        <option value="A-">A-</option>
-                                        <option value="B+">B+</option>
-                                        <option value="O+">O+</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Aadhar Number</label>
-                                <input type="text" placeholder="0000 0000 0000" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Religion</label>
-                                <input type="text" placeholder="Enter Religion" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 placeholder-slate-400 outline-none" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
-                                <div className="relative">
-                                    <select className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 appearance-none outline-none">
-                                        <option value="General">General</option>
-                                        <option value="OBC">OBC</option>
-                                        <option value="SC/ST">SC/ST</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">expand_more</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Nationality</label>
-                                <input type="text" value="Indian" readOnly className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-100 text-sm font-bold text-slate-600 outline-none focus:outline-none pointer-events-none" />
-                            </div>
+                        <div className="mt-8">
+                            <button 
+                                onClick={() => navigate('/students')}
+                                className="px-8 py-3 bg-[#2563eb] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95"
+                            >
+                                Back to Directory
+                            </button>
                         </div>
                     </div>
+                ) : (
+                    /* Form Card content */
+                    <div className="bg-white rounded-[24px] p-6 lg:p-10 premium-shadow">
+                        <div className="flex flex-col lg:flex-row gap-10">
+                            
+                            {/* Left Profile Upload Area (Only for Step 1) */}
+                            {currentStep === 1 && (
+                                <div className="flex flex-col items-center mx-auto lg:mx-0 w-full lg:w-[220px] shrink-0 pt-4">
+                                    <label htmlFor="photoUpload" className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#f8fafc] flex flex-col items-center justify-center border-2 border-dashed border-[#94a3b8] group cursor-pointer hover:bg-slate-50 transition-colors overflow-hidden">
+                                        {previewPhoto ? (
+                                            <img src={previewPhoto} alt="Student" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <>
+                                                <span className="material-symbols-outlined text-4xl text-[#3b82f6] mb-1 group-hover:scale-110 transition-transform">add_a_photo</span>
+                                                <span className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-wider">Upload</span>
+                                            </>
+                                        )}
+                                        <input id="photoUpload" type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                                    </label>
+                                    <div className="text-center mt-6">
+                                        <h4 className="text-[15px] font-black text-slate-800">Student Photo</h4>
+                                        <p className="text-[10px] font-semibold text-slate-500 mt-1 leading-relaxed">Optional visual avatar</p>
+                                    </div>
+                                </div>
+                            )}
 
-                    {/* Step Navigation Actions */}
-                    <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-100">
-                        <button 
-                            className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all"
-                            onClick={handleBack}
-                        >
-                            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                            Back
-                        </button>
-                        <button 
-                            className="flex items-center gap-2 px-8 py-3 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95"
-                            onClick={handleNext}
-                        >
-                            {currentStep === 4 ? 'Submit' : 'Next Step'}
-                            <span className="material-symbols-outlined text-[18px]">{currentStep === 4 ? 'check' : 'arrow_forward'}</span>
-                        </button>
-                    </div>
-                </div>
+                            {/* Right Input Form Grid */}
+                            <div className={`flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full ${currentStep !== 1 ? 'lg:col-span-2' : ''}`}>
+                                
+                                {/* --- STEP 1: PERSONAL --- */}
+                                {currentStep === 1 && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">First Name <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input value={formData.firstName} onChange={e=>handleInputChange('firstName', e.target.value)} type="text" placeholder="John" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Last Name <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input value={formData.lastName} onChange={e=>handleInputChange('lastName', e.target.value)} type="text" placeholder="Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
 
-                {/* Support/Help Message Banner */}
-                <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-[24px] p-5 sm:p-6 flex items-start sm:items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-[#2563eb] flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-[18px]">info</span>
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-bold text-[#1e40af] mb-1">Need help?</h4>
-                        <p className="text-[12px] font-medium text-[#1e40af]/80 leading-relaxed max-w-4xl">
-                            Ensure all fields marked with an asterisk are filled before proceeding. You can save your progress at any time by clicking the 'Save Draft' button in the settings menu.
-                        </p>
-                    </div>
-                </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date Of Birth <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="date" value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
 
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <select value={formData.gender} onChange={e=>handleInputChange('gender', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none">
+                                                <option value="" disabled>Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Blood Group</label>
+                                            <select value={formData.bloodGroup} onChange={e=>handleInputChange('bloodGroup', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none">
+                                                <option value="" disabled>Select Group</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Aadhaar / ID Number</label>
+                                            <input type="text" value={formData.aadhaarNumber} onChange={e=>handleInputChange('aadhaarNumber', e.target.value)} placeholder="0000 0000 0000" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* --- STEP 2: PARENTS --- */}
+                                {currentStep === 2 && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Father's Full Name <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.fatherName} onChange={e=>handleInputChange('fatherName', e.target.value)} placeholder="Robert Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Mother's Full Name <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.motherName} onChange={e=>handleInputChange('motherName', e.target.value)} placeholder="Jane Doe" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Primary Phone Number <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="tel" value={formData.primaryContact} onChange={e=>handleInputChange('primaryContact', e.target.value)} placeholder="+91 999 999 9999" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Parent Email (Optional)</label>
+                                            <input type="email" value={formData.parentEmail} onChange={e=>handleInputChange('parentEmail', e.target.value)} placeholder="parent@email.com" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* --- STEP 3: ACADEMIC & ADDRESS --- */}
+                                {currentStep === 3 && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Class/Grade <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.class} onChange={e=>handleInputChange('class', e.target.value)} placeholder="e.g. 10" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Section <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.section} onChange={e=>handleInputChange('section', e.target.value)} placeholder="e.g. A" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Admission Number</label>
+                                            <input type="text" value={formData.admissionNumber} onChange={e=>handleInputChange('admissionNumber', e.target.value)} placeholder="0000000 (Optional)" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date of Admission <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="date" value={formData.dateOfAdmission} onChange={e=>handleInputChange('dateOfAdmission', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Current Address <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <textarea value={formData.currentAddress} onChange={e=>handleInputChange('currentAddress', e.target.value)} rows="3" placeholder="Full residential physical address" className="w-full p-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none resize-none"></textarea>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* --- STEP 4: REVIEW --- */}
+                                {currentStep === 4 && (
+                                    <div className="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                        <h3 className="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Review Details</h3>
+                                        <div className="grid grid-cols-2 gap-4 text-sm font-medium">
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Name</span>{formData.firstName} {formData.lastName}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Class & Sec</span>{formData.class} - {formData.section}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Aadhaar</span>{formData.aadhaarNumber || 'N/A'}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Admission Date</span>{formData.dateOfAdmission || 'N/A'}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Father</span>{formData.fatherName}</div>
+                                            <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Contact</span>{formData.primaryContact}</div>
+                                        </div>
+                                        <p className="mt-4 text-xs text-slate-500">Please review all fields. Upon submission, system will generate login credentials for the student app.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Step Navigation Actions */}
+                        <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-100">
+                            <button 
+                                className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all"
+                                onClick={handleBack}
+                                disabled={isLoading}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                                Back
+                            </button>
+                            <button 
+                                className={`flex items-center gap-2 px-8 py-3 text-white font-bold text-sm rounded-xl hover:shadow-lg transition-all active:scale-95 ${currentStep === 4 ? 'bg-green-600 hover:shadow-green-500/30' : 'bg-[#2563eb] hover:shadow-blue-500/30'}`}
+                                onClick={handleNext}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Processing...' : (currentStep === 4 ? 'Confirm & Admit' : 'Next Step')}
+                                {!isLoading && <span className="material-symbols-outlined text-[18px]">{currentStep === 4 ? 'check' : 'arrow_forward'}</span>}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
