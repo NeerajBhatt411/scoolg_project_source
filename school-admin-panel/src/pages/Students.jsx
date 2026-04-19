@@ -1,207 +1,206 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Filter, 
-  MoreHorizontal, 
-  ChevronRight, 
-  Calendar, 
-  BadgeCheck,
-  UserCheck,
-  ArrowUpRight,
-  ChevronDown
-} from 'lucide-react';
 
 const Students = () => {
     const navigate = useNavigate();
-    const { students, loadingStudents, refreshStudents } = useAdmin();
-    
+    const { students, loadingStudents, stats, refreshStudents } = useAdmin();
+
     // Filters
     const [classFilter, setClassFilter] = useState('All');
     const [sectionFilter, setSectionFilter] = useState('All');
 
     useEffect(() => {
+        // Silent refresh every time we land here
         refreshStudents(true);
     }, []);
 
     const filteredStudents = students.filter(student => {
-        const matchesClass = classFilter === 'All' || student.class === classFilter;
-        const matchesSection = sectionFilter === 'All' || student.section === sectionFilter;
-        return matchesClass && matchesSection;
+        if (classFilter !== 'All' && student.class !== classFilter) return false;
+        if (sectionFilter !== 'All' && student.section !== sectionFilter) return false;
+        return true;
     });
 
-    // Unique classes and sections for filters
-    const classes = ['All', ...new Set(students.map(s => s.class))].sort();
-    const sections = ['All', ...new Set(students.map(s => s.section))].sort();
+    const uniqueClasses = ['All', ...new Set(students.map(s => s.class).filter(Boolean))];
+    const uniqueSections = ['All', ...new Set(students.map(s => s.section).filter(Boolean))];
 
     return (
-        <div className="animate-fade-in p-4 md:p-10 max-w-7xl mx-auto space-y-8">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Student Directory</h2>
-                    <p className="text-slate-500 font-medium text-sm flex items-center gap-1.5">
-                        <Users size={14} />
-                        {students.length} Total Enrolled Students
-                    </p>
+        <>
+            {/* TopNavBar Component */}
+            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
+                <div className="flex items-center justify-between w-full md:w-auto">
+                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Students</h2>
                 </div>
-                
-                <button 
-                  onClick={() => navigate('/add-student')}
-                  className="btn-premium"
-                >
-                  <Plus size={18} />
-                  New Admission
-                </button>
-            </div>
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64 group">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                        <input
+                            className="w-full h-10 pl-10 pr-4 rounded-xl border-none bg-surface-container-high focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all text-xs font-semibold"
+                            placeholder="Find student..."
+                            type="text"
+                        />
+                    </div>
+                </div>
+            </header>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bento-card p-6 flex items-center gap-5 border-l-4 border-indigo-500">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
-                        <UserCheck size={24} />
+            {/* Content Canvas */}
+            <div className="p-4 sm:p-8 space-y-6 max-w-full relative z-0">
+                {/* Page Actions Row */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-3 rounded-2xl">
+                            <span className="material-symbols-outlined text-primary">group</span>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold">{stats.total} Total Students</h3>
+                            <p className="text-sm text-on-surface-variant font-medium">Active Enrolled</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.05em]">Attendance Today</p>
-                        <h4 className="text-2xl font-black text-slate-800">92%</h4>
-                    </div>
-                </div>
-                <div className="bento-card p-6 flex items-center gap-5 border-l-4 border-rose-500">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-sm">
-                        <Calendar size={24} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.05em]">Fee Pending</p>
-                        <h4 className="text-2xl font-black text-slate-800">12%</h4>
-                    </div>
-                </div>
-                <div className="bento-card p-6 flex items-center gap-5 border-l-4 border-emerald-500">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
-                        <BadgeCheck size={24} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.05em]">New Admissions</p>
-                        <h4 className="text-2xl font-black text-slate-800">1.4k</h4>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters Bar */}
-            <div className="bento-card bg-slate-50/50 p-4 flex flex-col md:flex-row gap-4 border-slate-200">
-                <div className="relative flex-1 group">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Search name, ID or guardian..." 
-                      className="w-full h-12 pl-11 pr-4 bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/10 transition-all font-semibold text-sm text-slate-700"
-                    />
-                </div>
-                
-                <div className="flex gap-3">
-                    <div className="relative min-w-[140px]">
-                        <select 
-                          value={classFilter} 
-                          onChange={(e) => setClassFilter(e.target.value)}
-                          className="w-full h-12 px-4 appearance-none bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/10 font-bold text-xs text-slate-700 cursor-pointer"
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                        <button
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+                            onClick={() => navigate('/students/add')}
                         >
-                            {classes.map(c => <option key={c} value={c}>{c === 'All' ? 'All Classes' : `Grade ${c}`}</option>)}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <span className="material-symbols-outlined">add</span>
+                            Add Student
+                        </button>
                     </div>
-                    
-                    <button className="h-12 w-12 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-indigo-600 transition-all active:scale-95 shadow-sm">
-                        <Filter size={20} />
+                </div>
+
+                {/* Filter Bar */}
+                <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Class</label>
+                        <select
+                            value={classFilter}
+                            onChange={(e) => setClassFilter(e.target.value)}
+                            className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none"
+                        >
+                            {uniqueClasses.map(c => <option key={c} value={c}>{c === 'All' ? 'All Classes' : c}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Section</label>
+                        <select
+                            value={sectionFilter}
+                            onChange={(e) => setSectionFilter(e.target.value)}
+                            className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none"
+                        >
+                            {uniqueSections.map(s => <option key={s} value={s}>{s === 'All' ? 'All Sections' : s}</option>)}
+                        </select>
+                    </div>
+                    <div className="hidden lg:block space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Status</label>
+                        <select className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none">
+                            <option>Active</option>
+                        </select>
+                    </div>
+                    <button className="mt-auto h-11 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2 justify-center" onClick={() => { setClassFilter('All'); setSectionFilter('All'); }}>
+                        <span className="material-symbols-outlined text-[18px]">clear</span>
+                        Clear Filters
                     </button>
                 </div>
-            </div>
 
-            {/* Table Area */}
-            <div className="bento-card shadow-2xl shadow-indigo-100 border-none overflow-hidden h-[600px] flex flex-col">
-                <div className="overflow-x-auto h-full flex flex-col">
-                    <table className="w-full border-collapse">
-                        <thead className="bg-slate-50 sticky top-0 z-10">
-                            <tr className="text-[11px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">
-                                <th className="px-8 py-5 text-left">Elite Member</th>
-                                <th className="px-8 py-5 text-left">Academic Unit</th>
-                                <th className="px-8 py-5 text-left">Guardian</th>
-                                <th className="px-8 py-5 text-left">ID / Roll</th>
-                                <th className="px-8 py-5 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                            {loadingStudents && students.length === 0 ? (
-                                [...Array(6)].map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                      <td colSpan={5} className="px-8 py-6 h-[80px]">
-                                          <div className="h-4 bg-slate-100 rounded-full w-full opacity-50"></div>
-                                      </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                filteredStudents.map((student) => (
-                                    <tr 
-                                      key={student.id} 
-                                      className="group hover:bg-slate-50 transition-all cursor-pointer"
-                                      onClick={() => navigate(`/student/${student.id || student._id}`)}
-                                    >
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-11 h-11 rounded-2xl bg-indigo-50 flex-shrink-0 flex items-center justify-center border border-indigo-100/50 shadow-sm overflow-hidden transform group-hover:scale-105 transition-transform">
-                                                    <img 
-                                                      src={student.profileImageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.firstName}`} 
-                                                      alt={student.firstName} 
-                                                      className="w-full h-full object-cover"
-                                                    />
+                {/* Data Table Card */}
+                <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden max-w-full">
+                    <div className="overflow-x-auto w-full">
+                        <table className="w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                                <tr className="bg-surface-container-low/50">
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden sm:table-cell">#</th>
+                                    <th className="px-4 sm:px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Student</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Roll No</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Class</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden lg:table-cell">Father's Name</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden md:table-cell">Date of Birth</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider text-center">Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-outline-variant/10">
+                                {loadingStudents && students.length === 0 ? (
+                                    [...Array(5)].map((_, i) => (
+                                        <tr key={i}>
+                                            <td className="px-6 py-5 hidden sm:table-cell"><div className="h-4 w-4 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse"></div>
+                                                    <div className="space-y-2">
+                                                        <div className="h-3 w-32 bg-slate-100 animate-pulse rounded"></div>
+                                                        <div className="h-2 w-16 bg-slate-100 animate-pulse rounded"></div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-[15px] font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors uppercase">{student.firstName} {student.lastName}</p>
-                                                    <p className="text-[11px] font-bold text-slate-500 mt-0.5">{student.gender}</p>
+                                            </td>
+                                            <td className="px-6 py-5"><div className="h-3 w-16 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5 hidden lg:table-cell"><div className="h-3 w-28 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5 hidden md:table-cell"><div className="h-3 w-24 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5"><div className="h-3 w-20 bg-slate-100 animate-pulse rounded mx-auto"></div></td>
+                                        </tr>
+                                    ))
+                                ) : filteredStudents.length === 0 ? (
+                                    <tr><td colSpan="6" className="text-center py-10 font-bold text-slate-400 font-bold">No students found</td></tr>
+                                ) : (
+                                    filteredStudents.map((student, index) => (
+                                        <tr
+                                            key={student._id}
+                                            className="group hover:bg-[#f8fafc] transition-colors cursor-pointer"
+                                            onClick={() => navigate('/students/profile', { state: { student } })}
+                                        >
+                                            <td className="px-6 py-5 text-sm font-bold text-outline hidden sm:table-cell">
+                                                {String(index + 1).padStart(2, '0')}
+                                            </td>
+
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center font-bold text-slate-500 overflow-hidden">
+                                                        {student.profileImageUrl ? (
+                                                            <img src={student.profileImageUrl} alt="avatar" className="w-full h-full object-cover" />
+                                                        ) : student.firstName?.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-on-surface">{student.firstName} {student.lastName}</p>
+                                                        <p className="text-[11px] font-medium text-on-surface-variant">ID: {student.studentAppId}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex flex-col">
-                                                <span className="text-[13px] font-black text-slate-700">Class {student.class} - {student.section}</span>
-                                                <span className="text-[10px] font-bold text-slate-400">Batch 2024</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-700">{student.fatherName}</span>
-                                                <span className="text-[11px] font-bold text-slate-400 italic">Guardian</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-black rounded-lg">#{student.rollNumber || 'NA'}</span>
-                                                <span className="text-[10px] font-black text-slate-400">{student.studentAppId || 'SID000'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <button className="h-9 w-9 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-white border border-transparent hover:border-indigo-100 transition-all group-hover:shadow-sm">
-                                                <ArrowUpRight size={18} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td className="px-6 py-5"><span className="text-sm font-bold text-blue-600">#{student.rollNumber || 'NA'}</span></td>
+                                            <td className="px-6 py-5"><span className="text-sm font-semibold">{student.class} - Sec {student.section}</span></td>
+                                            <td className="px-6 py-5 hidden lg:table-cell"><span className="text-sm font-medium text-on-surface-variant">{student.fatherName}</span></td>
+                                            <td className="px-6 py-5 hidden md:table-cell"><span className="text-sm font-medium text-on-surface-variant">
+                                                {new Date(student.dateOfBirth).toLocaleDateString()}
+                                            </span></td>
+
+                                            <td className="px-6 py-5 text-center">
+                                                <span className="text-sm font-bold text-slate-600">{student.primaryContact}</span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                
-                {/* Custom Pagination Style */}
-                <div className="mt-auto bg-slate-50/50 p-6 flex flex-col md:flex-row justify-between items-center border-t border-slate-100 gap-4">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Page 1 of 24 • Showing 10-25</p>
-                    <div className="flex gap-2">
-                        <button className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[11px] font-black uppercase text-slate-500 hover:bg-slate-50 transition-all">Previous</button>
-                        <button className="px-6 py-2.5 bg-slate-900 border border-slate-900 rounded-xl text-[11px] font-black uppercase text-white hover:bg-slate-800 transition-all shadow-lg active:scale-95">Next</button>
+
+                {/* Dashboard Stats Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1 bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex flex-col justify-between h-40">
+                        <span className="material-symbols-outlined text-primary text-3xl">male</span>
+                        <div>
+                            <p className="text-2xl font-extrabold">{stats.male}</p>
+                            <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Male Students</p>
+                        </div>
+                    </div>
+                    <div className="md:col-span-1 bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex flex-col justify-between h-40">
+                        <span className="material-symbols-outlined text-rose-500 text-3xl">female</span>
+                        <div>
+                            <p className="text-2xl font-extrabold">{stats.female}</p>
+                            <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Female Students</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div className="mt-auto h-12"></div>
+        </>
     );
 };
 
