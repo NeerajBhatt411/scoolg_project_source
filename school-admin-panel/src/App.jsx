@@ -3,6 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
+import AddStudent from './pages/AddStudent';
+import Teachers from './pages/Teachers';
+import AddTeacher from './pages/AddTeacher';
+import Timetable from './pages/Timetable';
+import Classes from './pages/Classes';
+import Attendance from './pages/Attendance';
+import Exams from './pages/Exams';
+import Notices from './pages/Notices';
 import ComingSoon from './components/ComingSoon';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
@@ -54,28 +62,36 @@ function App() {
                     element={<ProtectedRoute><Students /></ProtectedRoute>}
                 />
                 <Route
+                    path="/students/add"
+                    element={<ProtectedRoute><AddStudent /></ProtectedRoute>}
+                />
+                <Route
                     path="/teachers"
-                    element={<ProtectedRoute><ComingSoon title="Teachers" subtitle="We are working on the teacher module." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Teachers /></ProtectedRoute>}
+                />
+                <Route
+                    path="/teachers/add"
+                    element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
                 />
                 <Route
                     path="/classes"
-                    element={<ProtectedRoute><ComingSoon title="Classes" subtitle="We are working on the classes module." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Classes /></ProtectedRoute>}
                 />
                 <Route
                     path="/timetable"
-                    element={<ProtectedRoute><ComingSoon title="Timetable" subtitle="We are working on the timetable module." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Timetable /></ProtectedRoute>}
                 />
                 <Route
                     path="/attendance"
-                    element={<ProtectedRoute><ComingSoon title="Attendance" subtitle="We are working on attendance insights." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Attendance /></ProtectedRoute>}
                 />
                 <Route
                     path="/exams"
-                    element={<ProtectedRoute><ComingSoon title="Exams" subtitle="We are working on the exams module." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Exams /></ProtectedRoute>}
                 />
                 <Route
                     path="/notices"
-                    element={<ProtectedRoute><ComingSoon title="Notices" subtitle="We are working on notices and announcements." /></ProtectedRoute>}
+                    element={<ProtectedRoute><Notices /></ProtectedRoute>}
                 />
                 <Route
                     path="/roles"
