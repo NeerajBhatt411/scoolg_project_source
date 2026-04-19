@@ -453,20 +453,34 @@ router.get('/admin/students', async (req, res) => {
 router.get('/admin/dashboard-stats/:schoolId', async (req, res) => {
     try {
         await connectToDB();
-        const school = await School.findOne({ id: req.params.schoolId });
-        if (!school) return res.status(404).json({ error: "School not found" });
+        const schoolIdParam = req.params.schoolId;
+        console.log("Fetching stats for schoolId:", schoolIdParam);
 
-        const studentCount = await Student.countDocuments({ schoolId: school._id });
+        const school = await School.findOne({ id: schoolIdParam });
+        if (!school) {
+            console.warn("School not found for stats:", schoolIdParam);
+            return res.status(404).json({ error: "School not found" });
+        }
+
+        console.log("Found school:", school.formData?.schoolName, "ObjectId:", school._id);
+
+        // Try counting by both MongoDB _id and the custom 'id' string for backward compatibility
+        const studentCount = await Student.countDocuments({ 
+            $or: [
+                { schoolId: school._id },
+                { schoolId: school.id }
+            ]
+        });
+        console.log("Robust Student Count:", studentCount);
         
-        // Mocking teachers and classes counts for now as they are coming in next modules
-        // But making student count REAL
         res.json({
             students: studentCount,
-            teachers: 12, // Placeholder
-            classes: 8,   // Placeholder
-            activeNotices: 4
+            teachers: 0, 
+            classes: 0,  
+            activeNotices: 0
         });
     } catch (err) {
+        console.error("Dashboard stats error:", err);
         res.status(500).json({ error: "Failed to fetch stats" });
     }
 });

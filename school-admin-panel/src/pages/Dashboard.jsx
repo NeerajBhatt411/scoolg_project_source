@@ -13,6 +13,7 @@ const Dashboard = () => {
             if (!schoolId) return;
             try {
                 const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/dashboard-stats/${schoolId}`);
+                console.log("Dashboard Stats Response:", res.data);
                 setStats(res.data);
             } catch (err) {
                 console.error("Failed to fetch dashboard stats", err);
