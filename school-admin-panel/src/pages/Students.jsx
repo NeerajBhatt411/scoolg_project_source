@@ -109,6 +109,7 @@ const Students = () => {
                                 <tr className="bg-surface-container-low/50">
                                     <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden sm:table-cell">#</th>
                                     <th className="px-4 sm:px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Student</th>
+                                    <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Roll No</th>
                                     <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider">Class</th>
                                     <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden lg:table-cell">Father's Name</th>
                                     <th className="px-6 py-4 text-[10px] uppercase font-extrabold text-on-surface-variant tracking-wider hidden md:table-cell">Date of Birth</th>
@@ -161,6 +162,7 @@ const Students = () => {
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-5"><span className="text-sm font-bold text-blue-600">#{student.rollNumber || 'NA'}</span></td>
                                             <td className="px-6 py-5"><span className="text-sm font-semibold">{student.class} - Sec {student.section}</span></td>
                                             <td className="px-6 py-5 hidden lg:table-cell"><span className="text-sm font-medium text-on-surface-variant">{student.fatherName}</span></td>
                                             <td className="px-6 py-5 hidden md:table-cell"><span className="text-sm font-medium text-on-surface-variant">

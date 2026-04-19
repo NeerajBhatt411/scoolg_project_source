@@ -109,7 +109,7 @@ const StudentProfile = () => {
                         </div>
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 mt-2">
                             <span className="material-symbols-outlined text-[18px]">badge</span>
-                            ID: {student.studentAppId || student.admissionNumber}
+                            ID: {student.studentAppId} <span className="mx-2 text-slate-300">|</span> Roll: {student.rollNumber}
                         </div>
                     </div>
                 </div>

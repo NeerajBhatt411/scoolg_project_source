@@ -349,7 +349,7 @@ const StudentSchema = new mongoose.Schema({
     password: { type: String, required: true },
     isPasswordChanged: { type: Boolean, default: false },
     admissionNumber: { type: String },
-    rollNumber: { type: String },
+    rollNumber: { type: String, required: true },
     class: { type: String, required: true },
     section: { type: String, required: true },
     academicYear: { type: String, default: "2023-2024" },
