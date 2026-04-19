@@ -15,7 +15,8 @@ import {
   Key,
   Copy,
   ArrowRight,
-  ClipboardList
+  ClipboardList,
+  Megaphone
 } from 'lucide-react';
 
 const Dashboard = () => {
