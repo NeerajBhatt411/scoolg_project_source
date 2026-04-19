@@ -377,17 +377,34 @@ const Student = mongoose.models.Student || mongoose.model('Student', StudentSche
 router.post('/admin/students', async (req, res) => {
     try {
         await connectToDB();
-        const { schoolId } = req.body;
+        const { schoolId, dateOfBirth } = req.body;
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
 
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
         const count = await Student.countDocuments({ schoolId: school._id });
-        const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1001}`;
         
-        const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const plainPassword = `PASS-${randomSuffix}`;
+        // Format ID like: gaj15611001
+        const campusStr = (school.campusCode || 'sch').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const studentAppId = `${campusStr}${count + 1001}`;
+        
+        // Default password = DDMMYYYY
+        let plainPassword = "password123"; // Fallback
+        if (dateOfBirth) {
+            try {
+                const dob = new Date(dateOfBirth);
+                const d = String(dob.getDate()).padStart(2, '0');
+                const m = String(dob.getMonth() + 1).padStart(2, '0');
+                const y = dob.getFullYear();
+                if (!isNaN(y)) {
+                    plainPassword = `${d}${m}${y}`;
+                }
+            } catch (e) {
+                console.warn("Could not parse date of birth for password generation");
+            }
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
