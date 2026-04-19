@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Students = () => {
+    const navigate = useNavigate();
+
     return (
         <>
             {/* TopNavBar Component (same as Dashboard) */}
@@ -50,7 +53,10 @@ const Students = () => {
                             <span className="material-symbols-outlined text-[20px]">ios_share</span>
                             Export CSV
                         </button>
-                        <button className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto">
+                        <button 
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+                            onClick={() => navigate('/students/add')}
+                        >
                             <span className="material-symbols-outlined">add</span>
                             Add Student
                         </button>
