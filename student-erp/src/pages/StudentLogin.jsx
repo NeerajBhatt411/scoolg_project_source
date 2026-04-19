@@ -91,6 +91,9 @@ const StudentLogin = () => {
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-800 font-bold focus:outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:font-medium placeholder:text-slate-300"
                         />
                     </div>
+                    <p className="text-[10px] text-slate-400 font-bold mt-2 ml-1 italic flex items-center gap-1">
+                        💡 Hint: Use your Date of Birth in DDMMYYYY format
+                    </p>
                 </div>
 
                 {error && <p className="text-red-500 text-sm font-bold text-center bg-red-50 py-2 rounded-xl border border-red-100">{error}</p>}
