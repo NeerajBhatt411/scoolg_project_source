@@ -4,7 +4,7 @@ import { useAdmin } from '../context/AdminContext';
 
 const Students = () => {
     const navigate = useNavigate();
-    const { students, loadingStudents, stats, refreshStudents } = useAdmin();
+    const { students, loadingStudents, stats, loadingStats, refreshStudents } = useAdmin();
 
     // Filters
     const [classFilter, setClassFilter] = useState('All');
@@ -23,6 +23,10 @@ const Students = () => {
 
     const uniqueClasses = ['All', ...new Set(students.map(s => s.class).filter(Boolean))];
     const uniqueSections = ['All', ...new Set(students.map(s => s.section).filter(Boolean))];
+
+    const Shimmer = ({ className }) => (
+        <div className={`animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg ${className}`}></div>
+    );
 
     return (
         <>
@@ -52,7 +56,11 @@ const Students = () => {
                             <span className="material-symbols-outlined text-primary">group</span>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold">{stats.total} Total Students</h3>
+                            {loadingStats && !stats ? (
+                                <Shimmer className="h-6 w-32" />
+                            ) : (
+                                <h3 className="text-xl font-bold">{stats?.total || 0} Total Students</h3>
+                            )}
                             <p className="text-sm text-on-surface-variant font-medium">Active Enrolled</p>
                         </div>
                     </div>
@@ -118,26 +126,29 @@ const Students = () => {
                             </thead>
                             <tbody className="divide-y divide-outline-variant/10">
                                 {loadingStudents && students.length === 0 ? (
-                                    [...Array(5)].map((_, i) => (
+                                    [...Array(6)].map((_, i) => (
                                         <tr key={i}>
-                                            <td className="px-6 py-5 hidden sm:table-cell"><div className="h-4 w-4 bg-slate-100 animate-pulse rounded"></div></td>
+                                            <td className="px-6 py-5 hidden sm:table-cell">
+                                                <Shimmer className="h-4 w-4" />
+                                            </td>
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse"></div>
+                                                    <Shimmer className="h-10 w-10 rounded-full" />
                                                     <div className="space-y-2">
-                                                        <div className="h-3 w-32 bg-slate-100 animate-pulse rounded"></div>
-                                                        <div className="h-2 w-16 bg-slate-100 animate-pulse rounded"></div>
+                                                        <Shimmer className="h-3 w-32" />
+                                                        <Shimmer className="h-2 w-20" />
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5"><div className="h-3 w-16 bg-slate-100 animate-pulse rounded"></div></td>
-                                            <td className="px-6 py-5 hidden lg:table-cell"><div className="h-3 w-28 bg-slate-100 animate-pulse rounded"></div></td>
-                                            <td className="px-6 py-5 hidden md:table-cell"><div className="h-3 w-24 bg-slate-100 animate-pulse rounded"></div></td>
-                                            <td className="px-6 py-5"><div className="h-3 w-20 bg-slate-100 animate-pulse rounded mx-auto"></div></td>
+                                            <td className="px-6 py-5"><Shimmer className="h-3 w-12" /></td>
+                                            <td className="px-6 py-5"><Shimmer className="h-3 w-20" /></td>
+                                            <td className="px-6 py-5 hidden lg:table-cell"><Shimmer className="h-3 w-28" /></td>
+                                            <td className="px-6 py-5 hidden md:table-cell"><Shimmer className="h-3 w-24" /></td>
+                                            <td className="px-6 py-5"><Shimmer className="h-3 w-24 mx-auto" /></td>
                                         </tr>
                                     ))
                                 ) : filteredStudents.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center py-10 font-bold text-slate-400 font-bold">No students found</td></tr>
+                                    <tr><td colSpan="7" className="text-center py-10 font-bold text-slate-400">No students found</td></tr>
                                 ) : (
                                     filteredStudents.map((student, index) => (
                                         <tr
@@ -185,14 +196,22 @@ const Students = () => {
                     <div className="md:col-span-1 bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex flex-col justify-between h-40">
                         <span className="material-symbols-outlined text-primary text-3xl">male</span>
                         <div>
-                            <p className="text-2xl font-extrabold">{stats.male}</p>
+                            {loadingStats && !stats ? (
+                                <Shimmer className="h-8 w-16 mb-2" />
+                            ) : (
+                                <p className="text-2xl font-extrabold">{stats?.male || 0}</p>
+                            )}
                             <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Male Students</p>
                         </div>
                     </div>
                     <div className="md:col-span-1 bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex flex-col justify-between h-40">
                         <span className="material-symbols-outlined text-rose-500 text-3xl">female</span>
                         <div>
-                            <p className="text-2xl font-extrabold">{stats.female}</p>
+                            {loadingStats && !stats ? (
+                                <Shimmer className="h-8 w-16 mb-2" />
+                            ) : (
+                                <p className="text-2xl font-extrabold">{stats?.female || 0}</p>
+                            )}
                             <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Female Students</p>
                         </div>
                     </div>
