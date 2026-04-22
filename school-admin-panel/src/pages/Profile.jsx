@@ -50,6 +50,13 @@ const Profile = () => {
 
     if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={48} color="#2563eb" /></div>;
 
+    if (!formData) return (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Profile Not Found</h1>
+            <p style={{ color: '#64748b' }}>We couldn't load your school profile. Please try again later.</p>
+        </div>
+    );
+
     return (
         <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>

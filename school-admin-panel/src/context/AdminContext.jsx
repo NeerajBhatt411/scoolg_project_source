@@ -19,14 +19,21 @@ export const AdminProvider = ({ children }) => {
 
     const refreshStats = async (force = false) => {
         if (!schoolId) return;
-        if (!force && stats) setLoadingStats(false);
+        if (!force && stats) {
+            setLoadingStats(false);
+            return;
+        }
         
         try {
             const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/dashboard-stats/${schoolId}`);
-            setStats(res.data);
-            localStorage.setItem('scoolg_cached_stats', JSON.stringify(res.data));
+            if (res.data) {
+                setStats(res.data);
+                localStorage.setItem('scoolg_cached_stats', JSON.stringify(res.data));
+            }
         } catch (err) {
             console.error("Stats fetch error:", err);
+            // Ensure stats is at least an object to prevent crashes
+            if (!stats) setStats({ total: 0, male: 0, female: 0, students: 0 });
         } finally {
             setLoadingStats(false);
         }
@@ -34,14 +41,19 @@ export const AdminProvider = ({ children }) => {
 
     const refreshStudents = async (force = false) => {
         if (!schoolId) return;
-        if (!force && students.length > 0) setLoadingStudents(false);
+        if (!force && students.length > 0) {
+            setLoadingStudents(false);
+            return;
+        }
 
         try {
             const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/students?schoolId=${schoolId}`);
-            setStudents(res.data);
-            localStorage.setItem('scoolg_cached_students', JSON.stringify(res.data));
+            const data = Array.isArray(res.data) ? res.data : [];
+            setStudents(data);
+            localStorage.setItem('scoolg_cached_students', JSON.stringify(data));
         } catch (err) {
             console.error("Students fetch error:", err);
+            if (students.length === 0) setStudents([]);
         } finally {
             setLoadingStudents(false);
         }
