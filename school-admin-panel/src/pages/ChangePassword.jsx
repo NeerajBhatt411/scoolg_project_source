@@ -60,11 +60,11 @@ const ChangePassword = () => {
 
                 <form onSubmit={handleChangePassword}>
                     <div className="input-container-premium" style={{ marginBottom: '20px' }}>
-                        <Key size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 1 }} />
+                        <Key size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
                         <input 
                             type={showNewPassword ? "text" : "password"} 
-                            className="form-input-minimal" 
-                            style={{ paddingLeft: '48px', height: '56px' }}
+                            className="form-input-premium" 
+                            style={{ paddingLeft: '56px' }}
                             placeholder="New Password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
@@ -73,18 +73,18 @@ const ChangePassword = () => {
                         <button 
                             type="button" 
                             onClick={() => setShowNewPassword(!showNewPassword)}
-                            style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                            className="absolute right-5 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-slate-400"
                         >
                             {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
 
                     <div className="input-container-premium" style={{ marginBottom: '32px' }}>
-                        <Key size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 1 }} />
+                        <Key size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
                         <input 
                             type={showConfirmPassword ? "text" : "password"} 
-                            className="form-input-minimal" 
-                            style={{ paddingLeft: '48px', height: '56px' }}
+                            className="form-input-premium" 
+                            style={{ paddingLeft: '56px' }}
                             placeholder="Confirm New Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -93,7 +93,7 @@ const ChangePassword = () => {
                         <button 
                             type="button" 
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                            className="absolute right-5 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-slate-400"
                         >
                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>

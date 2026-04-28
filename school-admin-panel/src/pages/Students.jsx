@@ -11,8 +11,7 @@ const Students = () => {
     const [sectionFilter, setSectionFilter] = useState('All');
 
     useEffect(() => {
-        // Silent refresh every time we land here
-        refreshStudents(true);
+        refreshStudents();
     }, []);
 
     const filteredStudents = students.filter(student => {
