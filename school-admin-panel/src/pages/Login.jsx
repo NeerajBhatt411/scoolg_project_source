@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Mail, Lock, CheckCircle2, LayoutDashboard, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAdmin } from '../context/AdminContext';
 import logo from '../assets/logo.png';
 import loginBg from '../assets/login-bg.png';
 
@@ -14,6 +15,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { setSchoolId } = useAdmin();
 
     const API_BASE_URL = 'https://scoolg-backend.netlify.app/api/admin';
 
@@ -30,6 +32,9 @@ const Login = () => {
             localStorage.setItem('scoolg_token', token);
             localStorage.setItem('scoolg_school_id', schoolId);
             localStorage.setItem('scoolg_school_name', schoolName);
+
+            // Inform AdminContext about the new schoolId
+            setSchoolId(schoolId);
 
             if (isPasswordChanged === false) {
                 navigate('/change-password');
@@ -76,42 +81,42 @@ const Login = () => {
                     )}
 
                     <form onSubmit={handleLogin}>
-                        <div className="input-group-premium">
-                            <label className="form-label-minimal">Email Address</label>
+                        <div className="input-container-premium">
+                            <Mail size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
                             <input
                                 type="email"
-                                className="form-input-minimal"
-                                placeholder="name@school.edu"
+                                className="form-input-premium"
+                                placeholder="Email Address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                style={{ paddingLeft: '56px' }}
                             />
                         </div>
 
-                        <div className="input-group-premium" style={{ marginBottom: '32px' }}>
-                            <label className="form-label-minimal">Password</label>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    className="form-input-minimal"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
+                        <div className="input-container-premium" style={{ marginBottom: '32px' }}>
+                            <Lock size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="form-input-premium"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                style={{ paddingLeft: '56px' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-5 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-slate-400 flex items-center hover:text-slate-600 transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                         </div>
 
                         <button
                             type="submit"
-                            className="btn-minimal-login"
+                            className="btn-premium-login"
                             disabled={loading}
                         >
                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login to Dashboard'}
