@@ -281,7 +281,8 @@ router.post('/admin/login', async (req, res) => {
             token, 
             schoolId: school.id, 
             schoolName: school.formData.schoolName,
-            isPasswordChanged: school.isPasswordChanged 
+            isPasswordChanged: school.isPasswordChanged,
+            status: school.status
         });
     } catch (err) {
         console.error("❌ Authentication Server Error:", err);
