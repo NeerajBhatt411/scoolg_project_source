@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SchoolProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // AUTO-DETECT API BASE URL
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+        ? 'https://scoolg-backend.netlify.app/api' 
+        : 'https://scoolg-backend.netlify.app/api';
+
     const [school, setSchool] = useState(location.state?.school);
     const [activeTab, setActiveTab] = useState('Overview');
     const [isUpdating, setIsUpdating] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState(school?.formData || {});
 
     if (!school) {
         return (
@@ -18,7 +25,7 @@ const SchoolProfile = () => {
         );
     }
 
-    const tabs = ['Overview', 'Contact Info', 'Gallery', 'Statistics', 'Advanced'];
+    const tabs = ['Overview', 'Contact Info', 'Academic', 'Gallery', 'Advanced'];
     const isActive = school.status !== 'PENDING' && school.status !== 'SUSPENDED' && school.status !== 'INACTIVE';
 
     const handleStatusChange = async (newStatus) => {
@@ -26,7 +33,7 @@ const SchoolProfile = () => {
         
         setIsUpdating(true);
         try {
-            const res = await fetch(`https://scoolg-backend.netlify.app/api/superadmin/schools/${school.id}/status`, {
+            const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -34,13 +41,35 @@ const SchoolProfile = () => {
             if (res.ok) {
                 const updatedSchool = await res.json();
                 setSchool(updatedSchool.school);
-                alert(`Status updated to ${newStatus}`);
             } else {
                 alert("Failed to update status");
             }
         } catch (error) {
             console.error("Status update error", error);
-            alert("Error updating status");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        setIsUpdating(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/onboarding/update/${school.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ formData: editData })
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setSchool(updated.data);
+                setIsEditing(false);
+                alert('School profile updated successfully!');
+            } else {
+                alert('Failed to update profile.');
+            }
+        } catch (error) {
+            console.error("Save error", error);
+            alert("Error saving data.");
         } finally {
             setIsUpdating(false);
         }
@@ -49,7 +78,7 @@ const SchoolProfile = () => {
     const handleDelete = async () => {
         setIsUpdating(true);
         try {
-            const res = await fetch(`https://scoolg-backend.netlify.app/api/superadmin/schools/${school.id}`, {
+            const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -60,12 +89,37 @@ const SchoolProfile = () => {
             }
         } catch (error) {
             console.error("Deletion error", error);
-            alert("Error deleting school.");
             setShowDeleteModal(false);
         } finally {
             setIsUpdating(false);
         }
     };
+
+    const InputField = ({ label, value, onChange, type = "text", placeholder = "" }) => (
+        <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{label}</label>
+            <input 
+                type={type}
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="w-full bg-surface-container/50 border border-border/50 rounded-2xl px-5 py-3.5 text-sm font-bold text-text focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none"
+            />
+        </div>
+    );
+
+    const TextAreaField = ({ label, value, onChange, placeholder = "" }) => (
+        <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">{label}</label>
+            <textarea 
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                rows={3}
+                className="w-full bg-surface-container/50 border border-border/50 rounded-2xl px-5 py-3.5 text-sm font-bold text-text focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none resize-none"
+            />
+        </div>
+    );
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1400px] mx-auto pb-20 relative bg-background">
@@ -103,6 +157,13 @@ const SchoolProfile = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                    <button 
+                        onClick={() => setIsEditing(!isEditing)}
+                        className={`px-6 py-3 font-black rounded-2xl flex items-center gap-2 transition-all text-xs uppercase tracking-widest ${isEditing ? 'bg-primary text-on-primary' : 'bg-surface-container hover:bg-surface-container-high text-text'}`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">{isEditing ? 'visibility' : 'edit'}</span> 
+                        {isEditing ? 'View Profile' : 'Edit Profile'}
+                    </button>
                     {isActive ? (
                         <button 
                             disabled={isUpdating}
@@ -130,327 +191,370 @@ const SchoolProfile = () => {
                 </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="relative bg-surface rounded-[40px] shadow-2xl border border-border overflow-hidden flex flex-col min-h-[700px]">
-                
-                {/* Tabs */}
-                <div className="flex items-center gap-6 px-10 border-b border-border bg-surface-container/10 pt-2 overflow-x-auto custom-scrollbar">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`pb-5 pt-5 px-4 font-black text-xs uppercase tracking-widest transition-all relative whitespace-nowrap flex items-center gap-2 ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text'}`}
-                        >
-                            <span className="material-symbols-outlined text-[18px]">
-                                {tab === 'Overview' ? 'info' : tab === 'Contact Info' ? 'alternate_email' : tab === 'Gallery' ? 'photo_library' : tab === 'Statistics' ? 'analytics' : 'developer_mode'}
-                            </span>
-                            {tab}
-                            {activeTab === tab && (
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full"></div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex flex-col lg:flex-row flex-1">
-                    {/* Left Detail Canvas */}
-                    <div className="flex-1 p-10 border-b lg:border-b-0 lg:border-r border-border bg-surface">
-                        {activeTab === 'Overview' && (
-                            <div className="space-y-12 animate-fade-in">
-                                <div>
-                                    <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
-                                        <span className="material-symbols-outlined text-primary text-3xl">domain</span>
-                                        Institutional Profile
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                        <div className="bg-surface-container/20 p-6 rounded-3xl border border-border/50">
-                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">School Full Name</span>
-                                            <span className="font-black text-text text-xl tracking-tight">{school.formData?.schoolName}</span>
-                                        </div>
-                                        <div className="bg-surface-container/20 p-6 rounded-3xl border border-border/50">
-                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Affiliation Board</span>
-                                            <span className="font-black text-text text-xl tracking-tight">{school.formData?.affiliationBoard || 'N/A'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-4 p-4">
-                                            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                                                <span className="material-symbols-outlined">account_tree</span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Total Branches</span>
-                                                <span className="font-black text-text">{school.formData?.totalBranches || '1'}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 p-4">
-                                            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                                                <span className="material-symbols-outlined">language</span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Website</span>
-                                                <a href={school.formData?.website} target="_blank" rel="noreferrer" className="font-black text-primary underline truncate max-w-[200px] block">
-                                                    {school.formData?.website || 'N/A'}
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div className="sm:col-span-2 p-6 bg-surface-container-low/50 rounded-3xl border border-border/30">
-                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Campus Address</span>
-                                            <div className="font-bold text-text text-lg flex items-start gap-3">
-                                                <span className="material-symbols-outlined text-primary mt-1">location_on</span>
-                                                {school.formData?.address}, {school.formData?.city}, {school.formData?.state} - {school.formData?.pincode}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="pt-10 border-t border-border">
-                                    <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
-                                        <span className="material-symbols-outlined text-primary text-3xl">badge</span>
-                                        Leadership & Management
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                        <div className="bg-surface-container-low p-6 rounded-3xl group hover:bg-surface-container-high transition-all">
-                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Principal / Head</span>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-text/5 flex items-center justify-center font-black text-text text-xl">
-                                                    {school.formData?.principalName?.substring(0, 1)}
-                                                </div>
-                                                <span className="font-black text-text text-lg tracking-tight">
-                                                    {school.formData?.principalName || 'Not Disclosed'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="bg-surface-container-low p-6 rounded-3xl group hover:bg-surface-container-high transition-all">
-                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">IT Administrator</span>
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-text/5 flex items-center justify-center font-black text-text text-xl">
-                                                    {school.formData?.itAdminName?.substring(0, 1)}
-                                                </div>
-                                                <span className="font-black text-text text-lg tracking-tight">
-                                                    {school.formData?.itAdminName || 'Not Disclosed'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'Contact Info' && (
-                            <div className="space-y-12 animate-fade-in">
-                                <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
-                                    <span className="material-symbols-outlined text-primary text-3xl">contact_mail</span>
-                                    Connectivity Channels
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                    <div className="bg-surface-container-low p-8 rounded-[40px] space-y-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                                                <span className="material-symbols-outlined">email</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Admin Email</span>
-                                                <p className="font-black text-text text-lg">{school.email}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-surface-container-high text-text flex items-center justify-center">
-                                                <span className="material-symbols-outlined">support_agent</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Support Line</span>
-                                                <p className="font-black text-text text-lg">{school.formData?.supportEmail || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-surface-container-low p-8 rounded-[40px] space-y-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                                                <span className="material-symbols-outlined">call</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Phone Number</span>
-                                                <p className="font-black text-text text-lg">{school.formData?.phone || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-surface-container-high text-text flex items-center justify-center">
-                                                <span className="material-symbols-outlined">person_pin</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Onboarding POC</span>
-                                                <p className="font-black text-text text-lg">{school.formData?.contactPerson || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'Gallery' && (
-                            <div className="space-y-12 animate-fade-in">
-                                <h3 className="flex items-center gap-3 text-xl font-black text-text mb-2">
-                                    <span className="material-symbols-outlined text-primary text-3xl">photo_library</span>
-                                    Branding Artifacts
-                                </h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-4">
-                                        <span className="block text-[11px] font-black text-text-muted uppercase tracking-widest ml-2">Official Institutional Logo</span>
-                                        <div className="aspect-square bg-surface-container/30 rounded-[48px] border-8 border-surface shadow-2xl overflow-hidden flex items-center justify-center group relative cursor-pointer">
-                                            {school.formData?.logo ? (
-                                                <img src={school.formData.logo} alt="Logo" className="w-full h-full object-contain p-12 group-hover:scale-110 transition-all duration-700" />
-                                            ) : (
-                                                <div className="text-center opacity-20 group-hover:opacity-40 transition-opacity">
-                                                    <span className="material-symbols-outlined text-7xl block">image_not_supported</span>
-                                                    <span className="text-[10px] font-black mt-2 uppercase">Awaiting Upload</span>
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all"></div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <span className="block text-[11px] font-black text-text-muted uppercase tracking-widest ml-2">Digital Banner / Cover</span>
-                                        <div className="aspect-[4/3] bg-surface-container/30 rounded-[48px] border-8 border-surface shadow-2xl overflow-hidden flex items-center justify-center group relative cursor-pointer">
-                                            {school.formData?.banner ? (
-                                                <img src={school.formData.banner} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-1000" />
-                                            ) : (
-                                                <div className="text-center opacity-20 group-hover:opacity-40 transition-opacity">
-                                                    <span className="material-symbols-outlined text-7xl block">landscape</span>
-                                                    <span className="text-[10px] font-black mt-2 uppercase">Awaiting Upload</span>
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'Statistics' && (
-                            <div className="flex flex-col items-center justify-center py-24 text-text-muted animate-fade-in opacity-40">
-                                <div className="w-24 h-24 bg-surface-container rounded-[32px] flex items-center justify-center mb-6">
-                                    <span className="material-symbols-outlined text-5xl">bar_chart_4_bars</span>
-                                </div>
-                                <h3 className="text-2xl font-black mb-2 tracking-tighter">Usage Analytics</h3>
-                                <p className="text-sm font-bold uppercase tracking-widest">Real-time sync coming soon</p>
-                            </div>
-                        )}
-
-                        {activeTab === 'Advanced' && (
-                            <div className="space-y-8 animate-fade-in">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="flex items-center gap-3 text-xl font-black text-error">
-                                        <span className="material-symbols-outlined text-3xl">developer_mode</span>
-                                        Raw Kernel Access
-                                    </h3>
-                                    <span className="text-[10px] font-black bg-error text-on-error px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-error/20">Read/Write Access</span>
-                                </div>
-                                
-                                <div className="relative group">
-                                    <textarea 
-                                        className="w-full bg-gray-900 text-green-400 p-8 rounded-[40px] overflow-x-auto text-xs font-mono h-[450px] border-none focus:ring-8 focus:ring-error/10 shadow-inner custom-scrollbar-dark transition-all"
-                                        defaultValue={JSON.stringify(school.formData, null, 2)}
-                                        id="raw-json-editor"
-                                    />
-                                    <div className="absolute top-6 right-8 text-[10px] font-black text-gray-500 bg-gray-800 px-3 py-1 rounded-full uppercase">DB: {school.id}</div>
-                                </div>
-                                
-                                <div className="flex items-center justify-between p-8 bg-error-container/5 rounded-[40px] border border-error/10">
-                                    <div className="max-w-md">
-                                        <p className="font-black text-text tracking-tight">Overwrite Database State</p>
-                                        <p className="text-xs text-text-muted font-bold leading-relaxed mt-1">This will bypass all validation. Ensure the JSON schema matches the onboarding requirements.</p>
-                                    </div>
-                                    <button 
-                                        onClick={async () => {
-                                            try {
-                                                const newJSON = JSON.parse(document.getElementById('raw-json-editor').value);
-                                                setIsUpdating(true);
-                                                const res = await fetch(`https://scoolg-backend.netlify.app/api/onboarding/update/${school.id}`, {
-                                                    method: 'PATCH',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ formData: newJSON })
-                                                });
-                                                if (res.ok) {
-                                                    const updated = await res.json();
-                                                    setSchool(updated.data);
-                                                    alert('Database kernel updated successfully!');
-                                                } else {
-                                                    alert('Transmission failed. Check console for details.');
-                                                }
-                                            } catch(e) {
-                                                alert('Syntax Error: Invalid JSON structure detected.');
-                                            } finally {
-                                                setIsUpdating(false);
-                                            }
-                                        }}
-                                        disabled={isUpdating}
-                                        className="px-10 py-4 bg-error text-on-error font-black rounded-2xl hover:opacity-90 transition-all shadow-xl shadow-error/30 flex items-center gap-2 active:scale-95 disabled:opacity-50 uppercase text-xs tracking-widest"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">{isUpdating ? 'sync' : 'publish'}</span>
-                                        {isUpdating ? 'Updating...' : 'Commit Changes'}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+            {isEditing ? (
+                /* EDIT FORM UI */
+                <div className="bg-surface rounded-[40px] shadow-2xl border-4 border-primary/20 overflow-hidden animate-fade-in">
+                    <div className="p-8 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-2xl font-black text-text tracking-tight">Graphical Profile Editor</h3>
+                            <p className="text-xs font-bold text-text-muted uppercase tracking-widest mt-1">Sectioned Data Management</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => setIsEditing(false)}
+                                className="px-6 py-3 font-black text-xs uppercase tracking-widest text-text-muted hover:text-text transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleSaveProfile}
+                                disabled={isUpdating}
+                                className="px-8 py-3 bg-primary text-on-primary font-black rounded-2xl shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">{isUpdating ? 'sync' : 'save'}</span>
+                                {isUpdating ? 'Save Changes' : 'Save Changes'}
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Right Sidebar Widget Canvas */}
-                    <div className="w-full lg:w-[380px] p-10 bg-surface-container/20 space-y-10 flex-shrink-0">
-                        
-                        {/* Quick Metrics */}
-                        <div className="bg-surface border border-border rounded-[40px] p-8 shadow-xl">
-                            <h4 className="font-black text-text mb-8 flex items-center justify-between text-[10px] uppercase tracking-widest opacity-60">
-                                Platform Metrics
-                                <span className="material-symbols-outlined text-primary">analytics</span>
+                    
+                    <div className="p-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        {/* Column 1: Basic & Description */}
+                        <div className="space-y-8">
+                            <h4 className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[20px]">info</span> Basic Identity
                             </h4>
-                            <div className="space-y-8">
-                                <div>
-                                    <div className="flex justify-between items-center text-[10px] font-black text-text-muted mb-3 uppercase tracking-tighter">
-                                        <span>Student Load</span>
-                                        <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-full tracking-normal">62%</span>
-                                    </div>
-                                    <div className="w-full bg-surface-container h-4 rounded-full overflow-hidden p-1 border border-border/50 shadow-inner">
-                                        <div className="bg-primary h-full rounded-full shadow-sm shadow-primary/30" style={{width: '62%'}}></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center text-[10px] font-black text-text-muted mb-3 uppercase tracking-tighter">
-                                        <span>Faculty Sync</span>
-                                        <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full tracking-normal">45%</span>
-                                    </div>
-                                    <div className="w-full bg-surface-container h-4 rounded-full overflow-hidden p-1 border border-border/50 shadow-inner">
-                                        <div className="bg-green-500 h-full rounded-full shadow-sm shadow-green-500/30" style={{width: '45%'}}></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center text-[10px] font-black text-text-muted mb-3 uppercase tracking-tighter">
-                                        <span>Cloud Storage</span>
-                                        <span className="text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full tracking-normal">4.2 GB</span>
-                                    </div>
-                                    <div className="w-full bg-surface-container h-4 rounded-full overflow-hidden p-1 border border-border/50 shadow-inner">
-                                        <div className="bg-orange-500 h-full rounded-full shadow-sm shadow-orange-500/30" style={{width: '42%'}}></div>
-                                    </div>
-                                </div>
+                            <InputField label="School Name" value={editData.schoolName} onChange={(val) => setEditData({...editData, schoolName: val})} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <InputField label="Established Year" value={editData.establishedYear} onChange={(val) => setEditData({...editData, establishedYear: val})} />
+                                <InputField label="Strength" value={editData.schoolStrength} onChange={(val) => setEditData({...editData, schoolStrength: val})} />
+                            </div>
+                            <TextAreaField label="School Description" value={editData.schoolDescription} onChange={(val) => setEditData({...editData, schoolDescription: val})} />
+                            <TextAreaField label="Mission" value={editData.mission} onChange={(val) => setEditData({...editData, mission: val})} />
+                            <TextAreaField label="Vision" value={editData.vision} onChange={(val) => setEditData({...editData, vision: val})} />
+                        </div>
+
+                        {/* Column 2: Location & Contact */}
+                        <div className="space-y-8">
+                            <h4 className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[20px]">location_on</span> Contact & Venue
+                            </h4>
+                            <InputField label="Contact Phone" value={editData.phone} onChange={(val) => setEditData({...editData, phone: val})} />
+                            <TextAreaField label="Full Address" value={editData.address} onChange={(val) => setEditData({...editData, address: val})} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <InputField label="City" value={editData.city} onChange={(val) => setEditData({...editData, city: val})} />
+                                <InputField label="State" value={editData.state} onChange={(val) => setEditData({...editData, state: val})} />
+                            </div>
+                            <InputField label="Pincode" value={editData.pincode} onChange={(val) => setEditData({...editData, pincode: val})} />
+                            
+                            <h4 className="text-sm font-black text-primary uppercase tracking-widest pt-4 flex items-center gap-2 border-t border-border/50">
+                                <span className="material-symbols-outlined text-[20px]">share</span> Social Media
+                            </h4>
+                            <div className="grid grid-cols-1 gap-4">
+                                <InputField label="Instagram" value={editData.socialMedia?.instagram} onChange={(val) => setEditData({...editData, socialMedia: {...editData.socialMedia, instagram: val}})} />
+                                <InputField label="Facebook" value={editData.socialMedia?.facebook} onChange={(val) => setEditData({...editData, socialMedia: {...editData.socialMedia, facebook: val}})} />
                             </div>
                         </div>
 
-                        {/* System Status Card */}
-                        <div className="bg-primary/5 rounded-[40px] p-8 border border-primary/10 relative overflow-hidden group">
-                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700"></div>
-                            <h4 className="font-black text-primary mb-6 text-[10px] uppercase tracking-widest opacity-80">Software Architecture</h4>
-                            <div className="flex items-end gap-2 mb-4">
-                                <span className="text-6xl font-black text-text leading-none tracking-tighter">v2.4</span>
-                                <span className="flex items-center gap-1.5 text-[10px] font-black text-green-600 bg-green-100 px-3 py-1 rounded-full mb-1 border border-green-200">
-                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                    STABLE
-                                </span>
+                        {/* Column 3: Media & Academic */}
+                        <div className="space-y-8">
+                            <h4 className="text-sm font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[20px]">school</span> Academic Config
+                            </h4>
+                            <InputField label="Primary Board" value={editData.otherBoardName || (editData.selectedBoards && editData.selectedBoards[0])} onChange={(val) => setEditData({...editData, otherBoardName: val})} />
+                            <InputField label="School Type" value={editData.selectedSchoolType} onChange={(val) => setEditData({...editData, selectedSchoolType: val})} />
+                            
+                            <h4 className="text-sm font-black text-primary uppercase tracking-widest pt-4 flex items-center gap-2 border-t border-border/50">
+                                <span className="material-symbols-outlined text-[20px]">image</span> Media Assets (Cloud URLs)
+                            </h4>
+                            <InputField label="Logo URL" value={editData.logo} onChange={(val) => setEditData({...editData, logo: val})} />
+                            <InputField label="Cover Image URL" value={editData.coverImage} onChange={(val) => setEditData({...editData, coverImage: val})} />
+                            <TextAreaField label="Gallery (Comma separated URLs)" value={editData.gallery?.join(', ')} onChange={(val) => setEditData({...editData, gallery: val.split(',').map(s => s.trim())})} />
+                            
+                            <div className="bg-surface-container-high p-6 rounded-3xl space-y-4">
+                                <h5 className="text-[10px] font-black text-text uppercase tracking-widest">Fees Breakdown</h5>
+                                <div className="grid grid-cols-1 gap-3">
+                                    <InputField label="Primary Fee" value={editData.fees?.primary} onChange={(val) => setEditData({...editData, fees: {...editData.fees, primary: val}})} />
+                                    <InputField label="Secondary Fee" value={editData.fees?.secondary} onChange={(val) => setEditData({...editData, fees: {...editData.fees, secondary: val}})} />
+                                </div>
                             </div>
-                            <p className="text-[11px] font-bold text-text-muted leading-relaxed opacity-80">
-                                This instance is synced with the global master node and receiving OTA security patches from Scoolg HQ.
-                            </p>
                         </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                /* Main Content Area - DISPLAY MODE */
+                <div className="relative bg-surface rounded-[40px] shadow-2xl border border-border overflow-hidden flex flex-col min-h-[700px]">
+                    
+                    {/* Tabs */}
+                    <div className="flex items-center gap-6 px-10 border-b border-border bg-surface-container/10 pt-2 overflow-x-auto custom-scrollbar">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`pb-5 pt-5 px-4 font-black text-xs uppercase tracking-widest transition-all relative whitespace-nowrap flex items-center gap-2 ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text'}`}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {tab === 'Overview' ? 'info' : tab === 'Contact Info' ? 'alternate_email' : tab === 'Academic' ? 'school' : tab === 'Gallery' ? 'photo_library' : 'developer_mode'}
+                                </span>
+                                {tab}
+                                {activeTab === tab && (
+                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full"></div>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row flex-1">
+                        {/* Left Detail Canvas */}
+                        <div className="flex-1 p-10 border-b lg:border-b-0 lg:border-r border-border bg-surface">
+                            {activeTab === 'Overview' && (
+                                <div className="space-y-12 animate-fade-in">
+                                    <div>
+                                        <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
+                                            <span className="material-symbols-outlined text-primary text-3xl">domain</span>
+                                            Institutional Profile
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                            <div className="bg-surface-container/20 p-6 rounded-3xl border border-border/50">
+                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">School Full Name</span>
+                                                <span className="font-black text-text text-xl tracking-tight">{school.formData?.schoolName}</span>
+                                            </div>
+                                            <div className="bg-surface-container/20 p-6 rounded-3xl border border-border/50">
+                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Established Year</span>
+                                                <span className="font-black text-text text-xl tracking-tight">{school.formData?.establishedYear || 'N/A'}</span>
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">About School</span>
+                                                <p className="font-medium text-text-muted leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1">
+                                                    "{school.formData?.schoolDescription || 'No description provided.'}"
+                                                </p>
+                                            </div>
+                                            <div className="p-6 bg-surface-container-low/50 rounded-3xl border border-border/30">
+                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Our Mission</span>
+                                                <p className="text-xs font-bold text-text leading-relaxed">{school.formData?.mission || 'N/A'}</p>
+                                            </div>
+                                            <div className="p-6 bg-surface-container-low/50 rounded-3xl border border-border/30">
+                                                <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Our Vision</span>
+                                                <p className="text-xs font-bold text-text leading-relaxed">{school.formData?.vision || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="pt-10 border-t border-border">
+                                        <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
+                                            <span className="material-symbols-outlined text-primary text-3xl">groups</span>
+                                            Key Leadership
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            {school.formData?.leadership?.filter(l => l.name).map((person, i) => (
+                                                <div key={i} className="flex items-center gap-4 p-4 bg-surface-container-low rounded-3xl border border-border/30">
+                                                    <div className="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-black text-2xl">
+                                                        {person.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-text tracking-tight">{person.name}</p>
+                                                        <p className="text-[10px] font-black text-primary uppercase">{person.role}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(!school.formData?.leadership || school.formData.leadership.filter(l => l.name).length === 0) && <p className="text-sm text-text-muted font-bold opacity-50">No leadership data recorded.</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'Contact Info' && (
+                                <div className="space-y-12 animate-fade-in">
+                                    <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
+                                        <span className="material-symbols-outlined text-primary text-3xl">contact_mail</span>
+                                        Location & Reach
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                        <div className="bg-surface-container-low p-8 rounded-[40px] space-y-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                                                    <span className="material-symbols-outlined">email</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Administrative Email</span>
+                                                    <p className="font-black text-text text-lg">{school.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-surface-container-high text-text flex items-center justify-center">
+                                                    <span className="material-symbols-outlined">call</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Primary Phone</span>
+                                                    <p className="font-black text-text text-lg">{school.formData?.phone || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-surface-container-low p-8 rounded-[40px] space-y-4">
+                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Campus Address</span>
+                                            <div className="font-bold text-text text-lg leading-snug">
+                                                {school.formData?.address}<br/>
+                                                {school.formData?.city}, {school.formData?.state}<br/>
+                                                {school.formData?.pincode}
+                                            </div>
+                                            <div className="pt-4 flex gap-4">
+                                                {school.formData?.socialMedia?.instagram && <a href={school.formData.socialMedia.instagram} target="_blank" className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary border border-border">IG</a>}
+                                                {school.formData?.socialMedia?.facebook && <a href={school.formData.socialMedia.facebook} target="_blank" className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary border border-border">FB</a>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'Academic' && (
+                                <div className="space-y-12 animate-fade-in">
+                                    <h3 className="flex items-center gap-3 text-xl font-black text-text mb-8">
+                                        <span className="material-symbols-outlined text-primary text-3xl">school</span>
+                                        Academic Standards
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                        <div className="bg-surface-container-low p-6 rounded-3xl">
+                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-4">Board Affiliations</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                {school.formData?.selectedBoards?.map(board => (
+                                                    <span key={board} className="px-4 py-2 bg-primary/10 text-primary font-black text-xs rounded-xl uppercase tracking-widest border border-primary/20">{board}</span>
+                                                ))}
+                                                {school.formData?.otherBoardName && <span className="px-4 py-2 bg-surface text-text font-black text-xs rounded-xl border border-border">{school.formData.otherBoardName}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="bg-surface-container-low p-6 rounded-3xl">
+                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-4">Levels Offered</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                {school.formData?.selectedClasses?.map(cls => (
+                                                    <span key={cls} className="px-4 py-2 bg-text/5 text-text font-black text-xs rounded-xl border border-border/50">{cls}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="sm:col-span-2 bg-surface-container-low p-6 rounded-3xl">
+                                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-4">Available Facilities</span>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                {school.formData?.facilities?.map(f => (
+                                                    <div key={f} className="flex items-center gap-2 p-3 bg-surface rounded-2xl border border-border text-xs font-bold text-text">
+                                                        <span className="material-symbols-outlined text-primary text-sm">done_all</span>
+                                                        {f}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'Gallery' && (
+                                <div className="space-y-12 animate-fade-in">
+                                    <h3 className="flex items-center gap-3 text-xl font-black text-text mb-2">
+                                        <span className="material-symbols-outlined text-primary text-3xl">photo_library</span>
+                                        Media Assets
+                                    </h3>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                        <div className="space-y-4">
+                                            <span className="block text-[11px] font-black text-text-muted uppercase tracking-widest ml-2">Official Logo</span>
+                                            <div className="aspect-square bg-surface-container/30 rounded-[48px] border-8 border-surface shadow-2xl overflow-hidden flex items-center justify-center group relative">
+                                                {school.formData?.logo ? (
+                                                    <img src={school.formData.logo} alt="Logo" className="w-full h-full object-contain p-12 group-hover:scale-110 transition-all duration-700" />
+                                                ) : (
+                                                    <div className="text-center opacity-20"><span className="material-symbols-outlined text-7xl block">image</span></div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <span className="block text-[11px] font-black text-text-muted uppercase tracking-widest ml-2">Hero Cover</span>
+                                            <div className="aspect-[4/3] bg-surface-container/30 rounded-[48px] border-8 border-surface shadow-2xl overflow-hidden flex items-center justify-center group relative">
+                                                {school.formData?.coverImage ? (
+                                                    <img src={school.formData.coverImage} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-1000" />
+                                                ) : (
+                                                    <div className="text-center opacity-20"><span className="material-symbols-outlined text-7xl block">landscape</span></div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {school.formData?.gallery && school.formData.gallery.length > 0 && (
+                                        <div className="pt-10 border-t border-border">
+                                            <h4 className="text-xs font-black text-text-muted uppercase tracking-widest mb-6 ml-2">Extended Gallery</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                {school.formData.gallery.map((img, i) => (
+                                                    <div key={i} className="aspect-square rounded-3xl overflow-hidden border-2 border-border group">
+                                                        <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-all" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'Advanced' && (
+                                <div className="space-y-8 animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="flex items-center gap-3 text-xl font-black text-error">
+                                            <span className="material-symbols-outlined text-3xl">developer_mode</span>
+                                            Kernel Console
+                                        </h3>
+                                        <span className="text-[10px] font-black bg-error text-on-error px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-error/20">Read/Write Access</span>
+                                    </div>
+                                    
+                                    <div className="relative group">
+                                        <textarea 
+                                            className="w-full bg-gray-900 text-green-400 p-8 rounded-[40px] overflow-x-auto text-xs font-mono h-[450px] border-none focus:ring-8 focus:ring-error/10 shadow-inner custom-scrollbar-dark transition-all"
+                                            defaultValue={JSON.stringify(school.formData, null, 2)}
+                                            id="raw-json-editor"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Sidebar Widget Canvas */}
+                        <div className="w-full lg:w-[380px] p-10 bg-surface-container/20 space-y-10 flex-shrink-0">
+                            
+                            {/* Capacity Metrics */}
+                            <div className="bg-surface border border-border rounded-[40px] p-8 shadow-xl">
+                                <h4 className="font-black text-text mb-8 flex items-center justify-between text-[10px] uppercase tracking-widest opacity-60">
+                                    Capacity Load
+                                    <span className="material-symbols-outlined text-primary">analytics</span>
+                                </h4>
+                                <div className="space-y-8">
+                                    <div>
+                                        <div className="flex justify-between items-center text-[10px] font-black text-text-muted mb-3 uppercase tracking-tighter">
+                                            <span>Student Capacity</span>
+                                            <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-full tracking-normal">{school.formData?.schoolStrength || '0'} Total</span>
+                                        </div>
+                                        <div className="w-full bg-surface-container h-4 rounded-full overflow-hidden p-1 border border-border/50 shadow-inner">
+                                            <div className="bg-primary h-full rounded-full shadow-sm shadow-primary/30" style={{width: '62%'}}></div>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 text-center">
+                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Campus Code</p>
+                                        <p className="text-2xl font-black text-text tracking-tighter">{school.campusCode || 'PENDING'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Node Status */}
+                            <div className="bg-primary/5 rounded-[40px] p-8 border border-primary/10 relative overflow-hidden group">
+                                <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700"></div>
+                                <h4 className="font-black text-primary mb-6 text-[10px] uppercase tracking-widest opacity-80">Software Architecture</h4>
+                                <div className="flex items-end gap-2 mb-4">
+                                    <span className="text-6xl font-black text-text leading-none tracking-tighter">v2.4</span>
+                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-green-600 bg-green-100 px-3 py-1 rounded-full mb-1 border border-green-200">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                        STABLE
+                                    </span>
+                                </div>
+                                <p className="text-[11px] font-bold text-text-muted leading-relaxed opacity-80">
+                                    Instance synced with global master node and receiving OTA patches.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-fade-in {
@@ -467,23 +571,11 @@ const SchoolProfile = () => {
                     from { transform: scale(0.9); opacity: 0; }
                     to { transform: scale(1); opacity: 1; }
                 }
-                .custom-scrollbar::-webkit-scrollbar {
-                    height: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: var(--border);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar-dark::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-                    background: #374151;
-                    border-radius: 10px;
-                }
+                .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+                .custom-scrollbar-dark::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar-dark::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
             `}</style>
 
             {/* Custom Delete Modal */}
