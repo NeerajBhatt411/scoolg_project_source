@@ -4,14 +4,15 @@ import { useNavigate } from 'react-router-dom';
 const ManageSchools = () => {
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterStatus, setFilterStatus] = useState('ALL');
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSchools = async () => {
             try {
-                const res = await fetch('http://localhost:5001/api/superadmin/schools');
+                const res = await fetch('https://scoolg-backend.netlify.app/api/superadmin/schools');
                 const data = await res.json();
-                setSchools(data.filter(s => s.status !== 'PENDING'));
+                setSchools(data);
             } catch (error) {
                 console.error("Failed to fetch schools", error);
             } finally {
@@ -34,6 +35,18 @@ const ManageSchools = () => {
                 </button>
             </div>
 
+            <div className="flex gap-2 overflow-x-auto pb-2">
+                {['ALL', 'COMPLETED', 'PENDING', 'INACTIVE'].map(status => (
+                    <button 
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${filterStatus === status ? 'bg-primary text-white' : 'bg-surface-container-low text-text-muted hover:bg-surface-container'}`}
+                    >
+                        {status}
+                    </button>
+                ))}
+            </div>
+
             <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -49,9 +62,9 @@ const ManageSchools = () => {
                         <tbody className="divide-y divide-surface-container/50">
                             {loading ? (
                                 <tr><td colSpan="5" className="text-center py-8 text-on-surface-variant">Loading schools...</td></tr>
-                            ) : schools.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-8 text-on-surface-variant">No active schools found.</td></tr>
-                            ) : schools.map(school => (
+                            ) : schools.filter(s => filterStatus === 'ALL' || s.status === filterStatus).length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-8 text-on-surface-variant">No schools found for this status.</td></tr>
+                            ) : schools.filter(s => filterStatus === 'ALL' || s.status === filterStatus).map(school => (
                                 <tr 
                                     key={school.id} 
                                     onClick={() => navigate(`/schools/${school.id}`, { state: { school } })}
@@ -59,9 +72,13 @@ const ManageSchools = () => {
                                 >
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm uppercase">
-                                                {school.formData?.schoolName ? school.formData.schoolName.substring(0, 2) : 'NA'}
-                                            </div>
+                                            {school.formData?.logo ? (
+                                                <img src={school.formData.logo} alt="Logo" className="w-10 h-10 rounded-xl object-cover bg-surface-container" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm uppercase">
+                                                    {school.formData?.schoolName ? school.formData.schoolName.substring(0, 2) : 'NA'}
+                                                </div>
+                                            )}
                                             <div>
                                                 <span className="font-bold text-[0.875rem] text-on-surface block">{school.formData?.schoolName || 'Unknown School'}</span>
                                                 <span className="text-xs text-on-surface-variant">{school.email}</span>
@@ -75,8 +92,11 @@ const ManageSchools = () => {
                                         {new Date(school.createdAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-green-600 px-3 py-1 rounded-full status-aura-success w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-green-600"></span>
+                                        <div className={`flex items-center gap-2 text-[0.875rem] font-bold px-3 py-1 rounded-full w-fit ${
+                                            school.status === 'COMPLETED' ? 'bg-green-100 text-green-600' :
+                                            school.status === 'INACTIVE' ? 'bg-red-100 text-red-600' :
+                                            'bg-orange-100 text-orange-600'
+                                        }`}>
                                             {school.status}
                                         </div>
                                     </td>

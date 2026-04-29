@@ -7,7 +7,7 @@ const PendingApprovals = () => {
     const fetchSchools = async () => {
         try {
             setLoading(true);
-            const res = await fetch('http://localhost:5001/api/superadmin/schools');
+            const res = await fetch('https://scoolg-backend.netlify.app/api/superadmin/schools');
             const data = await res.json();
             setSchools(data.filter(s => s.status === 'PENDING'));
         } catch (error) {
@@ -23,7 +23,7 @@ const PendingApprovals = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`http://localhost:5001/api/superadmin/schools/${id}/approve`, {
+            const res = await fetch(`https://scoolg-backend.netlify.app/api/superadmin/schools/${id}/approve`, {
                 method: 'POST'
             });
             if (res.ok) {
@@ -52,12 +52,27 @@ const PendingApprovals = () => {
                 ) : schools.map(school => (
                     <div key={school.id} className="bg-surface-container-lowest p-6 rounded-xl premium-shadow border border-surface-container">
                         <div className="flex items-start justify-between mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg uppercase">
-                                {school.formData?.schoolName ? school.formData.schoolName.substring(0, 2) : 'NA'}
-                            </div>
-                            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">New Request</span>
+                            {school.formData?.logo ? (
+                                <img src={school.formData.logo} alt="Logo" className="w-12 h-12 rounded-xl object-cover bg-surface-container" />
+                            ) : (
+                                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg uppercase">
+                                    {school.formData?.schoolName ? school.formData.schoolName.substring(0, 2) : 'NA'}
+                                </div>
+                            )}
+                            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">Step {school.currentStep || 1} / 8</span>
                         </div>
-                        <h4 className="text-lg font-bold text-on-surface">{school.formData?.schoolName || 'Unknown School'}</h4>
+                        <h4 className="text-lg font-bold text-on-surface">{school.formData?.schoolName || 'Incomplete Setup'}</h4>
+                        
+                        <div className="mt-3 mb-4">
+                            <div className="flex justify-between text-xs text-text-muted mb-1 font-bold">
+                                <span>Onboarding Progress</span>
+                                <span>{Math.round(((school.currentStep || 1) / 8) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                                <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${((school.currentStep || 1) / 8) * 100}%` }}></div>
+                            </div>
+                        </div>
+
                         <div className="mt-2 space-y-1">
                             <p className="text-sm text-on-surface-variant flex items-center gap-2">
                                 <span className="material-symbols-outlined text-[16px]">mail</span> {school.email}

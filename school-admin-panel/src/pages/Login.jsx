@@ -27,11 +27,12 @@ const Login = () => {
 
         try {
             const res = await axios.post(`${API_BASE_URL}/login`, { email, password });
-            const { token, schoolId, schoolName, isPasswordChanged } = res.data;
+            const { token, schoolId, schoolName, isPasswordChanged, status } = res.data;
 
             localStorage.setItem('scoolg_token', token);
             localStorage.setItem('scoolg_school_id', schoolId);
             localStorage.setItem('scoolg_school_name', schoolName);
+            if (status) localStorage.setItem('scoolg_school_status', status);
 
             // Inform AdminContext about the new schoolId
             setSchoolId(schoolId);

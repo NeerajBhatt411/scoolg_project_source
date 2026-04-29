@@ -29,9 +29,39 @@ const PageLoading = () => (
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('scoolg_token');
+    const status = localStorage.getItem('scoolg_school_status');
     const location = useLocation();
+    
     if (!token) {
         return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    if (status === 'INACTIVE') {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-slate-50/50 flex-col">
+                <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md text-center border border-red-100">
+                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="material-symbols-outlined text-3xl">block</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Admin Panel Frozen</h2>
+                    <p className="text-slate-600 mb-8 font-medium leading-relaxed">Your school account has been suspended by the platform administrator. Please reach out to <span className="font-bold text-slate-800">scoolg.com</span> to reactivate your access.</p>
+                    <div className="space-y-3">
+                        <a href="mailto:support@scoolg.com" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-2xl transition-all inline-block shadow-lg shadow-slate-200">
+                            Contact Scoolg Support
+                        </a>
+                        <button 
+                            onClick={() => {
+                                localStorage.clear();
+                                window.location.href = '/login';
+                            }}
+                            className="w-full text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest pt-2"
+                        >
+                            Sign out of session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (

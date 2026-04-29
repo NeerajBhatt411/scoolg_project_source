@@ -27,7 +27,7 @@ const Sidebar = () => {
                     <p className="text-[11px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">Super Admin</p>
                 </div>
             </div>
-            
+
             <nav className="flex-1 space-y-1">
                 {navItems.map((item) => (
                     <NavLink
@@ -42,14 +42,14 @@ const Sidebar = () => {
                         <span className="material-symbols-outlined">{item.icon}</span>
                         <span className="text-[0.875rem] hidden md:inline">{item.name}</span>
                         {item.name === 'Approvals' && (
-                           <span className="hidden md:inline ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                               3
-                           </span>
+                            <span className="hidden md:inline ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                3
+                            </span>
                         )}
                     </NavLink>
                 ))}
             </nav>
-            
+
             <div className="mt-auto pt-6 border-t border-[#e0e7ff] space-y-1">
                 <button
                     className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 text-error font-bold hover:bg-error-container/20 transition-colors rounded-xl mt-2 text-red-500"
