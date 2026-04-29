@@ -315,7 +315,7 @@ router.get('/admin/profile/:id', async (req, res) => {
         await connectToDB();
         const school = await School.findOne({ id: req.params.id });
         if (!school) return res.status(404).json({ error: "School not found" });
-        res.json(school.formData);
+        res.json({ ...school.formData, status: school.status });
     } catch (err) { res.status(500).json({ error: "Fetch failed" }); }
 });
 
