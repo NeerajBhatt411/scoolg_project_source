@@ -210,7 +210,8 @@ app.post('/api/admin/login', async (req, res) => {
             token, 
             schoolId: school.id, 
             schoolName: school.formData.schoolName,
-            isPasswordChanged: school.isPasswordChanged 
+            isPasswordChanged: school.isPasswordChanged,
+            status: school.status
         });
     } catch (err) {
         console.error("❌ Authentication Server Error:", err);
@@ -398,6 +399,43 @@ app.post('/api/superadmin/schools/:id/approve', async (req, res) => {
         res.json({ message: "School approved successfully", school });
     } catch (err) {
         res.status(500).json({ error: "Failed to approve school" });
+    }
+});
+
+app.patch('/api/superadmin/schools/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const school = await School.findOne({ id: req.params.id });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        school.status = status;
+        await school.save();
+
+        res.json({ message: `School status updated to ${status}`, school });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update status" });
+    }
+});
+
+app.delete('/api/superadmin/schools/:id', async (req, res) => {
+    try {
+        const schoolId = req.params.id;
+        const school = await School.findOne({ id: schoolId });
+        
+        if (!school) {
+            return res.status(404).json({ error: "School not found" });
+        }
+
+        // Delete all students associated with the school
+        await Student.deleteMany({ schoolId: school._id });
+        
+        // Delete the school itself
+        await School.deleteOne({ id: schoolId });
+
+        res.json({ message: "School and all associated data deleted successfully." });
+    } catch (err) {
+        console.error("❌ Delete error:", err);
+        res.status(500).json({ error: "Failed to delete school" });
     }
 });
 
