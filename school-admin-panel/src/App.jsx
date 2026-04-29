@@ -1,7 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import { AdminProvider } from './context/AdminContext';
+import { AdminProvider, useAdmin } from './context/AdminContext';
 
 // Lazy load components
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -28,33 +28,37 @@ const PageLoading = () => (
 );
 
 const ProtectedRoute = ({ children }) => {
+    const { schoolId, status, checkCurrentStatus } = useAdmin();
     const token = localStorage.getItem('scoolg_token');
-    const status = localStorage.getItem('scoolg_school_status');
     const location = useLocation();
-    
+
+    // Check status in real-time whenever we navigate or mount
+    useEffect(() => {
+        if (schoolId) {
+            checkCurrentStatus();
+        }
+    }, [location.pathname, schoolId]);
+
     if (!token) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (status === 'INACTIVE') {
+    if (status === 'INACTIVE' || status === 'SUSPENDED') {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-slate-50/50 flex-col">
-                <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md text-center border border-red-100">
-                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="material-symbols-outlined text-3xl">block</span>
+            <div className="flex h-screen w-full items-center justify-center bg-white flex-col z-[999] fixed inset-0">
+                <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md text-center border border-red-100 animate-in fade-in zoom-in duration-300">
+                    <div className="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="material-symbols-outlined text-4xl">ac_unit</span>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Admin Panel Frozen</h2>
-                    <p className="text-slate-600 mb-8 font-medium leading-relaxed">Your school account has been suspended by the platform administrator. Please reach out to <span className="font-bold text-slate-800">scoolg.com</span> to reactivate your access.</p>
-                    <div className="space-y-3">
-                        <a href="mailto:support@scoolg.com" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-2xl transition-all inline-block shadow-lg shadow-slate-200">
-                            Contact Scoolg Support
-                        </a>
-                        <button 
+                    <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tighter">Admin Panel Frozen</h2>
+                    <p className="text-slate-500 mb-8 font-medium leading-relaxed text-sm">Your school account has been suspended by the platform administrator. Please reach out to <span className="font-bold text-slate-900">support@scoolg.com</span> to reactivate your access.</p>
+                    <div className="space-y-4">
+                        <button
                             onClick={() => {
                                 localStorage.clear();
-                                window.location.href = '/login';
+                                window.location.href = '/admin/login';
                             }}
-                            className="w-full text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-widest pt-2"
+                            className="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg shadow-slate-200"
                         >
                             Sign out of session
                         </button>
@@ -116,12 +120,12 @@ function App() {
                             element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
                         />
                         <Route
-                            path="/classes"
-                            element={<ProtectedRoute><Classes /></ProtectedRoute>}
+                            path="/timetable"
+                            element={<ProtectedRoute><Timetable /></ProtectedRoute>}
                         />
                         <Route
-                            path="/timetable"
-                            element={<ProtectedRoute><ProtectedRoute><Timetable /></ProtectedRoute></ProtectedRoute>}
+                            path="/classes"
+                            element={<ProtectedRoute><Classes /></ProtectedRoute>}
                         />
                         <Route
                             path="/attendance"
