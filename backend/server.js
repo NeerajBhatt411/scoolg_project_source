@@ -6,7 +6,12 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import School from './models/School.js';
-
+import ClassModel from './models/Class.js';
+import Section from './models/Section.js';
+import Subject from './models/Subject.js';
+import Timetable from './models/Timetable.js';
+import Teacher from './models/Teacher.js';
+import Student from './models/Student.js';
 dotenv.config();
 
 const app = express();
@@ -264,11 +269,138 @@ app.get('/api/onboarding/:id', async (req, res) => {
     res.json(school.formData);
 });
 
+// --- Classes API ---
+app.post('/api/admin/classes', async (req, res) => {
+    try {
+        const { schoolId, className, order } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const newClass = new ClassModel({ schoolId: school._id, className, order });
+        await newClass.save();
+        res.status(201).json(newClass);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to create class", details: err.message });
+    }
+});
+
+app.get('/api/admin/classes', async (req, res) => {
+    try {
+        const { schoolId } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const classes = await ClassModel.find({ schoolId: school._id }).sort({ order: 1 });
+        res.json(classes);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch classes" });
+    }
+});
+
+// --- Sections API ---
+app.post('/api/admin/sections', async (req, res) => {
+    try {
+        const { schoolId, classId, sectionName, maxCapacity } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const newSection = new Section({ schoolId: school._id, classId, sectionName, maxCapacity });
+        await newSection.save();
+        res.status(201).json(newSection);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to create section" });
+    }
+});
+
+app.get('/api/admin/sections', async (req, res) => {
+    try {
+        const { classId } = req.query;
+        if (!classId) return res.status(400).json({ error: "classId is required" });
+
+        const sections = await Section.find({ classId }).populate('classTeacherId');
+        res.json(sections);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch sections" });
+    }
+});
+
+// --- Subjects API ---
+app.post('/api/admin/subjects', async (req, res) => {
+    try {
+        const { schoolId, subjectName, subjectCode } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const newSubject = new Subject({ schoolId: school._id, subjectName, subjectCode });
+        await newSubject.save();
+        res.status(201).json(newSubject);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to create subject" });
+    }
+});
+
+app.get('/api/admin/subjects', async (req, res) => {
+    try {
+        const { schoolId } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const subjects = await Subject.find({ schoolId: school._id });
+        res.json(subjects);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch subjects" });
+    }
+});
+
+// --- Timetable API ---
+app.post('/api/admin/timetable', async (req, res) => {
+    try {
+        const { schoolId, classId, sectionId, dayOfWeek, periods } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        // Update if exists, else create
+        const timetable = await Timetable.findOneAndUpdate(
+            { schoolId: school._id, classId, sectionId, dayOfWeek },
+            { periods },
+            { new: true, upsert: true }
+        );
+        res.json(timetable);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save timetable" });
+    }
+});
+
+app.get('/api/admin/timetable', async (req, res) => {
+    try {
+        const { sectionId } = req.query;
+        if (!sectionId) return res.status(400).json({ error: "sectionId is required" });
+
+        const timetable = await Timetable.find({ sectionId })
+            .populate('periods.subjectId')
+            .populate('periods.teacherId');
+        res.json(timetable);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch timetable" });
+    }
+});
+
+// --- Teachers API (Basic) ---
+app.get('/api/admin/teachers', async (req, res) => {
+    try {
+        const { schoolId } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const teachers = await Teacher.find({ schoolId: school._id }).populate('subjects');
+        res.json(teachers);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch teachers" });
+    }
+});
+
 // --- Students API ---
 
-// Import Student model at top, but since we are modifying here we will just dynamically import or we should have imported it.
-// I will add the import at the top of the file in another call, here I'll use it assuming it's imported.
-import Student from './models/Student.js';
 
 app.post('/api/admin/students', async (req, res) => {
     try {
