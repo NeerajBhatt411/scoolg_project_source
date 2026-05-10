@@ -258,7 +258,7 @@ const Exams = () => {
             </div>
 
             {/* Bottom Sticky Action Footer */}
-            <div className="w-full bg-[#f8fafc] md:bg-transparent h-auto md:h-24 p-4 md:px-8 flex items-center justify-end gap-4 fixed bottom-0 z-30 pointer-events-none">
+            <div className="fixed bottom-0 left-16 md:left-[280px] right-0 bg-[#f8fafc] md:bg-transparent h-auto md:h-24 p-4 md:px-8 flex items-center justify-end gap-4 z-30 pointer-events-none">
                 <div className="flex gap-4 pointer-events-auto bg-[#f8fafc] md:bg-transparent p-2 md:p-0 rounded-xl w-full md:w-auto justify-end">
                     <button className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-700 font-bold text-sm rounded-xl border border-slate-200 hover:bg-slate-50 premium-shadow transition-all w-full md:w-auto shrink-0">
                         <span className="material-symbols-outlined text-[18px]">save</span>

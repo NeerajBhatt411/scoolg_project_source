@@ -57,7 +57,7 @@ const Dashboard = () => {
             </header>
 
 
-            <div className="p-4 sm:p-8 space-y-8 max-w-full">
+            <div className="min-h-[calc(100vh-72px)] bg-slate-50/50 p-4 sm:p-8 space-y-8 max-w-full">
                 {/* Welcome Section */}
                 <section className="max-w-full overflow-hidden flex flex-col gap-2">
                     <h3 className="text-[20px] sm:text-[28px] font-[800] text-on-surface tracking-tight leading-tight truncate sm:whitespace-normal" title={schoolName}>
@@ -72,8 +72,7 @@ const Dashboard = () => {
 
                 {/* Stat Cards Bento */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-primary">
-
+                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Total Students
@@ -83,32 +82,33 @@ const Dashboard = () => {
                             ) : (
                                 <h4 className="text-2xl font-extrabold text-on-surface">{stats?.students?.toLocaleString() || 0}</h4>
                             )}
-                            <div className="flex items-center gap-1 mt-2 text-primary font-bold text-xs">
-                                <span className="material-symbols-outlined text-sm">trending_up</span>
-                                <span>Real-time data</span>
+                            <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                                <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600 animate-pulse"></span>
+                                <span>Live Metrics</span>
                             </div>
                         </div>
-                        <div className="p-3 bg-primary-container/10 rounded-xl text-primary">
+                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">group</span>
                         </div>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-secondary">
 
+                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Teachers
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">{stats?.teachers || 0}</h4>
-                            <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Active across faculty</span>
+                            <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{stats?.teachers || 0}</h4>
+                            <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                                <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
+                                <span>Faculty</span>
                             </div>
                         </div>
-                        <div className="p-3 bg-secondary-container/10 rounded-xl text-secondary">
+                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">school</span>
                         </div>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-tertiary">
-                        {/* Calculate unique code: first 3 of name + last 4 of ID */}
+
+                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         {(() => {
                             const sid = localStorage.getItem('scoolg_school_id') || "";
                             const suffix = sid.slice(-4);
@@ -121,164 +121,164 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
                                         <button
-                                            onClick={() => { navigator.clipboard.writeText(code); alert('Copied!') }}
+                                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(code); alert('Copied!') }}
                                             title="Copy Code"
                                             className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-[18px]">content_copy</span>
                                         </button>
                                     </div>
-                                    <div className="flex items-center gap-1 mt-2 text-tertiary font-bold text-xs">
-                                        <span className="material-symbols-outlined text-sm">vpn_key</span>
-                                        <span>Used for student app</span>
+                                    <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
+                                        <span>Active Code</span>
                                     </div>
                                 </div>
                             );
                         })()}
-                        <div className="p-3 bg-tertiary-container/10 rounded-xl text-tertiary">
+                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
                         </div>
                     </div>
-                    <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow flex items-start justify-between border-b-4 border-outline">
 
+                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Classes
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">{stats?.classes || 0}</h4>
-                            <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Academic Wings</span>
+                            <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{stats?.classes || 0}</h4>
+                            <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                                <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
+                                <span>Academic</span>
                             </div>
                         </div>
-                        <div className="p-3 bg-surface-container-high rounded-xl text-outline">
+                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">class</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Actions Grid */}
-                <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow border border-slate-100">
-                    <h5 className="text-lg sm:text-2xl text-on-surface font-bold mb-5 sm:mb-6 flex items-center gap-2">
-                        Quick Administrative Actions
-                    </h5>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <button onClick={() => window.location.href = '/admin/students/add'} className="bg-[#eff6ff] border border-blue-200 border-b-4 text-blue-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-blue-300 active:border-b-0 active:translate-y-1 group">
-                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
-                                <span className="material-symbols-outlined text-[24px]">person_add</span>
-                            </div>
-                            <span className="text-sm font-extrabold tracking-tight">Add Student</span>
-                        </button>
-                        <button onClick={() => window.location.href = '/admin/teachers/add'} className="bg-[#f5f3ff] border border-indigo-200 border-b-4 text-indigo-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-indigo-300 active:border-b-0 active:translate-y-1 group">
-                            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
-                                <span className="material-symbols-outlined text-[24px]">person_add_alt</span>
-                            </div>
-                            <span className="text-sm font-extrabold tracking-tight">Add Teacher</span>
-                        </button>
-                        <button onClick={() => window.location.href = '/admin/notices'} className="bg-[#fff7ed] border border-orange-200 border-b-4 text-orange-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-orange-300 active:border-b-0 active:translate-y-1 group">
-                            <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
-                                <span className="material-symbols-outlined text-[24px]">send</span>
-                            </div>
-                            <span className="text-sm font-extrabold tracking-tight">Send Notice</span>
-                        </button>
-                        <button onClick={() => window.location.href = '/admin/timetable'} className="bg-[#ecfdf5] border border-emerald-200 border-b-4 text-emerald-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-emerald-300 active:border-b-0 active:translate-y-1 group">
-                            <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
-                                <span className="material-symbols-outlined text-[24px]">event_note</span>
-                            </div>
-                            <span className="text-sm font-extrabold tracking-tight">Timetable</span>
-                        </button>
+                {/* Quick Actions Section */}
+                <div className="bg-slate-100/50 py-10 px-0 rounded-[48px] border-2 border-slate-200/40 shadow-[inset_0_4px_12px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-8 px-6 sm:px-8">
+                        <h5 className="text-xl text-slate-900 font-black flex items-center gap-3 tracking-tight">
+                            <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.4)]"></span>
+                            Quick Actions
+                        </h5>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6">
+                        <button onClick={() => window.location.href = '/admin/students/add'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
+                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                <span className="material-symbols-outlined text-[26px]">person_add</span>
+                            </div>
+                            <span className="text-sm font-black tracking-tight">Add Student</span>
+                        </button>
 
+                        <button onClick={() => window.location.href = '/admin/teachers/add'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
+                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                <span className="material-symbols-outlined text-[26px]">person_add_alt</span>
+                            </div>
+                            <span className="text-sm font-black tracking-tight">Add Teacher</span>
+                        </button>
+
+                        <button onClick={() => window.location.href = '/admin/notices'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
+                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                <span className="material-symbols-outlined text-[26px]">send</span>
+                            </div>
+                            <span className="text-sm font-black tracking-tight">Send Notice</span>
+                        </button>
+
+                        <button onClick={() => window.location.href = '/admin/timetable'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
+                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                <span className="material-symbols-outlined text-[26px]">event_note</span>
+                            </div>
+                            <span className="text-sm font-black tracking-tight">Timetable</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Middle Row: Charts & Notices */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                    {/* Attendance Chart */}
-                    <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
-                        <div className="flex justify-between items-center mb-6 sm:mb-8">
-                            <h5 className="text-title-md text-on-surface font-bold">Class Attendance</h5>
-                            <button className="text-primary font-bold text-sm hover:underline">View Analytics</button>
+                    {/* Attendance Chart Card */}
+                    <div className="bg-white p-6 sm:p-8 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-50 group transition-all duration-500">
+                        <div className="flex justify-between items-center mb-8 px-2">
+                            <h5 className="text-xl text-slate-900 font-black flex items-center gap-3 tracking-tight">
+                                <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></span>
+                                Attendance Snapshot
+                            </h5>
+                            <button className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all flex items-center gap-2">
+                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                View Analytics
+                            </button>
                         </div>
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 1</span>
-                                    <span className="text-primary">96%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '96%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 2</span>
-                                    <span className="text-primary">88%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '88%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 3</span>
-                                    <span className="text-primary">92%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary rounded-full" style={{ width: '92%' }} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm font-bold">
-                                    <span className="text-on-surface">Class 4</span>
-                                    <span className="text-primary">79%</span>
-                                </div>
-                                <div className="h-3 w-full bg-surface-container-low rounded-full overflow-hidden">
-                                    <div className="h-full bg-error/80 rounded-full" style={{ width: '79%' }} />
-                                </div>
-                            </div>
+                        <div className="space-y-6 px-2">
+                            {[
+                                { class: "Grade 1", val: 96 },
+                                { class: "Grade 2", val: 88 },
+                                { class: "Grade 3", val: 92 },
+                                { class: "Grade 4", val: 74 }
+                            ].map((item, idx) => {
+                                // Dynamic color logic
+                                let barColor = "bg-blue-600";
+                                let textColor = "text-blue-600";
+
+                                if (item.val >= 90) {
+                                    barColor = "bg-emerald-500";
+                                    textColor = "text-emerald-600";
+                                } else if (item.val >= 80) {
+                                    barColor = "bg-lime-500";
+                                    textColor = "text-lime-600";
+                                } else if (item.val < 75) {
+                                    barColor = "bg-rose-500";
+                                    textColor = "text-rose-600";
+                                }
+
+                                return (
+                                    <div key={idx} className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-900 font-bold text-sm tracking-tight">{item.class}</span>
+                                            <span className={`text-[12px] font-black ${textColor}`}>{item.val}%</span>
+                                        </div>
+                                        <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${barColor} rounded-full transition-all duration-1000 shadow-sm`}
+                                                style={{ width: `${item.val}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Recent Notices */}
-                    <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
-                        <div className="flex justify-between items-center mb-6 sm:mb-8">
-                            <h5 className="text-title-md text-on-surface font-bold">Recent Notices</h5>
-                            <button className="bg-surface-container-low hover:bg-surface-container-high p-2 rounded-lg transition-colors">
-                                <span className="material-symbols-outlined text-on-surface-variant text-xl">open_in_new</span>
-                            </button>
+                    {/* Recent Notices Card */}
+                    <div className="bg-white p-6 sm:p-8 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-50 group transition-all duration-500">
+                        <div className="flex justify-between items-center mb-8 px-2">
+                            <h5 className="text-xl text-slate-900 font-black flex items-center gap-3 tracking-tight">
+                                <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></span>
+                                Recent Updates
+                            </h5>
+                            <div className="p-2 bg-slate-50 text-slate-400 rounded-xl">
+                                <span className="material-symbols-outlined text-xl">notifications_active</span>
+                            </div>
                         </div>
                         <div className="space-y-4">
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary">
-                                    <span className="material-symbols-outlined">groups</span>
+                            {[
+                                { title: "PTM on 15 Apr", desc: "Parent Teacher Meeting for Grade 5-10", time: "2h ago", icon: "groups" },
+                                { title: "Holiday: Holi", desc: "School will remain closed on 25th March", time: "1d ago", icon: "celebration" },
+                                { title: "Basketball Finals", desc: "Inter-school tournament at Main Court", time: "2d ago", icon: "sports_basketball" }
+                            ].map((notice, idx) => (
+                                <div key={idx} className="group flex items-center gap-4 p-4 rounded-[24px] hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-100">
+                                    <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[18px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                        <span className="material-symbols-outlined text-2xl">{notice.icon}</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h6 className="font-bold text-slate-900 text-sm tracking-tight">{notice.title}</h6>
+                                        <p className="text-slate-500 text-[11px] font-medium mt-0.5 line-clamp-1">{notice.desc}</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{notice.time}</span>
                                 </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">PTM on 15 Apr</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">Parent Teacher Meeting for Grade 5-10</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">2h ago</span>
-                            </div>
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-tertiary-container/10 flex items-center justify-center text-tertiary">
-                                    <span className="material-symbols-outlined">celebration</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">Holiday: Holi</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">School will remain closed on 25th March</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">1d ago</span>
-                            </div>
-                            <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-low transition-all cursor-pointer">
-                                <div className="w-12 h-12 rounded-xl bg-secondary-container/10 flex items-center justify-center text-secondary">
-                                    <span className="material-symbols-outlined">sports_basketball</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h6 className="font-bold text-on-surface text-[0.875rem]">Sports Day</h6>
-                                    <p className="text-on-surface-variant text-xs mt-0.5">Annual sports meet registration is open</p>
-                                </div>
-                                <span className="text-xs font-bold text-on-surface-variant">3d ago</span>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>

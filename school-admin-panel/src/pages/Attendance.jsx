@@ -56,7 +56,7 @@ const Attendance = () => {
                 setStudents(studentList);
 
                 const attRes = await axios.get(`${API_BASE}/attendance?sectionId=${selectedSectionObj._id}&date=${selectedDate}`);
-                
+
                 if (attRes.data && attRes.data.records && attRes.data.records.length > 0) {
                     const newAttData = {};
                     attRes.data.records.forEach(r => {
@@ -157,8 +157,8 @@ const Attendance = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 flex-1">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Classroom</label>
-                                    <select 
-                                        value={selectedClassObj?._id || ''} 
+                                    <select
+                                        value={selectedClassObj?._id || ''}
                                         onChange={(e) => setSelectedClassObj(classes.find(c => c._id === e.target.value))}
                                         className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     >
@@ -167,8 +167,8 @@ const Attendance = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Section</label>
-                                    <select 
-                                        value={selectedSectionObj?._id || ''} 
+                                    <select
+                                        value={selectedSectionObj?._id || ''}
                                         onChange={(e) => setSelectedSectionObj(sections.find(s => s._id === e.target.value))}
                                         className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     >
@@ -177,18 +177,18 @@ const Attendance = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Calendar Date</label>
-                                    <input 
-                                        type="date" 
-                                        value={selectedDate} 
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
                                         max={today}
                                         onChange={(e) => setSelectedDate(e.target.value)}
                                         className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div className="flex gap-3 pb-0.5">
-                                <button 
+                                <button
                                     onClick={() => handleMarkAll('P')}
                                     disabled={isLocked}
                                     className="h-11 px-6 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-emerald-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2 border-b-4 border-emerald-800"
@@ -196,7 +196,7 @@ const Attendance = () => {
                                     <span className="material-symbols-outlined text-[18px]">done_all</span>
                                     Mark All P
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => handleMarkAll('A')}
                                     disabled={isLocked}
                                     className="h-11 px-6 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-red-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2 border-b-4 border-red-800"
@@ -272,16 +272,16 @@ const Attendance = () => {
 
                                     {/* Action Buttons - High Contrast */}
                                     <div className="flex items-center justify-center gap-3">
-                                        <button 
-                                            onClick={() => handleStatusChange(s._id, 'P')} 
+                                        <button
+                                            onClick={() => handleStatusChange(s._id, 'P')}
                                             disabled={isLocked}
                                             className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
                                         >
                                             <span className="material-symbols-outlined text-[18px]">check_circle</span>
                                             Present
                                         </button>
-                                        <button 
-                                            onClick={() => handleStatusChange(s._id, 'A')} 
+                                        <button
+                                            onClick={() => handleStatusChange(s._id, 'A')}
                                             disabled={isLocked}
                                             className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
                                         >
@@ -297,10 +297,10 @@ const Attendance = () => {
 
 
 
-                <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-2xl border-t border-slate-200 flex justify-end gap-5 z-50">
+                <div className="fixed bottom-0 left-16 md:left-[280px] right-0 p-6 bg-white/80 backdrop-blur-2xl border-t border-slate-200 flex justify-end gap-5 z-50">
                     <div className="max-w-[1400px] mx-auto w-full flex justify-end gap-5">
                         {isLocked ? (
-                            <button 
+                            <button
                                 onClick={() => setIsLocked(false)}
                                 className="px-10 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
                             >
@@ -309,13 +309,13 @@ const Attendance = () => {
                             </button>
                         ) : (
                             <>
-                                <button 
+                                <button
                                     onClick={() => setIsLocked(true)}
                                     className="px-10 py-5 bg-white border-2 border-slate-200 text-slate-500 font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] hover:bg-slate-50 transition-all active:scale-95"
                                 >
                                     Cancel
                                 </button>
-                                <button 
+                                <button
                                     onClick={handleSubmit}
                                     disabled={saving || students.length === 0}
                                     className="px-12 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"

@@ -1135,3 +1135,182 @@ app.get('/api/admin/attendance', async (req, res) => {
         res.status(500).json({ error: "Failed to fetch attendance" });
     }
 });
+
+// --- Student App Specific APIs ---
+
+/**
+ * @swagger
+ * /api/student/verify-campus/{code}:
+ *   get:
+ *     summary: Verify school campus code
+ *     tags: [Student App]
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: School branding info
+ */
+app.get('/api/student/verify-campus/:code', async (req, res) => {
+    try {
+        const { code } = req.params;
+        const school = await School.findOne({ campusCode: code.toUpperCase() });
+        if (!school) return res.status(404).json({ error: "Invalid Campus Code" });
+        
+        res.json({
+            schoolId: school.id,
+            schoolName: school.formData.schoolName,
+            logo: school.formData.logo || school.formData.schoolLogo
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/login:
+ *   post:
+ *     summary: Student Login (AppID/Password)
+ *     tags: [Student App]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               studentAppId:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
+app.post('/api/student/login', async (req, res) => {
+    try {
+        const { studentAppId, password } = req.body;
+        const student = await Student.findOne({ studentAppId });
+        if (!student) return res.status(401).json({ error: "Invalid ID or Password" });
+
+        const isMatch = await bcrypt.compare(password, student.password);
+        if (!isMatch) return res.status(401).json({ error: "Invalid ID or Password" });
+
+        const token = jwt.sign(
+            { id: student._id, schoolId: student.schoolId },
+            process.env.JWT_SECRET || 'scoolg_secret_99',
+            { expiresIn: '30d' }
+        );
+
+        res.json({ token, studentId: student._id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/me:
+ *   get:
+ *     summary: Get authenticated student profile
+ *     tags: [Student App]
+ *     responses:
+ *       200:
+ *         description: Student and school data
+ */
+app.get('/api/student/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "No token provided" });
+        
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+        
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const school = await School.findOne({ _id: student.schoolId });
+
+        res.json({
+            student,
+            school: {
+                name: school.formData.schoolName,
+                logo: school.formData.logo || school.formData.schoolLogo
+            }
+        });
+    } catch (err) {
+        res.status(401).json({ error: "Invalid token" });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/timetable:
+ *   get:
+ *     summary: Get timetable for the current student
+ *     tags: [Student App]
+ *     responses:
+ *       200:
+ *         description: Timetable object
+ */
+app.get('/api/student/timetable', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+        
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const timetable = await Timetable.findOne({
+            schoolId: student.schoolId,
+            className: student.class,
+            sectionName: student.section
+        });
+
+        res.json(timetable || { message: "No timetable found" });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/attendance:
+ *   get:
+ *     summary: Get attendance history for the current student
+ *     tags: [Student App]
+ *     responses:
+ *       200:
+ *         description: Array of attendance records
+ */
+app.get('/api/student/attendance', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+        
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        // Find all attendance records for this school where this student is present in the records array
+        const attendanceRecords = await Attendance.find({
+            schoolId: student.schoolId,
+            "records.studentId": student._id
+        }).sort({ date: -1 });
+
+        // Map to return only this student's status for each day
+        const result = attendanceRecords.map(record => ({
+            date: record.date,
+            status: record.records.find(r => r.studentId.toString() === student._id.toString())?.status
+        }));
+
+        res.json(result);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
