@@ -22,8 +22,8 @@ app.use(express.json());
 
 // --- MongoDB Connection (Local & Global) ---
 mongoose.connect(process.env.MONGODB_URI)
-.then(() => console.log("✅ MongoDB Connected Successfully to Atlas!"))
-.catch(err => console.error("❌ MongoDB Connection Error:", err));
+    .then(() => console.log("✅ MongoDB Connected Successfully to Atlas!"))
+    .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -51,9 +51,9 @@ app.post('/api/onboarding/start', async (req, res) => {
 
         // CASE 1: Already fully onboarded
         if (school && school.status === "COMPLETED") {
-            return res.status(409).json({ 
-                error: "Account already exists for this email.", 
-                type: "ALREADY_ONBOARDED" 
+            return res.status(409).json({
+                error: "Account already exists for this email.",
+                type: "ALREADY_ONBOARDED"
             });
         }
 
@@ -82,23 +82,23 @@ app.post('/api/onboarding/start', async (req, res) => {
                 formData: { email: email }
             });
             await newSchool.save();
-            return res.json({ 
-                message: "OTP sent", 
-                schoolId: newSchool.id, 
-                currentStep: 1, 
+            return res.json({
+                message: "OTP sent",
+                schoolId: newSchool.id,
+                currentStep: 1,
                 formData: newSchool.formData,
-                isNewAccount: true 
+                isNewAccount: true
             });
         } else {
             // CASE 3: Resuming pending account
             school.otp = otp;
             await school.save();
-            return res.json({ 
-                message: "OTP sent to resume your session", 
-                schoolId: school.id, 
-                currentStep: school.currentStep, 
+            return res.json({
+                message: "OTP sent to resume your session",
+                schoolId: school.id,
+                currentStep: school.currentStep,
                 formData: school.formData,
-                isNewAccount: false 
+                isNewAccount: false
             });
         }
     } catch (err) {
@@ -137,18 +137,18 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
             school.isPasswordChanged = false; // Reset to false for new passwords
 
             // Generate unique Campus Code (No dashes, e.g. GAJ1561)
-            const schoolNamePrefix = school.formData?.schoolName 
-                ? school.formData.schoolName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'SCH') 
+            const schoolNamePrefix = school.formData?.schoolName
+                ? school.formData.schoolName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'SCH')
                 : 'SCH';
             const randomCode = Math.floor(1000 + Math.random() * 9000);
             school.campusCode = `${schoolNamePrefix}${randomCode}`;
         }
 
         await school.save();
-        res.json({ 
-            message: "Saved!", 
+        res.json({
+            message: "Saved!",
             data: school,
-            password: generatedPassword 
+            password: generatedPassword
         });
     } catch (err) {
         console.error("❌ Update error:", err);
@@ -162,7 +162,7 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
 app.post('/api/admin/login', async (req, res) => {
     res.header("Access-Control-Allow-Origin", "*");
     console.log("🔥 Login Request Received:", req.body);
-    
+
     let { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email & Password required" });
 
@@ -170,7 +170,7 @@ app.post('/api/admin/login', async (req, res) => {
 
     try {
         console.log(`🔍 Searching for school with email: ${email}`);
-        
+
         // Search in both top-level email and formData email
         const school = await School.findOne({
             $or: [
@@ -178,14 +178,14 @@ app.post('/api/admin/login', async (req, res) => {
                 { "formData.email": email }
             ]
         });
-        
+
         if (!school) {
             console.log(`❌ No account found for email: ${email}`);
             return res.status(401).json({ error: "No account found with this email" });
         }
 
         console.log(`✅ School record located: ${school.id} (${school.formData.schoolName})`);
-        
+
         // Final password match check
         let isMatch = false;
         try {
@@ -206,14 +206,14 @@ app.post('/api/admin/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: school.id, email: school.email }, 
-            process.env.JWT_SECRET || 'scoolg_secret_99', 
+            { id: school.id, email: school.email },
+            process.env.JWT_SECRET || 'scoolg_secret_99',
             { expiresIn: '7d' }
         );
 
-        res.json({ 
-            token, 
-            schoolId: school.id, 
+        res.json({
+            token,
+            schoolId: school.id,
             schoolName: school.formData.schoolName,
             isPasswordChanged: school.isPasswordChanged,
             status: school.status
@@ -272,11 +272,16 @@ app.get('/api/onboarding/:id', async (req, res) => {
 // --- Classes API ---
 app.post('/api/admin/classes', async (req, res) => {
     try {
-        const { schoolId, className, order } = req.body;
+        const { schoolId, className, order, subjects } = req.body;
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        const newClass = new ClassModel({ schoolId: school._id, className, order });
+        const newClass = new ClassModel({
+            schoolId: school._id,
+            className,
+            order,
+            subjects: subjects || []
+        });
         await newClass.save();
         res.status(201).json(newClass);
     } catch (err) {
@@ -314,13 +319,23 @@ app.post('/api/admin/sections', async (req, res) => {
 
 app.get('/api/admin/sections', async (req, res) => {
     try {
-        const { classId } = req.query;
-        if (!classId) return res.status(400).json({ error: "classId is required" });
+        const { classId, schoolId } = req.query;
+        let query = {};
 
-        const sections = await Section.find({ classId }).populate('classTeacherId');
+        if (classId) {
+            query.classId = classId;
+        } else if (schoolId) {
+            const school = await School.findOne({ id: schoolId });
+            if (!school) return res.status(404).json({ error: "School not found" });
+            query.schoolId = school._id;
+        } else {
+            return res.status(400).json({ error: "classId or schoolId is required" });
+        }
+
+        const sections = await Section.find(query).populate('classTeacherId');
         res.json(sections);
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch sections" });
+        res.status(500).json({ error: "Failed to fetch sections", details: err.message });
     }
 });
 
@@ -352,50 +367,17 @@ app.get('/api/admin/subjects', async (req, res) => {
     }
 });
 
-// --- Timetable API ---
-app.post('/api/admin/timetable', async (req, res) => {
-    try {
-        const { schoolId, classId, sectionId, dayOfWeek, periods } = req.body;
-        const school = await School.findOne({ id: schoolId });
-        if (!school) return res.status(404).json({ error: "School not found" });
-
-        // Update if exists, else create
-        const timetable = await Timetable.findOneAndUpdate(
-            { schoolId: school._id, classId, sectionId, dayOfWeek },
-            { periods },
-            { new: true, upsert: true }
-        );
-        res.json(timetable);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to save timetable" });
-    }
-});
-
-app.get('/api/admin/timetable', async (req, res) => {
-    try {
-        const { sectionId } = req.query;
-        if (!sectionId) return res.status(400).json({ error: "sectionId is required" });
-
-        const timetable = await Timetable.find({ sectionId })
-            .populate('periods.subjectId')
-            .populate('periods.teacherId');
-        res.json(timetable);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch timetable" });
-    }
-});
-
 // --- Teachers API (Basic) ---
 app.post('/api/admin/teachers', async (req, res) => {
     try {
-        const { schoolId, fullName, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress } = req.body;
+        const { schoolId, fullName, gender, dateOfBirth, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress, profileImageUrl } = req.body;
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
         // Generate short Teacher App ID: TCH101
         const count = await Teacher.countDocuments({ schoolId: school._id });
         const teacherAppId = `TCH${count + 101}`;
-        
+
         // Generate short Password: PASS-XYZ
         const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
         const plainPassword = `PASS-${randomSuffix}`;
@@ -407,6 +389,8 @@ app.post('/api/admin/teachers', async (req, res) => {
             teacherAppId,
             password: hashedPassword,
             fullName,
+            gender,
+            dateOfBirth,
             email,
             phone,
             highestQualification,
@@ -459,7 +443,7 @@ app.post('/api/admin/students', async (req, res) => {
         // Generate App ID and Password
         const count = await Student.countDocuments({ schoolId: school._id });
         const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1001}`;
-        
+
         const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
         const plainPassword = `PASS-${randomSuffix}`;
         const salt = await bcrypt.genSalt(10);
@@ -511,7 +495,7 @@ app.get('/api/superadmin/dashboard', async (req, res) => {
         const totalSchools = await School.countDocuments({ status: { $ne: "PENDING" } });
         const pendingSchools = await School.countDocuments({ status: "PENDING" });
         const totalStudents = await Student.countDocuments();
-        
+
         // Dummy revenue calculation for demo (assuming 15k per school)
         const revenue = totalSchools * 15000;
 
@@ -541,16 +525,16 @@ app.post('/api/superadmin/schools/:id/approve', async (req, res) => {
         if (!school) return res.status(404).json({ error: "School not found" });
 
         school.status = "COMPLETED"; // Or ACTIVE
-        
+
         // Ensure they have a campus code if not generated
         if (!school.campusCode) {
-            const schoolNamePrefix = school.formData?.schoolName 
-                ? school.formData.schoolName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'SCH') 
+            const schoolNamePrefix = school.formData?.schoolName
+                ? school.formData.schoolName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'SCH')
                 : 'SCH';
             const randomCode = Math.floor(1000 + Math.random() * 9000);
             school.campusCode = `${schoolNamePrefix}${randomCode}`;
         }
-        
+
         // Optionally generate a password if they don't have one
         if (!school.password) {
             const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -599,14 +583,14 @@ app.delete('/api/superadmin/schools/:id', async (req, res) => {
     try {
         const schoolId = req.params.id;
         const school = await School.findOne({ id: schoolId });
-        
+
         if (!school) {
             return res.status(404).json({ error: "School not found" });
         }
 
         // Delete all students associated with the school
         await Student.deleteMany({ schoolId: school._id });
-        
+
         // Delete the school itself
         await School.deleteOne({ id: schoolId });
 
@@ -614,6 +598,43 @@ app.delete('/api/superadmin/schools/:id', async (req, res) => {
     } catch (err) {
         console.error("❌ Delete error:", err);
         res.status(500).json({ error: "Failed to delete school" });
+    }
+});
+
+// --- Timetable API ---
+app.get('/api/admin/timetable', async (req, res) => {
+    try {
+        const { schoolId, className, sectionName } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const timetable = await Timetable.findOne({
+            schoolId: school._id,
+            className,
+            sectionName
+        });
+
+        res.json(timetable || { message: "No timetable found" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/admin/timetable', async (req, res) => {
+    try {
+        const { schoolId, className, sectionName, schedule } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const updatedTimetable = await Timetable.findOneAndUpdate(
+            { schoolId: school._id, className, sectionName },
+            { schedule },
+            { new: true, upsert: true }
+        );
+
+        res.json(updatedTimetable);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
