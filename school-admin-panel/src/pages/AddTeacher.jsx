@@ -84,9 +84,10 @@ const AddTeacher = () => {
                                 <div className="flex flex-col items-center gap-4 lg:w-[200px] shrink-0">
                                     <div className="relative w-[140px] h-[140px] rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
                                         <span className="material-symbols-outlined text-[48px] text-slate-400">person</span>
-                                        <button type="button" className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[#2563eb] text-white flex items-center justify-center border-2 border-white shadow-sm hover:scale-105 transition-transform">
+                                        <label className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[#2563eb] text-white flex items-center justify-center border-2 border-white shadow-sm hover:scale-105 transition-transform cursor-pointer">
                                             <span className="material-symbols-outlined text-[16px]">photo_camera</span>
-                                        </button>
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => console.log(e.target.files[0])} />
+                                        </label>
                                     </div>
                                     <span className="text-xs font-bold text-slate-500 tracking-wider uppercase">Upload Photo</span>
                                 </div>
