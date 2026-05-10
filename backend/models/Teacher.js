@@ -6,6 +6,8 @@ const TeacherSchema = new mongoose.Schema({
     password: { type: String, required: true },
     isPasswordChanged: { type: Boolean, default: false },
     fullName: { type: String, required: true }, // Changed from firstName, lastName based on old UI
+    gender: { type: String },
+    dateOfBirth: { type: Date },
     email: { type: String },
     phone: { type: String, required: true },
     highestQualification: { type: String },

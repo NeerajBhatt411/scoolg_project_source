@@ -9,6 +9,7 @@ const Students = lazy(() => import('./pages/Students'));
 const AddStudent = lazy(() => import('./pages/AddStudent'));
 const Teachers = lazy(() => import('./pages/Teachers'));
 const AddTeacher = lazy(() => import('./pages/AddTeacher'));
+const TeacherProfile = lazy(() => import('./pages/TeacherProfile'));
 const Timetable = lazy(() => import('./pages/Timetable'));
 const Classes = lazy(() => import('./pages/Classes'));
 const Attendance = lazy(() => import('./pages/Attendance'));
@@ -118,6 +119,10 @@ function App() {
                         <Route
                             path="/teachers/add"
                             element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
+                        />
+                        <Route
+                            path="/teachers/profile"
+                            element={<ProtectedRoute><TeacherProfile /></ProtectedRoute>}
                         />
                         <Route
                             path="/timetable"
