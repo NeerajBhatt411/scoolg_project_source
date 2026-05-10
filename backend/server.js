@@ -81,6 +81,7 @@ app.get('/docs', (req, res) => {
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+                <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
                 <style>
                   body { margin: 0; padding: 0; background: #fafafa; }
                   #redoc-loader { 
@@ -90,27 +91,30 @@ app.get('/docs', (req, res) => {
                 </style>
               </head>
               <body>
-                <div id="redoc-loader">🚀 Loading Scoolg Documentation...</div>
+                <div id="redoc-loader">🚀 Initializing Scoolg API Docs...</div>
                 <div id="redoc-container"></div>
-                <script 
-                  src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
-                  onload="initRedoc()"
-                ></script>
                 <script>
-                  function initRedoc() {
+                  (function() {
                     const spec = ${spec};
-                    try {
-                      Redoc.init(spec, {
-                        scrollYOffset: 50,
-                        theme: { colors: { primary: { main: '#2563eb' } } }
-                      }, document.getElementById('redoc-container'), () => {
-                        document.getElementById('redoc-loader').style.display = 'none';
-                      });
-                    } catch (e) {
-                      console.error('Redoc Init Error:', e);
-                      document.getElementById('redoc-loader').innerText = '❌ Error loading documentation.';
+                    function startRedoc() {
+                      try {
+                        Redoc.init(spec, {
+                          scrollYOffset: 50,
+                          theme: { colors: { primary: { main: '#2563eb' } } }
+                        }, document.getElementById('redoc-container'), () => {
+                          document.getElementById('redoc-loader').style.display = 'none';
+                        });
+                      } catch (e) {
+                        console.error('Redoc Error:', e);
+                        document.getElementById('redoc-loader').innerHTML = '❌ Load Error. <br/>' + e.message;
+                      }
                     }
-                  }
+                    if (window.Redoc) {
+                      startRedoc();
+                    } else {
+                      window.addEventListener('load', startRedoc);
+                    }
+                  })();
                 </script>
               </body>
             </html>
