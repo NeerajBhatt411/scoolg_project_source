@@ -14,24 +14,14 @@ import Subject from './models/Subject.js';
 import Timetable from './models/Timetable.js';
 import Teacher from './models/Teacher.js';
 import Student from './models/Student.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// --- CRITICAL: Permissive CORS for Production & Local ---
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: false
-}));
-app.options('(.*)', cors()); 
-
+// --- CRITICAL: Permissive CORS ---
+app.use(cors());
 app.use(express.json());
 const swaggerOptions = {
     definition: {
