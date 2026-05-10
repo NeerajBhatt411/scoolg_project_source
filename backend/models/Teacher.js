@@ -10,6 +10,7 @@ const TeacherSchema = new mongoose.Schema({
     dateOfBirth: { type: Date },
     email: { type: String },
     phone: { type: String, required: true },
+    profileImageUrl: { type: String, default: "" },
     highestQualification: { type: String },
     specialization: { type: String },
     experienceYears: { type: Number },
