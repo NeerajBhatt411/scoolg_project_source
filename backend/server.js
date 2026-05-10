@@ -310,7 +310,7 @@ app.post('/api/admin/login', async (req, res) => {
             return res.status(401).json({ error: "No account found with this email" });
         }
 
-        console.log(`✅ School record located: ${school.id} (${school.formData.schoolName})`);
+        console.log(`✅ School record located: ${school.id} (${school.formData?.schoolName || 'Unnamed School'})`);
 
         // Final password match check
         let isMatch = false;
@@ -372,7 +372,12 @@ app.post('/api/admin/change-password', async (req, res) => {
 app.get('/api/admin/profile/:id', async (req, res) => {
     const school = await School.findOne({ id: req.params.id });
     if (!school) return res.status(404).json({ error: "School not found" });
-    res.json(school.formData);
+    res.json({
+        ...school.formData,
+        email: school.email,
+        status: school.status,
+        isPasswordChanged: school.isPasswordChanged
+    });
 });
 
 app.patch('/api/admin/profile/:id', async (req, res) => {

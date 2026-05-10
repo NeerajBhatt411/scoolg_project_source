@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const Teachers = () => {
     const navigate = useNavigate();
@@ -9,12 +10,10 @@ const Teachers = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const API_BASE = 'http://localhost:5001/api/admin';
-
     useEffect(() => {
         const fetchTeachers = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/teachers?schoolId=${schoolId}`);
+                const res = await axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`);
                 setTeachers(res.data);
             } catch (error) {
                 console.error("Failed to fetch teachers", error);

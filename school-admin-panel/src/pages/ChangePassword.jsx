@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Key, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const ChangePassword = () => {
     const [newPassword, setNewPassword] = useState('');
@@ -25,8 +26,7 @@ const ChangePassword = () => {
         setLoading(true);
         try {
             const schoolId = localStorage.getItem('scoolg_school_id');
-            await axios.post('https://scoolg-backend.netlify.app/api/admin/change-password', {
-
+            await axios.post(`${ADMIN_API_BASE}/change-password`, {
                 schoolId,
                 newPassword
             });

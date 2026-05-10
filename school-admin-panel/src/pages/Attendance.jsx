@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const Attendance = () => {
     const [classes, setClasses] = useState([]);
@@ -14,14 +15,13 @@ const Attendance = () => {
     const [isLocked, setIsLocked] = useState(true);
 
     const schoolId = localStorage.getItem('scoolg_school_id') || "";
-    const API_BASE = 'http://localhost:5001/api/admin';
     const today = new Date().toISOString().split('T')[0];
 
     useEffect(() => {
         const fetchClasses = async () => {
             if (!schoolId) return;
             try {
-                const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+                const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
                 if (Array.isArray(res.data)) {
                     setClasses(res.data);
                     if (res.data.length > 0) setSelectedClassObj(res.data[0]);
@@ -35,7 +35,7 @@ const Attendance = () => {
         if (!selectedClassObj?._id) return;
         const fetchSections = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/sections?classId=${selectedClassObj._id}`);
+                const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClassObj._id}`);
                 if (Array.isArray(res.data)) {
                     setSections(res.data);
                     if (res.data.length > 0) setSelectedSectionObj(res.data[0]);
@@ -51,11 +51,11 @@ const Attendance = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const stuRes = await axios.get(`${API_BASE}/students?schoolId=${schoolId}&className=${selectedClassObj.className}&sectionName=${selectedSectionObj.sectionName}`);
+                const stuRes = await axios.get(`${ADMIN_API_BASE}/students?schoolId=${schoolId}&className=${selectedClassObj.className}&sectionName=${selectedSectionObj.sectionName}`);
                 const studentList = Array.isArray(stuRes.data) ? stuRes.data : [];
                 setStudents(studentList);
 
-                const attRes = await axios.get(`${API_BASE}/attendance?sectionId=${selectedSectionObj._id}&date=${selectedDate}`);
+                const attRes = await axios.get(`${ADMIN_API_BASE}/attendance?sectionId=${selectedSectionObj._id}&date=${selectedDate}`);
 
                 if (attRes.data && attRes.data.records && attRes.data.records.length > 0) {
                     const newAttData = {};
@@ -96,7 +96,7 @@ const Attendance = () => {
                 studentId: s._id,
                 status: attendanceData[s._id] || 'P'
             }));
-            await axios.post(`${API_BASE}/attendance`, {
+            await axios.post(`${ADMIN_API_BASE}/attendance`, {
                 schoolId, classId: selectedClassObj._id, sectionId: selectedSectionObj._id,
                 date: selectedDate, records
             });

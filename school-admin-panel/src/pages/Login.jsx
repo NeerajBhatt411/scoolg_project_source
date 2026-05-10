@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Mail, Lock, CheckCircle2, LayoutDashboard, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
+import { ADMIN_API_BASE } from '../lib/api';
 import logo from '../assets/logo.png';
 import loginBg from '../assets/login-bg.png';
 
@@ -17,18 +18,13 @@ const Login = () => {
     const navigate = useNavigate();
     const { setSchoolId } = useAdmin();
 
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5001/api/admin' 
-        : 'https://scoolg-backend.netlify.app/api/admin';
-
-
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            const res = await axios.post(`${API_BASE_URL}/login`, { email, password });
+            const res = await axios.post(`${ADMIN_API_BASE}/login`, { email, password });
             const { token, schoolId, schoolName, isPasswordChanged, status } = res.data;
 
             localStorage.setItem('scoolg_token', token);
