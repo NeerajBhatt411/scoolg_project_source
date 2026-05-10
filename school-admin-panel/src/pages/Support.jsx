@@ -135,7 +135,7 @@ const Support = () => {
                         <div className="relative mb-8">
                             <div className="w-32 h-32 rounded-[44px] bg-slate-50 p-1.5 border-2 border-slate-100 shadow-lg overflow-hidden group">
                                 <img 
-                                    src="https://ui-avatars.com/api/?name=Neeraj+Bhatt&background=2563eb&color=fff" 
+                                    src="https://ui-avatars.com/api/?name=Navdeep+Aggarwal&background=2563eb&color=fff" 
                                     alt="Manager" 
                                     className="w-full h-full object-cover rounded-[36px] group-hover:scale-110 transition-transform duration-700" 
                                 />
@@ -143,7 +143,7 @@ const Support = () => {
                         </div>
 
                         <div className="space-y-2 mb-10">
-                            <h4 className="text-2xl font-black text-slate-900 tracking-tighter">Neeraj Bhatt</h4>
+                            <h4 className="text-2xl font-black text-slate-900 tracking-tighter">Navdeep Aggarwal</h4>
                             <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.2em] opacity-80">Primary Account Head</p>
                         </div>
 
