@@ -5,6 +5,8 @@ import nodemailer from 'nodemailer';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 import School from './models/School.js';
 import ClassModel from './models/Class.js';
 import Section from './models/Section.js';
@@ -12,10 +14,43 @@ import Subject from './models/Subject.js';
 import Timetable from './models/Timetable.js';
 import Teacher from './models/Teacher.js';
 import Student from './models/Student.js';
+
 dotenv.config();
 
 const app = express();
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
+
+// Swagger Configuration
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Scoolg API Documentation',
+            version: '1.0.0',
+            description: 'Full API documentation for Scoolg School Management System (Super Admin, School Admin, Student & Teacher apps)',
+        },
+        servers: [
+            {
+                url: `http://localhost:${PORT}`,
+                description: 'Local Server',
+            },
+        ],
+        tags: [
+            { name: 'Super Admin', description: 'APIs for Scoolg Global Control' },
+            { name: 'School Admin - Core', description: 'School Profile & Settings' },
+            { name: 'School Admin - Academic', description: 'Classes, Sections, Timetable' },
+            { name: 'School Admin - Students', description: 'Student Management' },
+            { name: 'School Admin - Teachers', description: 'Teacher Management' },
+            { name: 'School Admin - Attendance', description: 'Daily Attendance Logging' },
+            { name: 'Student App', description: 'APIs for Student/Parent Mobile App' },
+            { name: 'Teacher App', description: 'APIs for Teacher Mobile App' },
+        ],
+    },
+    apis: ['./server.js'], // Files containing annotations as defined above
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(cors());
 app.use(express.json());
@@ -41,6 +76,25 @@ app.get('/api/test', (req, res) => res.json({ message: "Local Test Success! 🚀
 
 // --- API Endpoints ---
 
+/**
+ * @swagger
+ * /api/onboarding/start:
+ *   post:
+ *     summary: Start school onboarding with OTP
+ *     tags: [Public - Onboarding]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP sent to email
+ */
 app.post('/api/onboarding/start', async (req, res) => {
     let { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
@@ -106,6 +160,27 @@ app.post('/api/onboarding/start', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/onboarding/verify:
+ *   post:
+ *     summary: Verify OTP for registration
+ *     tags: [Public - Onboarding]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Verified successfully
+ */
 app.post('/api/onboarding/verify', (req, res) => {
     const { email, otp } = req.body;
     if (TMP_OTPS[email] === otp) {
@@ -159,6 +234,27 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
 // --- Admin Panel Endpoints ---
 
 // Login
+/**
+ * @swagger
+ * /api/admin/login:
+ *   post:
+ *     summary: School Admin Login (Email/Password)
+ *     tags: [Public - Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
 app.post('/api/admin/login', async (req, res) => {
     res.header("Access-Control-Allow-Origin", "*");
     console.log("🔥 Login Request Received:", req.body);
@@ -270,6 +366,27 @@ app.get('/api/onboarding/:id', async (req, res) => {
 });
 
 // --- Classes API ---
+/**
+ * @swagger
+ * /api/admin/classes:
+ *   post:
+ *     summary: Create a new academic class
+ *     tags: [School Admin - Academic]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               schoolId:
+ *                 type: string
+ *               className:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Class created
+ */
 app.post('/api/admin/classes', async (req, res) => {
     try {
         const { schoolId, className, order, subjects } = req.body;
@@ -289,6 +406,22 @@ app.post('/api/admin/classes', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/classes:
+ *   get:
+ *     summary: List all classes for a school
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: query
+ *         name: schoolId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of classes
+ */
 app.get('/api/admin/classes', async (req, res) => {
     try {
         const { schoolId } = req.query;
@@ -303,6 +436,27 @@ app.get('/api/admin/classes', async (req, res) => {
 });
 
 // --- Sections API ---
+/**
+ * @swagger
+ * /api/admin/sections:
+ *   post:
+ *     summary: Create a new section in a class
+ *     tags: [School Admin - Academic]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               classId:
+ *                 type: string
+ *               sectionName:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Section created
+ */
 app.post('/api/admin/sections', async (req, res) => {
     try {
         const { schoolId, classId, sectionName, maxCapacity } = req.body;
@@ -317,6 +471,22 @@ app.post('/api/admin/sections', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/sections:
+ *   get:
+ *     summary: List all sections for a specific class
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: query
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of sections
+ */
 app.get('/api/admin/sections', async (req, res) => {
     try {
         const { classId, schoolId } = req.query;
@@ -368,6 +538,31 @@ app.get('/api/admin/subjects', async (req, res) => {
 });
 
 // --- Teachers API (Basic) ---
+/**
+ * @swagger
+ * /api/admin/teachers:
+ *   post:
+ *     summary: Add a new teacher
+ *     tags: [School Admin - Teachers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               schoolId:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Teacher added successfully
+ */
 app.post('/api/admin/teachers', async (req, res) => {
     try {
         const { schoolId, fullName, gender, dateOfBirth, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress, profileImageUrl } = req.body;
@@ -416,6 +611,22 @@ app.post('/api/admin/teachers', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/teachers:
+ *   get:
+ *     summary: List all teachers for a school
+ *     tags: [School Admin - Teachers]
+ *     parameters:
+ *       - in: query
+ *         name: schoolId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of teachers
+ */
 app.get('/api/admin/teachers', async (req, res) => {
     try {
         const { schoolId } = req.query;
@@ -432,6 +643,35 @@ app.get('/api/admin/teachers', async (req, res) => {
 // --- Students API ---
 
 
+/**
+ * @swagger
+ * /api/admin/students:
+ *   post:
+ *     summary: Add a new student
+ *     tags: [Admin - Students]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               schoolId:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               class:
+ *                 type: string
+ *               section:
+ *                 type: string
+ *               rollNumber:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Student added successfully
+ */
 app.post('/api/admin/students', async (req, res) => {
     try {
         const { schoolId } = req.body; // In real app, get from JWT token middleware
@@ -472,15 +712,36 @@ app.post('/api/admin/students', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/students:
+ *   get:
+ *     summary: Search/List students with filters
+ *     tags: [School Admin - Students]
+ *     parameters:
+ *       - in: query
+ *         name: schoolId
+ *       - in: query
+ *         name: className
+ *       - in: query
+ *         name: sectionName
+ *     responses:
+ *       200:
+ *         description: Array of students
+ */
 app.get('/api/admin/students', async (req, res) => {
     try {
-        const { schoolId } = req.query; // Real app: from JWT
+        const { schoolId, className, sectionName } = req.query; 
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
 
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        const students = await Student.find({ schoolId: school._id }).sort({ createdAt: -1 });
+        let query = { schoolId: school._id };
+        if (className) query.class = className;
+        if (sectionName) query.section = sectionName;
+
+        const students = await Student.find(query).sort({ rollNumber: 1, firstName: 1 });
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch students" });
@@ -490,6 +751,16 @@ app.get('/api/admin/students', async (req, res) => {
 
 // --- Super Admin APIs ---
 
+/**
+ * @swagger
+ * /api/superadmin/dashboard:
+ *   get:
+ *     summary: Get Super Admin dashboard stats
+ *     tags: [Super Admin]
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ */
 app.get('/api/superadmin/dashboard', async (req, res) => {
     try {
         const totalSchools = await School.countDocuments({ status: { $ne: "PENDING" } });
@@ -510,6 +781,16 @@ app.get('/api/superadmin/dashboard', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/superadmin/schools:
+ *   get:
+ *     summary: List all schools for Super Admin
+ *     tags: [Super Admin]
+ *     responses:
+ *       200:
+ *         description: List of schools
+ */
 app.get('/api/superadmin/schools', async (req, res) => {
     try {
         const schools = await School.find().sort({ createdAt: -1 });
@@ -519,6 +800,22 @@ app.get('/api/superadmin/schools', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/superadmin/schools/{id}/approve:
+ *   post:
+ *     summary: Approve a pending school registration
+ *     tags: [Super Admin]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: School approved successfully
+ */
 app.post('/api/superadmin/schools/:id/approve', async (req, res) => {
     try {
         const school = await School.findOne({ id: req.params.id });
@@ -564,6 +861,31 @@ app.post('/api/superadmin/schools/:id/approve', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/superadmin/schools/{id}/status:
+ *   patch:
+ *     summary: Update school status (ACTIVE, SUSPENDED, etc.)
+ *     tags: [Super Admin]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Status updated
+ */
 app.patch('/api/superadmin/schools/:id/status', async (req, res) => {
     try {
         const { status } = req.body;
@@ -579,6 +901,22 @@ app.patch('/api/superadmin/schools/:id/status', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/superadmin/schools/{id}:
+ *   delete:
+ *     summary: Permanently delete a school and its data
+ *     tags: [Super Admin]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: School deleted
+ */
 app.delete('/api/superadmin/schools/:id', async (req, res) => {
     try {
         const schoolId = req.params.id;
@@ -602,6 +940,29 @@ app.delete('/api/superadmin/schools/:id', async (req, res) => {
 });
 
 // --- Timetable API ---
+/**
+ * @swagger
+ * /api/admin/timetable:
+ *   get:
+ *     summary: Fetch timetable for a class/section
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: query
+ *         name: schoolId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: className
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sectionName
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Timetable object
+ */
 app.get('/api/admin/timetable', async (req, res) => {
     try {
         const { schoolId, className, sectionName } = req.query;
@@ -620,6 +981,22 @@ app.get('/api/admin/timetable', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/timetable:
+ *   post:
+ *     summary: Save or update class timetable
+ *     tags: [School Admin - Academic]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Timetable saved
+ */
 app.post('/api/admin/timetable', async (req, res) => {
     try {
         const { schoolId, className, sectionName, schedule } = req.body;
@@ -638,4 +1015,102 @@ app.post('/api/admin/timetable', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
+}
+
+export default app;
+
+// --- Attendance API ---
+import Attendance from './models/Attendance.js';
+
+/**
+ * @swagger
+ * /api/admin/attendance:
+ *   post:
+ *     summary: Save or update daily attendance
+ *     tags: [Admin - Attendance]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               schoolId:
+ *                 type: string
+ *               classId:
+ *                 type: string
+ *               sectionId:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *               records:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     studentId:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Attendance saved successfully
+ */
+app.post('/api/admin/attendance', async (req, res) => {
+    try {
+        const { schoolId, classId, sectionId, date, records } = req.body;
+        
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const attendance = await Attendance.findOneAndUpdate(
+            { sectionId, date },
+            { 
+                schoolId: school._id,
+                classId,
+                sectionId,
+                date,
+                records,
+                markedBy: "Admin"
+            },
+            { upsert: true, new: true }
+        );
+
+        res.json(attendance);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save attendance", details: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/admin/attendance:
+ *   get:
+ *     summary: Fetch attendance for a specific date
+ *     tags: [School Admin - Attendance]
+ *     parameters:
+ *       - in: query
+ *         name: sectionId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Attendance record
+ */
+app.get('/api/admin/attendance', async (req, res) => {
+    try {
+        const { sectionId, date } = req.query;
+        if (!sectionId || !date) return res.status(400).json({ error: "sectionId and date are required" });
+
+        const attendance = await Attendance.findOne({ sectionId, date });
+        res.json(attendance);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch attendance" });
+    }
+});
