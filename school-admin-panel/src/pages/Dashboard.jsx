@@ -98,9 +98,9 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Teachers
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">48</h4>
+                            <h4 className="text-2xl font-extrabold text-on-surface">{stats?.teachers || 0}</h4>
                             <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Active across 14 wings</span>
+                                <span>Active across faculty</span>
                             </div>
                         </div>
                         <div className="p-3 bg-secondary-container/10 rounded-xl text-secondary">
@@ -112,7 +112,7 @@ const Dashboard = () => {
                         {(() => {
                             const sid = localStorage.getItem('scoolg_school_id') || "";
                             const suffix = sid.slice(-4);
-                            const code = (schoolName.substring(0, 3) + suffix).toLowerCase();
+                            const code = (schoolName.substring(0, 3) + suffix).toUpperCase();
                             return (
                                 <div>
                                     <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
@@ -121,7 +121,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
                                         <button
-                                            onClick={() => navigator.clipboard.writeText(code)}
+                                            onClick={() => { navigator.clipboard.writeText(code); alert('Copied!') }}
                                             title="Copy Code"
                                             className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
                                         >
@@ -145,9 +145,9 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Classes
                             </p>
-                            <h4 className="text-2xl font-extrabold text-on-surface">14</h4>
+                            <h4 className="text-2xl font-extrabold text-on-surface">{stats?.classes || 0}</h4>
                             <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-medium text-xs">
-                                <span>Standard 1 to 12</span>
+                                <span>Academic Wings</span>
                             </div>
                         </div>
                         <div className="p-3 bg-surface-container-high rounded-xl text-outline">
@@ -157,28 +157,35 @@ const Dashboard = () => {
                 </div>
 
                 {/* Quick Actions Grid */}
-                <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow">
+                <div className="bg-surface-container-lowest p-5 sm:p-8 rounded-xl premium-shadow border border-slate-100">
                     <h5 className="text-lg sm:text-2xl text-on-surface font-bold mb-5 sm:mb-6 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">bolt</span>
                         Quick Administrative Actions
                     </h5>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <button className="primary-gradient text-on-primary font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all shadow-lg shadow-primary/20 overflow-hidden">
-                            <span className="material-symbols-outlined text-[20px] sm:text-[24px]">person_add</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Add Student</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <button onClick={() => window.location.href = '/admin/students/add'} className="bg-[#eff6ff] border border-blue-200 border-b-4 text-blue-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-blue-300 active:border-b-0 active:translate-y-1 group">
+                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                                <span className="material-symbols-outlined text-[24px]">person_add</span>
+                            </div>
+                            <span className="text-sm font-extrabold tracking-tight">Add Student</span>
                         </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">person_add_alt</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Add Teacher</span>
+                        <button onClick={() => window.location.href = '/admin/teachers/add'} className="bg-[#f5f3ff] border border-indigo-200 border-b-4 text-indigo-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-indigo-300 active:border-b-0 active:translate-y-1 group">
+                            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                                <span className="material-symbols-outlined text-[24px]">person_add_alt</span>
+                            </div>
+                            <span className="text-sm font-extrabold tracking-tight">Add Teacher</span>
                         </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">send</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Send Notice</span>
+                        <button onClick={() => window.location.href = '/admin/notices'} className="bg-[#fff7ed] border border-orange-200 border-b-4 text-orange-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-orange-300 active:border-b-0 active:translate-y-1 group">
+                            <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                                <span className="material-symbols-outlined text-[24px]">send</span>
+                            </div>
+                            <span className="text-sm font-extrabold tracking-tight">Send Notice</span>
                         </button>
-                        <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                            <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">event_note</span>
-                            <span className="text-[11px] sm:text-sm whitespace-nowrap">Timetable</span>
+                        <button onClick={() => window.location.href = '/admin/timetable'} className="bg-[#ecfdf5] border border-emerald-200 border-b-4 text-emerald-900 font-bold py-5 px-5 rounded-2xl flex items-center gap-4 transition-all hover:shadow-lg hover:border-emerald-300 active:border-b-0 active:translate-y-1 group">
+                            <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                                <span className="material-symbols-outlined text-[24px]">event_note</span>
+                            </div>
+                            <span className="text-sm font-extrabold tracking-tight">Timetable</span>
                         </button>
                     </div>
 
@@ -276,92 +283,8 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Bottom Card: Recent Activity */}
-                <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden">
-                    <div className="px-4 sm:px-8 py-5 sm:py-6 border-b border-surface-container">
-                        <h5 className="text-title-md text-on-surface font-bold">Recent Activity</h5>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="text-[11px] uppercase font-bold text-on-surface-variant tracking-widest">
-                                    <th className="px-4 sm:px-8 py-4">Activity</th>
-                                    <th className="px-4 sm:px-8 py-4">Subject</th>
-                                    <th className="px-4 sm:px-8 py-4">Performed By</th>
-                                    <th className="px-4 sm:px-8 py-4">Time</th>
-                                    <th className="px-4 sm:px-8 py-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-surface-container/50">
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                                <span className="material-symbols-outlined text-sm">person_add</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">New Admission</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Rahul Kumar added</td>
-
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Admin Sarah</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Just Now</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-green-600 px-3 py-1 rounded-full status-aura-success w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-green-600"></span>
-                                            Success
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                <span className="material-symbols-outlined text-sm">update</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">Timetable Update</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Class 8-B timetable updated</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Registrar Office</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">45 mins ago</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-blue-600 px-3 py-1 rounded-full bg-blue-50 w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                                            Updated
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="hover:bg-surface-container-low/40 transition-colors">
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                                                <span className="material-symbols-outlined text-sm">campaign</span>
-                                            </div>
-                                            <span className="font-bold text-[0.875rem]">Notice Published</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface text-[0.875rem]">Annual Sports Day Announcement</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">Admin Sarah</td>
-                                    <td className="px-4 sm:px-8 py-5 text-on-surface-variant text-[0.875rem]">2 hours ago</td>
-                                    <td className="px-4 sm:px-8 py-5">
-                                        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-orange-600 px-3 py-1 rounded-full bg-orange-50 w-fit">
-                                            <span className="w-2 h-2 rounded-full bg-orange-600"></span>
-                                            Public
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-4 sm:px-8 py-5 sm:py-6 bg-surface-container-low/30 border-t border-surface-container text-center">
-                        <button className="text-primary font-bold text-[0.875rem] hover:underline">View All Activities</button>
-                    </div>
-                </div>
             </div>
-
         </>
-
     );
 };
 

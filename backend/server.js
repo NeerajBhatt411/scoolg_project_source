@@ -365,6 +365,27 @@ app.get('/api/onboarding/:id', async (req, res) => {
     res.json(school.formData);
 });
 
+// --- Dashboard Stats ---
+app.get('/api/admin/dashboard/stats', async (req, res) => {
+    try {
+        const { schoolId } = req.query;
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const [students, teachers, classes] = await Promise.all([
+            Student.countDocuments({ schoolId: school._id }),
+            Teacher.countDocuments({ schoolId: school._id }),
+            ClassModel.countDocuments({ schoolId: school._id })
+        ]);
+
+        res.json({ students, teachers, classes });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch stats" });
+    }
+});
+
 // --- Classes API ---
 /**
  * @swagger
@@ -731,7 +752,7 @@ app.post('/api/admin/students', async (req, res) => {
  */
 app.get('/api/admin/students', async (req, res) => {
     try {
-        const { schoolId, className, sectionName } = req.query; 
+        const { schoolId, className, sectionName } = req.query;
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
 
         const school = await School.findOne({ id: schoolId });
@@ -1061,13 +1082,13 @@ import Attendance from './models/Attendance.js';
 app.post('/api/admin/attendance', async (req, res) => {
     try {
         const { schoolId, classId, sectionId, date, records } = req.body;
-        
+
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
         const attendance = await Attendance.findOneAndUpdate(
             { sectionId, date },
-            { 
+            {
                 schoolId: school._id,
                 classId,
                 sectionId,

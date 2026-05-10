@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -39,6 +39,49 @@ const AddStudent = () => {
 
     const [previewPhoto, setPreviewPhoto] = useState(null);
     const [errors, setErrors] = useState({});
+    const [classes, setClasses] = useState([]);
+    const [availableSections, setAvailableSections] = useState([]);
+
+    const API_BASE = 'http://localhost:5001/api/admin';
+
+    // Fetch Classes
+    useEffect(() => {
+        const fetchClasses = async () => {
+            if (!schoolId) return;
+            try {
+                const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+                setClasses(res.data);
+            } catch (err) {
+                console.error("Failed to fetch classes", err);
+            }
+        };
+        fetchClasses();
+    }, [schoolId]);
+
+    // Fetch Sections when class changes
+    // Fetch Sections when class changes
+    useEffect(() => {
+        const fetchSections = async () => {
+            if (!formData.class) {
+                setAvailableSections([]);
+                return;
+            }
+            const selectedClass = classes.find(c => c.className === formData.class);
+            if (selectedClass) {
+                try {
+                    const res = await axios.get(`${API_BASE}/sections?classId=${selectedClass._id}`);
+                    setAvailableSections(res.data);
+                    // Reset section if not valid for new class
+                    if (res.data.length > 0 && !res.data.find(s => s.sectionName === formData.section)) {
+                        setFormData(prev => ({ ...prev, section: res.data[0].sectionName }));
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch sections", err);
+                }
+            }
+        };
+        fetchSections();
+    }, [formData.class, classes]);
 
     const steps = [
         { id: 1, title: 'Personal' },
@@ -103,21 +146,24 @@ const AddStudent = () => {
 
     const validateStep = (step) => {
         const newErrors = {};
+        const today = new Date().toISOString().split('T')[0];
+
         if (step === 1) {
-            if (!formData.firstName) newErrors.firstName = true;
-            if (!formData.lastName) newErrors.lastName = true;
-            if (!formData.dateOfBirth) newErrors.dateOfBirth = true;
+            if (!formData.firstName || formData.firstName.length < 2) newErrors.firstName = true;
+            if (!formData.lastName || formData.lastName.length < 2) newErrors.lastName = true;
+            if (!formData.dateOfBirth || formData.dateOfBirth > today) newErrors.dateOfBirth = true;
             if (!formData.gender) newErrors.gender = true;
         } else if (step === 2) {
-            if (!formData.fatherName) newErrors.fatherName = true;
-            if (!formData.motherName) newErrors.motherName = true;
-            if (!formData.primaryContact) newErrors.primaryContact = true;
+            if (!formData.fatherName || formData.fatherName.length < 2) newErrors.fatherName = true;
+            if (!formData.motherName || formData.motherName.length < 2) newErrors.motherName = true;
+            if (!formData.primaryContact || !/^\d{10}$/.test(formData.primaryContact)) newErrors.primaryContact = true;
+            if (formData.parentEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail)) newErrors.parentEmail = true;
         } else if (step === 3) {
             if (!formData.class) newErrors.class = true;
             if (!formData.section) newErrors.section = true;
             if (!formData.rollNumber) newErrors.rollNumber = true;
-            if (!formData.dateOfAdmission) newErrors.dateOfAdmission = true;
-            if (!formData.currentAddress) newErrors.currentAddress = true;
+            if (!formData.dateOfAdmission || formData.dateOfAdmission > today) newErrors.dateOfAdmission = true;
+            if (!formData.currentAddress || formData.currentAddress.length < 5) newErrors.currentAddress = true;
         }
         
         setErrors(newErrors);
@@ -125,12 +171,14 @@ const AddStudent = () => {
     };
 
     const isStepValid = (step) => {
+        const today = new Date().toISOString().split('T')[0];
         if (step === 1) {
-            return formData.firstName && formData.lastName && formData.dateOfBirth && formData.gender;
+            return formData.firstName.length >= 2 && formData.lastName.length >= 2 && formData.dateOfBirth && formData.dateOfBirth <= today && formData.gender;
         } else if (step === 2) {
-            return formData.fatherName && formData.motherName && formData.primaryContact;
+            const emailValid = !formData.parentEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail);
+            return formData.fatherName.length >= 2 && formData.motherName.length >= 2 && /^\d{10}$/.test(formData.primaryContact) && emailValid;
         } else if (step === 3) {
-            return formData.class && formData.section && formData.rollNumber && formData.dateOfAdmission && formData.currentAddress;
+            return formData.class && formData.section && formData.rollNumber && formData.dateOfAdmission && formData.dateOfAdmission <= today && formData.currentAddress.length >= 5;
         }
         return true;
     };
@@ -151,9 +199,8 @@ const AddStudent = () => {
             }
             setIsLoading(true);
             try {
-                // Ensure we use the proper API BASE URL 
-                const API_URL = 'https://scoolg-backend.netlify.app/api/admin/students';
-                const res = await axios.post(API_URL, {
+                // Use the local API BASE
+                const res = await axios.post(`${API_BASE}/students`, {
                     ...formData,
                     schoolId
                 });
@@ -362,12 +409,14 @@ const AddStudent = () => {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Primary Phone Number <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="tel" value={formData.primaryContact} onChange={e=>handleInputChange('primaryContact', e.target.value)} placeholder="+91 999 999 9999" className={`w-full h-12 px-4 rounded-xl border ${errors.primaryContact ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <input type="tel" value={formData.primaryContact} onChange={e=>handleInputChange('primaryContact', e.target.value)} placeholder="10 Digit Number" maxLength="10" className={`w-full h-12 px-4 rounded-xl border ${errors.primaryContact ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            {errors.primaryContact && <p className="text-[10px] text-red-500 font-bold ml-1">Must be exactly 10 digits</p>}
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Parent Email (Optional)</label>
-                                            <input type="email" value={formData.parentEmail} onChange={e=>handleInputChange('parentEmail', e.target.value)} placeholder="parent@email.com" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <input type="email" value={formData.parentEmail} onChange={e=>handleInputChange('parentEmail', e.target.value)} placeholder="parent@email.com" className={`w-full h-12 px-4 rounded-xl border ${errors.parentEmail ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            {errors.parentEmail && <p className="text-[10px] text-red-500 font-bold ml-1">Invalid email format</p>}
                                         </div>
                                     </>
                                 )}
@@ -377,11 +426,30 @@ const AddStudent = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Class/Grade <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.class} onChange={e=>handleInputChange('class', e.target.value)} placeholder="e.g. 10" className={`w-full h-12 px-4 rounded-xl border ${errors.class ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <select 
+                                                value={formData.class} 
+                                                onChange={e=>handleInputChange('class', e.target.value)} 
+                                                className={`w-full h-12 px-4 rounded-xl border ${errors.class ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}
+                                            >
+                                                <option value="">Select Class</option>
+                                                {classes.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
+                                            </select>
+                                            {classes.length === 0 && (
+                                                <p className="text-[9px] text-red-500 font-bold uppercase tracking-tighter mt-1">
+                                                    No classes found. <span className="underline cursor-pointer" onClick={() => navigate('/classes')}>Add Class First</span>
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Section <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.section} onChange={e=>handleInputChange('section', e.target.value)} placeholder="e.g. A" className={`w-full h-12 px-4 rounded-xl border ${errors.section ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <select 
+                                                value={formData.section} 
+                                                onChange={e=>handleInputChange('section', e.target.value)} 
+                                                className={`w-full h-12 px-4 rounded-xl border ${errors.section ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}
+                                            >
+                                                <option value="">Select Section</option>
+                                                {availableSections.map(s => <option key={s._id} value={s.sectionName}>{s.sectionName}</option>)}
+                                            </select>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>
