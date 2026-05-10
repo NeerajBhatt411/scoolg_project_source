@@ -76,7 +76,15 @@ const swaggerUiOptions = {
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://www.scoolg.com',
+        'https://scoolg.com',
+        'http://localhost:5173',
+        'http://localhost:3000'
+    ],
+    credentials: true
+}));
 app.use(express.json());
 
 // --- MongoDB Connection (Local & Global) ---
@@ -280,7 +288,6 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
  *         description: Login successful
  */
 app.post('/api/admin/login', async (req, res) => {
-    res.header("Access-Control-Allow-Origin", "*");
     console.log("🔥 Login Request Received:", req.body);
 
     let { email, password } = req.body;
