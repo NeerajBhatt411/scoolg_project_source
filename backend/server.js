@@ -30,7 +30,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: false
 }));
-app.options('*', cors()); 
+app.options('(.*)', cors()); 
 
 app.use(express.json());
 const swaggerOptions = {
