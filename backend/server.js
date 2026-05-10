@@ -14,6 +14,11 @@ import Subject from './models/Subject.js';
 import Timetable from './models/Timetable.js';
 import Teacher from './models/Teacher.js';
 import Student from './models/Student.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -35,22 +40,36 @@ const swaggerOptions = {
                 description: 'Local Server',
             },
         ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            }
+        },
+        security: [{
+            bearerAuth: []
+        }],
         tags: [
-            { name: 'Super Admin', description: 'APIs for Scoolg Global Control' },
-            { name: 'School Admin - Core', description: 'School Profile & Settings' },
-            { name: 'School Admin - Academic', description: 'Classes, Sections, Timetable' },
-            { name: 'School Admin - Students', description: 'Student Management' },
-            { name: 'School Admin - Teachers', description: 'Teacher Management' },
-            { name: 'School Admin - Attendance', description: 'Daily Attendance Logging' },
             { name: 'Student App', description: 'APIs for Student/Parent Mobile App' },
-            { name: 'Teacher App', description: 'APIs for Teacher Mobile App' },
+            { name: 'Auth', description: 'Authentication & Session Management' },
+            { name: 'Academic', description: 'Timetable, Attendance, Results' },
+            { name: 'Admin', description: 'School Administration & Controls' },
         ],
     },
-    apis: ['./server.js'], // Files containing annotations as defined above
+    apis: ['./server.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Serve Static API Documentation (Redoc) at /docs
+app.get('/docs/swagger.json', (req, res) => {
+    res.json(swaggerDocs);
+});
+app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
 app.use(cors());
 app.use(express.json());
@@ -1159,7 +1178,7 @@ app.get('/api/student/verify-campus/:code', async (req, res) => {
         const { code } = req.params;
         const school = await School.findOne({ campusCode: code.toUpperCase() });
         if (!school) return res.status(404).json({ error: "Invalid Campus Code" });
-        
+
         res.json({
             schoolId: school.id,
             schoolName: school.formData.schoolName,
@@ -1174,39 +1193,65 @@ app.get('/api/student/verify-campus/:code', async (req, res) => {
  * @swagger
  * /api/student/login:
  *   post:
- *     summary: Student Login (AppID/Password)
- *     tags: [Student App]
+ *     summary: Student Login
+ *     description: Authenticates a student and returns session tokens.
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [studentAppId, password]
  *             properties:
  *               studentAppId:
  *                 type: string
+ *                 example: "sch1001"
  *               password:
  *                 type: string
+ *                 example: "15122005"
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 studentId:
+ *                   type: string
+ *       401:
+ *         description: Invalid credentials
  */
 app.post('/api/student/login', async (req, res) => {
     try {
-        const { studentAppId, password } = req.body;
+        let { studentAppId, password } = req.body;
+        if (!studentAppId || !password) return res.status(400).json({ error: "ID & Password required" });
+        
+        studentAppId = studentAppId.toLowerCase().trim();
         const student = await Student.findOne({ studentAppId });
         if (!student) return res.status(401).json({ error: "Invalid ID or Password" });
 
         const isMatch = await bcrypt.compare(password, student.password);
         if (!isMatch) return res.status(401).json({ error: "Invalid ID or Password" });
 
-        const token = jwt.sign(
-            { id: student._id, schoolId: student.schoolId },
+        const accessToken = jwt.sign(
+            { id: student._id, schoolId: student.schoolId, role: 'student' },
             process.env.JWT_SECRET || 'scoolg_secret_99',
-            { expiresIn: '30d' }
+            { expiresIn: '1d' } // Short lived
         );
 
-        res.json({ token, studentId: student._id });
+        const refreshToken = jwt.sign(
+            { id: student._id },
+            process.env.JWT_REFRESH_SECRET || 'scoolg_refresh_secret_88',
+            { expiresIn: '30d' } // Long lived
+        );
+
+        res.json({ accessToken, refreshToken, studentId: student._id });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1214,22 +1259,66 @@ app.post('/api/student/login', async (req, res) => {
 
 /**
  * @swagger
- * /api/student/me:
- *   get:
- *     summary: Get authenticated student profile
- *     tags: [Student App]
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh Access Token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Student and school data
+ *         description: New access token generated
+ */
+app.post('/api/auth/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ error: "Refresh token required" });
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'scoolg_refresh_secret_88');
+        const student = await Student.findById(decoded.id);
+        
+        if (!student) return res.status(401).json({ error: "Invalid session" });
+
+        const newAccessToken = jwt.sign(
+            { id: student._id, schoolId: student.schoolId, role: 'student' },
+            process.env.JWT_SECRET || 'scoolg_secret_99',
+            { expiresIn: '1d' }
+        );
+
+        res.json({ accessToken: newAccessToken });
+    } catch (err) {
+        res.status(401).json({ error: "Session expired. Please login again." });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/me:
+ *   get:
+ *     summary: Get Student Profile
+ *     tags: [Student App]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
  */
 app.get('/api/student/me', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) return res.status(401).json({ error: "No token provided" });
-        
+
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
-        
+
         const student = await Student.findById(decoded.id);
         if (!student) return res.status(404).json({ error: "Student not found" });
 
@@ -1251,18 +1340,20 @@ app.get('/api/student/me', async (req, res) => {
  * @swagger
  * /api/student/timetable:
  *   get:
- *     summary: Get timetable for the current student
- *     tags: [Student App]
+ *     summary: Get Student Timetable
+ *     tags: [Academic]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Timetable object
+ *         description: Success
  */
 app.get('/api/student/timetable', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
-        
+
         const student = await Student.findById(decoded.id);
         if (!student) return res.status(404).json({ error: "Student not found" });
 
@@ -1282,18 +1373,20 @@ app.get('/api/student/timetable', async (req, res) => {
  * @swagger
  * /api/student/attendance:
  *   get:
- *     summary: Get attendance history for the current student
- *     tags: [Student App]
+ *     summary: Get Attendance History
+ *     tags: [Academic]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Array of attendance records
+ *         description: Success
  */
 app.get('/api/student/attendance', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
-        
+
         const student = await Student.findById(decoded.id);
         if (!student) return res.status(404).json({ error: "Student not found" });
 

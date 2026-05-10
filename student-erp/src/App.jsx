@@ -16,13 +16,13 @@ function App() {
         <Routes>
           <Route path="/" element={<CampusVerify />} />
           <Route path="/login" element={<StudentLogin />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <StudentDashboard />
               </PrivateRoute>
-            } 
+            }
           />
         </Routes>
       </div>
