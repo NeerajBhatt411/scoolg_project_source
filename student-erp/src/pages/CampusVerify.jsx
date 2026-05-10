@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { School, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { STUDENT_API_BASE } from '../lib/api';
 
 const CampusVerify = () => {
     const [code, setCode] = useState('');
@@ -17,8 +18,7 @@ const CampusVerify = () => {
         setError('');
 
         try {
-            // Updated to use the correct API endpoint
-            const res = await axios.get(`http://localhost:5001/api/student/verify-campus/${code}`);
+            const res = await axios.get(`${STUDENT_API_BASE}/verify-campus/${code}`);
             localStorage.setItem('scoolg_school', JSON.stringify({
                 schoolId: res.data.schoolId,
                 name: res.data.schoolName,

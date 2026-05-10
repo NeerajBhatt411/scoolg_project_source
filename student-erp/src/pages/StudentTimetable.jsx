@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Clock, User, BookOpen, CalendarDays, ChevronLeft } from 'lucide-react';
+import { STUDENT_API_BASE } from '../lib/api';
 
 const StudentTimetable = ({ onBack }) => {
     const [timetable, setTimetable] = useState(null);
@@ -13,7 +14,7 @@ const StudentTimetable = ({ onBack }) => {
         const fetchTimetable = async () => {
             const token = localStorage.getItem('studentToken');
             try {
-                const res = await axios.get('http://localhost:5001/api/student/timetable', {
+                const res = await axios.get(`${STUDENT_API_BASE}/timetable`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setTimetable(res.data);
