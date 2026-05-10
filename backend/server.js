@@ -71,34 +71,48 @@ app.get('/docs/swagger.json', (req, res) => {
 });
 
 app.get('/docs', (req, res) => {
-    const spec = JSON.stringify(swaggerDocs);
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Scoolg API Documentation</title>
-            <meta charset="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-            <style>body { margin: 0; padding: 0; }</style>
-          </head>
-          <body>
-            <div id="redoc-container"></div>
-            <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
-            <script>
-                Redoc.init(${spec}, {
-                    scrollYOffset: 50,
-                    hideDownloadButton: true,
-                    theme: {
-                        colors: {
-                            primary: { main: '#2563eb' }
-                        }
-                    }
-                }, document.getElementById('redoc-container'))
-            </script>
-          </body>
-        </html>
-    `);
+    try {
+        const spec = JSON.stringify(swaggerDocs);
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Scoolg API Documentation</title>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+                <style>
+                  body { margin: 0; padding: 0; background: #fafafa; }
+                  #redoc-loader { 
+                    display: flex; justify-content: center; align-items: center; 
+                    height: 100vh; font-family: sans-serif; font-weight: bold; color: #2563eb;
+                  }
+                </style>
+              </head>
+              <body>
+                <div id="redoc-loader">🚀 Loading Scoolg Documentation...</div>
+                <div id="redoc-container"></div>
+                <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+                <script>
+                  const spec = ${spec};
+                  try {
+                    Redoc.init(spec, {
+                      scrollYOffset: 50,
+                      theme: { colors: { primary: { main: '#2563eb' } } }
+                    }, document.getElementById('redoc-container'), () => {
+                      document.getElementById('redoc-loader').style.display = 'none';
+                    });
+                  } catch (e) {
+                    console.error('Redoc Init Error:', e);
+                    document.getElementById('redoc-loader').innerText = '❌ Error loading documentation. Check console.';
+                  }
+                </script>
+              </body>
+            </html>
+        `);
+    } catch (err) {
+        res.status(500).send("Error generating docs: " + err.message);
+    }
 });
 
 app.use(cors());
