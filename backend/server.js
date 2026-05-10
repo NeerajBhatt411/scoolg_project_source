@@ -386,6 +386,48 @@ app.get('/api/admin/timetable', async (req, res) => {
 });
 
 // --- Teachers API (Basic) ---
+app.post('/api/admin/teachers', async (req, res) => {
+    try {
+        const { schoolId, firstName, lastName, email, phone } = req.body;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        // Generate short Teacher App ID: TCH101
+        const count = await Teacher.countDocuments({ schoolId: school._id });
+        const teacherAppId = `TCH${count + 101}`;
+        
+        // Generate short Password: PASS-XYZ
+        const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+        const plainPassword = `PASS-${randomSuffix}`;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+        const newTeacher = new Teacher({
+            schoolId: school._id,
+            teacherAppId,
+            password: hashedPassword,
+            firstName,
+            lastName,
+            email,
+            phone
+        });
+
+        await newTeacher.save();
+
+        res.status(201).json({
+            message: "Teacher added successfully",
+            teacher: newTeacher,
+            appCredentials: {
+                teacherAppId,
+                password: plainPassword
+            }
+        });
+    } catch (err) {
+        console.error("Failed to add teacher:", err);
+        res.status(500).json({ error: "Failed to create teacher" });
+    }
+});
+
 app.get('/api/admin/teachers', async (req, res) => {
     try {
         const { schoolId } = req.query;
