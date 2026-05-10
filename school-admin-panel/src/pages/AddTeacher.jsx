@@ -8,6 +8,7 @@ const AddTeacher = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
     const schoolId = localStorage.getItem('scoolg_school_id'); 
+    const today = new Date().toISOString().split('T')[0];
     
     // Check if missing
     if (!schoolId) {
@@ -42,7 +43,17 @@ const AddTeacher = () => {
     ];
 
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        let nextValue = value;
+
+        if (field === 'phone') {
+            nextValue = value.replace(/\D/g, '').slice(0, 10);
+        }
+
+        if (field === 'experienceYears') {
+            nextValue = value === '' ? '' : value.replace(/[^\d]/g, '');
+        }
+
+        setFormData(prev => ({ ...prev, [field]: nextValue }));
         if (errors[field]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -94,21 +105,31 @@ const AddTeacher = () => {
 
     const validateStep = (step) => {
         const newErrors = {};
+        const trimmedFullName = formData.fullName.trim();
+        const trimmedAddress = formData.residentialAddress.trim();
+        const trimmedQualification = formData.highestQualification.trim();
+        const trimmedSpecialization = formData.specialization.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (step === 1) {
-            if (!formData.fullName) newErrors.fullName = "Full Name is required";
+            if (!trimmedFullName || trimmedFullName.length < 2) newErrors.fullName = "Full Name is required";
             if (!formData.gender) newErrors.gender = "Gender is required";
             if (!formData.dateOfBirth) {
                 newErrors.dateOfBirth = "Date of Birth is required";
             } else {
                 const dob = new Date(formData.dateOfBirth);
-                const today = new Date();
-                let age = today.getFullYear() - dob.getFullYear();
-                const m = today.getMonth() - dob.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-                    age--;
-                }
-                if (age < 18) {
-                    newErrors.dateOfBirth = "Teacher must be at least 18 years old.";
+                if (Number.isNaN(dob.getTime()) || formData.dateOfBirth > today) {
+                    newErrors.dateOfBirth = "Please enter a valid date of birth.";
+                } else {
+                    const todayDate = new Date();
+                    let age = todayDate.getFullYear() - dob.getFullYear();
+                    const m = todayDate.getMonth() - dob.getMonth();
+                    if (m < 0 || (m === 0 && todayDate.getDate() < dob.getDate())) {
+                        age--;
+                    }
+                    if (age < 18) {
+                        newErrors.dateOfBirth = "Teacher must be at least 18 years old.";
+                    }
                 }
             }
         } else if (step === 2) {
@@ -121,21 +142,24 @@ const AddTeacher = () => {
                 }
             }
             if (formData.email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(formData.email)) {
                     newErrors.email = "Please enter a valid email address.";
                 }
             }
-            if (!formData.residentialAddress) newErrors.residentialAddress = "Address is required";
+            if (!trimmedAddress || trimmedAddress.length < 5) newErrors.residentialAddress = "Address is required";
         } else if (step === 3) {
-            if (!formData.highestQualification) newErrors.highestQualification = "Qualification is required";
-            if (!formData.specialization) newErrors.specialization = "Specialization is required";
+            if (!trimmedQualification) newErrors.highestQualification = "Qualification is required";
+            if (!trimmedSpecialization) newErrors.specialization = "Specialization is required";
             if (formData.experienceYears === '' || formData.experienceYears === null || formData.experienceYears === undefined) {
                 newErrors.experienceYears = "Experience is required";
             } else if (Number(formData.experienceYears) < 0) {
                 newErrors.experienceYears = "Experience cannot be negative.";
             }
-            if (!formData.dateOfJoining) newErrors.dateOfJoining = "Date of joining is required";
+            if (!formData.dateOfJoining) {
+                newErrors.dateOfJoining = "Date of joining is required";
+            } else if (formData.dateOfJoining > today) {
+                newErrors.dateOfJoining = "Date of joining cannot be in the future.";
+            }
         }
         
         setErrors(newErrors);
@@ -143,7 +167,45 @@ const AddTeacher = () => {
     };
 
     const isStepValid = (step) => {
-        return true; // We will handle validation with alerts on Next button click
+        const trimmedFullName = formData.fullName.trim();
+        const trimmedAddress = formData.residentialAddress.trim();
+        const trimmedQualification = formData.highestQualification.trim();
+        const trimmedSpecialization = formData.specialization.trim();
+        const emailValid = !formData.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+
+        if (step === 1) {
+            if (!trimmedFullName || trimmedFullName.length < 2 || !formData.gender || !formData.dateOfBirth || formData.dateOfBirth > today) {
+                return false;
+            }
+
+            const dob = new Date(formData.dateOfBirth);
+            if (Number.isNaN(dob.getTime())) return false;
+
+            const todayDate = new Date();
+            let age = todayDate.getFullYear() - dob.getFullYear();
+            const monthOffset = todayDate.getMonth() - dob.getMonth();
+            if (monthOffset < 0 || (monthOffset === 0 && todayDate.getDate() < dob.getDate())) {
+                age--;
+            }
+            return age >= 18;
+        }
+
+        if (step === 2) {
+            return /^\d{10}$/.test(formData.phone) && emailValid && trimmedAddress.length >= 5;
+        }
+
+        if (step === 3) {
+            return Boolean(
+                trimmedQualification &&
+                trimmedSpecialization &&
+                formData.experienceYears !== '' &&
+                Number(formData.experienceYears) >= 0 &&
+                formData.dateOfJoining &&
+                formData.dateOfJoining <= today
+            );
+        }
+
+        return true;
     };
 
     const handleNext = async () => {
@@ -170,7 +232,7 @@ const AddTeacher = () => {
                 }
             } catch (err) {
                 console.error(err);
-                alert("Failed to register teacher. Check console or make sure all required * fields are filled.");
+                alert(err.response?.data?.error || "Failed to register teacher. Check console or make sure all required fields are filled.");
             } finally {
                 setIsLoading(false);
             }
@@ -317,7 +379,7 @@ const AddTeacher = () => {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date Of Birth <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="date" value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfBirth ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <input type="date" max={today} value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfBirth ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
@@ -337,7 +399,7 @@ const AddTeacher = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Primary Phone Number <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="tel" value={formData.phone} onChange={e=>handleInputChange('phone', e.target.value)} placeholder="+91 999 999 9999" className={`w-full h-12 px-4 rounded-xl border ${errors.phone ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <input type="tel" value={formData.phone} onChange={e=>handleInputChange('phone', e.target.value)} placeholder="9999999999" className={`w-full h-12 px-4 rounded-xl border ${errors.phone ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
 
                                         <div className="space-y-2">
@@ -365,11 +427,11 @@ const AddTeacher = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Experience (Years) <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="number" value={formData.experienceYears} onChange={e=>handleInputChange('experienceYears', e.target.value)} placeholder="e.g. 5" className={`w-full h-12 px-4 rounded-xl border ${errors.experienceYears ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <input type="number" min="0" step="1" value={formData.experienceYears} onChange={e=>handleInputChange('experienceYears', e.target.value)} placeholder="e.g. 5" className={`w-full h-12 px-4 rounded-xl border ${errors.experienceYears ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date of Joining <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="date" value={formData.dateOfJoining} onChange={e=>handleInputChange('dateOfJoining', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfJoining ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            <input type="date" max={today} value={formData.dateOfJoining} onChange={e=>handleInputChange('dateOfJoining', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfJoining ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
                                     </>
                                 )}

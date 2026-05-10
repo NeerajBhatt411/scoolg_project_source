@@ -86,10 +86,33 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 
 
-// --- MongoDB Connection (Local & Global) ---
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log("✅ MongoDB Connected Successfully to Atlas!"))
-    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+// --- MongoDB Connection (Serverless-Safe) ---
+let cachedDbPromise = null;
+
+const connectToDB = async () => {
+    if (mongoose.connection.readyState === 1) {
+        return mongoose.connection;
+    }
+
+    if (!process.env.MONGODB_URI) {
+        throw new Error('MONGODB_URI is not configured');
+    }
+
+    if (!cachedDbPromise) {
+        cachedDbPromise = mongoose.connect(process.env.MONGODB_URI)
+            .then((connection) => {
+                console.log("✅ MongoDB Connected Successfully to Atlas!");
+                return connection;
+            })
+            .catch((err) => {
+                cachedDbPromise = null;
+                console.error("❌ MongoDB Connection Error:", err);
+                throw err;
+            });
+    }
+
+    return cachedDbPromise;
+};
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -104,6 +127,20 @@ const TMP_OTPS = {};
 // --- Health Check & Test ---
 app.get('/api/health', (req, res) => res.json({ status: "Scoolg Local Backend Online! ✨" }));
 app.get('/api/test', (req, res) => res.json({ message: "Local Test Success! 🚀" }));
+
+app.use('/api', async (req, res, next) => {
+    if (req.path === '/health' || req.path === '/test') {
+        return next();
+    }
+
+    try {
+        await connectToDB();
+        next();
+    } catch (err) {
+        console.error("❌ Request blocked: database unavailable", err);
+        res.status(500).json({ error: "Database connection failed" });
+    }
+});
 
 // --- API Endpoints ---
 
@@ -622,8 +659,87 @@ app.get('/api/admin/subjects', async (req, res) => {
 app.post('/api/admin/teachers', async (req, res) => {
     try {
         const { schoolId, fullName, gender, dateOfBirth, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress, profileImageUrl } = req.body;
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+
+        const normalizedFullName = fullName?.trim();
+        const normalizedGender = gender?.trim();
+        const normalizedPhone = String(phone || '').replace(/\D/g, '');
+        const normalizedEmail = email?.trim().toLowerCase() || '';
+        const normalizedQualification = highestQualification?.trim();
+        const normalizedSpecialization = specialization?.trim();
+        const normalizedAddress = residentialAddress?.trim();
+        const normalizedProfileImageUrl = profileImageUrl?.trim() || '';
+        const parsedDateOfBirth = new Date(dateOfBirth);
+        const parsedDateOfJoining = new Date(dateOfJoining);
+        const normalizedExperienceYears = Number(experienceYears);
+        const allowedGenders = ['Male', 'Female', 'Other'];
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const now = new Date();
+
+        if (!normalizedFullName || normalizedFullName.length < 2) {
+            return res.status(400).json({ error: "Full name is required" });
+        }
+        if (!allowedGenders.includes(normalizedGender)) {
+            return res.status(400).json({ error: "Valid gender is required" });
+        }
+        if (Number.isNaN(parsedDateOfBirth.getTime())) {
+            return res.status(400).json({ error: "Valid date of birth is required" });
+        }
+        if (parsedDateOfBirth > now) {
+            return res.status(400).json({ error: "Date of birth cannot be in the future" });
+        }
+
+        let age = now.getFullYear() - parsedDateOfBirth.getFullYear();
+        const ageMonthOffset = now.getMonth() - parsedDateOfBirth.getMonth();
+        if (ageMonthOffset < 0 || (ageMonthOffset === 0 && now.getDate() < parsedDateOfBirth.getDate())) {
+            age--;
+        }
+        if (age < 18) {
+            return res.status(400).json({ error: "Teacher must be at least 18 years old" });
+        }
+
+        if (normalizedPhone.length !== 10) {
+            return res.status(400).json({ error: "Phone number must be exactly 10 digits" });
+        }
+        if (normalizedEmail && !emailRegex.test(normalizedEmail)) {
+            return res.status(400).json({ error: "Please enter a valid email address" });
+        }
+        if (!normalizedQualification) {
+            return res.status(400).json({ error: "Highest qualification is required" });
+        }
+        if (!normalizedSpecialization) {
+            return res.status(400).json({ error: "Specialization is required" });
+        }
+        if (!Number.isFinite(normalizedExperienceYears) || normalizedExperienceYears < 0) {
+            return res.status(400).json({ error: "Experience must be a valid non-negative number" });
+        }
+        if (Number.isNaN(parsedDateOfJoining.getTime())) {
+            return res.status(400).json({ error: "Valid date of joining is required" });
+        }
+        if (parsedDateOfJoining > now) {
+            return res.status(400).json({ error: "Date of joining cannot be in the future" });
+        }
+        if (parsedDateOfJoining < parsedDateOfBirth) {
+            return res.status(400).json({ error: "Date of joining cannot be before date of birth" });
+        }
+        if (!normalizedAddress || normalizedAddress.length < 5) {
+            return res.status(400).json({ error: "Residential address is required" });
+        }
+
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
+
+        const existingPhone = await Teacher.findOne({ schoolId: school._id, phone: normalizedPhone });
+        if (existingPhone) {
+            return res.status(409).json({ error: "A teacher with this phone number already exists" });
+        }
+
+        if (normalizedEmail) {
+            const existingEmail = await Teacher.findOne({ schoolId: school._id, email: normalizedEmail });
+            if (existingEmail) {
+                return res.status(409).json({ error: "A teacher with this email address already exists" });
+            }
+        }
 
         // Generate short Teacher App ID: TCH101
         const count = await Teacher.countDocuments({ schoolId: school._id });
@@ -639,16 +755,17 @@ app.post('/api/admin/teachers', async (req, res) => {
             schoolId: school._id,
             teacherAppId,
             password: hashedPassword,
-            fullName,
-            gender,
-            dateOfBirth,
-            email,
-            phone,
-            highestQualification,
-            specialization,
-            experienceYears,
-            dateOfJoining,
-            residentialAddress
+            fullName: normalizedFullName,
+            gender: normalizedGender,
+            dateOfBirth: parsedDateOfBirth,
+            email: normalizedEmail || undefined,
+            phone: normalizedPhone,
+            profileImageUrl: normalizedProfileImageUrl,
+            highestQualification: normalizedQualification,
+            specialization: normalizedSpecialization,
+            experienceYears: normalizedExperienceYears,
+            dateOfJoining: parsedDateOfJoining,
+            residentialAddress: normalizedAddress
         });
 
         await newTeacher.save();
