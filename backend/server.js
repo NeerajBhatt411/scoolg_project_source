@@ -296,9 +296,6 @@ app.post('/api/admin/login', async (req, res) => {
 
     try {
         console.log(`🔍 Searching for school with email: [${email}]`);
-        console.log(`📡 Connected to Database: ${mongoose.connection.name}`);
-        const totalSchools = await School.countDocuments();
-        console.log(`📊 Total Schools in DB: ${totalSchools}`);
 
         // Search in both top-level email and formData email
         const school = await School.findOne({
