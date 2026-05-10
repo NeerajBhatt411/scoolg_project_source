@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import StudentTimetable from './StudentTimetable';
 import StudentAttendance from './StudentAttendance';
+import { STUDENT_API_BASE } from '../lib/api';
 
 const StudentDashboard = () => {
     const [data, setData] = useState(null);
@@ -34,7 +35,7 @@ const StudentDashboard = () => {
                 return;
             }
             try {
-                const res = await axios.get('http://localhost:5001/api/student/me', {
+                const res = await axios.get(`${STUDENT_API_BASE}/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setData(res.data);

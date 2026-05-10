@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ChevronLeft, CalendarCheck, TrendingUp, Filter } from 'lucide-react';
+import { STUDENT_API_BASE } from '../lib/api';
 
 const StudentAttendance = ({ onBack }) => {
     const [attendance, setAttendance] = useState([]);
@@ -10,7 +11,7 @@ const StudentAttendance = ({ onBack }) => {
         const fetchAttendance = async () => {
             const token = localStorage.getItem('studentToken');
             try {
-                const res = await axios.get('http://localhost:5001/api/student/attendance', {
+                const res = await axios.get(`${STUDENT_API_BASE}/attendance`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setAttendance(res.data);

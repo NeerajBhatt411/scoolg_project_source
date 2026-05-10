@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LogIn, Loader2, User, Lock, ChevronLeft, ShieldCheck } from 'lucide-react';
+import { STUDENT_API_BASE } from '../lib/api';
 
 const StudentLogin = () => {
     const [appId, setAppId] = useState('');
@@ -26,12 +27,12 @@ const StudentLogin = () => {
         setError('');
 
         try {
-            const res = await axios.post('http://localhost:5001/api/student/login', {
+            const res = await axios.post(`${STUDENT_API_BASE}/login`, {
                 studentAppId: appId,
                 password: password
             });
 
-            localStorage.setItem('studentToken', res.data.token);
+            localStorage.setItem('studentToken', res.data.accessToken);
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.error || 'Login failed');
