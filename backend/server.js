@@ -65,37 +65,8 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Serve Static API Documentation (Redoc) at /docs
-app.get('/docs/swagger.json', (req, res) => {
-    res.json(swaggerDocs);
-});
-
-app.get('/docs', (req, res) => {
-    const spec = JSON.stringify(swaggerDocs);
-    res.send(`
-        <!doctype html>
-        <html>
-          <head>
-            <title>Scoolg API Reference</title>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <style>
-              body { margin: 0; }
-            </style>
-          </head>
-          <body>
-            <script
-              id="api-reference"
-              data-url="/docs/swagger.json"></script>
-            <script>
-              const spec = ${spec};
-              document.getElementById('api-reference').dataset.spec = JSON.stringify(spec);
-            </script>
-            <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-          </body>
-        </html>
-    `);
-});
+// Serve Standard Swagger UI at /docs
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(cors());
 app.use(express.json());
