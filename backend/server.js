@@ -92,19 +92,24 @@ app.get('/docs', (req, res) => {
               <body>
                 <div id="redoc-loader">🚀 Loading Scoolg Documentation...</div>
                 <div id="redoc-container"></div>
-                <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+                <script 
+                  src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
+                  onload="initRedoc()"
+                ></script>
                 <script>
-                  const spec = ${spec};
-                  try {
-                    Redoc.init(spec, {
-                      scrollYOffset: 50,
-                      theme: { colors: { primary: { main: '#2563eb' } } }
-                    }, document.getElementById('redoc-container'), () => {
-                      document.getElementById('redoc-loader').style.display = 'none';
-                    });
-                  } catch (e) {
-                    console.error('Redoc Init Error:', e);
-                    document.getElementById('redoc-loader').innerText = '❌ Error loading documentation. Check console.';
+                  function initRedoc() {
+                    const spec = ${spec};
+                    try {
+                      Redoc.init(spec, {
+                        scrollYOffset: 50,
+                        theme: { colors: { primary: { main: '#2563eb' } } }
+                      }, document.getElementById('redoc-container'), () => {
+                        document.getElementById('redoc-loader').style.display = 'none';
+                      });
+                    } catch (e) {
+                      console.error('Redoc Init Error:', e);
+                      document.getElementById('redoc-loader').innerText = '❌ Error loading documentation.';
+                    }
                   }
                 </script>
               </body>
