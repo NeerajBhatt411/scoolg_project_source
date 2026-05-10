@@ -1068,11 +1068,7 @@ app.post('/api/admin/timetable', async (req, res) => {
     }
 });
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
-}
 
-export default app;
 
 // --- Attendance API ---
 import Attendance from './models/Attendance.js';
@@ -1420,3 +1416,9 @@ app.get('/api/student/attendance', async (req, res) => {
         res.status(401).json({ error: "Unauthorized" });
     }
 });
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
+}
+
+export default app;
