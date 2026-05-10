@@ -80,18 +80,28 @@ app.get('/docs', (req, res) => {
                 <title>Scoolg API Documentation</title>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
                 <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
                 <style>
-                  body { margin: 0; padding: 0; background: #fafafa; }
+                  body { margin: 0; padding: 0; background: #fff; }
                   #redoc-loader { 
-                    display: flex; justify-content: center; align-items: center; 
-                    height: 100vh; font-family: sans-serif; font-weight: bold; color: #2563eb;
+                    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                    height: 100vh; font-family: 'Inter', sans-serif; background: #0f172a; color: #fff;
                   }
+                  .loader-spin {
+                    width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1);
+                    border-top: 3px solid #3b82f6; border-radius: 50%;
+                    animation: spin 1s linear infinite; margin-bottom: 20px;
+                  }
+                  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 </style>
               </head>
               <body>
-                <div id="redoc-loader">🚀 Initializing Scoolg API Docs...</div>
+                <div id="redoc-loader">
+                  <div class="loader-spin"></div>
+                  <div style="font-weight: 600; letter-spacing: -0.02em;">SCOOLG API ENGINE</div>
+                  <div style="font-size: 12px; opacity: 0.5; margin-top: 8px;">Preparing documentation...</div>
+                </div>
                 <div id="redoc-container"></div>
                 <script>
                   (function() {
@@ -99,8 +109,32 @@ app.get('/docs', (req, res) => {
                     function startRedoc() {
                       try {
                         Redoc.init(spec, {
-                          scrollYOffset: 50,
-                          theme: { colors: { primary: { main: '#2563eb' } } }
+                          scrollYOffset: 0,
+                          hideDownloadButton: false,
+                          expandDefaultServerVariables: true,
+                          theme: {
+                            colors: {
+                              primary: { main: '#2563eb' },
+                              success: { main: '#10b981' },
+                              warning: { main: '#f59e0b' },
+                              error: { main: '#ef4444' },
+                              text: { primary: '#1e293b' }
+                            },
+                            typography: {
+                              fontFamily: "'Inter', sans-serif",
+                              headings: { fontFamily: "'Montserrat', sans-serif", fontWeight: '700' },
+                              code: { fontFamily: "'Fira Code', monospace", backgroundColor: '#f1f5f9' }
+                            },
+                            sidebar: {
+                              width: '300px',
+                              backgroundColor: '#ffffff',
+                              textColor: '#475569'
+                            },
+                            rightPanel: {
+                              backgroundColor: '#0f172a',
+                              textColor: '#ffffff'
+                            }
+                          }
                         }, document.getElementById('redoc-container'), () => {
                           document.getElementById('redoc-loader').style.display = 'none';
                         });
@@ -109,11 +143,8 @@ app.get('/docs', (req, res) => {
                         document.getElementById('redoc-loader').innerHTML = '❌ Load Error. <br/>' + e.message;
                       }
                     }
-                    if (window.Redoc) {
-                      startRedoc();
-                    } else {
-                      window.addEventListener('load', startRedoc);
-                    }
+                    if (window.Redoc) startRedoc();
+                    else window.addEventListener('load', startRedoc);
                   })();
                 </script>
               </body>
