@@ -12,7 +12,7 @@ export default function Team() {
             bio: "Driving technical excellence and building scalable architectures for the next generation of education."
         },
         {
-            name: "Navdeep Aggarwal",
+            name: "Navdeep Agarwal",
             role: "Software Developer",
             image: navdeepImg,
             bio: "Passionate about creating intuitive user experiences and robust systems that empower schools worldwide."
