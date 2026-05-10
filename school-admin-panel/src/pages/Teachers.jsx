@@ -74,7 +74,7 @@ const Teachers = () => {
                                         <tr key={t._id} className="hover:bg-slate-50">
                                             <td className="px-6 py-5 text-sm font-bold text-[#2563eb]">{t.teacherAppId}</td>
                                             <td className="px-6 py-5">
-                                                <p className="text-sm font-bold text-slate-800">{t.firstName} {t.lastName}</p>
+                                                <p className="text-sm font-bold text-slate-800">{t.fullName}</p>
                                             </td>
                                             <td className="px-6 py-5 text-sm font-medium text-slate-600">{t.phone}</td>
                                             <td className="px-6 py-5 text-sm font-medium text-slate-600">{t.email || '-'}</td>

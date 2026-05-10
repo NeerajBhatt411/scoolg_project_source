@@ -2,13 +2,17 @@ import mongoose from 'mongoose';
 
 const TeacherSchema = new mongoose.Schema({
     schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true, index: true },
-    teacherAppId: { type: String, required: true, unique: true }, // e.g., TCH-DPS-1001
+    teacherAppId: { type: String, required: true, unique: true }, // e.g., TCH101
     password: { type: String, required: true },
     isPasswordChanged: { type: Boolean, default: false },
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    fullName: { type: String, required: true }, // Changed from firstName, lastName based on old UI
     email: { type: String },
     phone: { type: String, required: true },
+    highestQualification: { type: String },
+    specialization: { type: String },
+    experienceYears: { type: Number },
+    dateOfJoining: { type: Date },
+    residentialAddress: { type: String },
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }], // Subjects they can teach
     status: { type: String, enum: ['Active', 'Inactive', 'Left'], default: 'Active' }
 }, { timestamps: true });

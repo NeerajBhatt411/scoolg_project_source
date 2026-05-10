@@ -388,7 +388,7 @@ app.get('/api/admin/timetable', async (req, res) => {
 // --- Teachers API (Basic) ---
 app.post('/api/admin/teachers', async (req, res) => {
     try {
-        const { schoolId, firstName, lastName, email, phone } = req.body;
+        const { schoolId, fullName, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress } = req.body;
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
@@ -406,10 +406,14 @@ app.post('/api/admin/teachers', async (req, res) => {
             schoolId: school._id,
             teacherAppId,
             password: hashedPassword,
-            firstName,
-            lastName,
+            fullName,
             email,
-            phone
+            phone,
+            highestQualification,
+            specialization,
+            experienceYears,
+            dateOfJoining,
+            residentialAddress
         });
 
         await newTeacher.save();
