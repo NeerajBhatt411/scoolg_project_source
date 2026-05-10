@@ -15,4 +15,5 @@ const AttendanceSchema = new mongoose.Schema({
 // Ensure one attendance record per section per day
 AttendanceSchema.index({ sectionId: 1, date: 1 }, { unique: true });
 
-export default mongoose.models.Attendance || mongoose.model('Attendance', AttendanceSchema);
+export const Attendance = mongoose.models.Attendance || mongoose.model('Attendance', AttendanceSchema);
+export default Attendance;

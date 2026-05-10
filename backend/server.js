@@ -7,14 +7,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import School from './models/School.js';
-import ClassModel from './models/Class.js';
-import Section from './models/Section.js';
-import Subject from './models/Subject.js';
-import Timetable from './models/Timetable.js';
-import Teacher from './models/Teacher.js';
-import Student from './models/Student.js';
-import Attendance from './models/Attendance.js';
+import { School } from './models/School.js';
+import { ClassModel } from './models/Class.js';
+import { Section } from './models/Section.js';
+import { Subject } from './models/Subject.js';
+import { Timetable } from './models/Timetable.js';
+import { Teacher } from './models/Teacher.js';
+import { Student } from './models/Student.js';
+import { Attendance } from './models/Attendance.js';
 
 dotenv.config();
 

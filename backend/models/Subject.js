@@ -7,4 +7,5 @@ const SubjectSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
 }, { timestamps: true });
 
-export default mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
+export const Subject = mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
+export default Subject;

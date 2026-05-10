@@ -11,4 +11,7 @@ const SchoolSchema = new mongoose.Schema({
     formData: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 
-export default mongoose.models.School || mongoose.model('School', SchoolSchema);
+export const School = mongoose.models.School || mongoose.model('School', SchoolSchema);
+export default School;
+export default School;
+

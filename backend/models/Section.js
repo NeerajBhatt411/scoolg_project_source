@@ -9,4 +9,5 @@ const SectionSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
 }, { timestamps: true });
 
-export default mongoose.models.Section || mongoose.model('Section', SectionSchema);
+export const Section = mongoose.models.Section || mongoose.model('Section', SectionSchema);
+export default Section;
