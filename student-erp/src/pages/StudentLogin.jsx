@@ -30,7 +30,7 @@ const StudentLogin = () => {
                 studentAppId: appId,
                 password: password
             });
-            
+
             localStorage.setItem('studentToken', res.data.token);
             navigate('/dashboard');
         } catch (err) {
@@ -46,8 +46,8 @@ const StudentLogin = () => {
         <div className="flex-1 flex flex-col min-h-screen bg-white relative z-10 overflow-auto animate-fade-in">
             {/* Header / Back Navigation */}
             <div className="p-6 flex items-center justify-between">
-                <button 
-                    onClick={() => navigate('/')} 
+                <button
+                    onClick={() => navigate('/')}
                     className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
                 >
                     <ChevronLeft size={20} />
@@ -57,7 +57,7 @@ const StudentLogin = () => {
                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Secure Portal</span>
                 </div>
             </div>
-            
+
             {/* School Branding Section */}
             <div className="px-8 pt-4 pb-10 flex flex-col items-center">
                 <div className="relative mb-6">
@@ -70,7 +70,7 @@ const StudentLogin = () => {
                         </div>
                     )}
                 </div>
-                
+
                 <h1 className="text-2xl font-black text-slate-900 text-center tracking-tight leading-tight max-w-[280px]">
                     {schoolInfo.name}
                 </h1>
@@ -83,8 +83,8 @@ const StudentLogin = () => {
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Student App ID</label>
                     <div className="relative group">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             required
                             value={appId}
                             onChange={(e) => setAppId(e.target.value)}
@@ -98,8 +98,8 @@ const StudentLogin = () => {
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Password (DOB)</label>
                     <div className="relative group">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors" size={20} />
-                        <input 
-                            type="password" 
+                        <input
+                            type="password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -125,7 +125,7 @@ const StudentLogin = () => {
                 )}
 
                 <div className="pt-6">
-                    <button 
+                    <button
                         disabled={loading}
                         type="submit"
                         className="w-full h-16 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 text-white font-black rounded-[24px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-600/10 active:scale-[0.98] group"

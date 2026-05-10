@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-    LogOut, 
-    CalendarDays, 
-    ClipboardList, 
-    Bell, 
-    LayoutDashboard, 
-    ChevronRight, 
-    User, 
+import {
+    LogOut,
+    CalendarDays,
+    ClipboardList,
+    Bell,
+    LayoutDashboard,
+    ChevronRight,
+    User,
     GraduationCap,
     Clock,
     BookOpen,
@@ -76,7 +76,7 @@ const StudentDashboard = () => {
             <header className="p-8 pb-10 bg-white relative">
                 <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-8">Personal ID</h2>
                 <div className="flex flex-col items-center">
-                     <div className="w-32 h-32 rounded-[40px] bg-white p-1.5 shadow-xl shadow-blue-100/50 border border-slate-100 mb-6 overflow-hidden">
+                    <div className="w-32 h-32 rounded-[40px] bg-white p-1.5 shadow-xl shadow-blue-100/50 border border-slate-100 mb-6 overflow-hidden">
                         {student.profileImageUrl ? (
                             <img src={student.profileImageUrl} alt="Profile" className="w-full h-full rounded-[34px] object-cover" />
                         ) : (
@@ -185,7 +185,7 @@ const StudentDashboard = () => {
 
                     <div className="px-6 space-y-8 animate-fade-in">
                         <section className="grid grid-cols-2 gap-4">
-                            <div 
+                            <div
                                 onClick={() => setActiveTab('attendance')}
                                 className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-sm relative overflow-hidden group cursor-pointer active:scale-95 transition-all"
                             >
@@ -217,7 +217,7 @@ const StudentDashboard = () => {
                                     Full View <ChevronRight size={12} />
                                 </button>
                             </div>
-                            
+
                             <div className="bg-white rounded-[28px] border border-slate-100 p-6 shadow-sm">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-slate-950 text-white flex flex-col items-center justify-center shrink-0">
@@ -284,15 +284,15 @@ const StudentDashboard = () => {
 
             {/* Premium Bottom Navigation */}
             <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-md h-20 bg-slate-950/95 backdrop-blur-xl rounded-[32px] border border-white/10 shadow-2xl flex items-center justify-around px-4 z-50 transition-transform duration-500">
-                <button 
+                <button
                     onClick={() => setActiveTab('home')}
                     className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${activeTab === 'home' || activeTab === 'attendance' ? 'text-blue-400 scale-110' : 'text-slate-500'}`}
                 >
                     <LayoutDashboard size={activeTab === 'home' ? 24 : 22} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
                     <span className={`text-[9px] font-black uppercase tracking-widest ${(activeTab === 'home' || activeTab === 'attendance') ? 'opacity-100' : 'opacity-0 h-0'}`}>Home</span>
                 </button>
-                
-                <button 
+
+                <button
                     onClick={() => setActiveTab('timetable')}
                     className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${activeTab === 'timetable' ? 'text-blue-400 scale-110' : 'text-slate-500'}`}
                 >
@@ -300,7 +300,7 @@ const StudentDashboard = () => {
                     <span className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'timetable' ? 'opacity-100' : 'opacity-0 h-0'}`}>Timetable</span>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setActiveTab('alerts')}
                     className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${activeTab === 'alerts' ? 'text-blue-400 scale-110' : 'text-slate-500'}`}
                 >
@@ -311,7 +311,7 @@ const StudentDashboard = () => {
                     <span className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'alerts' ? 'opacity-100' : 'opacity-0 h-0'}`}>Alerts</span>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setActiveTab('profile')}
                     className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${activeTab === 'profile' ? 'text-blue-400 scale-110' : 'text-slate-500'}`}
                 >

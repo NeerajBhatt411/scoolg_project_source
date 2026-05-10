@@ -1,0 +1,767 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Scoolg API Documentation",
+    "version": "1.0.0",
+    "description": "API documentation for Scoolg Student and Admin ERP"
+  },
+  "servers": [
+    {
+      "url": "https://scoolg-backend.onrender.com",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:5001",
+      "description": "Local Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/onboarding/start": {
+      "post": {
+        "summary": "Start school onboarding with OTP",
+        "tags": [
+          "Public - Onboarding"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent to email"
+          }
+        }
+      }
+    },
+    "/api/onboarding/verify": {
+      "post": {
+        "summary": "Verify OTP for registration",
+        "tags": [
+          "Public - Onboarding"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verified successfully"
+          }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "summary": "School Admin Login (Email/Password)",
+        "tags": [
+          "Public - Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        }
+      }
+    },
+    "/api/admin/classes": {
+      "post": {
+        "summary": "Create a new academic class",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schoolId": {
+                    "type": "string"
+                  },
+                  "className": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Class created"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all classes for a school",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "schoolId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of classes"
+          }
+        }
+      }
+    },
+    "/api/admin/sections": {
+      "post": {
+        "summary": "Create a new section in a class",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "classId": {
+                    "type": "string"
+                  },
+                  "sectionName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Section created"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all sections for a specific class",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "classId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of sections"
+          }
+        }
+      }
+    },
+    "/api/admin/teachers": {
+      "post": {
+        "summary": "Add a new teacher",
+        "tags": [
+          "School Admin - Teachers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schoolId": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Teacher added successfully"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all teachers for a school",
+        "tags": [
+          "School Admin - Teachers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "schoolId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of teachers"
+          }
+        }
+      }
+    },
+    "/api/admin/students": {
+      "post": {
+        "summary": "Add a new student",
+        "tags": [
+          "Admin - Students"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schoolId": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "class": {
+                    "type": "string"
+                  },
+                  "section": {
+                    "type": "string"
+                  },
+                  "rollNumber": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student added successfully"
+          }
+        }
+      },
+      "get": {
+        "summary": "Search/List students with filters",
+        "tags": [
+          "School Admin - Students"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "schoolId"
+          },
+          {
+            "in": "query",
+            "name": "className"
+          },
+          {
+            "in": "query",
+            "name": "sectionName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of students"
+          }
+        }
+      }
+    },
+    "/api/superadmin/dashboard": {
+      "get": {
+        "summary": "Get Super Admin dashboard stats",
+        "tags": [
+          "Super Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics"
+          }
+        }
+      }
+    },
+    "/api/superadmin/schools": {
+      "get": {
+        "summary": "List all schools for Super Admin",
+        "tags": [
+          "Super Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of schools"
+          }
+        }
+      }
+    },
+    "/api/superadmin/schools/{id}/approve": {
+      "post": {
+        "summary": "Approve a pending school registration",
+        "tags": [
+          "Super Admin"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "School approved successfully"
+          }
+        }
+      }
+    },
+    "/api/superadmin/schools/{id}/status": {
+      "patch": {
+        "summary": "Update school status (ACTIVE, SUSPENDED, etc.)",
+        "tags": [
+          "Super Admin"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/api/superadmin/schools/{id}": {
+      "delete": {
+        "summary": "Permanently delete a school and its data",
+        "tags": [
+          "Super Admin"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "School deleted"
+          }
+        }
+      }
+    },
+    "/api/admin/timetable": {
+      "get": {
+        "summary": "Fetch timetable for a class/section",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "schoolId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "className",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectionName",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Timetable object"
+          }
+        }
+      },
+      "post": {
+        "summary": "Save or update class timetable",
+        "tags": [
+          "School Admin - Academic"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Timetable saved"
+          }
+        }
+      }
+    },
+    "/api/admin/attendance": {
+      "post": {
+        "summary": "Save or update daily attendance",
+        "tags": [
+          "Admin - Attendance"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schoolId": {
+                    "type": "string"
+                  },
+                  "classId": {
+                    "type": "string"
+                  },
+                  "sectionId": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "studentId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attendance saved successfully"
+          }
+        }
+      },
+      "get": {
+        "summary": "Fetch attendance for a specific date",
+        "tags": [
+          "School Admin - Attendance"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sectionId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance record"
+          }
+        }
+      }
+    },
+    "/api/student/verify-campus/{code}": {
+      "get": {
+        "summary": "Verify school campus code",
+        "tags": [
+          "Student App"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "School branding info"
+          }
+        }
+      }
+    },
+    "/api/student/login": {
+      "post": {
+        "summary": "Student Login",
+        "description": "Authenticates a student and returns session tokens.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "studentAppId",
+                  "password"
+                ],
+                "properties": {
+                  "studentAppId": {
+                    "type": "string",
+                    "example": "sch1001"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "15122005"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "studentId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Refresh Access Token",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshToken"
+                ],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New access token generated"
+          }
+        }
+      }
+    },
+    "/api/student/me": {
+      "get": {
+        "summary": "Get Student Profile",
+        "tags": [
+          "Student App"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/student/timetable": {
+      "get": {
+        "summary": "Get Student Timetable",
+        "tags": [
+          "Academic"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/student/attendance": {
+      "get": {
+        "summary": "Get Attendance History",
+        "tags": [
+          "Academic"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

@@ -15,7 +15,7 @@ const CampusVerify = () => {
 
         setLoading(true);
         setError('');
-        
+
         try {
             // Updated to use the correct API endpoint
             const res = await axios.get(`http://localhost:5001/api/student/verify-campus/${code}`);
@@ -49,7 +49,7 @@ const CampusVerify = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Scoolg<span className="text-blue-600">OS</span></h1>
                     <p className="text-slate-500 font-bold text-sm max-w-[240px] mx-auto leading-relaxed">Connect with your school campus using your unique code</p>
@@ -59,8 +59,8 @@ const CampusVerify = () => {
                     <div className="relative">
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 ml-2">Campus Verification Code</label>
                         <div className="relative">
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                                 placeholder="E.G. SC-001"
@@ -76,7 +76,7 @@ const CampusVerify = () => {
                         </div>
                     )}
 
-                    <button 
+                    <button
                         disabled={loading || !code.trim()}
                         type="submit"
                         className="w-full h-16 bg-slate-950 hover:bg-blue-600 disabled:bg-slate-200 text-white font-black rounded-[24px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-slate-900/10 active:scale-[0.98] group"
