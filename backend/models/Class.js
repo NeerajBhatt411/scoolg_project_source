@@ -8,4 +8,5 @@ const ClassSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
 }, { timestamps: true });
 
-export default mongoose.models.Class || mongoose.model('Class', ClassSchema);
+export const ClassModel = mongoose.models.Class || mongoose.model('Class', ClassSchema);
+export default ClassModel;

@@ -19,4 +19,5 @@ const TeacherSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive', 'Left'], default: 'Active' }
 }, { timestamps: true });
 
-export default mongoose.models.Teacher || mongoose.model('Teacher', TeacherSchema);
+export const Teacher = mongoose.models.Teacher || mongoose.model('Teacher', TeacherSchema);
+export default Teacher;
