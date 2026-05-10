@@ -17,7 +17,9 @@ const Login = () => {
     const navigate = useNavigate();
     const { setSchoolId } = useAdmin();
 
-    const API_BASE_URL = 'https://scoolg-backend.netlify.app/api/admin';
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5001/api/admin' 
+        : 'https://scoolg-backend.netlify.app/api/admin';
 
 
     const handleLogin = async (e) => {

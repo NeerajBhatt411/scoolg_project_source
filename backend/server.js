@@ -25,7 +25,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Swagger Configuration
+// --- CRITICAL: Permissive CORS for Production & Local ---
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: false
+}));
+app.options('*', cors()); 
+
+app.use(express.json());
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
@@ -76,16 +85,6 @@ const swaggerUiOptions = {
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
 
-app.use(cors({
-    origin: [
-        'https://www.scoolg.com',
-        'https://scoolg.com',
-        'http://localhost:5173',
-        'http://localhost:3000'
-    ],
-    credentials: true
-}));
-app.use(express.json());
 
 // --- MongoDB Connection (Local & Global) ---
 mongoose.connect(process.env.MONGODB_URI)
