@@ -69,7 +69,25 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.get('/docs/swagger.json', (req, res) => {
     res.json(swaggerDocs);
 });
-app.use('/docs', express.static(path.join(__dirname, 'docs')));
+
+app.get('/docs', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Scoolg API Documentation</title>
+            <meta charset="utf-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+            <style>body { margin: 0; padding: 0; }</style>
+          </head>
+          <body>
+            <redoc spec-url='/docs/swagger.json'></redoc>
+            <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
+          </body>
+        </html>
+    `);
+});
 
 app.use(cors());
 app.use(express.json());
