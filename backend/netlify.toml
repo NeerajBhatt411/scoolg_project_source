@@ -1,6 +1,9 @@
 [build]
   functions = "functions"
 
+[build.environment]
+  NODE_VERSION = "20.19.0"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"

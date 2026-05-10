@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const StudentProfile = () => {
     const location = useLocation();
@@ -32,7 +33,7 @@ const StudentProfile = () => {
         if (!window.confirm(`Are you sure you want to mark this student as ${newStatus}?`)) return;
 
         try {
-            const res = await axios.put(`https://scoolg-backend.netlify.app/api/admin/students/${student._id}`, { status: newStatus });
+            const res = await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, { status: newStatus });
             setStudent(res.data.student);
             setEditData(res.data.student);
         } catch (err) {
@@ -43,7 +44,7 @@ const StudentProfile = () => {
     const handleSaveEdit = async () => {
         setIsSaving(true);
         try {
-            const res = await axios.put(`https://scoolg-backend.netlify.app/api/admin/students/${student._id}`, editData);
+            const res = await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, editData);
             setStudent(res.data.student);
             setIsEditing(false);
         } catch (err) {

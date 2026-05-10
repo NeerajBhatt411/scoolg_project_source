@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const AddStudent = () => {
     const navigate = useNavigate();
@@ -42,14 +43,12 @@ const AddStudent = () => {
     const [classes, setClasses] = useState([]);
     const [availableSections, setAvailableSections] = useState([]);
 
-    const API_BASE = 'http://localhost:5001/api/admin';
-
     // Fetch Classes
     useEffect(() => {
         const fetchClasses = async () => {
             if (!schoolId) return;
             try {
-                const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+                const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
                 setClasses(res.data);
             } catch (err) {
                 console.error("Failed to fetch classes", err);
@@ -69,7 +68,7 @@ const AddStudent = () => {
             const selectedClass = classes.find(c => c.className === formData.class);
             if (selectedClass) {
                 try {
-                    const res = await axios.get(`${API_BASE}/sections?classId=${selectedClass._id}`);
+                    const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClass._id}`);
                     setAvailableSections(res.data);
                     // Reset section if not valid for new class
                     if (res.data.length > 0 && !res.data.find(s => s.sectionName === formData.section)) {
@@ -199,8 +198,7 @@ const AddStudent = () => {
             }
             setIsLoading(true);
             try {
-                // Use the local API BASE
-                const res = await axios.post(`${API_BASE}/students`, {
+                const res = await axios.post(`${ADMIN_API_BASE}/students`, {
                     ...formData,
                     schoolId
                 });

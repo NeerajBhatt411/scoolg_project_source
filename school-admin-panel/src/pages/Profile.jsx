@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save, Loader2, User, Phone, MapPin, Globe, Award, Briefcase, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const Profile = () => {
     const [formData, setFormData] = useState(null);
@@ -10,16 +11,13 @@ const Profile = () => {
     const [message, setMessage] = useState('');
 
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const API_BASE_URL = 'https://scoolg-backend.netlify.app/api/admin';
-
-
     useEffect(() => {
         fetchProfile();
     }, []);
 
     const fetchProfile = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/profile/${schoolId}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/profile/${schoolId}`);
             setFormData(res.data);
         } catch (err) {
             console.error(err);
@@ -34,7 +32,7 @@ const Profile = () => {
         setMessage('');
 
         try {
-            await axios.patch(`${API_BASE_URL}/profile/${schoolId}`, formData);
+            await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, formData);
             setMessage('Profile updated successfully!');
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const AddTeacher = () => {
     const navigate = useNavigate();
@@ -160,8 +161,7 @@ const AddTeacher = () => {
             }
             setIsLoading(true);
             try {
-                const API_URL = 'http://localhost:5001/api/admin/teachers';
-                const res = await axios.post(API_URL, {
+                const res = await axios.post(`${ADMIN_API_BASE}/teachers`, {
                     ...formData,
                     schoolId
                 });

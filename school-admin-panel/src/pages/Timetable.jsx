@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const Timetable = () => {
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const API_BASE = 'http://localhost:5001/api/admin';
-
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -45,7 +44,7 @@ const Timetable = () => {
     // Fetch Classes on mount
     const fetchClasses = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
             if (res.data && res.data.length > 0) {
                 setClasses(res.data);
                 if (!selectedClassObj) setSelectedClassObj(res.data[0]);
@@ -68,7 +67,7 @@ const Timetable = () => {
             return;
         }
         try {
-            const res = await axios.get(`${API_BASE}/sections?classId=${selectedClassObj._id}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClassObj._id}`);
             setSections(res.data);
             if (res.data && res.data.length > 0) {
                 setSelectedSectionObj(res.data[0]);
@@ -91,7 +90,7 @@ const Timetable = () => {
                 return;
             }
             try {
-                const res = await axios.get(`${API_BASE}/sections?classId=${copyToClass}`);
+                const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${copyToClass}`);
                 setCopyToSections(res.data);
                 if (res.data && res.data.length > 0) {
                     setCopyToSection(res.data[0]._id);
@@ -106,7 +105,7 @@ const Timetable = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const techRes = await axios.get(`${API_BASE}/teachers?schoolId=${schoolId}`);
+                const techRes = await axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`);
                 setTeachers(techRes.data);
             } catch (e) { console.error("Error fetching teachers", e); }
         };
@@ -122,7 +121,7 @@ const Timetable = () => {
         }
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_BASE}/timetable?schoolId=${schoolId}&className=${selectedClassObj.className}&sectionName=${selectedSectionObj.sectionName}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/timetable?schoolId=${schoolId}&className=${selectedClassObj.className}&sectionName=${selectedSectionObj.sectionName}`);
             if (res.data && res.data.schedule) {
                 const fetchedSchedule = res.data.schedule;
                 setTimetable(res.data);
@@ -283,7 +282,7 @@ const Timetable = () => {
             // Check if class exists
             let classDoc = classes.find(c => c.className.toLowerCase() === newClassName.trim().toLowerCase());
             if (!classDoc) {
-                const classRes = await axios.post(`${API_BASE}/classes`, {
+                const classRes = await axios.post(`${ADMIN_API_BASE}/classes`, {
                     schoolId,
                     className: newClassName.trim(),
                     subjects: subjectList
@@ -292,7 +291,7 @@ const Timetable = () => {
             }
 
             // Create Section
-            await axios.post(`${API_BASE}/sections`, {
+            await axios.post(`${ADMIN_API_BASE}/sections`, {
                 schoolId,
                 classId: classDoc._id,
                 sectionName: sectionToCreate,
@@ -329,7 +328,7 @@ const Timetable = () => {
                 }))
             }));
 
-            await axios.post(`${API_BASE}/timetable`, {
+            await axios.post(`${ADMIN_API_BASE}/timetable`, {
                 schoolId,
                 className: selectedClassObj.className,
                 sectionName: selectedSectionObj.sectionName,
@@ -373,7 +372,7 @@ const Timetable = () => {
                 }))
             }));
 
-            await axios.post(`${API_BASE}/timetable`, {
+            await axios.post(`${ADMIN_API_BASE}/timetable`, {
                 schoolId,
                 className: targetClassObj.className,
                 sectionName: targetSectionObj.sectionName,

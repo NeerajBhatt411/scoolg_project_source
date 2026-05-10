@@ -21,4 +21,4 @@ const TimetableSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-export default mongoose.model('Timetable', TimetableSchema);
+export default mongoose.models.Timetable || mongoose.model('Timetable', TimetableSchema);

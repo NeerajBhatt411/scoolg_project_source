@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const Classes = () => {
     const [classes, setClasses] = useState([]);
@@ -14,8 +15,6 @@ const Classes = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const API_BASE = 'http://localhost:5001/api/admin';
-
     useEffect(() => {
         fetchClasses();
         fetchSections();
@@ -23,7 +22,7 @@ const Classes = () => {
 
     const fetchSections = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/sections?schoolId=${schoolId}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/sections?schoolId=${schoolId}`);
             setSections(res.data);
         } catch (err) {
             console.error("Failed to fetch sections", err);
@@ -33,7 +32,7 @@ const Classes = () => {
     const fetchClasses = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+            const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
             setClasses(res.data);
         } catch (err) {
             console.error("Failed to fetch classes", err);
@@ -55,7 +54,7 @@ const Classes = () => {
             const subjectList = newClassSubjects.split(',').map(s => s.trim()).filter(s => s !== "");
 
             // 1. Create/Find Class
-            const classRes = await axios.post(`${API_BASE}/classes`, {
+            const classRes = await axios.post(`${ADMIN_API_BASE}/classes`, {
                 schoolId,
                 className: newClassName.trim(),
                 subjects: subjectList,
@@ -64,7 +63,7 @@ const Classes = () => {
             const classDoc = classRes.data;
 
             // 2. Create Section
-            await axios.post(`${API_BASE}/sections`, {
+            await axios.post(`${ADMIN_API_BASE}/sections`, {
                 schoolId,
                 classId: classDoc._id,
                 sectionName: sectionToCreate,
