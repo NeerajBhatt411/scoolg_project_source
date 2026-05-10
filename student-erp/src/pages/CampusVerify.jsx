@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { School, ArrowRight, Loader2 } from 'lucide-react';
+import { School, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
 const CampusVerify = () => {
     const [code, setCode] = useState('');
@@ -17,8 +17,8 @@ const CampusVerify = () => {
         setError('');
         
         try {
-            const res = await axios.get(`https://scoolg-backend.netlify.app/api/student/verify-campus/${code}`);
-            // Save school info logic for next screen
+            // Updated to use the correct API endpoint
+            const res = await axios.get(`http://localhost:5001/api/student/verify-campus/${code}`);
             localStorage.setItem('scoolg_school', JSON.stringify({
                 schoolId: res.data.schoolId,
                 name: res.data.schoolName,
@@ -33,41 +33,67 @@ const CampusVerify = () => {
     };
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-blue-50 to-white animate-fade-in relative z-10">
-            <div className="w-16 h-16 rounded-3xl bg-blue-600 text-white flex items-center justify-center mb-8 shadow-xl shadow-blue-200">
-                <School size={32} />
-            </div>
-            
-            <h1 className="text-3xl font-black text-slate-800 text-center mb-2 tracking-tight">Scoolg ERP</h1>
-            <p className="text-slate-500 text-center mb-10 font-medium">Enter your School Code to continue</p>
+        <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-white selection:bg-blue-100">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[40%] bg-blue-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+            <div className="absolute bottom-[-5%] left-[-5%] w-[60%] h-[30%] bg-indigo-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
 
-            <form onSubmit={handleVerify} className="w-full max-w-sm space-y-6">
-                <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">School Code</label>
-                    <input 
-                        type="text" 
-                        value={code}
-                        onChange={(e) => setCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. SCH"
-                        className="w-full bg-white border-2 border-slate-100 rounded-2xl px-5 py-4 text-center text-xl font-black tracking-widest text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all uppercase placeholder:text-slate-300 placeholder:font-medium"
-                    />
+            <div className="flex-1 flex flex-col items-center justify-center p-8 relative z-10 animate-fade-in">
+                {/* Branding Icon */}
+                <div className="relative mb-10 group">
+                    <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[32px] blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                    <div className="w-20 h-20 rounded-[28px] bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-2xl relative">
+                        <School size={40} strokeWidth={1.5} />
+                        <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center">
+                            <Sparkles size={16} className="text-blue-600" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-3">Scoolg<span className="text-blue-600">OS</span></h1>
+                    <p className="text-slate-500 font-bold text-sm max-w-[240px] mx-auto leading-relaxed">Connect with your school campus using your unique code</p>
                 </div>
 
-                {error && <p className="text-red-500 text-sm font-bold text-center animate-fade-in bg-red-50 py-2 rounded-xl border border-red-100">{error}</p>}
+                <form onSubmit={handleVerify} className="w-full space-y-8">
+                    <div className="relative">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 ml-2">Campus Verification Code</label>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                value={code}
+                                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                                placeholder="E.G. SC-001"
+                                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-[24px] px-6 py-5 text-center text-2xl font-black tracking-[0.2em] text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-8 focus:ring-blue-50/50 transition-all uppercase placeholder:text-slate-200 placeholder:font-black"
+                            />
+                        </div>
+                    </div>
 
-                <button 
-                    disabled={loading || !code.trim()}
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-2xl px-5 py-4 flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200 active:scale-95"
-                >
-                    {loading ? <Loader2 className="animate-spin" /> : (
-                        <>Continue <ArrowRight size={20} /></>
+                    {error && (
+                        <div className="bg-red-50 text-red-600 text-xs font-black p-4 rounded-[20px] border border-red-100 flex items-center gap-3 animate-fade-in">
+                            <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                            {error}
+                        </div>
                     )}
-                </button>
-            </form>
 
-            <div className="absolute bottom-8 text-center text-xs font-bold text-slate-400">
-                Powered by Scoolg OS
+                    <button 
+                        disabled={loading || !code.trim()}
+                        type="submit"
+                        className="w-full h-16 bg-slate-950 hover:bg-blue-600 disabled:bg-slate-200 text-white font-black rounded-[24px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-slate-900/10 active:scale-[0.98] group"
+                    >
+                        {loading ? <Loader2 className="animate-spin" /> : (
+                            <>
+                                <span className="uppercase tracking-[0.2em] text-xs">Verify Campus</span>
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </>
+                        )}
+                    </button>
+                </form>
+            </div>
+
+            {/* Footer Attribution */}
+            <div className="pb-10 pt-4 text-center">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Next-Gen Schooling OS</p>
             </div>
         </div>
     );

@@ -20,6 +20,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const StudentProfile = lazy(() => import('./pages/StudentProfile'));
+const Support = lazy(() => import('./pages/Support'));
 
 // Loading Fallback
 const PageLoading = () => (
@@ -89,6 +90,10 @@ function App() {
                         <Route path="/change-password" element={<ChangePassword />} />
 
                         <Route
+                            path="/support"
+                            element={<ProtectedRoute><Support /></ProtectedRoute>}
+                        />
+                        <Route
                             path="/dashboard"
                             element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
                         />
@@ -148,11 +153,6 @@ function App() {
                             path="/roles"
                             element={<ProtectedRoute><ComingSoon title="Roles" subtitle="We are working on roles & permissions." /></ProtectedRoute>}
                         />
-                        <Route
-                            path="/settings"
-                            element={<ProtectedRoute><ComingSoon title="Settings" subtitle="We are working on settings." /></ProtectedRoute>}
-                        />
-
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>

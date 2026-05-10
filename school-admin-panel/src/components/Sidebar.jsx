@@ -53,10 +53,17 @@ const Sidebar = () => {
                 ))}
             </nav>
             <div className="mt-auto pt-6 border-t border-[#e0e7ff] space-y-1">
-                <button className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 text-[#64748b] font-medium hover:bg-[#f2f4f6] transition-colors rounded-xl">
+                <NavLink
+                    to="/support"
+                    className={({ isActive }) =>
+                        `w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 transition-all rounded-xl ${isActive
+                            ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
+                            : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`
+                    }
+                >
                     <span className="material-symbols-outlined">help</span>
                     <span className="text-[0.875rem] hidden md:inline">Support</span>
-                </button>
+                </NavLink>
                 <button
                     className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-3 text-error font-bold hover:bg-error-container/20 transition-colors rounded-xl mt-2"
                     onClick={handleLogout}
