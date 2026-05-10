@@ -1,270 +1,331 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Attendance = () => {
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [attendanceData, setAttendanceData] = useState({});
+    const [selectedClassObj, setSelectedClassObj] = useState(null);
+    const [selectedSectionObj, setSelectedSectionObj] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [isLocked, setIsLocked] = useState(true);
+
+    const schoolId = localStorage.getItem('scoolg_school_id') || "";
+    const API_BASE = 'http://localhost:5001/api/admin';
+    const today = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        const fetchClasses = async () => {
+            if (!schoolId) return;
+            try {
+                const res = await axios.get(`${API_BASE}/classes?schoolId=${schoolId}`);
+                if (Array.isArray(res.data)) {
+                    setClasses(res.data);
+                    if (res.data.length > 0) setSelectedClassObj(res.data[0]);
+                }
+            } catch (err) { console.error(err); }
+        };
+        fetchClasses();
+    }, [schoolId]);
+
+    useEffect(() => {
+        if (!selectedClassObj?._id) return;
+        const fetchSections = async () => {
+            try {
+                const res = await axios.get(`${API_BASE}/sections?classId=${selectedClassObj._id}`);
+                if (Array.isArray(res.data)) {
+                    setSections(res.data);
+                    if (res.data.length > 0) setSelectedSectionObj(res.data[0]);
+                    else setSelectedSectionObj(null);
+                }
+            } catch (err) { console.error(err); }
+        };
+        fetchSections();
+    }, [selectedClassObj]);
+
+    useEffect(() => {
+        if (!selectedSectionObj?._id || !selectedClassObj?.className || !selectedDate) return;
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const stuRes = await axios.get(`${API_BASE}/students?schoolId=${schoolId}&className=${selectedClassObj.className}&sectionName=${selectedSectionObj.sectionName}`);
+                const studentList = Array.isArray(stuRes.data) ? stuRes.data : [];
+                setStudents(studentList);
+
+                const attRes = await axios.get(`${API_BASE}/attendance?sectionId=${selectedSectionObj._id}&date=${selectedDate}`);
+                
+                if (attRes.data && attRes.data.records && attRes.data.records.length > 0) {
+                    const newAttData = {};
+                    attRes.data.records.forEach(r => {
+                        if (r.studentId) newAttData[r.studentId] = r.status;
+                    });
+                    setAttendanceData(newAttData);
+                    setIsLocked(true);
+                } else {
+                    const defaultAtt = {};
+                    studentList.forEach(s => { if (s._id) defaultAtt[s._id] = 'P'; });
+                    setAttendanceData(defaultAtt);
+                    setIsLocked(false);
+                }
+            } catch (err) { console.error(err); }
+            finally { setLoading(false); }
+        };
+        fetchData();
+    }, [selectedSectionObj, selectedClassObj, selectedDate, schoolId]);
+
+    const handleStatusChange = (studentId, status) => {
+        if (isLocked) return;
+        setAttendanceData(prev => ({ ...prev, [studentId]: status }));
+    };
+
+    const handleMarkAll = (status) => {
+        if (isLocked) return;
+        const newAttData = {};
+        students.forEach(s => { if (s._id) newAttData[s._id] = status; });
+        setAttendanceData(newAttData);
+    };
+
+    const handleSubmit = async () => {
+        if (!selectedSectionObj?._id || !selectedClassObj?._id || !selectedDate || isLocked) return;
+        try {
+            setSaving(true);
+            const records = students.map(s => ({
+                studentId: s._id,
+                status: attendanceData[s._id] || 'P'
+            }));
+            await axios.post(`${API_BASE}/attendance`, {
+                schoolId, classId: selectedClassObj._id, sectionId: selectedSectionObj._id,
+                date: selectedDate, records
+            });
+            setIsLocked(true);
+            alert("Attendance Submitted Successfully!");
+        } catch (err) { alert("Failed to submit"); }
+        finally { setSaving(false); }
+    };
+
+    const stats = {
+        P: Object.values(attendanceData || {}).filter(v => v === 'P').length,
+        A: Object.values(attendanceData || {}).filter(v => v === 'A').length,
+    };
+
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col relative">
-            {/* TopNavBar */}
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center justify-between w-full md:w-auto">
-                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-[#1e293b] tracking-tight">Mark Attendance</h2>
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col relative font-sans">
+            <header className="h-[80px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-6 md:px-10">
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none">Attendance</h2>
+                        {isLocked && (
+                            <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-100">
+                                <span className="material-symbols-outlined text-[14px] font-bold">lock</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Locked</span>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">Management Portal</p>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-                    <div className="relative group hidden sm:block">
+                <div className="flex items-center gap-6">
+                    <div className="relative group hidden lg:block">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input
-                            className="w-48 xl:w-64 h-10 pl-10 pr-4 rounded-xl border-none bg-slate-100 focus:ring-2 focus:ring-[#2563eb]/40 focus:bg-white transition-all text-xs font-semibold placeholder-slate-400"
-                            placeholder="Search student..."
+                            className="w-64 h-11 pl-10 pr-4 rounded-2xl bg-slate-100/50 border-none focus:ring-2 focus:ring-blue-600/10 focus:bg-white transition-all text-xs font-semibold placeholder-slate-400"
+                            placeholder="Find student..."
                             type="text"
                         />
                     </div>
-                    <div className="flex items-center gap-4">
-                        <button className="h-10 w-10 flex items-center justify-center bg-transparent hover:bg-slate-100 transition-colors rounded-full text-slate-600">
+                    <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
+                        <button className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100/50 text-slate-600 hover:bg-slate-100 transition-colors">
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[11px] font-bold text-slate-800">Admin User</p>
-                                <p className="text-[9px] font-semibold text-slate-500">Principal Office</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer">
-                                <img
-                                    alt="Admin Avatar"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                                    className="w-full h-full object-cover"
-                                />
+                        <div className="flex items-center gap-3 cursor-pointer">
+                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1e40af] flex items-center justify-center text-white font-black shadow-lg shadow-blue-600/20 hover:scale-105 transition-transform">
+                                A
                             </div>
                         </div>
                     </div>
                 </div>
             </header>
 
-            {/* Content Canvas */}
-            <div className="p-4 sm:p-8 max-w-[1240px] mx-auto space-y-6 w-full flex-1">
-
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Filter & Action Card */}
-                    <div className="bg-white rounded-[24px] p-6 lg:p-8 premium-shadow flex-1 flex flex-col justify-between">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Class</label>
-                                <button className="w-full h-12 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl px-4 flex items-center justify-between text-sm font-bold text-slate-700">
-                                    <span>Class 5</span>
-                                    <span className="material-symbols-outlined text-[18px] text-slate-400">keyboard_arrow_down</span>
-                                </button>
+            <main className="p-4 md:p-6 max-w-[1400px] mx-auto w-full space-y-4 pb-32">
+                {/* Condensed Control Panel */}
+                <section className="flex flex-col xl:flex-row gap-4">
+                    {/* Filters & Actions Combined */}
+                    <div className="bg-white rounded-[24px] p-4 border border-slate-200/60 shadow-sm flex-1">
+                        <div className="flex flex-col lg:flex-row lg:items-end gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Class</label>
+                                    <select 
+                                        value={selectedClassObj?._id || ''} 
+                                        onChange={(e) => setSelectedClassObj(classes.find(c => c._id === e.target.value))}
+                                        className="w-full h-10 bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all rounded-xl px-4 text-xs font-black text-slate-800 outline-none cursor-pointer"
+                                    >
+                                        {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Section</label>
+                                    <select 
+                                        value={selectedSectionObj?._id || ''} 
+                                        onChange={(e) => setSelectedSectionObj(sections.find(s => s._id === e.target.value))}
+                                        className="w-full h-10 bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all rounded-xl px-4 text-xs font-black text-slate-800 outline-none cursor-pointer"
+                                    >
+                                        {sections.length === 0 ? <option value="">None</option> : sections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={selectedDate} 
+                                        max={today}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="w-full h-10 bg-slate-50 border border-slate-100 hover:border-blue-200 transition-all rounded-xl px-4 text-xs font-black text-slate-800 outline-none cursor-pointer"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Section</label>
-                                <button className="w-full h-12 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl px-4 flex items-center justify-between text-sm font-bold text-slate-700">
-                                    <span>Section A</span>
-                                    <span className="material-symbols-outlined text-[18px] text-slate-400">keyboard_arrow_down</span>
+                            
+                            <div className="flex gap-2 pb-0.5">
+                                <button 
+                                    onClick={() => handleMarkAll('P')}
+                                    disabled={isLocked}
+                                    className="h-10 px-4 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-emerald-600/20 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">done_all</span>
+                                    Mark All P
                                 </button>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date</label>
-                                <button className="w-full h-12 bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl px-4 flex items-center gap-3 text-sm font-bold text-slate-700">
-                                    <span className="material-symbols-outlined text-[18px] text-[#2563eb]">calendar_month</span>
-                                    <span>Today, 24 May 2024</span>
+                                <button 
+                                    onClick={() => handleMarkAll('A')}
+                                    disabled={isLocked}
+                                    className="h-10 px-4 bg-red-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-red-600/20 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                    Mark All A
                                 </button>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="flex justify-end mt-6 sm:mt-10 lg:mt-auto pt-6">
-                            <button className="flex items-center gap-2 px-8 py-3.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 w-full sm:w-auto justify-center">
-                                <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                                Mark All Present
+                    {/* Compact Stats Panels */}
+                    <div className="flex gap-3 shrink-0">
+                        <div className="bg-white min-w-[100px] rounded-[24px] border border-slate-200/60 shadow-sm flex flex-col items-center justify-center py-3 relative overflow-hidden">
+                            <h3 className="text-2xl font-black text-emerald-600 leading-none">{stats.P}</h3>
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Present</p>
+                            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-emerald-600"></div>
+                        </div>
+                        <div className="bg-white min-w-[100px] rounded-[24px] border border-slate-200/60 shadow-sm flex flex-col items-center justify-center py-3 relative overflow-hidden">
+                            <h3 className="text-2xl font-black text-red-600 leading-none">{stats.A}</h3>
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Absent</p>
+                            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600"></div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* High-Contrast Table Student List */}
+                <section className="bg-white rounded-[32px] border border-slate-300 overflow-hidden shadow-md">
+                    {/* Darker Table Header for Visibility */}
+                    <div className="bg-slate-100 border-b-2 border-slate-200 px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center">
+                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">#</span>
+                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Student Profile</span>
+                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Roll No</span>
+                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest text-center">Attendance Status</span>
+                    </div>
+
+                    {loading ? (
+                        <div className="py-32 text-center flex flex-col items-center gap-4">
+                            <div className="w-12 h-12 border-4 border-[#2563eb] border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Fetching records...</span>
+                        </div>
+                    ) : students.length === 0 ? (
+                        <div className="py-32 text-center text-slate-500 font-black text-sm uppercase tracking-widest">
+                            No students found in this section
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-200">
+                            {students.map((s, idx) => (
+                                <div key={s._id} className={`px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center transition-colors ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
+                                    {/* Index - Darker */}
+                                    <div className="text-sm font-black text-slate-500">
+                                        {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                                    </div>
+
+                                    {/* Student Info - Sharp Contrast */}
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
+                                            {s.firstName ? s.firstName[0] : ''}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <h5 className="text-[16px] font-black text-slate-950 leading-none">{s.firstName} {s.lastName}</h5>
+                                            <p className="text-[10px] font-black text-slate-600 uppercase mt-1.5 tracking-tight">Grade {selectedClassObj?.className}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Roll Number Column - Bold & Clear */}
+                                    <div>
+                                        <span className="px-4 py-1.5 bg-blue-100 text-blue-900 rounded-lg text-[12px] font-black border-2 border-blue-200 inline-block shadow-sm">
+                                            ROLL: {s.rollNumber || '00'}
+                                        </span>
+                                    </div>
+
+                                    {/* Action Buttons - High Contrast */}
+                                    <div className="flex items-center justify-center gap-3">
+                                        <button 
+                                            onClick={() => handleStatusChange(s._id, 'P')} 
+                                            disabled={isLocked}
+                                            className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                            Present
+                                        </button>
+                                        <button 
+                                            onClick={() => handleStatusChange(s._id, 'A')} 
+                                            disabled={isLocked}
+                                            className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">cancel</span>
+                                            Absent
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+
+
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-2xl border-t border-slate-200 flex justify-end gap-5 z-50">
+                    <div className="max-w-[1400px] mx-auto w-full flex justify-end gap-5">
+                        {isLocked ? (
+                            <button 
+                                onClick={() => setIsLocked(false)}
+                                className="px-10 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                                Edit Attendance
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Stats Cards */}
-                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 lg:pb-0">
-                        {/* Present */}
-                        <div className="bg-white min-w-[120px] rounded-[24px] premium-shadow flex flex-col items-center justify-center py-8 relative overflow-hidden shrink-0">
-                            <h3 className="text-[2.5rem] font-black text-emerald-500 leading-none">28</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">PRESENT</p>
-                            <div className="absolute bottom-0 left-0 w-full h-2 bg-emerald-500"></div>
-                        </div>
-                        {/* Absent */}
-                        <div className="bg-white min-w-[120px] rounded-[24px] premium-shadow flex flex-col items-center justify-center py-8 relative overflow-hidden shrink-0">
-                            <h3 className="text-[2.5rem] font-black text-red-500 leading-none">2</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">ABSENT</p>
-                            <div className="absolute bottom-0 left-0 w-full h-2 bg-red-500"></div>
-                        </div>
-                        {/* Late */}
-                        <div className="bg-white min-w-[120px] rounded-[24px] premium-shadow flex flex-col items-center justify-center py-8 relative overflow-hidden shrink-0">
-                            <h3 className="text-[2.5rem] font-black text-amber-500 leading-none">1</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">LATE</p>
-                            <div className="absolute bottom-0 left-0 w-full h-2 bg-amber-500"></div>
-                        </div>
+                        ) : (
+                            <>
+                                <button 
+                                    onClick={() => setIsLocked(true)}
+                                    className="px-10 py-5 bg-white border-2 border-slate-200 text-slate-500 font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] hover:bg-slate-50 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleSubmit}
+                                    disabled={saving || students.length === 0}
+                                    className="px-12 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                >
+                                    {saving ? 'Processing...' : 'Submit Attendance'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
-
-                {/* Data Table */}
-                <div className="bg-white rounded-[24px] premium-shadow overflow-hidden w-full pb-6">
-                    <div className="overflow-x-auto w-full">
-                        <table className="w-full text-left border-collapse min-w-[800px]">
-                            <thead>
-                                <tr className="border-b border-slate-100">
-                                    <th className="px-6 md:px-10 py-5 text-[10px] uppercase font-bold text-slate-500 tracking-wider w-20">#</th>
-                                    <th className="px-6 md:px-10 py-5 text-[10px] uppercase font-bold text-slate-500 tracking-wider">STUDENT</th>
-                                    <th className="px-6 md:px-10 py-5 text-[10px] uppercase font-bold text-slate-500 tracking-wider w-40">ROLL NO</th>
-                                    <th className="px-6 md:px-10 py-5 text-[10px] uppercase font-bold text-slate-500 tracking-wider text-center w-[300px]">ATTENDANCE STATUS</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100/60">
-                                {/* Student 1 */}
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 md:px-10 py-4 text-sm font-bold text-slate-400">01</td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <img
-                                                className="w-10 h-10 rounded-full object-cover"
-                                                alt="Arjun Sharma"
-                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5Vq5g8gO4D4vQGf9eR2B8sK6V1X8yJd2yR4Q8uG1kY0vR5M7F6X9P3P1Q2h8D9j0S5K4H9H5v6v4X4v1P3P3P1Q2h8D9j0S5K4"
-                                                onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Arjun+Sharma&background=f1f5f9&color=64748b"; }}
-                                            />
-                                            <div>
-                                                <p className="text-sm font-black text-slate-800">Arjun Sharma</p>
-                                                <p className="text-[11px] font-semibold text-slate-500">Class 5-A</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 md:px-10 py-4"><span className="text-sm font-bold text-[#2563eb]">#5A01</span></td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-black transition-all bg-emerald-50 text-emerald-600 border-2 border-emerald-500 shadow-sm">P</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">A</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">L</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">H</button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {/* Student 2 */}
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 md:px-10 py-4 text-sm font-bold text-slate-400">02</td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <img
-                                                className="w-10 h-10 rounded-full object-cover"
-                                                alt="Sarah Jenkins"
-                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                                            />
-                                            <div>
-                                                <p className="text-sm font-black text-slate-800">Sarah Jenkins</p>
-                                                <p className="text-[11px] font-semibold text-slate-500">Class 5-A</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 md:px-10 py-4"><span className="text-sm font-bold text-[#2563eb]">#5A02</span></td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">P</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-black transition-all bg-red-50 text-red-600 border-2 border-red-500 shadow-sm">A</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">L</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">H</button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {/* Student 3 */}
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 md:px-10 py-4 text-sm font-bold text-slate-400">03</td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <img
-                                                className="w-10 h-10 rounded-full object-cover"
-                                                alt="Leo Maxwell"
-                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5Vq5g8gO4D4vQGf9eR2B8sK6V1X8yJd2yR4Q8uG1kY0vR5M7F6X9P3P1Q2h8D9j0S5K4H9H5v6v4X4v1P3P3P1Q2h8D9j0S5K5"
-                                                onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Leo+Maxwell&background=f1f5f9&color=64748b"; }}
-                                            />
-                                            <div>
-                                                <p className="text-sm font-black text-slate-800">Leo Maxwell</p>
-                                                <p className="text-[11px] font-semibold text-slate-500">Class 5-A</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 md:px-10 py-4"><span className="text-sm font-bold text-[#2563eb]">#5A03</span></td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">P</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">A</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-black transition-all bg-amber-50 text-amber-600 border-2 border-amber-500 shadow-sm">L</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">H</button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {/* Student 4 */}
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 md:px-10 py-4 text-sm font-bold text-slate-400">04</td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <img
-                                                className="w-10 h-10 rounded-full object-cover"
-                                                alt="Meera Patel"
-                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5Vq5g8gO4D4vQGf9eR2B8sK6V1X8yJd2yR4Q8uG1kY0vR5M7F6X9P3P1Q2h8D9j0S5K4H9H5v6v4X4v1P3P3P1Q2h8D9j0S5K6"
-                                                onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Meera+Patel&background=f1f5f9&color=64748b"; }}
-                                            />
-                                            <div>
-                                                <p className="text-sm font-black text-slate-800">Meera Patel</p>
-                                                <p className="text-[11px] font-semibold text-slate-500">Class 5-A</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 md:px-10 py-4"><span className="text-sm font-bold text-[#2563eb]">#5A04</span></td>
-                                    <td className="px-6 md:px-10 py-4">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-black transition-all bg-emerald-50 text-emerald-600 border-2 border-emerald-500 shadow-sm">P</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">A</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">L</button>
-                                            <button className="w-9 h-9 rounded-[8px] flex items-center justify-center text-[13px] font-bold transition-all bg-slate-50 text-slate-400 hover:bg-slate-100">H</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div className="h-16"></div> {/* Spacer for fixed footer */}
-
-            </div>
-
-            {/* Bottom Sticky Footer */}
-            <div className="w-full bg-white h-auto sm:h-[80px] border-t border-slate-200 mt-auto px-4 md:px-8 py-4 sm:py-0 flex flex-col sm:flex-row justify-between items-center gap-4 z-30 sticky bottom-0">
-                {/* Legends */}
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">P: Present</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">A: Absent</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">L: Late</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">H: Holiday</span>
-                    </div>
-                </div>
-
-                {/* Submit Actions */}
-                <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
-                    <button className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors">
-                        Cancel
-                    </button>
-                    <button className="flex items-center gap-2 px-8 py-3 bg-[#2563eb] text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95">
-                        Submit
-                        <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
-                    </button>
-                </div>
-            </div>
-
+            </main>
         </div>
     );
 };

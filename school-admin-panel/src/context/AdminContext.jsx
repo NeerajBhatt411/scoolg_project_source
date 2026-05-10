@@ -17,10 +17,12 @@ export const AdminProvider = ({ children }) => {
     const [loadingStats, setLoadingStats] = useState(!stats);
     const [loadingStudents, setLoadingStudents] = useState(students.length === 0);
 
+    const API_BASE = 'http://localhost:5001/api/admin';
+
     const checkCurrentStatus = async () => {
         if (!schoolId) return;
         try {
-            const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/profile/${schoolId}`);
+            const res = await axios.get(`${API_BASE}/profile/${schoolId}`);
             if (res.data) {
                 const newStatus = res.data.status || 'COMPLETED';
                 if (newStatus !== status) {
@@ -35,7 +37,7 @@ export const AdminProvider = ({ children }) => {
         if (!schoolId) return;
         if (!stats || force) setLoadingStats(true);
         try {
-            const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/dashboard-stats/${schoolId}`);
+            const res = await axios.get(`${API_BASE}/dashboard/stats?schoolId=${schoolId}`);
             if (res.data) {
                 setStats(res.data);
                 localStorage.setItem('scoolg_cached_stats', JSON.stringify(res.data));
@@ -51,7 +53,7 @@ export const AdminProvider = ({ children }) => {
         if (!schoolId) return;
         if (students.length === 0 || force) setLoadingStudents(true);
         try {
-            const res = await axios.get(`https://scoolg-backend.netlify.app/api/admin/students?schoolId=${schoolId}`);
+            const res = await axios.get(`${API_BASE}/students?schoolId=${schoolId}`);
             const data = Array.isArray(res.data) ? res.data : [];
             setStudents(data);
             localStorage.setItem('scoolg_cached_students', JSON.stringify(data));
@@ -73,8 +75,8 @@ export const AdminProvider = ({ children }) => {
     useEffect(() => {
         if (schoolId) {
             checkCurrentStatus();
-            refreshStats(true); // Force fetch on login
-            refreshStudents(true); // Force fetch on login
+            refreshStats(true);
+            refreshStudents(true);
         }
     }, [schoolId]);
 
