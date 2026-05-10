@@ -14,6 +14,7 @@ import Subject from './models/Subject.js';
 import Timetable from './models/Timetable.js';
 import Teacher from './models/Teacher.js';
 import Student from './models/Student.js';
+import Attendance from './models/Attendance.js';
 
 dotenv.config();
 
@@ -1071,7 +1072,7 @@ app.post('/api/admin/timetable', async (req, res) => {
 
 
 // --- Attendance API ---
-import Attendance from './models/Attendance.js';
+
 
 /**
  * @swagger
