@@ -462,7 +462,7 @@ const Timetable = () => {
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-10 relative">
-            <div className="p-4 sm:p-8 max-w-[1400px] mx-auto space-y-6">
+            <div className="p-4 sm:p-8 space-y-6 max-w-full w-full">
                 {/* Simplified Header */}
                 <div className="flex justify-between items-center mb-4">
                     <div>

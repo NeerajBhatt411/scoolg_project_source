@@ -105,7 +105,7 @@ const Classes = () => {
             </header>
 
             {/* Content Canvas */}
-            <div className="p-4 sm:p-8 max-w-[1200px] mx-auto space-y-6">
+            <div className="p-4 sm:p-8 space-y-6 max-w-full w-full">
 
                 {/* Header Section */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
