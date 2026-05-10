@@ -1417,7 +1417,7 @@ app.get('/api/student/attendance', async (req, res) => {
     }
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.NETLIFY) {
     app.listen(PORT, () => console.log(`🚀 LOCAL Scoolg Backend running on http://localhost:${PORT}`));
 }
 
