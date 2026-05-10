@@ -283,7 +283,10 @@ app.post('/api/admin/login', async (req, res) => {
     email = email.toLowerCase().trim(); // Normalize email for search
 
     try {
-        console.log(`🔍 Searching for school with email: ${email}`);
+        console.log(`🔍 Searching for school with email: [${email}]`);
+        console.log(`📡 Connected to Database: ${mongoose.connection.name}`);
+        const totalSchools = await School.countDocuments();
+        console.log(`📊 Total Schools in DB: ${totalSchools}`);
 
         // Search in both top-level email and formData email
         const school = await School.findOne({
@@ -294,7 +297,7 @@ app.post('/api/admin/login', async (req, res) => {
         });
 
         if (!school) {
-            console.log(`❌ No account found for email: ${email}`);
+            console.log(`❌ No account found for email: [${email}]`);
             return res.status(401).json({ error: "No account found with this email" });
         }
 
