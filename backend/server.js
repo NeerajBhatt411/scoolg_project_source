@@ -71,6 +71,7 @@ app.get('/docs/swagger.json', (req, res) => {
 });
 
 app.get('/docs', (req, res) => {
+    const spec = JSON.stringify(swaggerDocs);
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -82,8 +83,19 @@ app.get('/docs', (req, res) => {
             <style>body { margin: 0; padding: 0; }</style>
           </head>
           <body>
-            <redoc spec-url='/docs/swagger.json'></redoc>
+            <div id="redoc-container"></div>
             <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
+            <script>
+                Redoc.init(${spec}, {
+                    scrollYOffset: 50,
+                    hideDownloadButton: true,
+                    theme: {
+                        colors: {
+                            primary: { main: '#2563eb' }
+                        }
+                    }
+                }, document.getElementById('redoc-container'))
+            </script>
           </body>
         </html>
     `);
