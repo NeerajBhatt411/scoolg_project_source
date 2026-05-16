@@ -1,0 +1,195 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Onboarding - Stay Updated Anytime</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-on-surface": "#f0f0fb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-background": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-surface-variant": "#434655",
+                    "on-tertiary-container": "#ffede6",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e2ed",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#faf8ff",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191b23",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#0b1c30",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#0053db",
+                    "surface-container-high": "#e7e7f3",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "tertiary-fixed": "#ffdbcd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px",
+                    "section-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pressed-state:active {
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bento-glow {
+            background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.05), transparent);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-x-hidden">
+<!-- Top Navigation Header (Suppressed active nav, only branding/action) -->
+<header class="flex justify-between items-center px-container-margin w-full h-16 bg-surface z-50">
+<div class="text-title-lg font-title-lg font-bold text-primary">SchoolG</div>
+<button class="text-on-surface-variant font-label-md text-label-md px-4 py-2 hover:bg-surface-container-low transition-colors rounded-xl pressed-state">
+            Skip
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-container-margin py-section-padding gap-stack-gap relative">
+<!-- Illustration Container: Bento-style focused area -->
+<div class="w-full max-w-md aspect-square relative flex items-center justify-center bg-surface-container-low rounded-[40px] bento-glow shadow-sm overflow-hidden">
+<!-- Abstract background shapes for depth -->
+<div class="absolute -top-10 -right-10 w-64 h-64 bg-primary-fixed/20 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-20 -left-20 w-80 h-80 bg-secondary-container/30 rounded-full blur-3xl"></div>
+<!-- Modern Device & Notification Illustration -->
+<div class="relative w-4/5 h-4/5 flex items-center justify-center">
+<div class="absolute inset-0 z-0 bg-white/40 backdrop-blur-sm rounded-[32px] border border-white/60 shadow-lg transform rotate-[-4deg]"></div>
+<div class="relative z-10 w-full flex flex-col gap-3 p-6">
+<!-- Notification Card 1: Homework -->
+<div class="bg-white p-4 rounded-2xl shadow-[0_4px_20px_rgba(37,99,235,0.06)] flex items-start gap-4 transform translate-x-4 border border-surface-container">
+<div class="bg-primary-container text-white p-2 rounded-xl">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-title-lg text-[14px] text-on-surface font-bold">New Homework</span>
+<span class="text-label-md text-outline">Just now</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">Advanced Calculus: Assignment #4 is now available.</p>
+</div>
+</div>
+<!-- Notification Card 2: Notice -->
+<div class="bg-white p-4 rounded-2xl shadow-[0_4px_20px_rgba(37,99,235,0.08)] flex items-start gap-4 transform -translate-x-2 border border-surface-container">
+<div class="bg-tertiary-container text-white p-2 rounded-xl">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">campaign</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-title-lg text-[14px] text-on-surface font-bold">Urgent Notice</span>
+<span class="text-label-md text-outline">2m ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">Holiday Announcement: Campus closed on Friday.</p>
+</div>
+</div>
+<!-- Visual Accent: Floating Profile/Icon -->
+<div class="absolute -bottom-4 -right-2 bg-secondary-container p-3 rounded-full shadow-md transform rotate-12">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+</div>
+</div>
+<!-- Imagery for the illustration context -->
+<img class="hidden" data-alt="A clean, minimalist 3D render of a modern smartphone floating in a serene blue and white space. High-fidelity glassmorphism notifications float in front of the screen with vibrant icons for homework and campus alerts. The lighting is soft and studio-quality, emphasizing the premium educational technology aesthetic with a professional high-key background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGeTb9gCLBm-fgGpAld8tIuh_1r8IG6g65m9H-SMyNw2IQGj2p_El_e-_yCK04IheD_7DtBMz1DVZ2SHQ4ayv90z0S3EV9lz0zmktLNCqmAJlvNXOphsX7YLCbio4InrVpmCN-UHdq3W-nw_FfNLzoavqKVhqZo-DmznyGo0HMEmFiS4BcLhorA3DJZ9zMouznVmJQZmEOHE-gD_i8rqjyclFWNaQiYheJ5RHW2ZTVM3eqqbyCU931_05yG7Mtpqz7hRS5W80vh3w">
+</div>
+<!-- Text Content Area -->
+<div class="w-full max-w-md text-center mt-4 flex flex-col gap-4">
+<h1 class="text-display-lg font-display-lg text-on-surface px-4">Stay Updated Anytime</h1>
+<p class="text-body-lg text-on-surface-variant px-6 leading-relaxed">
+                Get notices, homework and important alerts instantly. Never miss a deadline or an update from your faculty.
+            </p>
+</div>
+</main>
+<!-- Footer Controls: Pagination and CTA -->
+<footer class="w-full px-container-margin py-section-padding flex flex-col items-center gap-8">
+<!-- Pagination Indicators -->
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+<div class="w-8 h-2 rounded-full bg-primary transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-surface-container-highest"></div>
+</div>
+<!-- Primary Action -->
+<div class="w-full max-w-md flex flex-col gap-4">
+<button class="w-full h-[52px] bg-primary text-white rounded-xl font-title-lg text-title-lg shadow-[0_4px_20px_rgba(37,99,235,0.2)] flex items-center justify-center gap-2 pressed-state transition-all hover:bg-primary/90">
+                Next
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- Bottom Nav placeholder for structure check (Suppressed as per rules for transactional/onboarding) -->
+
+
+</body></html>

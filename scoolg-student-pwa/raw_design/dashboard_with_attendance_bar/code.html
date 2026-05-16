@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-on-surface": "#f0f0fb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-background": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-surface-variant": "#434655",
+                    "on-tertiary-container": "#ffede6",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e2ed",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#faf8ff",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191b23",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#0b1c30",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#0053db",
+                    "surface-container-high": "#e7e7f3",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "tertiary-fixed": "#ffdbcd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px",
+                    "section-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center px-container-margin w-full h-16 bg-surface shadow-sm sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="Alex Johnson Profile" class="w-full h-full object-cover" data-alt="A professional portrait of a clean-cut high school student smiling warmly in a bright, modern school library environment. The lighting is soft and natural, emphasizing a light-mode aesthetic with cool blue and white tones. The young man is wearing a crisp white polo shirt, conveying a look of focused academic excellence and reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPBRp0_h2PWNrDO28zDSDp2z0h-lJfNIXC94dM-za3Wv8qg1ncZxNTKYBiA9NHvnPdsoRM1W52iZRhRT62kY3xnV6Kg1xLbt6QlOOepMDvjkO16rLQ1QHLL5naHD4veCx_mLuYVo86BYaqdbfatTASSSAaNAaI1lBApgjnr4jsiwACH9gyFS9xfdae-DRQFdkjmscDzXHpkTMbZEGCcf24eP7MaWePNEusrp3pqBEteHmHT8AlcZOBo7cp3gupSbLgzj470NWi0-c"/>
+</div>
+<div>
+<h1 class="text-title-lg font-title-lg font-bold text-primary">Alex Johnson</h1>
+<p class="text-label-md font-label-md text-on-surface-variant">Grade 10-A</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<main class="mt-stack-gap space-y-8">
+<!-- Swipeable Summary Cards -->
+<section class="px-container-margin">
+<div class="bg-white border border-outline-variant p-card-internal-padding rounded-[20px] shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div>
+<h3 class="text-body-md font-bold text-on-surface-variant">Total Attendance</h3>
+<p class="text-display-lg font-bold text-primary">94%</p>
+</div>
+<div class="flex items-center gap-1 text-primary cursor-pointer hover:underline">
+<span class="text-label-md font-bold">View Details</span>
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 94%"></div>
+</div>
+<p class="text-label-md text-on-surface-variant">You have attended 168 out of 180 sessions this term.</p>
+</div>
+</section>
+<!-- Announcements Carousel -->
+<section class="px-container-margin">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-headline-md font-headline-md">Latest Announcements</h2>
+<button class="text-primary text-label-md font-label-md font-bold">View All</button>
+</div>
+<div class="relative overflow-hidden rounded-2xl bg-surface-container-high h-48 group">
+<img alt="School Event" class="w-full h-full object-cover brightness-75" data-alt="A wide-angle shot of a vibrant, modern high school campus during golden hour. The architecture is contemporary with glass facades and clean lines. Students are seen in the distance, creating a sense of life and community. The atmosphere is optimistic and prestigious, bathed in warm, soft sunlight that complements the blue-based design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ32w7-UqUBM-BjRxQBpuKuaZFHQcpRK4Cq_zKpsDCIEIKkMzh6FSHo6RkpsxyTrXI0Dde9KixRu3Ytol7vHlHakNshf3PtlEkwp52wT2_NjdFNzyMVCCEnhe98p3vxyASL5IVYTmmD_W6yZjM8Yo3x43JDvHgzjRkAwW5UXmsV4knpEKP-biYXKjoQqHO9hHgGpkEX-12j9AtQ3R2qRqwDpuKxChPIEoti_-wR4asoz4-a2pGI1WSFSDxnw5FuUOCtBZssX2DQyE"/>
+<div class="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent">
+<h3 class="text-white text-title-lg font-title-lg mb-1">Annual Science Fair 2024</h3>
+<p class="text-white/80 text-body-md">Registrations are now open for all STEM enthusiasts. Join us next Friday!</p>
+<div class="flex gap-2 mt-4">
+<div class="w-6 h-1.5 rounded-full bg-primary"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Academics Section -->
+<section class="px-container-margin">
+<h2 class="text-headline-md font-headline-md mb-4">Academics</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-primary">schedule</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Timetable</span>
+<span class="text-body-md text-on-surface-variant">Check daily periods</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-tertiary">assignment</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Homework</span>
+<span class="text-body-md text-on-surface-variant">4 pending tasks</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-secondary">how_to_reg</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Attendance</span>
+<span class="text-body-md text-on-surface-variant">View monthly logs</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-green-700">insights</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Results</span>
+<span class="text-body-md text-on-surface-variant">Term 1 performance</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-orange-700">event_note</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Exam Dates</span>
+<span class="text-body-md text-on-surface-variant">Finals timetable</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all">
+<div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-blue-700">menu_book</span>
+</div>
+<span class="text-label-md font-label-md font-bold block mb-1">Subjects</span>
+<span class="text-body-md text-on-surface-variant">12 total courses</span>
+</div>
+</div>
+</section>
+<!-- Finance Section -->
+<section class="px-container-margin">
+<h2 class="text-headline-md font-headline-md mb-4">Finance</h2>
+<div class="bg-surface-container-low border border-outline-variant rounded-2xl p-5 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div>
+<span class="text-title-lg font-title-lg block">Fees</span>
+<span class="text-label-md font-label-md text-error">Outstanding: $240.00</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-full font-bold text-label-md shadow-sm active:scale-95 transition-transform">
+                    PAY NOW
+                </button>
+</div>
+<div class="mt-3 flex gap-3">
+<button class="flex-1 bg-white border border-outline-variant py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-label-md font-bold">
+<span class="material-symbols-outlined text-secondary">receipt_long</span>
+                    Receipts
+                </button>
+<button class="flex-1 bg-white border border-outline-variant py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-label-md font-bold">
+<span class="material-symbols-outlined text-secondary">history</span>
+                    History
+                </button>
+</div>
+</section>
+<!-- School Updates -->
+<section class="px-container-margin pb-8">
+<h2 class="text-headline-md font-headline-md mb-4">School Updates</h2>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-xl border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary bg-surface-container rounded-lg p-2">campaign</span>
+<div>
+<p class="font-bold text-body-lg">School Notices</p>
+<p class="text-label-md text-on-surface-variant">Update on winter timings</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary bg-surface-container rounded-lg p-2">festival</span>
+<div>
+<p class="font-bold text-body-lg">Upcoming Events</p>
+<p class="text-label-md text-on-surface-variant">Cultural fest in 3 days</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary bg-surface-container rounded-lg p-2">description</span>
+<div>
+<p class="font-bold text-body-lg">Circulars</p>
+<p class="text-label-md text-on-surface-variant">New laboratory guidelines</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="bg-white p-4 rounded-xl border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary bg-surface-container rounded-lg p-2">directions_bus</span>
+<div>
+<p class="font-bold text-body-lg">Transport</p>
+<p class="text-label-md text-on-surface-variant">Bus Route #14 on time</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest/90 backdrop-blur-md rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-2 transition-all duration-300 scale-90">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span class="text-label-md font-label-md">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-label-md font-label-md">Schedule</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="text-label-md font-label-md">Tracking</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-md font-label-md">Profile</span>
+</div>
+</nav>
+</body></html>

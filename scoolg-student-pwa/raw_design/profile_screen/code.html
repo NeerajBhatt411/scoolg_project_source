@@ -1,0 +1,251 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-on-surface": "#f0f0fb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-background": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-surface-variant": "#434655",
+                    "on-tertiary-container": "#ffede6",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e2ed",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#faf8ff",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191b23",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#0b1c30",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#0053db",
+                    "surface-container-high": "#e7e7f3",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "tertiary-fixed": "#ffdbcd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px",
+                    "section-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface flex justify-between items-center px-container-margin w-full h-16 sticky top-0 z-40 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img alt="Student Profile Photo" class="w-full h-full object-cover" data-alt="A professional high-resolution close-up portrait of a young student with a friendly smile, set against a soft-focus minimalist school hallway. The lighting is bright and airy, reflecting a clean light-mode aesthetic with subtle blue tones in the shadows to match a premium educational software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuBeUh3K-8Hh9K75vQQWaMd8nqXg0OEqupqw-G2um7af3Po0kV-_RnuXTJBNLCxmPOGQnfBCOcXswnjI8er3yIYfWDxAiDF0Ods_gI7DS3MPDLmkzQNDfnN_mOT_QBpVyBgqhrYn69V2WzGWCqeNX0f98xpSKBluRzCcZa8WsSpnX623ry9fxEtQZZggXt3A399cbsPfT5aCdBZtSJOdiipzgQrLxQTHl7Wq3_Qr_TliVW2Mk0T9D1RI9o_qTxyqqMac03HQ2ADC4">
+</div>
+<h1 class="text-title-lg font-title-lg font-bold text-primary dark:text-primary-fixed-dim">SchoolG</h1>
+</div>
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low transition-colors p-2 rounded-full">notifications</button>
+</header>
+<main class="px-container-margin py-stack-gap max-w-2xl mx-auto flex flex-col gap-stack-gap">
+<!-- Profile Header Section -->
+<section class="flex flex-col items-center gap-4 py-6 bg-surface-container-lowest rounded-[20px] shadow-[0_4px_20px_rgba(37,99,235,0.06)]">
+<div class="relative">
+<div class="w-32 h-32 rounded-full border-4 border-primary-fixed overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A clean, minimalist studio headshot of a teenage boy with a focused and confident expression, styled for a professional academic profile. The background is a solid, soft light grey, and the lighting is high-key and even, perfectly fitting a modern, blue-themed digital interface design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAawZdGHj82l_UAAuGLpBvt1EfcQpbB8QyEdLPobeN3enMEi6DwwZkCbQyjIGJfAibUl4tmHqREf5OULM7WFvPH_1d7X1RX9AhzFqEeB79_8zhZk8HY4MypBIJqfwSozFZYZkZjC6D4JXtLGiZu2AzEIxr2q9RB96bnmVyDSZblHvIhf39g1D2vEHr5FCr9-ECvAtRxzXUpyyCcmPUhp3WQfsDdgvWRvMWy3BoVCqVwFBd3oPpQnly9ImLFa3Jr1-nIztM_prKSCso">
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-on-primary p-1.5 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+</div>
+<div class="text-center">
+<h2 class="text-display-lg font-display-lg text-on-surface">Johnathan Doe</h2>
+<p class="text-body-lg font-body-lg text-secondary">Grade 11 - Science Stream (B)</p>
+</div>
+<div class="flex gap-3">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-label-md font-label-md">ID: STU-2024-089</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-md font-label-md">Active Student</span>
+</div>
+</section>
+<!-- Bento Grid Info Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-gap">
+<!-- Basic Details Card -->
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-[0_4px_20px_rgba(37,99,235,0.06)] flex flex-col gap-4">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">person</span>
+<h3 class="text-title-lg font-title-lg">Basic Details</h3>
+</div>
+<div class="space-y-3">
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Date of Birth</span>
+<span class="text-body-md font-body-md text-on-surface">March 15, 2007</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Gender</span>
+<span class="text-body-md font-body-md text-on-surface">Male</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Blood Group</span>
+<span class="text-body-md font-body-md text-on-surface">O+ Positive</span>
+</div>
+</div>
+</div>
+<!-- Parent Details Card -->
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-[0_4px_20px_rgba(37,99,235,0.06)] flex flex-col gap-4">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">family_restroom</span>
+<h3 class="text-title-lg font-title-lg">Parent Details</h3>
+</div>
+<div class="space-y-3">
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Father's Name</span>
+<span class="text-body-md font-body-md text-on-surface">Richard Doe</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Contact Number</span>
+<span class="text-body-md font-body-md text-on-surface">+1 (555) 0123-456</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Emergency Email</span>
+<span class="text-body-md font-body-md text-on-surface">richard.doe@email.com</span>
+</div>
+</div>
+</div>
+<!-- School Details Card (Spans full width on mobile) -->
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-[0_4px_20px_rgba(37,99,235,0.06)] flex flex-col gap-4 md:col-span-2">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">school</span>
+<h3 class="text-title-lg font-title-lg">School Details</h3>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Roll No.</span>
+<span class="text-body-md font-body-md text-on-surface">24BS1102</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Admission No.</span>
+<span class="text-body-md font-body-md text-on-surface">ADM/2021/045</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Joined Date</span>
+<span class="text-body-md font-body-md text-on-surface">Aug 12, 2021</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Library ID</span>
+<span class="text-body-md font-body-md text-on-surface">LIB-8822</span>
+</div>
+</div>
+<div class="flex flex-col pt-2 border-t border-surface-container">
+<span class="text-label-md font-label-md text-outline">Residential Address</span>
+<span class="text-body-md font-body-md text-on-surface">742 Evergreen Terrace, Springfield, State 58008, United States</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<section class="flex flex-col gap-3 mt-4">
+<button class="h-[52px] w-full bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(37,99,235,0.15)] active:scale-95 transition-transform">
+<span class="material-symbols-outlined">edit</span>
+                Edit Profile
+            </button>
+<button class="h-[52px] w-full bg-surface-container-low text-primary rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">lock_reset</span>
+                Change Password
+            </button>
+<button class="h-[52px] w-full border-2 border-error/20 text-error rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-error/5 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest dark:bg-surface-container-highest backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-label-md font-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-label-md font-label-md mt-1">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="text-label-md font-label-md mt-1">Tracking</span>
+</a>
+<!-- Active: Profile -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary rounded-xl px-4 py-2 transition-all duration-300 scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-label-md font-label-md mt-1">Profile</span>
+</a>
+</nav>
+
+
+</body></html>

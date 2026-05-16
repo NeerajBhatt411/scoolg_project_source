@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SchoolG - Campus Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "tertiary-fixed-dim": "#ffb596",
+                "on-tertiary-fixed": "#360f00",
+                "inverse-primary": "#b4c5ff",
+                "outline-variant": "#c3c6d7",
+                "surface-dim": "#d9d9e5",
+                "surface-tint": "#0053db",
+                "secondary": "#505f76",
+                "on-primary-fixed-variant": "#003ea8",
+                "surface-container-lowest": "#ffffff",
+                "on-primary": "#ffffff",
+                "on-secondary-container": "#54647a",
+                "inverse-surface": "#2e3039",
+                "on-tertiary-fixed-variant": "#7d2d00",
+                "surface-container-high": "#e7e7f3",
+                "error-container": "#ffdad6",
+                "surface-bright": "#faf8ff",
+                "on-secondary-fixed-variant": "#38485d",
+                "on-secondary": "#ffffff",
+                "background": "#faf8ff",
+                "surface-container-highest": "#e1e2ed",
+                "inverse-on-surface": "#f0f0fb",
+                "tertiary-fixed": "#ffdbcd",
+                "secondary-container": "#d0e1fb",
+                "primary-fixed-dim": "#b4c5ff",
+                "tertiary": "#943700",
+                "surface": "#faf8ff",
+                "surface-container": "#ededf9",
+                "primary-container": "#2563eb",
+                "on-error": "#ffffff",
+                "surface-container-low": "#f3f3fe",
+                "primary-fixed": "#dbe1ff",
+                "on-tertiary": "#ffffff",
+                "outline": "#737686",
+                "on-tertiary-container": "#ffede6",
+                "secondary-fixed-dim": "#b7c8e1",
+                "secondary-fixed": "#d3e4fe",
+                "error": "#ba1a1a",
+                "tertiary-container": "#bc4800",
+                "primary": "#004ac6",
+                "on-secondary-fixed": "#0b1c30",
+                "on-error-container": "#93000a",
+                "on-primary-container": "#eeefff",
+                "surface-variant": "#e1e2ed",
+                "on-primary-fixed": "#00174b",
+                "on-background": "#191b23",
+                "on-surface": "#191b23",
+                "on-surface-variant": "#434655"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "stack-gap": "16px",
+                "section-padding": "24px",
+                "card-internal-padding": "20px",
+                "container-margin": "20px",
+                "inline-gap": "12px"
+            },
+            "fontFamily": {
+                "label-md": ["Inter"],
+                "title-lg": ["Manrope"],
+                "body-lg": ["Inter"],
+                "headline-md": ["Manrope"],
+                "display-lg": ["Manrope"],
+                "body-md": ["Inter"]
+            },
+            "fontSize": {
+                "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .code-input:focus {
+            box-shadow: 0 0 0 1.5px #004ac6;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-stretch overflow-hidden">
+<!-- Left Split: Inspiring Academic Image -->
+<aside class="hidden lg:block w-1/2 relative overflow-hidden">
+<img alt="Inspiring campus library" class="absolute inset-0 w-full h-full object-cover" data-alt="A cinematic, wide-angle photograph of a modern university library bathed in soft afternoon sunlight streaming through floor-to-ceiling windows. The composition features rows of clean, white study tables where diverse students are focused on their work, surrounded by tall wooden bookshelves. The color palette is dominated by airy blues, crisp whites, and warm wood tones, creating a tranquil yet intellectually stimulating atmosphere. The lighting is high-key and soft, perfectly embodying a premium academic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6JIdzPdl1OSQ8eCStYRhUz811BdSAfCdsqcywqgEXzfHk85giKcLGzgjYgB2CnI6LIXFn0li7a4LmXkki2A2X33_p9eJG3HA9HZyPoECBDOLYtD4lNWWdp6caBOfjWeQzMrYaMxT3Z-f-X56fv9ADTyLwoeLqfsng-jeEpvZqQkg4ZxmY3OIYTKSsGjI86na3kcAEeFeA2TCSDMTx902uUJKZFT0NEHsqN8lXT7IzTmzrQjnSTKxbSeEge06l9noug96e4ZGKIr8"/>
+<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent"></div>
+<!-- Branding Overlay for Left Side -->
+<div class="absolute top-12 left-12 flex items-center gap-3">
+<div class="w-10 h-10 bg-on-primary rounded-xl flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<span class="font-display-lg text-display-lg text-on-primary">SchoolG</span>
+</div>
+<div class="absolute bottom-16 left-12 right-12">
+<h2 class="font-display-lg text-display-lg text-on-primary mb-4 leading-tight">Elevate Your Academic Journey.</h2>
+<p class="font-body-lg text-body-lg text-on-primary/90 max-w-md">Access your institution's digital campus with precision and ease. Your dedicated portal for results, fees, and daily success.</p>
+</div>
+</aside>
+<!-- Right Split: Clean Entry Panel -->
+<main class="w-full lg:w-1/2 bg-surface flex flex-col justify-center items-center px-container-margin relative">
+<!-- Branding for Mobile/Tablet in top corner -->
+<div class="absolute top-8 left-8 flex items-center gap-2 lg:hidden">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-display-lg text-title-lg text-primary">SchoolG</span>
+</div>
+<!-- Entry Form Container -->
+<div class="w-full max-w-md">
+<div class="mb-10 text-center lg:text-left">
+<h1 class="font-headline-md text-display-lg text-on-surface mb-3 tracking-tight">Enter Campus Code</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Please enter the unique code provided by your institution to access your student or parent portal.</p>
+</div>
+<!-- 6-Digit Styled Input Field -->
+<form class="space-y-8">
+<div aria-label="Campus Code Entry" class="flex justify-between gap-3 sm:gap-4">
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+<input class="code-input w-full aspect-square text-center font-display-lg text-display-lg bg-surface-container-low border-none rounded-xl text-primary transition-all duration-200 outline-none focus:bg-white focus:ring-0" maxlength="1" placeholder="•" type="text"/>
+</div>
+<div class="space-y-4">
+<button class="w-full h-[52px] bg-primary text-on-primary rounded-xl font-title-lg transition-all duration-200 hover:bg-primary/90 hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+                        Continue
+                        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+<button class="w-full py-3 text-primary font-label-md hover:underline transition-all" type="button">
+                        Where can I find my code?
+                    </button>
+</div>
+</form>
+<!-- Footer Assistance -->
+<footer class="mt-16 pt-8 border-t border-surface-container-high flex flex-col sm:flex-row items-center justify-between gap-4">
+<p class="font-label-md text-label-md text-outline">Problems signing in?</p>
+<a class="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-full font-label-md text-secondary hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">contact_support</span>
+                    Contact Support
+                </a>
+</footer>
+</div>
+</main>
+</body></html>

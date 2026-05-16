@@ -1,0 +1,269 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-on-surface": "#f0f0fb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-background": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-surface-variant": "#434655",
+                    "on-tertiary-container": "#ffede6",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e2ed",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#faf8ff",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191b23",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#0b1c30",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#0053db",
+                    "surface-container-high": "#e7e7f3",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "tertiary-fixed": "#ffdbcd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px",
+                    "section-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .press-effect:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center px-container-margin w-full h-16 bg-surface dark:bg-surface shadow-sm dark:shadow-none sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed ring-2 ring-primary/10">
+<img alt="Student Profile" data-alt="A professional high-quality 3D avatar of a cheerful male student with short hair, wearing a clean white polo shirt against a soft blue studio background. The lighting is bright and airy, reflecting a modern minimalist educational app aesthetic with a crisp, clear focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWc0ezxfYN78ua-tu0AeiyYZRqrIYJMqr2Srt_dxpdZ-agdPQwAUX-bup28YI459ihWcKi9JJ67-gatCx_WlupBL6Rfx-zIZCG6bfOhac448XEaY2sOj4F5eTwFSa1D57YCUQrKOXeX3LlDVXkUA8mhh-54Tclb-_yCMz5AiAAvDGwYqURT48voUb-aOkqwJ8Hg9bSh0SiRj1GjkYQTzW9lH2K2_84ynXh7LQ7WGVo1PD-GohGnNyYjRmfgor9g20QhZjWYQN3nqI">
+</div>
+<h1 class="text-title-lg font-title-lg font-bold text-primary dark:text-primary-fixed-dim">SchoolG</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="px-container-margin pt-section-padding space-y-stack-gap">
+<!-- Hero Section / Title -->
+<div class="space-y-1">
+<h2 class="text-display-lg font-display-lg text-on-surface">Homework</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Stay updated with your weekly assignments</p>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<span class="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-full text-label-md font-label-md border border-primary/10">All</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-label-md font-label-md border border-outline-variant/30">Pending</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-label-md font-label-md border border-outline-variant/30">Submitted</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-label-md font-label-md border border-outline-variant/30">Archived</span>
+</div>
+<!-- Homework List -->
+<div class="space-y-4">
+<!-- Card 1: Pending -->
+<div class="bg-surface-container-lowest p-card-internal-padding rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.06)] border border-surface-container-high relative overflow-hidden press-effect">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start mb-3">
+<div class="space-y-1">
+<span class="text-label-md font-label-md text-primary bg-primary/5 px-2 py-0.5 rounded">Mathematics</span>
+<h3 class="text-title-lg font-title-lg text-on-surface">Algebra Worksheet</h3>
+</div>
+<div class="bg-error/10 text-error px-3 py-1 rounded-full text-label-md font-label-md">Pending</div>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+<span class="text-label-md font-label-md">Due Oct 25</span>
+</div>
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="attachment">attachment</span>
+<span class="text-label-md font-label-md">2 Files</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md font-label-md font-bold shadow-md shadow-primary/20 transition-transform active:scale-95">Open</button>
+</div>
+</div>
+<!-- Card 2: Pending (Close Deadline) -->
+<div class="bg-surface-container-lowest p-card-internal-padding rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.06)] border border-surface-container-high relative overflow-hidden press-effect">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-start mb-3">
+<div class="space-y-1">
+<span class="text-label-md font-label-md text-tertiary bg-tertiary/5 px-2 py-0.5 rounded">Physics</span>
+<h3 class="text-title-lg font-title-lg text-on-surface">Newtonian Dynamics Lab</h3>
+</div>
+<div class="bg-error/10 text-error px-3 py-1 rounded-full text-label-md font-label-md">Pending</div>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-error">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+<span class="text-label-md font-label-md">Due Oct 24</span>
+</div>
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span>
+<span class="text-label-md font-label-md">Instructions</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md font-label-md font-bold shadow-md shadow-primary/20 transition-transform active:scale-95">Open</button>
+</div>
+</div>
+<!-- Card 3: Submitted -->
+<div class="bg-surface-container-lowest/60 p-card-internal-padding rounded-xl border border-surface-container-high opacity-90 press-effect">
+<div class="flex justify-between items-start mb-3">
+<div class="space-y-1">
+<span class="text-label-md font-label-md text-secondary bg-secondary/5 px-2 py-0.5 rounded">Literature</span>
+<h3 class="text-title-lg font-title-lg text-on-surface">The Great Gatsby Analysis</h3>
+</div>
+<div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-label-md font-label-md">Submitted</div>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="task_alt">task_alt</span>
+<span class="text-label-md font-label-md">Completed Oct 21</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+<span class="text-label-md font-label-md">Review</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Upcoming Hero Bento Card -->
+<div class="relative rounded-2xl overflow-hidden aspect-[16/9] shadow-lg shadow-primary/5 group">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A clean, minimalist desk setup featuring an open textbook, a modern digital tablet with educational diagrams, and a steaming cup of coffee. The lighting is soft morning sunlight, creating a productive and calm atmosphere. The color palette is dominated by whites, light slates, and primary blue accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGEbH0JXceMlHnW6thqq0ULsxcuBdCqHBHLaCriM1M7gLBJdRe7yNXAuJ8fmV-yyyDySt6tDjO77KMRApUKU6gnRC1kD7Q55TPa_Hb7NG6ryUSILs4zYolepLLbxK5dRe84fExAUQEjfPkeslATmQR8ulJjytc13_SVoEktb2EwEzP65VahuSCO3fl-LyavMuVGzwRXO3iQNQPdQLLn88SRlS4FhGd5t8uZEivzJEeaN_lPrajJR7kONjIBVoeoJspAXaktQ-Oe8E">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<span class="text-white/80 text-label-md font-label-md mb-2 block uppercase tracking-wider">Next Big Deadline</span>
+<h4 class="text-white text-headline-md font-headline-md">Advanced Chemistry Project</h4>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center gap-2 text-white/90">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+<span class="text-label-md font-label-md">Due in 5 days</span>
+</div>
+<span class="bg-white text-primary px-4 py-1 rounded-full text-label-md font-bold">Prepare Now</span>
+</div>
+</div>
+</div>
+<!-- Card 5: Submitted -->
+<div class="bg-surface-container-lowest/60 p-card-internal-padding rounded-xl border border-surface-container-high opacity-90 press-effect">
+<div class="flex justify-between items-start mb-3">
+<div class="space-y-1">
+<span class="text-label-md font-label-md text-secondary bg-secondary/5 px-2 py-0.5 rounded">Computer Science</span>
+<h3 class="text-title-lg font-title-lg text-on-surface">Sorting Algorithms Demo</h3>
+</div>
+<div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-label-md font-label-md">Submitted</div>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="task_alt">task_alt</span>
+<span class="text-label-md font-label-md">Completed Oct 19</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="grade">grade</span>
+<span class="text-label-md font-label-md">A+ Grade</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest dark:bg-surface-container-highest backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-label-md font-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="text-label-md font-label-md mt-1">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary rounded-xl px-4 py-2 transition-all duration-300 scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="text-label-md font-label-md mt-1">Tracking</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-md font-label-md mt-1">Profile</span>
+</a>
+</nav>
+
+
+</body></html>

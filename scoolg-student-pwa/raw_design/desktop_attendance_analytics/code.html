@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-primary-fixed": "#00174b",
+                    "background": "#faf8ff",
+                    "tertiary": "#943700",
+                    "secondary-container": "#d0e1fb",
+                    "on-surface-variant": "#434655",
+                    "surface-dim": "#d9d9e5",
+                    "inverse-surface": "#2e3039",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "on-background": "#191b23",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "primary": "#004ac6",
+                    "on-surface": "#191b23",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#bc4800",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface": "#faf8ff",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "surface-tint": "#0053db",
+                    "outline": "#737686",
+                    "surface-bright": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed": "#ffdbcd",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e1e2ed",
+                    "surface-container": "#ededf9",
+                    "surface-container-high": "#e7e7f3",
+                    "surface-container-low": "#f3f3fe",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#54647a",
+                    "on-tertiary-container": "#ffede6",
+                    "surface-variant": "#e1e2ed",
+                    "primary-container": "#2563eb",
+                    "on-tertiary-fixed": "#360f00",
+                    "inverse-on-surface": "#f0f0fb",
+                    "on-secondary-fixed": "#0b1c30",
+                    "secondary": "#505f76",
+                    "on-primary-container": "#eeefff",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "section-padding": "24px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .circular-progress {
+            background: conic-gradient(from 0deg, #004ac6 0% 94%, #e1e2ed 94% 100%);
+            border-radius: 50%;
+            width: 240px;
+            height: 240px;
+            position: relative;
+        }
+        .circular-progress::before {
+            content: "";
+            position: absolute;
+            inset: 24px;
+            background: white;
+            border-radius: 50%;
+        }
+        .shadow-soft {
+            box-shadow: 0 4px 20px rgba(0, 74, 198, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-lowest shadow-sm z-50 flex flex-col py-6 px-4">
+<div class="mb-10 px-2">
+<h1 class="text-display-lg font-display-lg font-bold text-primary dark:text-primary-fixed">SchoolG</h1>
+<p class="font-label-md text-label-md text-secondary opacity-70">Premium Academy</p>
+</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">calendar_today</span>
+<span class="font-label-md text-label-md">Timetable</span>
+</a>
+<!-- Active Navigation State for Attendance Analytics -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl font-bold transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu_book</span>
+<span class="font-label-md text-label-md">Homework</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">assessment</span>
+<span class="font-label-md text-label-md">Results</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
+<span class="font-label-md text-label-md">Fees</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">account_circle</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-2">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl font-bold transition-opacity duration-150 hover:opacity-90">
+<span class="material-symbols-outlined">help_outline</span>
+                Support
+            </button>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center h-16 pl-72 pr-8 w-full z-40 bg-surface dark:bg-surface-dim shadow-sm fixed top-0">
+<div class="flex items-center gap-4 flex-grow max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-full border-none bg-surface-container-low focus:ring-2 focus:ring-primary/20 text-body-md" placeholder="Search analytics or students..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<div class="text-right">
+<p class="font-title-lg text-body-md text-on-surface font-bold leading-tight">Prof. Julian Vane</p>
+<p class="text-label-md text-secondary">Registrar Office</p>
+</div>
+<img alt="User profile photo" class="w-10 h-10 rounded-full object-cover" data-alt="A professional portrait of a male educator in his late 40s, wearing a tailored navy blazer over a crisp white shirt. He has a friendly, intelligent expression and is posed against a softly blurred background of a modern library. The lighting is bright and natural, reflecting a high-quality light-mode UI aesthetic with professional clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJoV0eljVDSdqQ_XQUMRNtMsmWJ5wBbqQoO2s2CUUEZIX-L4q9ogl_DdlRv9uHbIrou3R4Ah8I3Y4wZCWapf-rZBCpqdhL4qWAZosPGCwkoffCZtJ8DZ596f3H0IBagiJ1tNbqX6E033Qr1yhy8Wrf-nxxofEEihcOGv4llXfIJsM1Wy8RJv9gZY_N-ZK1Qkhe4FvmA1hdQYznd_Hs6pR8eNUdakVM6RD4ODmRbjguLvEUXpId1jYjzlaPhRcrZNvHSA1IQbTw4RY"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-section-padding space-y-stack-gap">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-4">
+<div>
+<h2 class="font-headline-md text-display-lg text-on-background">Attendance Analytics</h2>
+<p class="text-body-lg text-secondary">Academic Session 2023-24 • Grade 12 Section B</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high rounded-xl font-label-md text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+                        Export PDF
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-label-md hover:bg-primary-container transition-colors shadow-soft">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        Mark Attendance
+                    </button>
+</div>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-stack-gap">
+<!-- Left Column: Circular Analytics -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-stack-gap">
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-soft flex flex-col items-center">
+<h3 class="w-full font-title-lg text-title-lg mb-8">Overall Presence</h3>
+<div class="circular-progress flex items-center justify-center mb-8">
+<div class="z-10 text-center">
+<span class="block font-display-lg text-[48px] text-primary leading-none">94%</span>
+<span class="text-label-md text-secondary uppercase tracking-widest font-bold">Excellent</span>
+</div>
+</div>
+<div class="w-full grid grid-cols-3 gap-4 border-t border-surface-container pt-8">
+<div class="text-center">
+<p class="text-label-md text-secondary mb-1">Total Present</p>
+<div class="flex items-center justify-center gap-1.5 text-primary">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-title-lg font-bold">120</span>
+</div>
+</div>
+<div class="text-center border-x border-surface-container">
+<p class="text-label-md text-secondary mb-1">Absent</p>
+<div class="flex items-center justify-center gap-1.5 text-error">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-title-lg font-bold">05</span>
+</div>
+</div>
+<div class="text-center">
+<p class="text-label-md text-secondary mb-1">Leaves</p>
+<div class="flex items-center justify-center gap-1.5 text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-title-lg font-bold">02</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-primary p-card-internal-padding rounded-[20px] text-white shadow-soft relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-label-md opacity-80 mb-2">Longest Streak</p>
+<h4 class="font-display-lg mb-1">42 Days</h4>
+<p class="text-body-md opacity-90">Consecutive full attendance since Sept 1st</p>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[120px] opacity-10 rotate-12 transition-transform group-hover:rotate-0" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+<!-- Right Column: Calendar View -->
+<div class="col-span-12 lg:col-span-7">
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-soft h-full">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-title-lg text-title-lg">Attendance Log - October 2023</h3>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<span class="font-bold text-on-surface px-2">October</span>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<!-- Calendar Grid -->
+<div class="grid grid-cols-7 gap-y-6">
+<!-- Days of Week -->
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Sun</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Mon</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Tue</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Wed</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Thu</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Fri</div>
+<div class="text-center text-label-md text-outline font-bold uppercase tracking-wider">Sat</div>
+<!-- Calendar Dates (Simplified mock data) -->
+<!-- Row 1 -->
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">24</div>
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">25</div>
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">26</div>
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">27</div>
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">28</div>
+<div class="aspect-square flex flex-col items-center justify-center opacity-30 text-body-md">29</div>
+<div class="aspect-square flex flex-col items-center justify-center bg-surface-container-low rounded-xl text-body-md font-bold text-on-surface">1</div>
+<!-- Row 2 -->
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">2</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">3</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">4</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-error rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">5</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">6</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">7</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative bg-surface-container-low rounded-xl text-body-md font-bold">8</div>
+<!-- Row 3 -->
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">9</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">10</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-tertiary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">11</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">12</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">13</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">14</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative bg-surface-container-low rounded-xl text-body-md font-bold">15</div>
+<!-- Row 4 -->
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md font-bold bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg">16</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">17</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">18</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">19</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-error rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">20</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative hover:bg-surface-container transition-colors rounded-xl group cursor-default">
+<span class="text-body-md">21</span>
+<span class="absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full"></span>
+</div>
+<div class="aspect-square flex flex-col items-center justify-center relative bg-surface-container-low rounded-xl text-body-md font-bold">22</div>
+</div>
+<div class="mt-8 flex gap-6 border-t border-surface-container pt-6">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-label-md text-secondary">Present</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-error"></span>
+<span class="text-label-md text-secondary">Absent</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary"></span>
+<span class="text-label-md text-secondary">On Leave</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom: Upcoming Holidays -->
+<div class="col-span-12">
+<div class="bg-white p-card-internal-padding rounded-[20px] shadow-soft">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-title-lg text-title-lg">Upcoming Holidays</h3>
+<a class="text-primary font-bold text-label-md hover:underline transition-all" href="#">View All Academic Calendar</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Holiday Card 1 -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="bg-primary-fixed w-12 h-12 rounded-xl flex flex-col items-center justify-center text-on-primary-fixed group-hover:scale-110 transition-transform">
+<span class="text-label-md font-bold leading-none">24</span>
+<span class="text-[10px] uppercase font-bold">Oct</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Dussehra Holiday</p>
+<p class="text-label-md text-secondary">National Festival</p>
+</div>
+</div>
+<!-- Holiday Card 2 -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="bg-tertiary-fixed w-12 h-12 rounded-xl flex flex-col items-center justify-center text-on-tertiary-fixed group-hover:scale-110 transition-transform">
+<span class="text-label-md font-bold leading-none">12</span>
+<span class="text-[10px] uppercase font-bold">Nov</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Diwali Break</p>
+<p class="text-label-md text-secondary">Mid-Term Holiday</p>
+</div>
+</div>
+<!-- Holiday Card 3 -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="bg-secondary-fixed w-12 h-12 rounded-xl flex flex-col items-center justify-center text-on-secondary-fixed group-hover:scale-110 transition-transform">
+<span class="text-label-md font-bold leading-none">25</span>
+<span class="text-[10px] uppercase font-bold">Dec</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Winter Vacation</p>
+<p class="text-label-md text-secondary">Seasonal Break</p>
+</div>
+</div>
+<!-- Holiday Card 4 -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="bg-outline-variant/30 w-12 h-12 rounded-xl flex flex-col items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform">
+<span class="text-label-md font-bold leading-none">01</span>
+<span class="text-[10px] uppercase font-bold">Jan</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">New Year's Day</p>
+<p class="text-label-md text-secondary">Public Holiday</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
