@@ -1,0 +1,197 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Onboarding - Manage School Life Easily</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#505f76",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "inverse-on-surface": "#f0f0fb",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-background": "#191b23",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container-low": "#f3f3fe",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary-container": "#ffede6",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e1e2ed",
+                        "on-primary-fixed": "#00174b",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "on-secondary-container": "#54647a",
+                        "on-primary-container": "#eeefff",
+                        "surface": "#faf8ff",
+                        "primary-container": "#2563eb",
+                        "primary-fixed": "#dbe1ff",
+                        "secondary-container": "#d0e1fb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191b23",
+                        "surface-container": "#ededf9",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-primary": "#b4c5ff",
+                        "outline-variant": "#c3c6d7",
+                        "inverse-surface": "#2e3039",
+                        "on-secondary-fixed": "#0b1c30",
+                        "background": "#faf8ff",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-tint": "#0053db",
+                        "surface-container-high": "#e7e7f3",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-error": "#ffffff",
+                        "outline": "#737686",
+                        "primary": "#004ac6",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-dim": "#d9d9e5",
+                        "surface-container-highest": "#e1e2ed",
+                        "tertiary": "#943700",
+                        "tertiary-container": "#bc4800",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "tertiary-fixed": "#ffdbcd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "inline-gap": "12px",
+                        "container-margin": "20px",
+                        "card-internal-padding": "20px",
+                        "stack-gap": "16px",
+                        "section-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Manrope"],
+                        "label-md": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "title-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+        h1, h2, h3, .font-manrope {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar Section - As defined in JSON -->
+<header class="flex justify-between items-center px-container-margin w-full h-16 bg-surface shadow-sm sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Student Profile Photo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJ_n5JQH-N5UqZP0rriJgEOY8Qhump-l4tUJKpBzvNLlM5HWbIW1Hr9UvfvYsNbP0ivcrwNcPLc9LtfTQ1vjJRmuq8_W6kKTCUbZB71Z6SzZTvIIvCibSu0u4R4g9hAqb0woBtfqIu_PwOT5Vjz7ZWNu63-5FgZ4uG9OLXWt_wjYNQPQAO2W3NKh623Je8QTWUW3Cy9FsFioLQnHdaIz8SLra-sUNFwjtC_xKcaUDyKHN_vWpXhb-EI3ubeJr0njGW1m35CXK-KnM">
+</div>
+<span class="text-title-lg font-title-lg font-bold text-primary">SchoolG</span>
+</div>
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full active:scale-95 duration-200" data-icon="notifications">
+            notifications
+        </button>
+</header>
+<!-- Main Canvas Content -->
+<main class="flex-grow flex flex-col items-center justify-between px-container-margin py-section-padding gap-stack-gap overflow-y-auto">
+<!-- Header & Subtitle Area -->
+<div class="w-full text-center mt-4">
+<h1 class="text-display-lg font-display-lg text-on-background mb-4">Manage School Life Easily</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xs mx-auto">Track academic activities from one place.</p>
+</div>
+<!-- Illustration Area (Bento-style layout for educational content) -->
+<div class="relative w-full max-w-md aspect-square flex items-center justify-center">
+<!-- Background Decorative Elements -->
+<div class="absolute inset-0 bg-primary/5 rounded-full blur-3xl opacity-50 scale-90"></div>
+<!-- Principal Onboarding Image -->
+<div class="relative w-full h-full bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden p-6 flex items-center justify-center border border-surface-variant/30">
+<img class="w-full h-auto object-contain" data-alt="A high-fidelity modern digital illustration of a diverse student interacting with a large floating translucent holographic calendar. The scene is set in a minimalist, sun-drenched study space with soft blue-based accents and vibrant primary blue UI elements. The lighting is crisp and bright, following a professional light-mode aesthetic with soft-edged containers and smooth gradients. The mood is organized, focused, and technologically advanced, emphasizing effortless educational management." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBei_TqcBSQ9Dg6PDrZ6Xk4YUFQhmMigw5sex99-Tp2n4oK8RzmT3YxSO-FEWP0fMXxMQVZJVwEfXcCNabq0QmH-rPEIcbTTuzBvV_MQOsQMLiC0mW-FXMs1iJHx0ND79Nxn9ljRieHVeR2Cpt-8Wz-n8F1_eiwT_rHnTFrr3-0GkO2DaBlG69WT-2JW4OTlrKXjyYalRH65PbuSk5pVNHlBnUT4VP6lWwns8SCe3wG4pkl2cDLTR49EMtDyOsh-8_ENIGNhTkrmo4">
+</div>
+<!-- Floating Academic Cards for UI Depth -->
+<div class="absolute -top-4 -right-2 bg-white p-3 rounded-xl shadow-lg border border-surface-variant/20 flex items-center gap-3 animate-bounce-slow">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]" data-icon="event">event</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Upcoming</span>
+<span class="text-body-md font-bold text-on-surface">Math Quiz</span>
+</div>
+</div>
+<div class="absolute bottom-10 -left-4 bg-white p-3 rounded-xl shadow-lg border border-surface-variant/20 flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container text-[18px]" data-icon="grade">grade</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-outline">Achievement</span>
+<span class="text-body-md font-bold text-on-surface">A+ Physics</span>
+</div>
+</div>
+</div>
+<!-- Onboarding Controls Area -->
+<div class="w-full flex flex-col items-center gap-8 mb-12">
+<!-- Pagination Indicators -->
+<div class="flex items-center gap-2">
+<div class="h-2 w-8 rounded-full bg-primary transition-all duration-300"></div>
+<div class="h-2 w-2 rounded-full bg-surface-container-highest transition-all duration-300"></div>
+<div class="h-2 w-2 rounded-full bg-surface-container-highest transition-all duration-300"></div>
+</div>
+<!-- CTA Buttons Stack -->
+<div class="w-full flex flex-col gap-4">
+<button class="w-full h-[52px] bg-primary-container text-on-primary font-bold text-body-lg rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.2)] hover:scale-[1.02] active:scale-95 transition-all duration-200">
+                    Next
+                </button>
+<button class="w-full h-[52px] bg-transparent text-primary font-semibold text-body-lg rounded-xl hover:bg-primary/5 active:scale-95 transition-all duration-200">
+                    Skip
+                </button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Suppressed as this is a transactional/onboarding screen per 'The Filter' rule) -->
+<!-- But if needed, the background tonal shift is prioritized over borders per style guidance -->
+<style>
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(0); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 3s ease-in-out infinite;
+        }
+    </style>
+
+
+</body></html>

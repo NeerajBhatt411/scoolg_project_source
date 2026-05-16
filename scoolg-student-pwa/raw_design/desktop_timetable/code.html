@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SchoolG - Academic Timetable</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-primary-fixed": "#00174b",
+                        "background": "#faf8ff",
+                        "tertiary": "#943700",
+                        "secondary-container": "#d0e1fb",
+                        "on-surface-variant": "#434655",
+                        "surface-dim": "#d9d9e5",
+                        "inverse-surface": "#2e3039",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "on-background": "#191b23",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "primary": "#004ac6",
+                        "on-surface": "#191b23",
+                        "inverse-primary": "#b4c5ff",
+                        "outline-variant": "#c3c6d7",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#bc4800",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface": "#faf8ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "surface-tint": "#0053db",
+                        "outline": "#737686",
+                        "surface-bright": "#faf8ff",
+                        "secondary-fixed": "#d3e4fe",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e1e2ed",
+                        "surface-container": "#ededf9",
+                        "surface-container-high": "#e7e7f3",
+                        "surface-container-low": "#f3f3fe",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#54647a",
+                        "on-tertiary-container": "#ffede6",
+                        "surface-variant": "#e1e2ed",
+                        "primary-container": "#2563eb",
+                        "on-tertiary-fixed": "#360f00",
+                        "inverse-on-surface": "#f0f0fb",
+                        "on-secondary-fixed": "#0b1c30",
+                        "secondary": "#505f76",
+                        "on-primary-container": "#eeefff",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "inline-gap": "12px",
+                        "section-padding": "24px",
+                        "container-margin": "20px",
+                        "card-internal-padding": "20px",
+                        "stack-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "title-lg": ["Manrope"],
+                        "display-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #faf8ff;
+            color: #191b23;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c3c6d7;
+            border-radius: 10px;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+    </style>
+</head>
+<body class="bg-background">
+<!-- Persistent Sidebar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low shadow-sm z-50 flex flex-col py-6 px-4">
+<div class="mb-10 px-4">
+<h1 class="text-display-lg font-display-lg font-bold text-primary">SchoolG</h1>
+<p class="font-label-md text-label-md text-secondary opacity-70">Premium Academy</p>
+</div>
+<nav class="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-xl font-bold transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Timetable</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-md text-label-md">Homework</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-label-md text-label-md">Results</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Fees</span>
+</a>
+<div class="pt-4 mt-4 border-t border-outline-variant/30">
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</nav>
+<button class="mt-auto mx-4 bg-primary text-on-primary py-3 px-4 rounded-xl font-title-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+            Support
+        </button>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="pl-64 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-8 w-full z-40 bg-surface shadow-sm sticky top-0">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" placeholder="Search classes, events..." type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="flex items-center gap-3 border-l border-outline-variant pl-6">
+<div class="text-right">
+<p class="font-title-lg text-body-md font-bold">Alex Henderson</p>
+<p class="text-label-md text-outline">Grade 11-B</p>
+</div>
+<img alt="User profile photo" class="w-10 h-10 rounded-full object-cover border-2 border-primary-fixed" data-alt="A professional close-up portrait of a young adult male with a friendly expression. He is photographed in a bright studio environment with clean high-key lighting. The style is modern and minimalist, reflecting a professional academic or corporate identity with a clean, high-contrast finish." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZ337GbKjFVmXNlvjQZpkTvtgQU-NVSRxpeco7nm1Jx8_yV4H-LYZuQ9IhErFlbQjne08bZOw5mzNs_NGe6xC9Q_KzIVmKk4A3744UhAgrT2GYVRcUGCw5j6cOr8fO34nfUZbaLAcYPiTvvUsPlRVNMp4Nc2rbB3dqzUetr5U8tjpw43kvy2w6PNpv3upygfCSVLZPA65nRR-NMFbBGjbBxtAN721NYXprxj7aOXgMPhnFtXlU3FC6JmC76imw94Ca9_EiEhA4y2I"/>
+</div>
+</div>
+</header>
+<!-- Timetable Content Area -->
+<section class="p-8 max-w-7xl mx-auto">
+<div class="mb-8">
+<h2 class="text-display-lg font-headline-md text-on-surface">Academic Timetable</h2>
+<p class="text-body-lg text-on-surface-variant">Manage your weekly schedule and upcoming lectures</p>
+</div>
+<!-- Day Selector Tabs -->
+<div class="flex gap-2 mb-8 bg-surface-container-low p-1.5 rounded-2xl w-max">
+<button class="px-8 py-3 bg-surface-container-lowest shadow-sm text-primary font-bold rounded-xl transition-all duration-200">Monday</button>
+<button class="px-8 py-3 text-secondary hover:bg-surface-container rounded-xl transition-all duration-200">Tuesday</button>
+<button class="px-8 py-3 text-secondary hover:bg-surface-container rounded-xl transition-all duration-200">Wednesday</button>
+<button class="px-8 py-3 text-secondary hover:bg-surface-container rounded-xl transition-all duration-200">Thursday</button>
+<button class="px-8 py-3 text-secondary hover:bg-surface-container rounded-xl transition-all duration-200">Friday</button>
+</div>
+<!-- Timetable List/Grid -->
+<div class="space-y-4">
+<!-- Time Slot Entry: Current Class -->
+<div class="group relative flex gap-6 items-stretch">
+<div class="w-24 pt-4 text-right">
+<p class="font-bold text-primary font-title-lg">09:00</p>
+<p class="text-label-md text-outline uppercase tracking-wider">AM</p>
+</div>
+<div class="flex-1 bg-surface-container-lowest p-6 rounded-3xl shadow-lg border-2 border-primary-container flex items-center justify-between transition-transform duration-300 hover:scale-[1.01]">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-primary-container/10 text-primary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl" data-icon="functions">functions</span>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h3 class="font-headline-md text-title-lg text-on-surface">Advanced Mathematics</h3>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">Current Class</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant text-body-md">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="person">person</span> Dr. Sarah Jenkins</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="meeting_room">meeting_room</span> Lab 402, North Wing</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">09:00 AM - 10:30 AM</p>
+<p class="text-label-md text-outline">90 Minutes Session</p>
+</div>
+</div>
+</div>
+<!-- Spacer Line -->
+<div class="ml-36 h-8 border-l-2 border-dashed border-outline-variant"></div>
+<!-- Time Slot Entry -->
+<div class="group relative flex gap-6 items-stretch">
+<div class="w-24 pt-4 text-right">
+<p class="font-bold text-on-surface font-title-lg">10:45</p>
+<p class="text-label-md text-outline uppercase tracking-wider">AM</p>
+</div>
+<div class="flex-1 bg-surface-container-lowest p-6 rounded-3xl shadow-sm border border-transparent hover:border-outline-variant/30 flex items-center justify-between transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-surface-container text-secondary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl" data-icon="biotech">biotech</span>
+</div>
+<div>
+<h3 class="font-headline-md text-title-lg text-on-surface mb-1">Molecular Biology</h3>
+<div class="flex items-center gap-4 text-on-surface-variant text-body-md">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="person">person</span> Prof. Michael Chen</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="meeting_room">meeting_room</span> Science Block A-12</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">10:45 AM - 12:15 PM</p>
+<p class="text-label-md text-outline">90 Minutes Session</p>
+</div>
+</div>
+</div>
+<!-- Break Entry -->
+<div class="group relative flex gap-6 items-stretch opacity-60">
+<div class="w-24 pt-4 text-right">
+<p class="font-bold text-on-surface font-title-lg">12:15</p>
+<p class="text-label-md text-outline uppercase tracking-wider">PM</p>
+</div>
+<div class="flex-1 bg-surface-container p-4 rounded-2xl border border-dashed border-outline-variant flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="restaurant">restaurant</span>
+<span class="font-title-lg text-body-lg text-secondary">Lunch Break &amp; Networking</span>
+</div>
+</div>
+<!-- Time Slot Entry -->
+<div class="group relative flex gap-6 items-stretch">
+<div class="w-24 pt-4 text-right">
+<p class="font-bold text-on-surface font-title-lg">01:30</p>
+<p class="text-label-md text-outline uppercase tracking-wider">PM</p>
+</div>
+<div class="flex-1 bg-surface-container-lowest p-6 rounded-3xl shadow-sm border border-transparent hover:border-outline-variant/30 flex items-center justify-between transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-surface-container text-secondary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl" data-icon="history_edu">history_edu</span>
+</div>
+<div>
+<h3 class="font-headline-md text-title-lg text-on-surface mb-1">Modern World History</h3>
+<div class="flex items-center gap-4 text-on-surface-variant text-body-md">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="person">person</span> Mrs. Elena Rodriguez</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="meeting_room">meeting_room</span> Humanities Hall, Room 102</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">01:30 PM - 03:00 PM</p>
+<p class="text-label-md text-outline">90 Minutes Session</p>
+</div>
+</div>
+</div>
+<!-- Time Slot Entry -->
+<div class="group relative flex gap-6 items-stretch">
+<div class="w-24 pt-4 text-right">
+<p class="font-bold text-on-surface font-title-lg">03:15</p>
+<p class="text-label-md text-outline uppercase tracking-wider">PM</p>
+</div>
+<div class="flex-1 bg-surface-container-lowest p-6 rounded-3xl shadow-sm border border-transparent hover:border-outline-variant/30 flex items-center justify-between transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-surface-container text-secondary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl" data-icon="code">code</span>
+</div>
+<div>
+<h3 class="font-headline-md text-title-lg text-on-surface mb-1">Introduction to Algorithm Design</h3>
+<div class="flex items-center gap-4 text-on-surface-variant text-body-md">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="person">person</span> Dr. Robert Stark</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="meeting_room">meeting_room</span> Computer Lab 1</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">03:15 PM - 04:45 PM</p>
+<p class="text-label-md text-outline">90 Minutes Session</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Stats/Summary Cards -->
+<div class="mt-12 bento-grid">
+<div class="col-span-4 bg-primary text-on-primary p-6 rounded-3xl shadow-lg relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-on-primary-container opacity-80 text-label-md uppercase font-bold tracking-widest mb-2">Weekly Load</p>
+<h4 class="text-display-lg font-headline-md">24 Hours</h4>
+<p class="text-body-md mt-2 opacity-90">You are on track for this week's academic objectives.</p>
+</div>
+<div class="absolute -right-6 -bottom-6 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="pending_actions">pending_actions</span>
+</div>
+</div>
+<div class="col-span-4 bg-surface-container-high p-6 rounded-3xl flex flex-col justify-between">
+<div>
+<p class="text-outline text-label-md uppercase font-bold tracking-widest mb-2">Next Subject</p>
+<h4 class="text-title-lg font-headline-md text-on-surface">Molecular Biology</h4>
+</div>
+<div class="flex justify-between items-end">
+<div class="flex -space-x-2">
+<img alt="Student" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="A portrait of a male student with a clear complexion and professional hairstyle, shot in a high-key bright setting with modern minimalist aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIuAicN1QILmzNK8JW2LzsZh_TlAD8W0LL1oth88_SOBSgl4o1yPN51_usDgfoAifO0qs4Zr5rbE5NK_Lg611WAq_9F6QJHaFm9VC52mj9P7JkoOggq5y5zvbeQQwLDVC51U7gG4zFF3NFrgq9toMuiqUOuM0nDj84DTM9VarchRenc7opLQveRlx38U7K82XRX2V5T4kwPB6dJFIugoQKgq0TbOrX0XvcH0XaovzNHzNcDW1K3QniyMeWkojPhyn0aeaU3azN94w"/>
+<img alt="Student" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="A smiling female student with long hair in a bright, clean educational setting. The lighting is soft and professional, using a cool blue and white palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfyHE-SPcWcR3IYdPoGu0uoQO0OGdbMbbv8nfjX0YwAcwUH58ar5p1x_mAN77Do0gybrs3bBH_jETHqDgQ0KHBCWFifmrO7H4mycUCX5mLloKA_scduxg-TfOJNiuHBi-QbLBLm4W4M_r0gUAxViQPGGrfy7h_kzRiSeR8AO2E2bo1Ez7GKoV_uXKyXmQrWUsMTapQJmsUB0AXtlV3QB_d2WSKN56mGEvD28oS5nGrN5KC0Bte6XIQ_d1jRADjya_QLuh8thSqCzw"/>
+<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary text-[10px] flex items-center justify-center font-bold border-2 border-surface-container-high">+12</div>
+</div>
+<span class="text-primary font-bold text-body-md">Starts in 15m</span>
+</div>
+</div>
+<div class="col-span-4 bg-surface-container-low border border-outline-variant/30 p-6 rounded-3xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+</div>
+<div>
+<p class="text-on-surface font-bold font-title-lg">Academic Holiday</p>
+<p class="text-body-md text-outline">Coming up this Friday, Oct 27</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

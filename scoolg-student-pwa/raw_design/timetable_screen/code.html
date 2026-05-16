@@ -1,0 +1,300 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-on-surface": "#f0f0fb",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-background": "#191b23",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-low": "#f3f3fe",
+                    "on-surface-variant": "#434655",
+                    "on-tertiary-container": "#ffede6",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e2ed",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-bright": "#faf8ff",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "secondary-container": "#d0e1fb",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191b23",
+                    "surface-container": "#ededf9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#0b1c30",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#0053db",
+                    "surface-container-high": "#e7e7f3",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#ffffff",
+                    "outline": "#737686",
+                    "primary": "#004ac6",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-dim": "#d9d9e5",
+                    "surface-container-highest": "#e1e2ed",
+                    "tertiary": "#943700",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "tertiary-fixed": "#ffdbcd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "inline-gap": "12px",
+                    "container-margin": "20px",
+                    "card-internal-padding": "20px",
+                    "stack-gap": "16px",
+                    "section-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #faf8ff;
+            color: #191b23;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+        .active-glow {
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-container-margin w-full h-16 sticky top-0 z-40 bg-surface shadow-sm transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="Student Profile Photo" class="w-full h-full object-cover" data-alt="A professional headshot of a smiling young college student in a sunlit university courtyard. The lighting is soft and golden, emphasizing a clean and scholarly atmosphere. The student is wearing a minimalist dark sweater, and the background features blurred modern campus architecture in light grey and white tones, matching a high-end academic UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEWGOiYLxP5xCz7KTMGK4Y2bv51L8BJxLzRUtMhFG87AYU9AUpMNkNESmxYWL-2d68czuW6Za2ojyPLaIfF8aAzJuYseUSVR5TdXcJB94RwC02ZYg4m90p_JiYTZwQH11Q2bIFr5xQl8xGsY7EVwvxMUY441hxrd3aM6H74S_t9Jc8e4HSuX1oa6VbMe-4NqBo_CDOAXJJuStiMYiozXzSVU2Y_XfcsOBAdNBXAnUwEuOpX_DDCBfUp-lVDw5K2jZ1SvCeFYFLcn4">
+</div>
+<h1 class="text-title-lg font-title-lg font-bold text-primary">SchoolG</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="mt-6 px-container-margin space-y-stack-gap">
+<!-- Welcome Section -->
+<section class="space-y-1">
+<p class="text-label-md font-label-md text-secondary uppercase tracking-widest">Academic Calendar</p>
+<h2 class="text-display-lg font-display-lg text-on-surface">Weekly Schedule</h2>
+</section>
+<!-- Day Tabs Horizontal Scroll -->
+<div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-container-margin px-container-margin">
+<button class="flex-shrink-0 px-6 py-3 rounded-xl bg-primary text-on-primary font-title-lg shadow-md active:scale-95 transition-all">
+                Mon
+            </button>
+<button class="flex-shrink-0 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface-variant font-title-lg hover:bg-surface-variant transition-all">
+                Tue
+            </button>
+<button class="flex-shrink-0 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface-variant font-title-lg hover:bg-surface-variant transition-all">
+                Wed
+            </button>
+<button class="flex-shrink-0 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface-variant font-title-lg hover:bg-surface-variant transition-all">
+                Thu
+            </button>
+<button class="flex-shrink-0 px-6 py-3 rounded-xl bg-surface-container-highest text-on-surface-variant font-title-lg hover:bg-surface-variant transition-all">
+                Fri
+            </button>
+</div>
+<!-- Timeline / Classes List -->
+<section class="space-y-4">
+<!-- Class Card: Current -->
+<div class="relative pl-6 border-l-2 border-primary-container">
+<div class="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-primary-container border-4 border-surface shadow-sm"></div>
+<div class="bg-surface border-2 border-primary-container active-glow rounded-3xl p-card-internal-padding flex gap-4 items-start custom-shadow">
+<div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="science">science</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-title-lg font-title-lg text-on-surface">Physics</h3>
+<p class="text-body-md font-body-md text-secondary">Mr. Smith</p>
+</div>
+<span class="bg-primary-container text-on-primary-container text-label-md font-label-md px-3 py-1 rounded-full">NOW</span>
+</div>
+<div class="mt-4 flex flex-wrap gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="schedule">schedule</span>
+<span class="text-body-md font-body-md text-on-surface-variant">9:00 AM - 10:30 AM</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="meeting_room">meeting_room</span>
+<span class="text-body-md font-body-md text-on-surface-variant">Room 102</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Class Card: Upcoming 1 -->
+<div class="relative pl-6 border-l-2 border-outline-variant">
+<div class="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-surface-container-high border-4 border-surface shadow-sm"></div>
+<div class="bg-surface rounded-3xl p-card-internal-padding flex gap-4 items-start custom-shadow hover:bg-surface-container-low transition-colors">
+<div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="functions">functions</span>
+</div>
+<div class="flex-grow">
+<div>
+<h3 class="text-title-lg font-title-lg text-on-surface">Advanced Mathematics</h3>
+<p class="text-body-md font-body-md text-secondary">Dr. Martinez</p>
+</div>
+<div class="mt-4 flex flex-wrap gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="schedule">schedule</span>
+<span class="text-body-md font-body-md text-on-surface-variant">10:45 AM - 12:15 PM</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="meeting_room">meeting_room</span>
+<span class="text-body-md font-body-md text-on-surface-variant">Lab 4B</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Break Card -->
+<div class="relative pl-6 border-l-2 border-outline-variant">
+<div class="absolute -left-[9px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-surface-container-high border-4 border-surface shadow-sm"></div>
+<div class="bg-surface-container-low/50 border border-dashed border-outline-variant rounded-2xl p-4 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="restaurant">restaurant</span>
+<span class="text-label-md font-label-md text-secondary uppercase tracking-widest font-semibold">Lunch Break</span>
+</div>
+<span class="text-body-md font-body-md text-on-surface-variant">12:15 PM - 1:15 PM</span>
+</div>
+</div>
+<!-- Class Card: Upcoming 2 -->
+<div class="relative pl-6 border-l-2 border-outline-variant">
+<div class="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-surface-container-high border-4 border-surface shadow-sm"></div>
+<div class="bg-surface rounded-3xl p-card-internal-padding flex gap-4 items-start custom-shadow hover:bg-surface-container-low transition-colors">
+<div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="menu_book">menu_book</span>
+</div>
+<div class="flex-grow">
+<div>
+<h3 class="text-title-lg font-title-lg text-on-surface">English Literature</h3>
+<p class="text-body-md font-body-md text-secondary">Ms. Thompson</p>
+</div>
+<div class="mt-4 flex flex-wrap gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="schedule">schedule</span>
+<span class="text-body-md font-body-md text-on-surface-variant">1:30 PM - 3:00 PM</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="meeting_room">meeting_room</span>
+<span class="text-body-md font-body-md text-on-surface-variant">Room 305</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Class Card: Upcoming 3 -->
+<div class="relative pl-6 border-l-2 border-outline-variant">
+<div class="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-surface-container-high border-4 border-surface shadow-sm"></div>
+<div class="bg-surface rounded-3xl p-card-internal-padding flex gap-4 items-start custom-shadow hover:bg-surface-container-low transition-colors">
+<div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed-variant" data-icon="history">history</span>
+</div>
+<div class="flex-grow">
+<div>
+<h3 class="text-title-lg font-title-lg text-on-surface">Modern History</h3>
+<p class="text-body-md font-body-md text-secondary">Mr. Henderson</p>
+</div>
+<div class="mt-4 flex flex-wrap gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="schedule">schedule</span>
+<span class="text-body-md font-body-md text-on-surface-variant">3:15 PM - 4:45 PM</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="meeting_room">meeting_room</span>
+<span class="text-body-md font-body-md text-on-surface-variant">Room 211</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest/90 backdrop-blur-md rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="text-label-md font-label-md">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-2 transition-all duration-300 active:scale-90">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_month" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="text-label-md font-label-md">Schedule</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined mb-1" data-icon="fact_check">fact_check</span>
+<span class="text-label-md font-label-md">Tracking</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:bg-surface-variant transition-colors rounded-xl">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="text-label-md font-label-md">Profile</span>
+</button>
+</nav>
+
+
+</body></html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Fees Management - Student Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-tertiary": "#ffffff",
+                  "surface-container-lowest": "#ffffff",
+                  "secondary": "#505f76",
+                  "on-primary-fixed-variant": "#003ea8",
+                  "inverse-on-surface": "#f0f0fb",
+                  "tertiary-fixed-dim": "#ffb596",
+                  "on-background": "#191b23",
+                  "primary-fixed-dim": "#b4c5ff",
+                  "surface-container-low": "#f3f3fe",
+                  "on-surface-variant": "#434655",
+                  "on-tertiary-container": "#ffede6",
+                  "error-container": "#ffdad6",
+                  "surface-variant": "#e1e2ed",
+                  "on-primary-fixed": "#00174b",
+                  "on-error-container": "#93000a",
+                  "on-secondary": "#ffffff",
+                  "surface-bright": "#faf8ff",
+                  "on-secondary-container": "#54647a",
+                  "on-primary-container": "#eeefff",
+                  "surface": "#faf8ff",
+                  "primary-container": "#2563eb",
+                  "primary-fixed": "#dbe1ff",
+                  "secondary-container": "#d0e1fb",
+                  "on-primary": "#ffffff",
+                  "on-surface": "#191b23",
+                  "surface-container": "#ededf9",
+                  "error": "#ba1a1a",
+                  "secondary-fixed-dim": "#b7c8e1",
+                  "inverse-primary": "#b4c5ff",
+                  "outline-variant": "#c3c6d7",
+                  "inverse-surface": "#2e3039",
+                  "on-secondary-fixed": "#0b1c30",
+                  "background": "#faf8ff",
+                  "secondary-fixed": "#d3e4fe",
+                  "surface-tint": "#0053db",
+                  "surface-container-high": "#e7e7f3",
+                  "on-secondary-fixed-variant": "#38485d",
+                  "on-error": "#ffffff",
+                  "outline": "#737686",
+                  "primary": "#004ac6",
+                  "on-tertiary-fixed": "#360f00",
+                  "surface-dim": "#d9d9e5",
+                  "surface-container-highest": "#e1e2ed",
+                  "tertiary": "#943700",
+                  "tertiary-container": "#bc4800",
+                  "on-tertiary-fixed-variant": "#7d2d00",
+                  "tertiary-fixed": "#ffdbcd"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "inline-gap": "12px",
+                  "container-margin": "20px",
+                  "card-internal-padding": "20px",
+                  "stack-gap": "16px",
+                  "section-padding": "24px"
+          },
+          "fontFamily": {
+                  "headline-md": ["Manrope"],
+                  "label-md": ["Inter"],
+                  "display-lg": ["Manrope"],
+                  "title-lg": ["Manrope"],
+                  "body-md": ["Inter"],
+                  "body-lg": ["Inter"]
+          },
+          "fontSize": {
+                  "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      background-color: #faf8ff;
+      color: #191b23;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<header class="flex justify-between items-center px-container-margin w-full h-16 bg-surface dark:bg-surface shadow-sm dark:shadow-none sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high">
+<img alt="Student Profile Photo" class="w-full h-full object-cover" data-alt="A professional studio portrait of a young adult student with a warm, confident smile. The photography style is high-fidelity and modern, featuring soft three-point lighting against a clean, light-blue gradient background. The student is wearing academic attire, and the overall mood is scholarly yet approachable, aligning with a premium educational platform aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLxOKi7MOUvjGdN1QlR9iGdTmFC5XhqyAhO_VzlfEvnyHdWIwdalVa8kYfQPPSH-m7kh3yrDqJR8IWX46jPwgDHXCpa8UxQh_NaDoriYI9QcM4n_pdGVoHOcsIoKCZOKbujT1zjnPZeFXEQH_LYpnUMqB5obmhSrSMeqeRckW-k7zCkVUMiLVpB054Ovj07rRA4VNn1v32Ap5SAgqDtLQhXahnc6oecllifkvuZlxcnaxAgVYFamiBGZ-RqUTArP2e5yz5_3KBRUI">
+</div>
+<h1 class="text-title-lg font-title-lg font-bold text-primary dark:text-primary-fixed-dim">SchoolG</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="flex-grow px-container-margin py-section-padding space-y-stack-gap mb-32">
+<div class="relative overflow-hidden bg-white rounded-[20px] p-card-internal-padding shadow-[0_4px_20px_rgba(37,99,235,0.08)] border border-surface-container-high">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
+<div class="relative z-10 space-y-4">
+<div>
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Total Fees Due</p>
+<p class="text-display-lg font-display-lg text-primary">$12,450.00</p>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-surface-container">
+<div class="space-y-1">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<p class="text-label-md font-label-md text-on-surface-variant">Paid</p>
+</div>
+<p class="text-title-lg font-title-lg text-on-surface">$8,200.00</p>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<p class="text-label-md font-label-md text-on-surface-variant">Pending</p>
+</div>
+<p class="text-title-lg font-title-lg text-on-surface">$4,250.00</p>
+</div>
+</div>
+<div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 65%;"></div>
+</div>
+<p class="text-label-md font-label-md text-on-surface-variant text-right">65% of total paid</p>
+</div>
+</div>
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h2 class="text-headline-md font-headline-md text-on-surface">Transaction History</h2>
+<button class="text-label-md font-label-md text-primary flex items-center gap-1">
+          View All <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="bg-white rounded-[20px] p-4 flex items-center justify-between border border-surface-container-low shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-body-lg font-title-lg text-on-surface">Tuition - Semester 1</p>
+<p class="text-label-md font-label-md text-on-surface-variant">Oct 12, 2023 • Credit Card</p>
+</div>
+</div>
+<div class="text-right flex flex-col items-end gap-2">
+<p class="text-body-lg font-title-lg text-on-surface">$4,100.00</p>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-surface-container-low text-primary rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+<span class="text-label-md font-label-md">Download Receipt</span>
+</button>
+</div>
+</div>
+<div class="bg-white rounded-[20px] p-4 flex items-center justify-between border border-surface-container-low shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+</div>
+<div>
+<p class="text-body-lg font-title-lg text-on-surface">Lab &amp; Library Fee</p>
+<p class="text-label-md font-label-md text-on-surface-variant">Sep 28, 2023 • Bank Transfer</p>
+</div>
+</div>
+<div class="text-right flex flex-col items-end gap-2">
+<p class="text-body-lg font-title-lg text-on-surface">$250.00</p>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-surface-container-low text-primary rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+<span class="text-label-md font-label-md">Download Receipt</span>
+</button>
+</div>
+</div>
+<div class="bg-white rounded-[20px] p-4 flex items-center justify-between border border-surface-container-low shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="sports_basketball">sports_basketball</span>
+</div>
+<div>
+<p class="text-body-lg font-title-lg text-on-surface">Sports &amp; Amenities</p>
+<p class="text-label-md font-label-md text-on-surface-variant">Sep 15, 2023 • Credit Card</p>
+</div>
+</div>
+<div class="text-right flex flex-col items-end gap-2">
+<p class="text-body-lg font-title-lg text-on-surface">$1,500.00</p>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-surface-container-low text-primary rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+<span class="text-label-md font-label-md">Download Receipt</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<div class="bg-surface-container-low rounded-[20px] p-card-internal-padding border border-dashed border-primary/20">
+<div class="flex items-start gap-4">
+<div class="text-primary mt-1">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+</div>
+<div class="space-y-1">
+<p class="text-body-lg font-title-lg text-on-surface">Upcoming Payment Reminder</p>
+<p class="text-body-md font-body-md text-on-surface-variant">Semester 2 tuition fees are due by December 15th, 2023. Late payments may incur a penalty of $50/week.</p>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-24 left-0 right-0 px-container-margin z-40 md:hidden">
+<button class="w-full h-[52px] bg-primary-container text-on-primary rounded-xl font-bold text-title-lg shadow-[0_8px_24px_rgba(37,99,235,0.25)] flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+      Pay Now
+    </button>
+</div>
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest/90 dark:bg-surface-container-highest/90 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-label-md font-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="text-label-md font-label-md">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary rounded-xl px-4 py-2 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="text-label-md font-label-md">Tracking</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-2 hover:bg-surface-variant dark:hover:bg-inverse-surface rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-md font-label-md">Profile</span>
+</a>
+</nav>
+
+
+</body></html>
