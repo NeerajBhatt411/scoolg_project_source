@@ -62,17 +62,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-full px-container-margin lg:px-8 pt-5 pb-32 lg:pb-10 max-w-6xl mx-auto">
-      {/* App brand */}
-      <div className="flex items-center gap-2.5 mb-4">
-        <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-surface-container flex items-center justify-center shrink-0">
-          <img src="/scoolg-logo.png" alt="ScoolG" className="w-full h-full object-contain p-1" />
-        </div>
-        <div className="leading-none">
-          <p className="text-[15px] font-manrope font-extrabold text-on-surface">ScoolG <span className="text-primary">Teacher</span></p>
-          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">{school?.name || 'School Portal'}</p>
-        </div>
-      </div>
-
       {/* HERO — light, clean */}
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-[28px] bg-white border border-surface-container p-6 lg:p-7 shadow-[0_10px_34px_-16px_rgba(15,23,42,0.18)]">
