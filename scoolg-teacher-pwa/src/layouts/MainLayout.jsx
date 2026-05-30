@@ -24,7 +24,7 @@ const MainLayout = () => {
   return (
     <div className="min-h-screen bg-background font-body-md text-on-surface">
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-white border-r border-surface-container flex-col py-6 px-4 shadow-[6px_0_24px_-16px_rgba(15,23,42,0.2)] z-50">
+      <aside className="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex-col py-6 px-4 z-50">
         <div className="mb-10 px-2 flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-primary/10 flex items-center justify-center shadow-sm border border-surface-container shrink-0">
             {school?.logo
@@ -41,12 +41,11 @@ const MainLayout = () => {
           {navItems.map((item) => (
             <NavLink key={item.path} to={item.path} className="block">
               {({ isActive }) => (
-                <div className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 active:scale-[0.98] ${isActive
-                  ? 'bg-gradient-to-r from-[#2563eb] to-[#4f46e5] text-white font-bold shadow-lg shadow-primary/25'
-                  : 'text-secondary hover:bg-surface-container-high'}`}>
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98] ${isActive
+                  ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
+                  : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`}>
                   <span className="material-symbols-outlined text-[22px]" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{item.icon}</span>
-                  <span className="text-label-md font-label-md">{item.name}</span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/80"></span>}
+                  <span className="text-[0.875rem]">{item.name}</span>
                 </div>
               )}
             </NavLink>
