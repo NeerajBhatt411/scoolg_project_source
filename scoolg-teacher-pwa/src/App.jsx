@@ -11,9 +11,12 @@ import MyClasses from './pages/MyClasses';
 import Attendance from './pages/Attendance';
 import Homework from './pages/Homework';
 import Profile from './pages/Profile';
+import InstallPrompt from './components/InstallPrompt';
 
 const App = () => {
   return (
+    <>
+    <InstallPrompt />
     <Routes>
       <Route path="/" element={<SplashScreen />} />
       <Route path="/onboarding/:step" element={<Onboarding />} />
@@ -31,6 +34,7 @@ const App = () => {
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   );
 };
 
