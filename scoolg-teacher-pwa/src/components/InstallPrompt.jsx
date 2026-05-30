@@ -7,28 +7,38 @@ const InstallPrompt = () => {
   const [deferred, setDeferred] = useState(null);
   const [show, setShow] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (standalone) return; // already installed
+    if (standalone) return; // running as the installed app — nothing to show
     if (localStorage.getItem('scoolg_install_dismissed')) return;
 
     const onPrompt = (e) => { e.preventDefault(); setDeferred(e); setShow(true); };
     window.addEventListener('beforeinstallprompt', onPrompt);
 
+    // Fired by Chrome/Android once the app is actually installed.
+    const onInstalled = () => { setInstalled(true); setShow(true); localStorage.setItem('scoolg_install_dismissed', '1'); };
+    window.addEventListener('appinstalled', onInstalled);
+
     const ua = window.navigator.userAgent;
     const ios = /iphone|ipad|ipod/i.test(ua) && /safari/i.test(ua) && !/crios|fxios/i.test(ua);
-    if (ios) { setIsIOS(true); const t = setTimeout(() => setShow(true), 1200); return () => { clearTimeout(t); window.removeEventListener('beforeinstallprompt', onPrompt); }; }
+    let t;
+    if (ios) { setIsIOS(true); t = setTimeout(() => setShow(true), 1200); }
 
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+    return () => { if (t) clearTimeout(t); window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); };
   }, []);
 
   const handleInstall = async () => {
     if (!deferred) return; // iOS shows instructions in-modal
     deferred.prompt();
-    await deferred.userChoice;
+    const { outcome } = await deferred.userChoice;
     setDeferred(null);
-    setShow(false);
+    if (outcome === 'accepted') {
+      setInstalled(true); // success screen (appinstalled also fires)
+    } else {
+      setShow(false);
+    }
   };
 
   const dismiss = () => {
@@ -43,6 +53,24 @@ const InstallPrompt = () => {
     { icon: 'fact_check', text: 'Mark attendance & homework on the go' },
     { icon: 'wifi_off', text: 'Works even on a weak connection' },
   ];
+
+  // SUCCESS screen — shown right after install finishes.
+  if (installed) {
+    return (
+      <div className="fixed inset-0 z-[90] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-5">
+        <div className="bg-white w-full max-w-sm rounded-[32px] shadow-2xl p-7 text-center animate-[pop_0.3s_ease-out]">
+          <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-[44px] text-green-500" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+          </div>
+          <h2 className="text-[22px] font-manrope font-extrabold text-on-surface">Installed! 🎉</h2>
+          <p className="text-body-md text-on-surface-variant mt-1 mb-6">ScoolG Teacher is now on your home screen. Open it from there for the full app experience.</p>
+          <button onClick={dismiss} className="w-full h-[52px] rounded-2xl bg-primary text-on-primary font-bold text-[16px] shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform">
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[90] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-5">
