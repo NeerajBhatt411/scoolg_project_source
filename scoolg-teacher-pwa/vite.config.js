@@ -12,7 +12,7 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'scoolg-logo.png'],
       manifest: {
         name: 'ScoolG Teacher',
-        short_name: 'ScoolG',
+        short_name: 'ScoolG Teacher',
         description: 'Mark attendance, assign homework and manage your classes.',
         theme_color: '#2563eb',
         background_color: '#ffffff',
