@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const Classes = () => {
+    const { invalidateAcademic } = useAdmin();
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -71,6 +73,7 @@ const Classes = () => {
             });
 
             await fetchClasses();
+            invalidateAcademic(); // keep shared classes/section caches in sync
             setIsAddModalOpen(false);
             setNewClassName('');
             setNewSectionName('');

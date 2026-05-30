@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const AddStudent = () => {
     const navigate = useNavigate();
+    const { classes, getSections } = useAdmin();
     const [currentStep, setCurrentStep] = useState(1);
     const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
     const schoolId = localStorage.getItem('scoolg_school_id'); // Ensure login saves this
@@ -40,47 +42,28 @@ const AddStudent = () => {
 
     const [previewPhoto, setPreviewPhoto] = useState(null);
     const [errors, setErrors] = useState({});
-    const [classes, setClasses] = useState([]);
     const [availableSections, setAvailableSections] = useState([]);
+    // `classes` comes from the shared cache (loaded once at app start).
 
-    // Fetch Classes
+    // Fetch Sections when class changes (cached per class in context).
     useEffect(() => {
-        const fetchClasses = async () => {
-            if (!schoolId) return;
-            try {
-                const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
-                setClasses(res.data);
-            } catch (err) {
-                console.error("Failed to fetch classes", err);
+        let active = true;
+        if (!formData.class) {
+            setAvailableSections([]);
+            return;
+        }
+        const selectedClass = classes.find(c => c.className === formData.class);
+        if (!selectedClass) return;
+        getSections(selectedClass._id).then((data) => {
+            if (!active) return;
+            setAvailableSections(data);
+            // Reset section if not valid for new class
+            if (data.length > 0 && !data.find(s => s.sectionName === formData.section)) {
+                setFormData(prev => ({ ...prev, section: data[0].sectionName }));
             }
-        };
-        fetchClasses();
-    }, [schoolId]);
-
-    // Fetch Sections when class changes
-    // Fetch Sections when class changes
-    useEffect(() => {
-        const fetchSections = async () => {
-            if (!formData.class) {
-                setAvailableSections([]);
-                return;
-            }
-            const selectedClass = classes.find(c => c.className === formData.class);
-            if (selectedClass) {
-                try {
-                    const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClass._id}`);
-                    setAvailableSections(res.data);
-                    // Reset section if not valid for new class
-                    if (res.data.length > 0 && !res.data.find(s => s.sectionName === formData.section)) {
-                        setFormData(prev => ({ ...prev, section: res.data[0].sectionName }));
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch sections", err);
-                }
-            }
-        };
-        fetchSections();
-    }, [formData.class, classes]);
+        });
+        return () => { active = false; };
+    }, [formData.class, classes, getSections, formData.section]);
 
     const steps = [
         { id: 1, title: 'Personal' },

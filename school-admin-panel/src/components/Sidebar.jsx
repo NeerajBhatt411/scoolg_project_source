@@ -6,25 +6,29 @@ import logo from '../assets/logo.png';
 
 const Sidebar = () => {
     const navigate = useNavigate();
-    const { logout } = useAdmin();
+    const { logout, can } = useAdmin();
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const navItems = [
-        { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
-        { name: 'Students', icon: 'group', path: '/students' },
-        { name: 'Teachers', icon: 'school', path: '/teachers' },
-        { name: 'Classes', icon: 'class', path: '/classes' },
-        { name: 'Timetable', icon: 'calendar_today', path: '/timetable' },
-        { name: 'Attendance', icon: 'fact_check', path: '/attendance' },
-        { name: 'Exams', icon: 'description', path: '/exams' },
-        { name: 'Notices', icon: 'campaign', path: '/notices' },
-        { name: 'Roles', icon: 'verified_user', path: '/roles' },
-        { name: 'Settings', icon: 'settings', path: '/settings' },
+    const allNavItems = [
+        { name: 'Dashboard', icon: 'dashboard', path: '/dashboard', module: 'dashboard' },
+        { name: 'Students', icon: 'group', path: '/students', module: 'students' },
+        { name: 'Teachers', icon: 'school', path: '/teachers', module: 'teachers' },
+        { name: 'Classes', icon: 'class', path: '/classes', module: 'classes' },
+        { name: 'Timetable', icon: 'calendar_today', path: '/timetable', module: 'timetable' },
+        { name: 'Homework', icon: 'assignment', path: '/homework', module: 'homework' },
+        { name: 'Attendance', icon: 'fact_check', path: '/attendance', module: 'attendance' },
+        { name: 'Exams', icon: 'description', path: '/exams', module: 'exams' },
+        { name: 'Notices', icon: 'campaign', path: '/notices', module: 'notices' },
+        { name: 'Roles', icon: 'verified_user', path: '/roles', module: 'roles' },
+        { name: 'Settings', icon: 'settings', path: '/settings', module: 'settings' },
     ];
+
+    // Dashboard + Settings are always visible; other modules respect permissions.
+    const navItems = allNavItems.filter(i => i.module === 'dashboard' || i.module === 'settings' || can(i.module));
 
     return (
         <aside className="w-16 md:w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-2 md:px-4 z-50">

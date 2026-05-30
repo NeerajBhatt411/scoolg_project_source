@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Mail, Lock, CheckCircle2, LayoutDashboard, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import { ADMIN_API_BASE } from '../lib/api';
+import { ADMIN_API_BASE, setAuthToken } from '../lib/api';
 import logo from '../assets/logo.png';
 import loginBg from '../assets/login-bg.png';
 
@@ -16,7 +16,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { setSchoolId } = useAdmin();
+    const { setSchoolId, setAuth } = useAdmin();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -25,14 +25,18 @@ const Login = () => {
 
         try {
             const res = await axios.post(`${ADMIN_API_BASE}/login`, { email, password });
-            const { token, schoolId, schoolName, isPasswordChanged, status } = res.data;
+            const { token, schoolId, schoolName, isPasswordChanged, status, role, allowedModules } = res.data;
 
             localStorage.setItem('scoolg_token', token);
             localStorage.setItem('scoolg_school_id', schoolId);
             localStorage.setItem('scoolg_school_name', schoolName);
             if (status) localStorage.setItem('scoolg_school_status', status);
+            localStorage.setItem('scoolg_role', role || 'Owner');
+            localStorage.setItem('scoolg_modules', JSON.stringify(allowedModules ?? 'ALL'));
 
-            // Inform AdminContext about the new schoolId
+            // Attach token for all subsequent API calls + sync context.
+            setAuthToken(token);
+            setAuth({ role: role || 'Owner', allowedModules: allowedModules ?? 'ALL' });
             setSchoolId(schoolId);
 
             if (isPasswordChanged === false) {

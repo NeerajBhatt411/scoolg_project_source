@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const Attendance = () => {
-    const [classes, setClasses] = useState([]);
+    const { classes, getSections } = useAdmin();
     const [sections, setSections] = useState([]);
     const [students, setStudents] = useState([]);
     const [attendanceData, setAttendanceData] = useState({});
@@ -17,34 +18,22 @@ const Attendance = () => {
     const schoolId = localStorage.getItem('scoolg_school_id') || "";
     const today = new Date().toISOString().split('T')[0];
 
+    // Default class from the shared cache (no per-visit refetch).
     useEffect(() => {
-        const fetchClasses = async () => {
-            if (!schoolId) return;
-            try {
-                const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
-                if (Array.isArray(res.data)) {
-                    setClasses(res.data);
-                    if (res.data.length > 0) setSelectedClassObj(res.data[0]);
-                }
-            } catch (err) { console.error(err); }
-        };
-        fetchClasses();
-    }, [schoolId]);
+        if (classes.length > 0) setSelectedClassObj((prev) => prev || classes[0]);
+    }, [classes]);
 
     useEffect(() => {
+        let active = true;
         if (!selectedClassObj?._id) return;
-        const fetchSections = async () => {
-            try {
-                const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClassObj._id}`);
-                if (Array.isArray(res.data)) {
-                    setSections(res.data);
-                    if (res.data.length > 0) setSelectedSectionObj(res.data[0]);
-                    else setSelectedSectionObj(null);
-                }
-            } catch (err) { console.error(err); }
-        };
-        fetchSections();
-    }, [selectedClassObj]);
+        getSections(selectedClassObj._id).then((data) => {
+            if (!active) return;
+            setSections(data);
+            if (data.length > 0) setSelectedSectionObj(data[0]);
+            else setSelectedSectionObj(null);
+        });
+        return () => { active = false; };
+    }, [selectedClassObj, getSections]);
 
     useEffect(() => {
         if (!selectedSectionObj?._id || !selectedClassObj?.className || !selectedDate) return;

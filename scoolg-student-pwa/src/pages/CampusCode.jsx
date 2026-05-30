@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { api } from '../context/AuthContext';
+import api from '../utils/api';
+
 
 const CampusCode = () => {
   const [code, setCode] = useState('');

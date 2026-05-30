@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
+
 
 const Dashboard = () => {
+  const { user, school } = useAuth();
+  const [attendanceStats, setAttendanceStats] = useState({ percentage: 0, present: 0, total: 0 });
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const res = await api.get('/student/attendance');
+        const presentCount = res.data.filter(r => r.status === 'Present' || r.status === 'P').length;
+        const total = res.data.length;
+
+        const percentage = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+        setAttendanceStats({ percentage, present: presentCount, total });
+      } catch (err) {
+        console.error('Failed to fetch attendance:', err);
+      }
+    };
+    fetchAttendance();
+  }, []);
+
   return (
     <div className="min-h-full">
+
       {/* MOBILE VIEW (Matches dashboard_with_attendance_bar design) */}
       <div className="lg:hidden space-y-8 pb-32 pt-stack-gap">
         
@@ -13,17 +36,20 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="text-body-md font-bold text-on-surface-variant">Total Attendance</h3>
-                <p className="text-display-lg font-bold text-primary">94%</p>
+                <p className="text-display-lg font-bold text-primary">{attendanceStats.percentage}%</p>
               </div>
+
               <div className="flex items-center gap-1 text-primary cursor-pointer hover:underline">
                 <span className="text-label-md font-bold">View Details</span>
                 <span className="material-symbols-outlined text-[20px]">chevron_right</span>
               </div>
             </div>
             <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
-              <div className="h-full bg-primary-container rounded-full" style={{ width: '94%' }}></div>
+              <div className="h-full bg-primary-container rounded-full" style={{ width: `${attendanceStats.percentage}%` }}></div>
             </div>
-            <p className="text-label-md text-on-surface-variant">You have attended 168 out of 180 sessions this term.</p>
+            <p className="text-label-md text-on-surface-variant">You have attended {attendanceStats.present} out of {attendanceStats.total} days recorded.</p>
+
+
           </div>
         </section>
 
@@ -111,19 +137,21 @@ const Dashboard = () => {
         <section className="bg-white p-8 rounded-[24px] shadow-soft border border-surface-container relative overflow-hidden">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h2 className="text-display-lg font-display-lg text-primary mb-1">Total Attendance: 94%</h2>
-              <p className="text-body-lg text-secondary">You have attended <span className="font-bold text-on-surface">168 out of 180</span> sessions this semester.</p>
+              <h2 className="text-display-lg font-display-lg text-primary mb-1">Total Attendance: {attendanceStats.percentage}%</h2>
+              <p className="text-body-lg text-secondary">You have attended <span className="font-bold text-on-surface">{attendanceStats.present} out of {attendanceStats.total}</span> days recorded.</p>
+
             </div>
+
             <span className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-label-md font-bold">
               Excellent Standing
             </span>
           </div>
           <div className="w-full bg-surface-container-high h-4 rounded-full overflow-hidden">
-            <div className="h-full bg-primary transition-all duration-1000" style={{ width: '94%' }}></div>
+            <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${attendanceStats.percentage}%` }}></div>
           </div>
-          <div className="flex justify-between mt-4 text-label-md text-outline">
+
+          <div className="mt-4 text-label-md text-outline">
             <span>Academic Year 2023-24</span>
-            <span className="font-bold uppercase tracking-wider">Target: 85%</span>
           </div>
         </section>
 
@@ -191,6 +219,9 @@ const Dashboard = () => {
     </div>
   );
 };
+
+
+
 
 const AcademicCard = ({ icon, title, subtitle, bg, color }) => (
   <div className="bg-white p-4 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-all cursor-pointer group active:scale-95">

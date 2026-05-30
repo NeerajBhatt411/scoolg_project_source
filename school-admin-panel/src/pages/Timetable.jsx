@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const Timetable = () => {
     const schoolId = localStorage.getItem('scoolg_school_id');
-    const [classes, setClasses] = useState([]);
+    // classes & teachers come from the shared cache; sections are cached per class.
+    const { classes, teachers, getSections, invalidateAcademic } = useAdmin();
     const [sections, setSections] = useState([]);
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const [periodNumbers, setPeriodNumbers] = useState([1, 2, 3, 4, 5, 6]);
@@ -23,7 +25,6 @@ const Timetable = () => {
     const [lunchAfterPeriod, setLunchAfterPeriod] = useState('4');
     const [lunchDuration, setLunchDuration] = useState('30');
     const [timetable, setTimetable] = useState(null);
-    const [teachers, setTeachers] = useState([]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [editSchedule, setEditSchedule] = useState([]);
@@ -41,76 +42,44 @@ const Timetable = () => {
     const [copyDaySource, setCopyDaySource] = useState('Monday');
     const [copyDayTargets, setCopyDayTargets] = useState([]);
 
-    // Fetch Classes on mount
-    const fetchClasses = async () => {
-        try {
-            const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
-            if (res.data && res.data.length > 0) {
-                setClasses(res.data);
-                if (!selectedClassObj) setSelectedClassObj(res.data[0]);
-            } else {
-                setClasses([]);
-                setSelectedClassObj(null);
-            }
-        } catch (e) { console.error("Error fetching classes", e); }
-    };
-
+    // Pick a default class once the shared classes list is available.
     useEffect(() => {
-        if (schoolId) fetchClasses();
-    }, [schoolId]);
+        if (classes.length > 0) setSelectedClassObj((prev) => prev || classes[0]);
+        else setSelectedClassObj(null);
+    }, [classes]);
 
-    // Fetch Sections when selectedClass changes
-    const fetchSections = async () => {
+    // Fetch Sections when selectedClass changes (cached per class in context).
+    useEffect(() => {
+        let active = true;
         if (!selectedClassObj) {
             setSections([]);
             setSelectedSectionObj(null);
             return;
         }
-        try {
-            const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${selectedClassObj._id}`);
-            setSections(res.data);
-            if (res.data && res.data.length > 0) {
-                setSelectedSectionObj(res.data[0]);
-            } else {
-                setSelectedSectionObj(null);
-            }
-        } catch (e) { console.error("Error fetching sections", e); }
-    };
-
-    useEffect(() => {
-        fetchSections();
-    }, [selectedClassObj]);
+        getSections(selectedClassObj._id).then((data) => {
+            if (!active) return;
+            setSections(data);
+            setSelectedSectionObj(data && data.length > 0 ? data[0] : null);
+        });
+        return () => { active = false; };
+    }, [selectedClassObj, getSections]);
 
     // Fetch Target Sections for Copy Modal
     useEffect(() => {
-        const fetchTargetSections = async () => {
-            if (!copyToClass) {
-                setCopyToSections([]);
-                setCopyToSection('');
-                return;
-            }
-            try {
-                const res = await axios.get(`${ADMIN_API_BASE}/sections?classId=${copyToClass}`);
-                setCopyToSections(res.data);
-                if (res.data && res.data.length > 0) {
-                    setCopyToSection(res.data[0]._id);
-                } else {
-                    setCopyToSection('');
-                }
-            } catch (e) { console.error("Error fetching target sections", e); }
-        };
-        if (showCopyModal) fetchTargetSections();
-    }, [copyToClass, showCopyModal]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const techRes = await axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`);
-                setTeachers(techRes.data);
-            } catch (e) { console.error("Error fetching teachers", e); }
-        };
-        if (schoolId) fetchData();
-    }, [schoolId]);
+        let active = true;
+        if (!showCopyModal) return;
+        if (!copyToClass) {
+            setCopyToSections([]);
+            setCopyToSection('');
+            return;
+        }
+        getSections(copyToClass).then((data) => {
+            if (!active) return;
+            setCopyToSections(data);
+            setCopyToSection(data && data.length > 0 ? data[0]._id : '');
+        });
+        return () => { active = false; };
+    }, [copyToClass, showCopyModal, getSections]);
 
     const fetchTimetable = async () => {
         if (!selectedClassObj || !selectedSectionObj) {
@@ -298,7 +267,7 @@ const Timetable = () => {
                 maxCapacity: 40
             });
 
-            await fetchClasses();
+            invalidateAcademic(); // refresh shared classes + section caches
 
             setShowAddClassModal(false);
             setNewClassName('');

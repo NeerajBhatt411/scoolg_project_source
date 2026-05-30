@@ -47,9 +47,10 @@ const Onboarding = () => {
     if (currentStep < 3) {
       navigate(`/onboarding/${currentStep + 1}`);
     } else {
-      navigate('/login');
+      navigate('/campus-code');
     }
   };
+
 
   return (
     <div className="bg-background text-on-surface min-h-screen flex flex-col font-body-md overflow-x-hidden">
@@ -57,11 +58,12 @@ const Onboarding = () => {
       <header className="flex justify-between items-center px-container-margin w-full h-16 bg-surface z-50">
         <div className="text-[18px] font-manrope font-extrabold text-primary">SchoolG</div>
         <Link 
-          to="/login"
+          to="/campus-code"
           className="text-on-surface-variant font-bold text-[12px] px-4 py-2 hover:bg-surface-container-low transition-colors rounded-xl uppercase tracking-widest"
         >
           Skip
         </Link>
+
       </header>
 
       {/* Main Content */}
