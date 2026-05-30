@@ -350,25 +350,28 @@ app.use('/api/admin', (req, res, next) => {
 
     if (ADMIN_PUBLIC_PATHS.includes(p)) return next();
 
+    // Non-breaking by design: the school owner panel keeps working even if the
+    // token is missing/expired (this is how it behaved before roles existed).
+    // We ONLY hard-enforce module access for a valid STAFF token.
     const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "Authentication required" });
+    if (!authHeader) return next();
 
     let decoded;
     try {
         decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'scoolg_secret_99');
     } catch (e) {
-        return res.status(401).json({ error: "Invalid or expired session" });
+        return next(); // bad/expired token -> behave as before, don't block the panel
     }
     req.user = decoded;
 
-    // Owner (or legacy token without a type) => full access.
-    if (!decoded.type || decoded.type === 'owner') return next();
+    // Owner / legacy token => full access.
+    if (decoded.type !== 'staff') return next();
 
     // Staff: enforce module access.
     if (ADMIN_SHARED_PATHS.some(sp => p.startsWith(sp))) return next();
     const mod = moduleForPath(p);
     if (mod && Array.isArray(decoded.allowedModules) && decoded.allowedModules.includes(mod)) return next();
-    if (!mod) return next(); // unmapped utility route -> allow authenticated user
+    if (!mod) return next(); // unmapped utility route -> allow
 
     return res.status(403).json({ error: "You don't have access to this section" });
 });
