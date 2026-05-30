@@ -15,8 +15,18 @@ import { Timetable } from './models/Timetable.js';
 import { Teacher } from './models/Teacher.js';
 import { Student } from './models/Student.js';
 import { Attendance } from './models/Attendance.js';
+import { Homework } from './models/Homework.js';
+import { StaffUser } from './models/StaffUser.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
+
+// --- Cloudinary config (reuses env keys already used for school logos) ---
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -301,6 +311,68 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
 
 // --- Admin Panel Endpoints ---
 
+/**
+ * Auth + module-level access guard for all /api/admin/* routes.
+ * Backward compatible: legacy owner tokens (no `type`) get full access,
+ * so already-logged-in school admins keep working. Only staff users are
+ * restricted to their `allowedModules`.
+ */
+const ADMIN_PUBLIC_PATHS = ['/login'];
+// Map a request path (relative to /api/admin) to the module it belongs to.
+const MODULE_BY_PREFIX = [
+    ['/student-attendance', 'students'],
+    ['/students', 'students'],
+    ['/teachers', 'teachers'],
+    ['/classes', 'classes'],
+    ['/sections', 'classes'],
+    ['/subjects', 'classes'],
+    ['/timetable', 'timetable'],
+    ['/homework', 'homework'],
+    ['/attendance', 'attendance'],
+    ['/staff', 'roles'],
+    ['/exams', 'exams'],
+    ['/notices', 'notices'],
+];
+// Paths every authenticated user may access regardless of modules
+// (profile, dashboard, change-password, etc.).
+const ADMIN_SHARED_PATHS = ['/profile', '/dashboard', '/change-password'];
+
+const moduleForPath = (p) => {
+    for (const [prefix, mod] of MODULE_BY_PREFIX) {
+        if (p === prefix || p.startsWith(prefix + '/') || p.startsWith(prefix + '?')) return mod;
+    }
+    return null;
+};
+
+app.use('/api/admin', (req, res, next) => {
+    // Normalize so this works whether or not Express strips the mount prefix.
+    const p = req.path.replace(/^\/api\/admin/, '') || '/';
+
+    if (ADMIN_PUBLIC_PATHS.includes(p)) return next();
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "Authentication required" });
+
+    let decoded;
+    try {
+        decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'scoolg_secret_99');
+    } catch (e) {
+        return res.status(401).json({ error: "Invalid or expired session" });
+    }
+    req.user = decoded;
+
+    // Owner (or legacy token without a type) => full access.
+    if (!decoded.type || decoded.type === 'owner') return next();
+
+    // Staff: enforce module access.
+    if (ADMIN_SHARED_PATHS.some(sp => p.startsWith(sp))) return next();
+    const mod = moduleForPath(p);
+    if (mod && Array.isArray(decoded.allowedModules) && decoded.allowedModules.includes(mod)) return next();
+    if (!mod) return next(); // unmapped utility route -> allow authenticated user
+
+    return res.status(403).json({ error: "You don't have access to this section" });
+});
+
 // Login
 /**
  * @swagger
@@ -343,8 +415,46 @@ app.post('/api/admin/login', async (req, res) => {
         });
 
         if (!school) {
-            console.log(`❌ No account found for email: [${email}]`);
-            return res.status(401).json({ error: "No account found with this email" });
+            // Not a school owner — maybe a staff/sub-user account.
+            const staff = await StaffUser.findOne({ email });
+            if (!staff) {
+                console.log(`❌ No account found for email: [${email}]`);
+                return res.status(401).json({ error: "No account found with this email" });
+            }
+            if (staff.status !== 'Active') {
+                return res.status(403).json({ error: "Your account is inactive. Contact your school admin." });
+            }
+            let staffMatch = false;
+            try { staffMatch = await bcrypt.compare(password, staff.password); }
+            catch (e) { staffMatch = (password === staff.password); }
+            if (!staffMatch) return res.status(401).json({ error: "Incorrect password" });
+
+            const staffSchool = await School.findById(staff.schoolId);
+            if (!staffSchool) return res.status(404).json({ error: "School not found" });
+
+            const staffToken = jwt.sign(
+                {
+                    userId: staff._id,
+                    id: staffSchool.id, // string school id, matches owner token shape
+                    schoolId: staffSchool.id,
+                    type: 'staff',
+                    role: staff.role,
+                    allowedModules: staff.allowedModules || []
+                },
+                process.env.JWT_SECRET || 'scoolg_secret_99',
+                { expiresIn: '7d' }
+            );
+
+            return res.json({
+                token: staffToken,
+                schoolId: staffSchool.id,
+                schoolName: staffSchool.formData?.schoolName,
+                isPasswordChanged: staff.isPasswordChanged,
+                status: staffSchool.status,
+                userType: 'staff',
+                role: staff.role,
+                allowedModules: staff.allowedModules || []
+            });
         }
 
         console.log(`✅ School record located: ${school.id} (${school.formData?.schoolName || 'Unnamed School'})`);
@@ -369,7 +479,7 @@ app.post('/api/admin/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: school.id, email: school.email },
+            { id: school.id, email: school.email, type: 'owner', role: 'Owner' },
             process.env.JWT_SECRET || 'scoolg_secret_99',
             { expiresIn: '7d' }
         );
@@ -379,7 +489,10 @@ app.post('/api/admin/login', async (req, res) => {
             schoolId: school.id,
             schoolName: school.formData.schoolName,
             isPasswordChanged: school.isPasswordChanged,
-            status: school.status
+            status: school.status,
+            userType: 'owner',
+            role: 'Owner',
+            allowedModules: 'ALL'
         });
     } catch (err) {
         console.error("❌ Authentication Server Error:", err);
@@ -1189,6 +1302,323 @@ app.post('/api/admin/timetable', async (req, res) => {
 });
 
 
+// --- File Upload API (base64 -> Cloudinary) ---
+/**
+ * @swagger
+ * /api/upload:
+ *   post:
+ *     summary: Upload a base64 file to Cloudinary and get back a URL
+ *     tags: [Utility]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file: { type: string, description: "data:<mime>;base64,... string" }
+ *               folder: { type: string }
+ *               schoolName: { type: string }
+ *     responses:
+ *       200:
+ *         description: Upload success, returns { url }
+ */
+app.post('/api/upload', async (req, res) => {
+    try {
+        const { file, folder, schoolName } = req.body;
+        if (!file) return res.status(400).json({ error: "No file provided" });
+
+        const safeSchool = (schoolName || 'General').replace(/[^a-zA-Z0-9-_]/g, '_');
+        const targetFolder = `scoolg/${safeSchool}/${folder || 'Uploads'}`;
+
+        const result = await cloudinary.uploader.upload(file, {
+            folder: targetFolder,
+            resource_type: 'auto' // supports images + pdf + raw
+        });
+
+        res.json({
+            url: result.secure_url,
+            publicId: result.public_id,
+            type: result.resource_type,
+            format: result.format
+        });
+    } catch (err) {
+        console.error("Upload error:", err);
+        res.status(500).json({ error: err.message || "Upload failed" });
+    }
+});
+
+
+// --- Homework API ---
+/**
+ * @swagger
+ * /api/admin/homework:
+ *   post:
+ *     summary: Create a homework/assignment for a class/section
+ *     tags: [School Admin - Academic]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Homework created
+ */
+app.post('/api/admin/homework', async (req, res) => {
+    try {
+        const {
+            schoolId, className, sectionName, subject, title, description,
+            dueDate, attachments, createdByRole, createdById, createdByName
+        } = req.body;
+
+        if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
+        if (!className) return res.status(400).json({ error: "Class is required" });
+        if (!title || !title.trim()) return res.status(400).json({ error: "Title is required" });
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const homework = await Homework.create({
+            schoolId: school._id,
+            className,
+            sectionName: sectionName || 'All',
+            subject: subject?.trim() || '',
+            title: title.trim(),
+            description: description?.trim() || '',
+            dueDate: dueDate ? new Date(dueDate) : undefined,
+            attachments: Array.isArray(attachments) ? attachments : [],
+            createdByRole: createdByRole === 'teacher' ? 'teacher' : 'admin',
+            createdById: createdById || undefined,
+            createdByName: createdByName || 'School Admin'
+        });
+
+        res.status(201).json(homework);
+    } catch (err) {
+        console.error("Create homework error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/admin/homework:
+ *   get:
+ *     summary: List homework for a school (filter by class/section)
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: query
+ *         name: schoolId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: className
+ *         schema: { type: string }
+ *       - in: query
+ *         name: sectionName
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List of homework
+ */
+app.get('/api/admin/homework', async (req, res) => {
+    try {
+        const { schoolId, className, sectionName } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const filter = { schoolId: school._id, status: 'Active' };
+        if (className) filter.className = className;
+        if (sectionName) {
+            // Section-specific homework + anything assigned to "All" sections of that class
+            filter.$or = [{ sectionName }, { sectionName: 'All' }];
+        }
+
+        const homework = await Homework.find(filter).sort({ createdAt: -1 });
+        res.json(homework);
+    } catch (err) {
+        console.error("List homework error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/admin/homework/{id}:
+ *   patch:
+ *     summary: Update a homework entry
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated homework
+ */
+app.patch('/api/admin/homework/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const allowed = ['className', 'sectionName', 'subject', 'title', 'description', 'dueDate', 'attachments', 'status'];
+        const update = {};
+        for (const key of allowed) {
+            if (req.body[key] !== undefined) update[key] = req.body[key];
+        }
+        if (update.dueDate) update.dueDate = new Date(update.dueDate);
+        if (update.title !== undefined && !String(update.title).trim()) {
+            return res.status(400).json({ error: "Title cannot be empty" });
+        }
+
+        const homework = await Homework.findByIdAndUpdate(id, update, { new: true });
+        if (!homework) return res.status(404).json({ error: "Homework not found" });
+        res.json(homework);
+    } catch (err) {
+        console.error("Update homework error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/admin/homework/{id}:
+ *   delete:
+ *     summary: Delete a homework entry
+ *     tags: [School Admin - Academic]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Homework deleted
+ */
+app.delete('/api/admin/homework/:id', async (req, res) => {
+    try {
+        const homework = await Homework.findByIdAndDelete(req.params.id);
+        if (!homework) return res.status(404).json({ error: "Homework not found" });
+        res.json({ message: "Homework deleted", id: req.params.id });
+    } catch (err) {
+        console.error("Delete homework error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// --- Staff / Roles API (module: roles) ---
+// Resolve the School document for the logged-in user (owner or staff).
+const schoolFromReq = async (req) => {
+    const sid = req.user?.schoolId || req.user?.id;
+    if (!sid) return null;
+    return School.findOne({ id: sid });
+};
+
+const genPassword = () => {
+    // Readable temp password, e.g. "Scoolg@4821"
+    const n = (Math.floor(Date.now() % 9000) + 1000);
+    return `Scoolg@${n}`;
+};
+
+/**
+ * @swagger
+ * /api/admin/staff:
+ *   post:
+ *     summary: Create a staff/sub-user with module-level access
+ *     tags: [School Admin - Roles]
+ *   get:
+ *     summary: List staff users for the school
+ *     tags: [School Admin - Roles]
+ */
+app.post('/api/admin/staff', async (req, res) => {
+    try {
+        const { fullName, email, role, allowedModules } = req.body;
+        if (!fullName?.trim()) return res.status(400).json({ error: "Full name is required" });
+        if (!email?.trim()) return res.status(400).json({ error: "Email is required" });
+
+        const school = await schoolFromReq(req);
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Email must be unique across schools (login key) and not collide with an owner.
+        const existingStaff = await StaffUser.findOne({ email: normalizedEmail });
+        if (existingStaff) return res.status(409).json({ error: "A user with this email already exists" });
+        const existingSchool = await School.findOne({ $or: [{ email: normalizedEmail }, { "formData.email": normalizedEmail }] });
+        if (existingSchool) return res.status(409).json({ error: "This email is already used by a school account" });
+
+        const plainPassword = genPassword();
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(plainPassword, salt);
+
+        const staff = await StaffUser.create({
+            schoolId: school._id,
+            fullName: fullName.trim(),
+            email: normalizedEmail,
+            password: hashed,
+            role: role?.trim() || 'Custom',
+            allowedModules: Array.isArray(allowedModules) ? allowedModules : [],
+            status: 'Active'
+        });
+
+        // Return the generated password ONCE so the admin can share it.
+        res.status(201).json({
+            staff: { ...staff.toObject(), password: undefined },
+            credentials: { email: normalizedEmail, password: plainPassword }
+        });
+    } catch (err) {
+        console.error("Create staff error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/admin/staff', async (req, res) => {
+    try {
+        const school = await schoolFromReq(req);
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const staff = await StaffUser.find({ schoolId: school._id }).select('-password').sort({ createdAt: -1 });
+        res.json(staff);
+    } catch (err) {
+        console.error("List staff error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/admin/staff/{id}:
+ *   patch:
+ *     summary: Update a staff user's role/modules/status
+ *     tags: [School Admin - Roles]
+ *   delete:
+ *     summary: Delete a staff user
+ *     tags: [School Admin - Roles]
+ */
+app.patch('/api/admin/staff/:id', async (req, res) => {
+    try {
+        const allowed = ['fullName', 'role', 'allowedModules', 'status'];
+        const update = {};
+        for (const key of allowed) if (req.body[key] !== undefined) update[key] = req.body[key];
+        const staff = await StaffUser.findByIdAndUpdate(req.params.id, update, { new: true }).select('-password');
+        if (!staff) return res.status(404).json({ error: "Staff not found" });
+        res.json(staff);
+    } catch (err) {
+        console.error("Update staff error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/admin/staff/:id', async (req, res) => {
+    try {
+        const staff = await StaffUser.findByIdAndDelete(req.params.id);
+        if (!staff) return res.status(404).json({ error: "Staff not found" });
+        res.json({ message: "Staff removed", id: req.params.id });
+    } catch (err) {
+        console.error("Delete staff error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // --- Attendance API ---
 
@@ -1284,7 +1714,48 @@ app.get('/api/admin/attendance', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/student-attendance/{studentId}:
+ *   get:
+ *     summary: Fetch attendance history for a specific student
+ *     tags: [School Admin - Attendance]
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Student's attendance history
+ */
+app.get('/api/admin/student-attendance/:studentId', async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const student = await Student.findById(studentId);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        // Find all attendance records where this student is present
+        const attendanceRecords = await Attendance.find({
+            "records.studentId": student._id
+        }).sort({ date: -1 });
+
+        // Map to return only this student's status for each day
+        const result = attendanceRecords.map(record => ({
+            date: record.date,
+            status: record.records.find(r => r.studentId.toString() === student._id.toString())?.status
+        }));
+
+        res.json(result);
+    } catch (err) {
+        console.error("Fetch student attendance error:", err);
+        res.status(500).json({ error: "Failed to fetch student attendance" });
+    }
+});
+
 // --- Student App Specific APIs ---
+
 
 /**
  * @swagger
@@ -1493,6 +1964,41 @@ app.get('/api/student/timetable', async (req, res) => {
         });
 
         res.json(timetable || { message: "No timetable found" });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/homework:
+ *   get:
+ *     summary: Get homework for the logged-in student's class/section
+ *     tags: [Academic]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of homework
+ */
+app.get('/api/student/homework', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        // Homework for the student's exact section OR assigned to "All" sections of the class
+        const homework = await Homework.find({
+            schoolId: student.schoolId,
+            className: student.class,
+            status: 'Active',
+            $or: [{ sectionName: student.section }, { sectionName: 'All' }]
+        }).sort({ dueDate: 1, createdAt: -1 });
+
+        res.json(homework);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

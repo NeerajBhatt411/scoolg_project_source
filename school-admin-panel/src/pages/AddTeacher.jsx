@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const AddTeacher = () => {
     const navigate = useNavigate();
+    const { refreshTeachers } = useAdmin();
     const [currentStep, setCurrentStep] = useState(1);
     const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
     const schoolId = localStorage.getItem('scoolg_school_id'); 
@@ -229,6 +231,7 @@ const AddTeacher = () => {
                 });
                 if (res.data && res.data.appCredentials) {
                     setSuccessData(res.data);
+                    refreshTeachers(); // keep shared teacher cache fresh for timetable, etc.
                 }
             } catch (err) {
                 console.error(err);

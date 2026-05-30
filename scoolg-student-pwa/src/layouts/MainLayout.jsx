@@ -1,9 +1,12 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const MainLayout = () => {
+  const { user, school } = useAuth();
   const location = useLocation();
+
 
   const navItems = [
     { name: 'Home', path: '/dashboard', icon: 'dashboard' },
@@ -21,8 +24,9 @@ const MainLayout = () => {
       <aside className="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex-col py-6 px-4 shadow-sm z-50">
         <div className="mb-10 px-4">
           <h1 className="text-display-lg font-display-lg font-bold text-primary">SchoolG</h1>
-          <p className="text-label-md font-label-md text-secondary opacity-70">Premium Academy</p>
+          <p className="text-label-md font-label-md text-secondary opacity-70">{school?.name || 'Premium Academy'}</p>
         </div>
+
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => (
             <NavLink
@@ -68,14 +72,16 @@ const MainLayout = () => {
           <div className="h-8 w-px bg-outline-variant mx-2"></div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-body-md font-bold text-on-surface leading-none">Alex Johnson</p>
-              <p className="text-label-md text-secondary leading-none mt-1">Grade 11-A</p>
+              <p className="text-body-md font-bold text-on-surface leading-none">{user?.firstName} {user?.lastName}</p>
+              <p className="text-label-md text-secondary leading-none mt-1">Grade {user?.class}-{user?.section}</p>
             </div>
+
             <img
               alt="User"
               className="w-10 h-10 rounded-full object-cover border-2 border-primary-container"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKKZBP1dLcjY5xb0YcM6xm86Zy95TME-gpxtDy7X4jSrEz8plPyKYGjDM7g9cM0ap3mw5jlV80W2n0GBGtqhz3uh-IH5EtIhiIVXfscq1ttjNnifh52G6Sgsjq1s9cMsNBJRB1o7-5yVSkM3Y2BZAfxPzXnRendUSHJuCYH-LX4_vRwbGPBSMnNQN5tGtXmYjD8yY8GNdVDG52LBrmxXxvAJG7HSXrBnAoNMpJ1QzQUUqYlCf5pkizTCkXd05xRo7mU0xeSHlQTtI"
+              src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.firstName}`}
             />
+
           </div>
         </div>
       </header>
@@ -85,15 +91,17 @@ const MainLayout = () => {
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
             <img
-              alt="Alex Johnson Profile"
+              alt="Profile"
               className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPBRp0_h2PWNrDO28zDSDp2z0h-lJfNIXC94dM-za3Wv8qg1ncZxNTKYBiA9NHvnPdsoRM1W52iZRhRT62kY3xnV6Kg1xLbt6QlOOepMDvjkO16rLQ1QHLL5naHD4veCx_mLuYVo86BYaqdbfatTASSSAaNAaI1lBApgjnr4jsiwACH9gyFS9xfdae-DRQFdkjmscDzXHpkTMbZEGCcf24eP7MaWePNEusrp3pqBEteHmHT8AlcZOBo7cp3gupSbLgzj470NWi0-c"
+              src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.firstName}`}
             />
           </div>
+
           <div>
             <h1 className="text-title-lg font-title-lg font-bold text-primary">SchoolG</h1>
-            <p className="text-label-md font-label-md text-on-surface-variant">Grade 10-A</p>
+            <p className="text-label-md font-label-md text-on-surface-variant">Grade {user?.class}-{user?.section}</p>
           </div>
+
         </div>
         <div className="flex items-center gap-2">
           <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors">

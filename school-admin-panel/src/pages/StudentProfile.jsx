@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -16,6 +17,53 @@ const StudentProfile = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [activeTab, setActiveTab] = useState('Personal');
+    const [allAttendance, setAllAttendance] = useState([]);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [attStats, setAttStats] = useState({ present: 0, absent: 0, percentage: 0, total: 0 });
+
+    useEffect(() => {
+        if (student?._id) {
+            const fetchAttendance = async () => {
+                try {
+                    const res = await axios.get(`${ADMIN_API_BASE}/student-attendance/${student._id}`);
+                    setAllAttendance(res.data || []);
+                } catch (err) {
+                    console.error("Failed to fetch attendance for profile:", err);
+                }
+            };
+            fetchAttendance();
+        }
+    }, [student?._id]);
+
+    useEffect(() => {
+        const monthlyData = allAttendance.filter(r => {
+            if (!r.date) return false;
+            const [year, month] = r.date.includes('T') 
+               ? [new Date(r.date).getFullYear(), new Date(r.date).getMonth()] 
+               : [parseInt(r.date.split('-')[0], 10), parseInt(r.date.split('-')[1], 10) - 1];
+            
+            const isCorrectMonth = year === currentMonth.getFullYear() && month === currentMonth.getMonth();
+            if (!isCorrectMonth) return false;
+
+            const dayStr = r.date.includes('T') ? new Date(r.date).getDate() : parseInt(r.date.split('-')[2], 10);
+            const isSun = new Date(year, month, dayStr).getDay() === 0;
+            return !isSun; // Ignore Sundays
+        });
+
+
+        const present = monthlyData.filter(r => r.status === 'Present' || r.status === 'P').length;
+        const absent = monthlyData.filter(r => r.status === 'Absent' || r.status === 'A').length;
+        const total = monthlyData.length;
+        const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+        setAttStats({ present, absent, percentage, total, data: monthlyData });
+    }, [allAttendance, currentMonth]);
+
+    const handlePrevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    const handleNextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+    const monthName = currentMonth.toLocaleString('default', { month: 'short', year: 'numeric' });
+
+
 
     if (!student) {
         return (
@@ -314,51 +362,73 @@ const StudentProfile = () => {
                         {/* Fake Calendar Widget */}
                         <div className="bg-[#f8fafc] border border-slate-100 rounded-3xl p-6 shadow-sm">
                             <h4 className="font-extrabold text-slate-800 mb-4 flex items-center justify-between">
-                                Attendance Overview <span className="text-blue-600 text-sm">Oct 2023</span>
+                                Attendance Overview 
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handlePrevMonth} className="material-symbols-outlined text-slate-400 hover:text-blue-600 text-sm">chevron_left</button>
+                                    <span className="text-blue-600 text-sm w-16 text-center">{monthName}</span>
+                                    <button onClick={handleNextMonth} className="material-symbols-outlined text-slate-400 hover:text-blue-600 text-sm">chevron_right</button>
+                                </div>
                             </h4>
                             <div className="grid grid-cols-7 gap-y-3 gap-x-2 text-center mb-6">
                                 {['M','T','W','T','F','S','S'].map(d=><div key={d} className="text-[10px] font-bold text-slate-400">{d}</div>)}
-                                {/* Fake Days */}
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">1</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">2</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">3</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">4</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">5</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">6</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">7</div>
                                 
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">8</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-rose-500 text-white flex items-center justify-center">9</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">10</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">11</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-amber-400 text-white flex items-center justify-center">12</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">13</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">14</div>
+                                {/* Offset empty blocks for first day alignment */}
+                                {Array.from({ length: currentMonth.getDay() === 0 ? 6 : currentMonth.getDay() - 1 }).map((_, i) => (
+                                    <div key={`empty-${i}`} className="w-6 h-6 mx-auto"></div>
+                                ))}
 
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">15</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">16</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">17</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-rose-500 text-white flex items-center justify-center">18</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">19</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">20</div>
-                                <div className="text-xs font-bold w-6 h-6 mx-auto text-slate-400">21</div>
+                                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((dayNumber) => {
+                                    const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayNumber);
+                                    const isSunday = dateObj.getDay() === 0;
+
+                                    const record = !isSunday ? (attStats.data || []).find(r => {
+                                        if (!r.date) return false;
+                                        const d = r.date.includes('T') ? new Date(r.date).getDate() : parseInt(r.date.split('-')[2], 10);
+                                        return d === dayNumber;
+                                    }) : null;
+
+                                    const status = record?.status;
+                                    const isP = status === 'Present' || status === 'P';
+                                    const isA = status === 'Absent' || status === 'A';
+                                    const isL = status === 'Leave' || status === 'L' || status === 'Late';
+                                    
+                                    const today = new Date();
+                                    const isFuture = currentMonth.getFullYear() > today.getFullYear() || 
+                                        (currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() > today.getMonth()) ||
+                                        (currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() === today.getMonth() && dayNumber > today.getDate());
+
+                                    const showNM = !record && !isFuture && !isSunday;
+                                    
+                                    if (isSunday) return <div key={dayNumber} className="text-[10px] font-bold w-6 h-6 mx-auto rounded-full bg-rose-100 text-rose-500 flex items-center justify-center">H</div>;
+                                    if (isP) return <div key={dayNumber} className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-emerald-500 text-white flex items-center justify-center">P</div>;
+                                    if (isA) return <div key={dayNumber} className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-rose-500 text-white flex items-center justify-center">A</div>;
+                                    if (isL) return <div key={dayNumber} className="text-xs font-bold w-6 h-6 mx-auto rounded-full bg-amber-400 text-white flex items-center justify-center">L</div>;
+                                    if (showNM) return <div key={dayNumber} className="text-[8px] font-bold w-6 h-6 mx-auto rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">NM</div>;
+                                    
+                                    return <div key={dayNumber} className="text-xs font-bold w-6 h-6 mx-auto text-slate-500 border border-slate-100 rounded-full flex items-center justify-center shadow-sm">{dayNumber}</div>;
+                                })}
+
+
                             </div>
 
+
                             <div className="flex justify-between items-center text-sm font-bold text-slate-500 mb-2">
-                                <span>Working Days</span>
-                                <span className="text-slate-800">24</span>
+                                <span>Total Days</span>
+
+                                <span className="text-slate-800">{attStats.total}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm font-bold text-slate-500 mb-6 border-b border-dashed border-slate-200 pb-4">
                                 <span>Present</span>
-                                <span className="text-emerald-500">21</span>
+                                <span className="text-emerald-500">{attStats.present}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Percentage</span>
-                                <span className="text-2xl font-black text-blue-600">87.5%</span>
+                                <span className="text-2xl font-black text-blue-600">{attStats.percentage}%</span>
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2 mt-2 overflow-hidden">
-                                <div className="bg-blue-600 h-2 rounded-full" style={{width: '87.5%'}}></div>
+                                <div className="bg-blue-600 h-2 rounded-full transition-all duration-1000" style={{width: `${attStats.percentage}%`}}></div>
                             </div>
+
                         </div>
 
                         {/* Academic Standing */}

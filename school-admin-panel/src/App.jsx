@@ -11,11 +11,12 @@ const Teachers = lazy(() => import('./pages/Teachers'));
 const AddTeacher = lazy(() => import('./pages/AddTeacher'));
 const TeacherProfile = lazy(() => import('./pages/TeacherProfile'));
 const Timetable = lazy(() => import('./pages/Timetable'));
+const Homework = lazy(() => import('./pages/Homework'));
+const Roles = lazy(() => import('./pages/Roles'));
 const Classes = lazy(() => import('./pages/Classes'));
 const Attendance = lazy(() => import('./pages/Attendance'));
 const Exams = lazy(() => import('./pages/Exams'));
 const Notices = lazy(() => import('./pages/Notices'));
-const ComingSoon = lazy(() => import('./components/ComingSoon'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
@@ -34,11 +35,13 @@ const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('scoolg_token');
     const location = useLocation();
 
-    // Check status in real-time whenever we navigate or mount
+    // Sync status on navigation, but throttled (context limits to once / 60s)
+    // so moving between pages doesn't fire an API call on every click.
     useEffect(() => {
         if (schoolId) {
             checkCurrentStatus();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname, schoolId]);
 
     if (!token) {
@@ -80,6 +83,15 @@ const ProtectedRoute = ({ children }) => {
     );
 };
 
+// Blocks staff users from opening a module they don't have access to.
+const ModuleRoute = ({ module, children }) => {
+    const { can } = useAdmin();
+    if (module && !can(module)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return <ProtectedRoute>{children}</ProtectedRoute>;
+};
+
 function App() {
     return (
         <AdminProvider>
@@ -107,51 +119,55 @@ function App() {
                         />
                         <Route
                             path="/students"
-                            element={<ProtectedRoute><Students /></ProtectedRoute>}
+                            element={<ModuleRoute module="students"><Students /></ModuleRoute>}
                         />
                         <Route
                             path="/students/add"
-                            element={<ProtectedRoute><AddStudent /></ProtectedRoute>}
+                            element={<ModuleRoute module="students"><AddStudent /></ModuleRoute>}
                         />
                         <Route
                             path="/students/profile"
-                            element={<ProtectedRoute><StudentProfile /></ProtectedRoute>}
+                            element={<ModuleRoute module="students"><StudentProfile /></ModuleRoute>}
                         />
                         <Route
                             path="/teachers"
-                            element={<ProtectedRoute><Teachers /></ProtectedRoute>}
+                            element={<ModuleRoute module="teachers"><Teachers /></ModuleRoute>}
                         />
                         <Route
                             path="/teachers/add"
-                            element={<ProtectedRoute><AddTeacher /></ProtectedRoute>}
+                            element={<ModuleRoute module="teachers"><AddTeacher /></ModuleRoute>}
                         />
                         <Route
                             path="/teachers/profile"
-                            element={<ProtectedRoute><TeacherProfile /></ProtectedRoute>}
+                            element={<ModuleRoute module="teachers"><TeacherProfile /></ModuleRoute>}
                         />
                         <Route
                             path="/timetable"
-                            element={<ProtectedRoute><Timetable /></ProtectedRoute>}
+                            element={<ModuleRoute module="timetable"><Timetable /></ModuleRoute>}
+                        />
+                        <Route
+                            path="/homework"
+                            element={<ModuleRoute module="homework"><Homework /></ModuleRoute>}
                         />
                         <Route
                             path="/classes"
-                            element={<ProtectedRoute><Classes /></ProtectedRoute>}
+                            element={<ModuleRoute module="classes"><Classes /></ModuleRoute>}
                         />
                         <Route
                             path="/attendance"
-                            element={<ProtectedRoute><Attendance /></ProtectedRoute>}
+                            element={<ModuleRoute module="attendance"><Attendance /></ModuleRoute>}
                         />
                         <Route
                             path="/exams"
-                            element={<ProtectedRoute><Exams /></ProtectedRoute>}
+                            element={<ModuleRoute module="exams"><Exams /></ModuleRoute>}
                         />
                         <Route
                             path="/notices"
-                            element={<ProtectedRoute><Notices /></ProtectedRoute>}
+                            element={<ModuleRoute module="notices"><Notices /></ModuleRoute>}
                         />
                         <Route
                             path="/roles"
-                            element={<ProtectedRoute><ComingSoon title="Roles" subtitle="We are working on roles & permissions." /></ProtectedRoute>}
+                            element={<ModuleRoute module="roles"><Roles /></ModuleRoute>}
                         />
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

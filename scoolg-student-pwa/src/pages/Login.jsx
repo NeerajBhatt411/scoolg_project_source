@@ -1,19 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+
 
 const Login = () => {
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const campusCode = sessionStorage.getItem('verified_campus_code');
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Reverting to simple mock login
-    if (studentId && password) {
+    setLoading(true);
+    setError('');
+
+    const result = await login(campusCode, studentId, password);
+    
+    if (result.success) {
       navigate('/dashboard');
+    } else {
+      setError(result.message);
     }
+    setLoading(false);
   };
+
 
   return (
     <div className="min-h-screen bg-background font-body-md text-on-surface">
@@ -56,6 +71,34 @@ const Login = () => {
 
             {/* Form */}
             <form className="space-y-6" onSubmit={handleLogin}>
+              {error && (
+                <div className="p-4 bg-error/10 text-error rounded-xl text-label-md font-bold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px]">error</span>
+                  {error}
+                </div>
+              )}
+
+              {campusCode && (
+                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[18px]">school</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-outline uppercase">Campus Code</p>
+                      <p className="text-[14px] font-bold text-on-surface">{campusCode}</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => navigate('/campus-code')}
+                    className="text-[12px] font-bold text-primary hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="font-label-md text-label-md text-on-surface-variant ml-1" htmlFor="studentId">Student ID / Email</label>
                 <div className="relative group">
@@ -104,12 +147,14 @@ const Login = () => {
               </div>
 
               <button
-                className="w-full h-[52px] bg-primary-container text-white font-title-lg text-title-lg rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_24px_rgba(37,99,235,0.3)] transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full h-[52px] bg-primary-container text-white font-title-lg text-title-lg rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_24px_rgba(37,99,235,0.3)] transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
                 type="submit"
               >
-                Login
+                {loading ? 'Logging in...' : 'Login'}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
+
             </form>
 
             <div className="pt-8 flex flex-col items-center space-y-4">

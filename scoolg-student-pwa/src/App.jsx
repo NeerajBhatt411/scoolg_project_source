@@ -11,13 +11,17 @@ import Attendance from './pages/Attendance';
 import Results from './pages/Results';
 import Fees from './pages/Fees';
 import Profile from './pages/Profile';
+import CampusCode from './pages/CampusCode';
+
 
 const App = () => {
   return (
     <Routes>
       <Route path="/" element={<SplashScreen />} />
       <Route path="/onboarding/:step" element={<Onboarding />} />
+      <Route path="/campus-code" element={<CampusCode />} />
       <Route path="/login" element={<Login />} />
+
 
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

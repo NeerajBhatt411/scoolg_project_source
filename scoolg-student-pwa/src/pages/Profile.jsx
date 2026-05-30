@@ -1,76 +1,97 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { BadgeCheck, User, Users, GraduationCap, KeyRound, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Profile = () => {
+  const { user, logout } = useAuth();
+  
+  if (!user) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div className="min-h-full pb-32">
-      {/* MOBILE CONTENT (Matches profile_screen design) */}
-      <div className="lg:hidden space-y-stack-gap px-container-margin pt-6">
+      {/* CONTENT (Responsive for Mobile & Desktop) */}
+      <div className="max-w-3xl mx-auto space-y-stack-gap px-container-margin pt-6 sm:pt-10">
         
         {/* Profile Card */}
         <section className="bg-white p-section-padding rounded-[32px] shadow-sm flex flex-col items-center">
           <div className="relative">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary-container p-1">
               <img 
-                alt="Johnathan Doe" 
+                alt={user.firstName} 
                 className="w-full h-full object-cover rounded-full" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPBRp0_h2PWNrDO28zDSDp2z0h-lJfNIXC94dM-za3Wv8qg1ncZxNTKYBiA9NHvnPdsoRM1W52iZRhRT62kY3xnV6Kg1xLbt6QlOOepMDvjkO16rLQ1QHLL5naHD4veCx_mLuYVo86BYaqdbfatTASSSAaNAaI1lBApgjnr4jsiwACH9gyFS9xfdae-DRQFdkjmscDzXHpkTMbZEGCcf24eP7MaWePNEusrp3pqBEteHmHT8AlcZOBo7cp3gupSbLgzj470NWi0-c"
+                src={user.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}`}
               />
             </div>
-            <div className="absolute bottom-1 right-1 bg-primary-container text-white p-1 rounded-full border-4 border-white">
-              <span className="material-symbols-outlined text-[16px] font-bold">verified</span>
+            <div className="absolute bottom-1 right-1 bg-primary text-white p-1 rounded-full border-4 border-white shadow-sm">
+              <BadgeCheck strokeWidth={2.5} size={20} />
             </div>
           </div>
-          <h2 className="text-[30px] font-bold text-on-surface mt-6">Johnathan Doe</h2>
-          <p className="text-body-lg text-secondary">Grade 11 - Science Stream (B)</p>
+          <h2 className="text-[30px] font-bold text-on-surface mt-6">{user.firstName} {user.lastName}</h2>
+          <p className="text-body-lg text-secondary">Grade {user.class} - {user.section}</p>
+
           
           <div className="flex gap-3 mt-6">
-            <span className="bg-primary-fixed text-on-primary-fixed-variant px-4 py-1.5 rounded-full text-label-md font-bold">ID: STU-2024-089</span>
-            <span className="bg-secondary-fixed text-on-secondary-fixed-variant px-4 py-1.5 rounded-full text-label-md font-bold">Active Student</span>
+            <span className="bg-primary-fixed text-on-primary-fixed-variant px-4 py-1.5 rounded-full text-label-md font-bold">ID: {user.studentAppId}</span>
+            <span className="bg-secondary-fixed text-on-secondary-fixed-variant px-4 py-1.5 rounded-full text-label-md font-bold">{user.status} Student</span>
           </div>
+
         </section>
 
         {/* Basic Details */}
-        <DetailSection icon="person" title="Basic Details">
-          <DetailItem label="Date of Birth" value="March 15, 2007" />
-          <DetailItem label="Gender" value="Male" />
-          <DetailItem label="Blood Group" value="O+ Positive" />
+        <DetailSection icon={<User size={24} strokeWidth={2.5} />} title="Basic Details">
+          <DetailItem label="Date of Birth" value={formatDate(user.dateOfBirth)} />
+          <DetailItem label="Gender" value={user.gender || 'N/A'} />
+          <DetailItem label="Blood Group" value={user.bloodGroup || 'N/A'} />
         </DetailSection>
+
 
         {/* Parent Details */}
-        <DetailSection icon="groups" title="Parent Details">
-          <DetailItem label="Father's Name" value="Richard Doe" />
-          <DetailItem label="Contact Number" value="+1 (555) 0123-456" />
-          <DetailItem label="Emergency Email" value="richard.doe@email.com" />
+        <DetailSection icon={<Users size={24} strokeWidth={2.5} />} title="Parent Details">
+          <DetailItem label="Father's Name" value={user.fatherName || 'N/A'} />
+          <DetailItem label="Mother's Name" value={user.motherName || 'N/A'} />
+          <DetailItem label="Contact Number" value={user.primaryContact || 'N/A'} />
+          <DetailItem label="Emergency Email" value={user.parentEmail || 'N/A'} />
         </DetailSection>
 
+
         {/* School Details */}
-        <DetailSection icon="school" title="School Details">
+        <DetailSection icon={<GraduationCap size={24} strokeWidth={2.5} />} title="School Details">
           <div className="grid grid-cols-2 gap-y-4">
-            <DetailItem label="Roll No." value="24BS1102" />
-            <DetailItem label="Admission No." value="ADM/2021/045" />
-            <DetailItem label="Joined Date" value="Aug 12, 2021" />
-            <DetailItem label="Library ID" value="LIB-8822" />
+            <DetailItem label="Roll No." value={user.rollNumber || 'N/A'} />
+            <DetailItem label="Admission No." value={user.admissionNumber || 'N/A'} />
+            <DetailItem label="Joined Date" value={formatDate(user.dateOfAdmission)} />
+            <DetailItem label="Class" value={user.class} />
           </div>
           <div className="mt-4 pt-4 border-t border-surface-container">
-            <DetailItem label="Residential Address" value="742 Evergreen Terrace, Springfield, State 58008, United States" />
+            <DetailItem label="Residential Address" value={user.currentAddress || 'N/A'} />
           </div>
         </DetailSection>
+
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-4">
-          <button className="w-full bg-primary text-white h-[56px] rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
-            <span className="material-symbols-outlined">edit</span>
-            Edit Profile
-          </button>
-          <button className="w-full bg-surface-container-high text-primary h-[56px] rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-            <span className="material-symbols-outlined">lock_reset</span>
+          <button className="w-full bg-slate-50 border border-slate-100 text-slate-700 h-[56px] rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform hover:bg-slate-100">
+            <KeyRound size={20} strokeWidth={2.5} />
             Change Password
           </button>
-          <button className="w-full border-2 border-error/20 text-error h-[56px] rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-            <span className="material-symbols-outlined">logout</span>
+          <button 
+            onClick={logout}
+            className="w-full bg-rose-50 border border-rose-100 text-rose-600 h-[56px] rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform hover:bg-rose-100"
+          >
+            <LogOut size={20} strokeWidth={2.5} />
             Logout
           </button>
+
         </div>
 
       </div>
@@ -79,10 +100,12 @@ const Profile = () => {
 };
 
 const DetailSection = ({ icon, title, children }) => (
-  <section className="bg-white p-section-padding rounded-[32px] shadow-sm">
+  <section className="bg-white p-section-padding rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/60">
     <div className="flex items-center gap-3 mb-6">
-      <span className="material-symbols-outlined text-primary">{icon}</span>
-      <h3 className="text-title-lg font-bold text-primary">{title}</h3>
+      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+        {icon}
+      </div>
+      <h3 className="text-xl font-black text-slate-800 tracking-tight">{title}</h3>
     </div>
     <div className="space-y-4">
       {children}
