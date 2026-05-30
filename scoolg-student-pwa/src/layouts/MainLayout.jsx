@@ -22,9 +22,16 @@ const MainLayout = () => {
     <div className="min-h-screen bg-background font-body-md text-on-surface">
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex-col py-6 px-4 shadow-sm z-50">
-        <div className="mb-10 px-4">
-          <h1 className="text-display-lg font-display-lg font-bold text-primary">SchoolG</h1>
-          <p className="text-label-md font-label-md text-secondary opacity-70">{school?.name || 'Premium Academy'}</p>
+        <div className="mb-10 px-2 flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-primary/10 flex items-center justify-center border border-surface-container shrink-0">
+            {school?.logo
+              ? <img src={school.logo} alt={school?.name} className="w-full h-full object-cover" />
+              : <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-title-lg font-bold text-on-surface leading-tight truncate">{school?.name || 'My School'}</h1>
+            <p className="text-[10px] font-bold text-secondary uppercase tracking-widest opacity-70">Student Portal</p>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -97,8 +104,8 @@ const MainLayout = () => {
             />
           </div>
 
-          <div>
-            <h1 className="text-title-lg font-title-lg font-bold text-primary">SchoolG</h1>
+          <div className="min-w-0">
+            <h1 className="text-title-lg font-title-lg font-bold text-on-surface leading-none truncate">{school?.name || 'My School'}</h1>
             <p className="text-label-md font-label-md text-on-surface-variant">Grade {user?.class}-{user?.section}</p>
           </div>
 
