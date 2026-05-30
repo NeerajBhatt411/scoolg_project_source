@@ -49,8 +49,11 @@ const InstallPrompt = () => {
     deferred.prompt();
     const { outcome } = await deferred.userChoice;
     setDeferred(null);
-    if (outcome === 'accepted') setInstalled(true);
-    else { setShowModal(false); sessionStorage.setItem('scoolg_install_dismissed', '1'); }
+    // Do NOT show "Installed" here — accepting only starts the install.
+    // The real `appinstalled` event (fires once the app is actually added
+    // to the phone, a few seconds later) flips us to the success screen.
+    setShowModal(false);
+    if (outcome !== 'accepted') sessionStorage.setItem('scoolg_install_dismissed', '1');
   };
 
   const dismissModal = () => { sessionStorage.setItem('scoolg_install_dismissed', '1'); setShowModal(false); };
