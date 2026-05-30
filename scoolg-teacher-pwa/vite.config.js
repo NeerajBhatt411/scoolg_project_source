@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: { enabled: true }, // make the PWA installable during `npm run dev`
       includeAssets: ['favicon.svg', 'scoolg-logo.png'],
       manifest: {
         name: 'ScoolG Teacher',
