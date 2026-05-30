@@ -2,8 +2,20 @@ import React, { useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
 
 const Dashboard = () => {
-    const { stats, loadingStats, refreshStats } = useAdmin();
+    const { stats, loadingStats, refreshStats, can } = useAdmin();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
+
+    const StatValue = ({ children }) =>
+        (loadingStats && !stats)
+            ? <div className="h-8 w-20 bg-slate-200 animate-pulse rounded-lg mt-1"></div>
+            : <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{children}</h4>;
+
+    const quickActions = [
+        { module: 'students', label: 'Add Student', icon: 'person_add', path: '/admin/students/add' },
+        { module: 'teachers', label: 'Add Teacher', icon: 'person_add_alt', path: '/admin/teachers/add' },
+        { module: 'notices', label: 'Send Notice', icon: 'send', path: '/admin/notices' },
+        { module: 'timetable', label: 'Timetable', icon: 'event_note', path: '/admin/timetable' },
+    ].filter(a => can(a.module));
 
     useEffect(() => {
         // Refresh silently in background when landing on dashboard
@@ -77,11 +89,7 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Total Students
                             </p>
-                            {loadingStats && !stats ? (
-                                <div className="h-8 w-20 bg-slate-200 animate-pulse rounded-lg mt-1"></div>
-                            ) : (
-                                <h4 className="text-2xl font-extrabold text-on-surface">{stats?.students?.toLocaleString() || 0}</h4>
-                            )}
+                            <StatValue>{stats?.students?.toLocaleString() || 0}</StatValue>
                             <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
                                 <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600 animate-pulse"></span>
                                 <span>Live Metrics</span>
@@ -97,7 +105,7 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Teachers
                             </p>
-                            <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{stats?.teachers || 0}</h4>
+                            <StatValue>{stats?.teachers || 0}</StatValue>
                             <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
                                 <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                                 <span>Faculty</span>
@@ -145,7 +153,7 @@ const Dashboard = () => {
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Classes
                             </p>
-                            <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{stats?.classes || 0}</h4>
+                            <StatValue>{stats?.classes || 0}</StatValue>
                             <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
                                 <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                                 <span>Academic</span>
@@ -167,33 +175,17 @@ const Dashboard = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6">
-                        <button onClick={() => window.location.href = '/admin/students/add'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
-                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
-                                <span className="material-symbols-outlined text-[26px]">person_add</span>
-                            </div>
-                            <span className="text-sm font-black tracking-tight">Add Student</span>
-                        </button>
-
-                        <button onClick={() => window.location.href = '/admin/teachers/add'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
-                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
-                                <span className="material-symbols-outlined text-[26px]">person_add_alt</span>
-                            </div>
-                            <span className="text-sm font-black tracking-tight">Add Teacher</span>
-                        </button>
-
-                        <button onClick={() => window.location.href = '/admin/notices'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
-                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
-                                <span className="material-symbols-outlined text-[26px]">send</span>
-                            </div>
-                            <span className="text-sm font-black tracking-tight">Send Notice</span>
-                        </button>
-
-                        <button onClick={() => window.location.href = '/admin/timetable'} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
-                            <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
-                                <span className="material-symbols-outlined text-[26px]">event_note</span>
-                            </div>
-                            <span className="text-sm font-black tracking-tight">Timetable</span>
-                        </button>
+                        {quickActions.map((a) => (
+                            <button key={a.module} onClick={() => window.location.href = a.path} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
+                                <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                    <span className="material-symbols-outlined text-[26px]">{a.icon}</span>
+                                </div>
+                                <span className="text-sm font-black tracking-tight">{a.label}</span>
+                            </button>
+                        ))}
+                        {quickActions.length === 0 && (
+                            <p className="text-slate-400 text-sm font-bold col-span-full text-center py-4">No quick actions available for your role.</p>
+                        )}
                     </div>
                 </div>
 
