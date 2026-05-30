@@ -503,20 +503,38 @@ app.post('/api/admin/login', async (req, res) => {
     }
 });
 
-// Change Password
+// Change Password — identity comes from the TOKEN, not the body.
+// This prevents a logged-in staff member from accidentally overwriting the
+// school owner's password (the old code always changed School.password).
 app.post('/api/admin/change-password', async (req, res) => {
     const { schoolId, newPassword } = req.body;
     try {
-        const school = await School.findOne({ id: schoolId });
+        if (!newPassword) return res.status(400).json({ error: "New password required" });
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(newPassword, salt);
+
+        // Staff user logged in -> change the STAFF password only.
+        if (req.user?.type === 'staff' && req.user.userId) {
+            const staff = await StaffUser.findById(req.user.userId);
+            if (!staff) return res.status(404).json({ error: "Staff account not found" });
+            staff.password = hashed;
+            staff.isPasswordChanged = true;
+            await staff.save();
+            return res.json({ message: "Password updated successfully!" });
+        }
+
+        // Otherwise the school owner -> change School password.
+        // Prefer the id from the token; fall back to body for legacy sessions.
+        const ownerSchoolId = (req.user && req.user.type !== 'staff' && req.user.id) || schoolId;
+        const school = await School.findOne({ id: ownerSchoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        const salt = await bcrypt.genSalt(10);
-        school.password = await bcrypt.hash(newPassword, salt);
+        school.password = hashed;
         school.isPasswordChanged = true;
         await school.save();
-
         res.json({ message: "Password updated successfully!" });
     } catch (err) {
+        console.error("Change password error:", err);
         res.status(500).json({ error: "Password change failed" });
     }
 });
