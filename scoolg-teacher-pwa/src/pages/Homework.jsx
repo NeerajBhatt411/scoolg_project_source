@@ -73,6 +73,7 @@ const Homework = () => {
   const handleSave = async () => {
     if (!form.className) return setError('Select a class');
     if (!form.title.trim()) return setError('Title is required');
+    if (!form.dueDate) return setError('Due date is required');
     setSaving(true); setError('');
     try {
       await api.post('/teacher/homework', form);
@@ -84,6 +85,7 @@ const Homework = () => {
   };
 
   const sectionsForClass = classes.filter(c => c.className === form.className);
+  const classSubjects = distinctClasses.find(c => c.className === form.className)?.subjects || [];
 
   return (
     <div className="min-h-full px-container-margin lg:px-8 pt-6 pb-32 lg:pb-10 space-y-5 max-w-4xl mx-auto">
@@ -129,7 +131,10 @@ const Homework = () => {
                   ))}
                 </div>
               )}
-              <p className="text-label-md font-bold text-on-surface-variant mt-3">{fmtDate(hw.dueDate)}</p>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-surface-container">
+                <p className="text-label-md font-bold text-on-surface-variant">{fmtDate(hw.dueDate)}</p>
+                {hw.createdAt && <p className="text-[11px] font-semibold text-on-surface-variant/70">Given {new Date(hw.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>}
+              </div>
             </div>
           ))}
         </div>
@@ -157,7 +162,7 @@ const Homework = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-label-md font-bold text-on-surface-variant ml-1 mb-1 block">Class</label>
-                  <Select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: 'All' })}>
+                  <Select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: 'All', subject: '' })}>
                     <option value="">Select</option>
                     {distinctClasses.map(c => <option key={c.className} value={c.className}>Class {c.className}</option>)}
                   </Select>
@@ -172,9 +177,14 @@ const Homework = () => {
               </div>
 
               <div>
-                <label className="text-label-md font-bold text-on-surface-variant ml-1">Subject</label>
-                <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g. Math"
-                  className="w-full h-12 px-4 mt-1 rounded-2xl bg-surface-container-low border border-surface-container font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" />
+                <label className="text-label-md font-bold text-on-surface-variant ml-1 mb-1 block">Subject</label>
+                <Select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className}>
+                  <option value="">{form.className ? 'Select subject' : 'Select a class first'}</option>
+                  {classSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </Select>
+                {form.className && classSubjects.length === 0 && (
+                  <p className="text-[11px] font-bold text-on-surface-variant mt-1 ml-1">No subjects set for this class. Ask admin to add them.</p>
+                )}
               </div>
 
               <div>
@@ -190,8 +200,8 @@ const Homework = () => {
               </div>
 
               <div>
-                <label className="text-label-md font-bold text-on-surface-variant ml-1">Due Date</label>
-                <input type="date" value={form.dueDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                <label className="text-label-md font-bold text-on-surface-variant ml-1">Due Date *</label>
+                <input type="date" required value={form.dueDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
                   className="w-full h-12 px-4 mt-1 rounded-2xl bg-surface-container-low border border-surface-container font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" />
               </div>
 

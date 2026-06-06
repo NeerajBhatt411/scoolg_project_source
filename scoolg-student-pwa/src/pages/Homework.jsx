@@ -20,9 +20,23 @@ const dueInfo = (dueDate) => {
   return { text: `Due ${fmtDate(dueDate)}`, urgent: false, priority: 'Low' };
 };
 
+const isImageAtt = (a) => a?.type === 'image' || /\.(png|jpe?g|gif|webp|bmp)(\?|$)/i.test(a?.url || '');
+const isPdfAtt = (a) => a?.type === 'pdf' || /\.pdf(\?|$)/i.test(a?.url || '');
+
+const AttachmentView = ({ a }) => {
+  if (isImageAtt(a)) return <img src={a.url} alt={a.fileName || 'image'} className="w-full rounded-2xl border border-surface-container" />;
+  if (isPdfAtt(a)) return <iframe src={a.url} title={a.fileName || 'pdf'} className="w-full h-[68vh] rounded-2xl border border-surface-container bg-white"></iframe>;
+  return (
+    <a href={a.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-3 bg-surface-container-low rounded-xl text-body-md font-bold text-primary border border-surface-container">
+      <span className="material-symbols-outlined">description</span>{a.fileName || 'Open file'}
+    </a>
+  );
+};
+
 const Homework = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     const fetchHomework = async () => {
@@ -72,7 +86,7 @@ const Homework = () => {
 
         {loading ? <Spinner /> : list.length === 0 ? <EmptyState /> : (
           <div className="space-y-4">
-            {list.map((hw) => <MobileHomeworkCard key={hw._id} hw={hw} />)}
+            {list.map((hw) => <div key={hw._id} onClick={() => setSelected(hw)} className="cursor-pointer"><MobileHomeworkCard hw={hw} /></div>)}
           </div>
         )}
       </div>
@@ -90,7 +104,7 @@ const Homework = () => {
           <div className="grid grid-cols-12 gap-8">
             {/* Left: Task List */}
             <div className="col-span-8 space-y-4">
-              {list.map((hw) => <DesktopHomeworkCard key={hw._id} hw={hw} />)}
+              {list.map((hw) => <div key={hw._id} onClick={() => setSelected(hw)} className="cursor-pointer"><DesktopHomeworkCard hw={hw} /></div>)}
             </div>
 
             {/* Right: Summary */}
@@ -128,6 +142,36 @@ const Homework = () => {
           </div>
         )}
       </div>
+
+      {/* Detail modal — shows description + inline attachments (image/pdf) */}
+      {selected && (
+        <div onClick={() => setSelected(null)} className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col">
+            <div className="flex items-start justify-between gap-3 px-6 py-5 border-b border-surface-container shrink-0">
+              <div className="min-w-0">
+                {selected.subject && <span className="text-label-md font-bold px-2 py-0.5 rounded text-primary bg-primary/5">{selected.subject}</span>}
+                <h3 className="text-title-lg font-bold text-on-surface mt-1">{selected.title}</h3>
+              </div>
+              <button onClick={() => setSelected(null)} className="w-9 h-9 rounded-xl bg-surface-container-low grid place-items-center text-on-surface-variant shrink-0"><span className="material-symbols-outlined text-[20px]">close</span></button>
+            </div>
+            <div className="px-6 py-5 overflow-y-auto space-y-4">
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-label-md font-semibold text-on-surface-variant">
+                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px]">groups</span>Class {selected.className}-{selected.sectionName}</span>
+                {selected.createdByName && <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px]">person</span>{selected.createdByName}</span>}
+                {selected.createdAt && <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px]">event_available</span>Given {fmtDate(selected.createdAt)}</span>}
+                <span className={`flex items-center gap-1.5 ${dueInfo(selected.dueDate).urgent ? 'text-error' : ''}`}><span className="material-symbols-outlined text-[17px]">schedule</span>{dueInfo(selected.dueDate).text}</span>
+              </div>
+              {selected.description && <p className="text-body-md text-on-surface leading-relaxed whitespace-pre-wrap">{selected.description}</p>}
+              {selected.attachments?.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-label-md font-bold text-on-surface-variant uppercase tracking-widest">Attachments</p>
+                  {selected.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -147,11 +191,16 @@ const MobileHomeworkCard = ({ hw }) => {
     <div className="bg-white p-card-internal-padding rounded-xl shadow-sm border border-surface-container-high relative overflow-hidden active:scale-[0.98] transition-transform">
       <div className={`absolute top-0 left-0 w-1 h-full ${color}`}></div>
       <div className="flex justify-between items-start mb-3">
-        <div className="space-y-1">
+        <div className="space-y-1 min-w-0">
           {hw.subject && <span className="text-label-md font-label-md px-2 py-0.5 rounded text-primary bg-primary/5">{hw.subject}</span>}
           <h3 className="text-title-lg font-title-lg text-on-surface">{hw.title}</h3>
+          <p className="text-label-md text-on-surface-variant flex flex-wrap items-center gap-x-2">
+            {hw.createdByName && <span>by {hw.createdByName}</span>}
+            {hw.createdByName && hw.createdAt && <span className="opacity-40">·</span>}
+            {hw.createdAt && <span>Given {fmtDate(hw.createdAt)}</span>}
+          </p>
         </div>
-        <div className="bg-secondary/5 text-secondary px-3 py-1 rounded-full text-label-md font-label-md whitespace-nowrap">
+        <div className="bg-secondary/5 text-secondary px-3 py-1 rounded-full text-label-md font-label-md whitespace-nowrap shrink-0">
           {hw.sectionName === 'All' ? 'All Sec' : `Sec ${hw.sectionName}`}
         </div>
       </div>
@@ -161,8 +210,8 @@ const MobileHomeworkCard = ({ hw }) => {
       {hw.attachments?.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {hw.attachments.map((a, i) => (
-            <a key={i} href={a.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 px-2.5 py-1.5 bg-surface-container rounded-lg text-label-md font-medium text-secondary max-w-[160px]">
-              <span className="material-symbols-outlined text-[16px] text-primary">attach_file</span>
+            <a key={i} href={a.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 px-2.5 py-1.5 bg-surface-container rounded-lg text-label-md font-medium text-secondary max-w-[160px]">
+              <span className="material-symbols-outlined text-[16px] text-primary">{isImageAtt(a) ? 'image' : isPdfAtt(a) ? 'picture_as_pdf' : 'attach_file'}</span>
               <span className="truncate">{a.fileName || 'File'}</span>
             </a>
           ))}
@@ -174,11 +223,9 @@ const MobileHomeworkCard = ({ hw }) => {
           <span className="material-symbols-outlined text-[18px]">{info.urgent ? 'schedule' : 'calendar_month'}</span>
           <span className="text-label-md font-label-md">{info.text}</span>
         </div>
-        {hw.attachments?.length > 0 && (
-          <a href={hw.attachments[0].url} target="_blank" rel="noreferrer" className="bg-primary text-on-primary shadow-md shadow-primary/20 px-4 py-2 rounded-lg text-label-md font-bold transition-transform active:scale-95">
-            Open
-          </a>
-        )}
+        <span className="bg-primary text-on-primary shadow-md shadow-primary/20 px-4 py-2 rounded-lg text-label-md font-bold">
+          View
+        </span>
       </div>
     </div>
   );
@@ -214,6 +261,18 @@ const DesktopHomeworkCard = ({ hw }) => {
             <span className="material-symbols-outlined text-[20px]">calendar_today</span>
             {info.text}
           </div>
+          {hw.createdByName && (
+            <div className="flex items-center gap-2 text-label-md text-secondary font-medium">
+              <span className="material-symbols-outlined text-[20px]">person</span>
+              {hw.createdByName}
+            </div>
+          )}
+          {hw.createdAt && (
+            <div className="flex items-center gap-2 text-label-md text-secondary font-medium">
+              <span className="material-symbols-outlined text-[20px]">event_available</span>
+              Given {fmtDate(hw.createdAt)}
+            </div>
+          )}
           {hw.attachments?.length > 0 && (
             <div className="flex items-center gap-2 text-label-md text-secondary font-medium">
               <span className="material-symbols-outlined text-[20px]">attach_file</span>
@@ -222,13 +281,11 @@ const DesktopHomeworkCard = ({ hw }) => {
           )}
         </div>
       </div>
-      {hw.attachments?.length > 0 && (
-        <div className="self-center">
-          <a href={hw.attachments[0].url} target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-secondary group-hover:bg-primary group-hover:text-on-primary group-hover:border-primary transition-all">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </a>
-        </div>
-      )}
+      <div className="self-center">
+        <span className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center text-secondary group-hover:bg-primary group-hover:text-on-primary group-hover:border-primary transition-all">
+          <span className="material-symbols-outlined">chevron_right</span>
+        </span>
+      </div>
     </div>
   );
 };
