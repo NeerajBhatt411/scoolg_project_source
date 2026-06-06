@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
 const Diary = () => {
+  const { teacher } = useAuth();
   const [classes, setClasses] = useState([]);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ classKey: '', subject: '', date: todayISO(), note: '' });
+  const [form, setForm] = useState({ className: '', sectionName: '', subject: '', date: todayISO(), note: '' });
 
   const load = async () => {
     try {
@@ -24,23 +26,28 @@ const Diary = () => {
   };
   useEffect(() => { load(); }, []);
 
-  const selectedClass = classes.find(c => `${c.className}|${c.sectionName}` === form.classKey);
-  const subjects = selectedClass?.subjects || [];
+  // Cascading options: class -> section -> subject
+  const classOptions = [...new Set(classes.map(c => c.className).filter(Boolean))];
+  const sectionOptions = [...new Set(classes.filter(c => c.className === form.className).map(c => c.sectionName).filter(Boolean))];
+  const classObj = classes.find(c => c.className === form.className);
+  const teacherSubs = (teacher?.subjects || []).map(s => (typeof s === 'string' ? s : s?.subjectName)).filter(Boolean);
+  const specSubs = (teacher?.specialization || '').split(/[,&/]|\band\b/i).map(s => s.trim()).filter(Boolean);
+  const subjects = [...new Set([...(classObj?.subjects || []), ...teacherSubs, ...specSubs])];
 
   const save = async () => {
-    if (!form.classKey) { setError('Please select a class.'); return; }
+    if (!form.className) { setError('Please select a class.'); return; }
     if (!form.note.trim()) { setError('Write what you taught.'); return; }
     setSaving(true); setError('');
     try {
       const res = await api.post('/teacher/diary', {
         date: form.date,
-        className: selectedClass.className,
-        sectionName: selectedClass.sectionName,
+        className: form.className,
+        sectionName: form.sectionName || 'All',
         subject: form.subject,
         note: form.note.trim(),
       });
       setEntries(prev => [res.data, ...prev]);
-      setForm({ classKey: '', subject: '', date: todayISO(), note: '' });
+      setForm({ className: '', sectionName: '', subject: '', date: todayISO(), note: '' });
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to save.');
     } finally { setSaving(false); }
@@ -73,12 +80,16 @@ const Diary = () => {
 
       {/* Add form */}
       <div className="bg-white border border-surface-container rounded-3xl p-5 space-y-3 shadow-[0_8px_24px_-14px_rgba(15,23,42,0.18)]">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <select value={form.classKey} onChange={(e) => setForm({ ...form, classKey: e.target.value, subject: '' })} className={field}>
-            <option value="">Select class</option>
-            {classes.map(c => <option key={c.sectionId} value={`${c.className}|${c.sectionName}`}>Class {c.className}-{c.sectionName}</option>)}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: '', subject: '' })} className={field}>
+            <option value="">Class</option>
+            {classOptions.map(c => <option key={c} value={c}>Class {c}</option>)}
           </select>
-          <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className={field}>
+          <select value={form.sectionName} onChange={(e) => setForm({ ...form, sectionName: e.target.value })} disabled={!form.className} className={`${field} disabled:opacity-50`}>
+            <option value="">Section</option>
+            {sectionOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className} className={`${field} disabled:opacity-50`}>
             <option value="">Subject</option>
             {subjects.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
