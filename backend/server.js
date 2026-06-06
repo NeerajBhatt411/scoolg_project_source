@@ -2527,6 +2527,36 @@ const teacherFromToken = async (req) => {
     return teacher;
 };
 
+// --- Teacher Diary (teacher app) ---
+app.get('/api/teacher/diary', async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const entries = await TeacherDiary.find({ teacherId: teacher._id }).sort({ date: -1, createdAt: -1 }).limit(200);
+        res.json(entries);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+app.post('/api/teacher/diary', async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const { date, className, sectionName, subject, note } = req.body;
+        if (!date || !className || !note?.trim()) {
+            return res.status(400).json({ error: "Date, class and note are required" });
+        }
+        const entry = new TeacherDiary({
+            schoolId: teacher.schoolId, teacherId: teacher._id, date, className,
+            sectionName: sectionName || 'All', subject: subject || '', note: note.trim(),
+            createdByRole: 'teacher',
+        });
+        await entry.save();
+        res.status(201).json(entry);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
 /**
  * @swagger
  * /api/teacher/login:
