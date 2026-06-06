@@ -9,6 +9,8 @@ const Teachers = () => {
     const [teachers, setTeachers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const PER_PAGE = 8;
 
     const schoolId = localStorage.getItem('scoolg_school_id');
     useEffect(() => {
@@ -25,10 +27,14 @@ const Teachers = () => {
         fetchTeachers();
     }, [schoolId]);
 
-    const filteredTeachers = teachers.filter(t => 
-        t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filteredTeachers = teachers.filter(t =>
+        t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.teacherAppId.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    useEffect(() => { setPage(1); }, [searchQuery]);
+    const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / PER_PAGE));
+    const pageTeachers = filteredTeachers.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
     const Shimmer = ({ className }) => (
         <div className={`animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg ${className}`}></div>
@@ -123,14 +129,14 @@ const Teachers = () => {
                                 ) : filteredTeachers.length === 0 ? (
                                     <tr><td colSpan="7" className="text-center py-10 font-bold text-slate-400">No teachers found</td></tr>
                                 ) : (
-                                    filteredTeachers.map((teacher, index) => (
+                                    pageTeachers.map((teacher, index) => (
                                         <tr
                                             key={teacher._id}
                                             className="group hover:bg-[#f8fafc] transition-colors cursor-pointer"
                                             onClick={() => navigate('/teachers/profile', { state: { teacher } })}
                                         >
                                             <td className="px-6 py-5 text-sm font-bold text-outline hidden sm:table-cell">
-                                                {String(index + 1).padStart(2, '0')}
+                                                {String((page - 1) * PER_PAGE + index + 1).padStart(2, '0')}
                                             </td>
 
                                             <td className="px-6 py-5">
@@ -163,6 +169,25 @@ const Teachers = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination */}
+                    {!loading && filteredTeachers.length > PER_PAGE && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 pt-5">
+                            <p className="text-xs font-bold text-slate-400">
+                                Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filteredTeachers.length)} of {filteredTeachers.length} teachers
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                                    className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Prev</button>
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <button key={i} onClick={() => setPage(i + 1)}
+                                        className={`h-9 w-9 rounded-xl text-sm font-bold transition-colors ${page === i + 1 ? 'bg-[#2563eb] text-white shadow-sm shadow-blue-500/30' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}>{i + 1}</button>
+                                ))}
+                                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                                    className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="mt-auto h-12"></div>
