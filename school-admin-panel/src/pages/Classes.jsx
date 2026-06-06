@@ -17,13 +17,13 @@ const Classes = () => {
     const [newClassSubjects, setNewClassSubjects] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Manage Subjects / Sections modal state
-    const [manageSubjectsClass, setManageSubjectsClass] = useState(null);
+    // Manage Class modal state (sections + subjects together)
+    const [manageClass, setManageClass] = useState(null);
     const [editSubjects, setEditSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
-    const [manageSectionsClass, setManageSectionsClass] = useState(null);
     const [newSecName, setNewSecName] = useState('');
     const [savingManage, setSavingManage] = useState(false);
+    const [subjectsSaved, setSubjectsSaved] = useState(false);
 
     const schoolId = localStorage.getItem('scoolg_school_id');
     useEffect(() => {
@@ -95,34 +95,35 @@ const Classes = () => {
         }
     };
 
-    // --- Manage Subjects ---
-    const openManageSubjects = (cls) => { setManageSubjectsClass(cls); setEditSubjects([...(cls.subjects || [])]); setSubjectInput(''); };
+    // --- Manage Class (sections + subjects in one place) ---
+    const openManageClass = (cls) => { setManageClass(cls); setEditSubjects([...(cls.subjects || [])]); setSubjectInput(''); setNewSecName(''); setSubjectsSaved(false); };
     const addSubjectChip = () => {
         const v = subjectInput.trim();
         if (v && !editSubjects.includes(v)) setEditSubjects([...editSubjects, v]);
         setSubjectInput('');
+        setSubjectsSaved(false);
     };
-    const removeSubjectChip = (s) => setEditSubjects(editSubjects.filter(x => x !== s));
+    const removeSubjectChip = (s) => { setEditSubjects(editSubjects.filter(x => x !== s)); setSubjectsSaved(false); };
     const saveSubjects = async () => {
         setSavingManage(true);
         try {
-            await axios.patch(`${ADMIN_API_BASE}/classes/${manageSubjectsClass._id}`, { subjects: editSubjects });
+            await axios.patch(`${ADMIN_API_BASE}/classes/${manageClass._id}`, { subjects: editSubjects });
             await fetchClasses();
             invalidateAcademic();
-            setManageSubjectsClass(null);
+            setManageClass(c => c ? { ...c, subjects: editSubjects } : c);
+            setSubjectsSaved(true);
+            setTimeout(() => setSubjectsSaved(false), 2000);
         } catch (err) {
             alert('Failed to save subjects: ' + (err.response?.data?.error || err.message));
         } finally { setSavingManage(false); }
     };
 
-    // --- Manage Sections ---
-    const openManageSections = (cls) => { setManageSectionsClass(cls); setNewSecName(''); };
     const addSection = async () => {
         const name = newSecName.trim();
         if (!name) return;
         setSavingManage(true);
         try {
-            await axios.post(`${ADMIN_API_BASE}/sections`, { schoolId, classId: manageSectionsClass._id, sectionName: name, maxCapacity: 40 });
+            await axios.post(`${ADMIN_API_BASE}/sections`, { schoolId, classId: manageClass._id, sectionName: name, maxCapacity: 40 });
             await fetchSections();
             invalidateAcademic();
             setNewSecName('');
@@ -260,11 +261,9 @@ const Classes = () => {
                                     </div>
 
                                     <div className="flex items-center gap-4 pt-2 md:pt-0 justify-end md:justify-start">
-                                        <button onClick={() => openManageSubjects(cls)} className="text-sm font-bold text-[#2563eb] hover:text-blue-700 transition-colors">
-                                            Manage Subjects
-                                        </button>
-                                        <button onClick={() => openManageSections(cls)} className="px-5 py-2.5 bg-[#eff6ff] text-[#2563eb] font-bold text-sm rounded-xl hover:bg-blue-100 transition-colors">
-                                            Manage Sections
+                                        <button onClick={() => openManageClass(cls)} className="px-5 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[18px]">tune</span>
+                                            Manage Class
                                         </button>
                                     </div>
                                 </div>
@@ -345,76 +344,76 @@ const Classes = () => {
                 </div>
             )}
 
-            {/* Manage Subjects Modal */}
-            {manageSubjectsClass && (
-                <div onClick={() => setManageSubjectsClass(null)} className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-                    <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            {/* Manage Class Modal — sections + subjects in one place */}
+            {manageClass && (
+                <div onClick={() => setManageClass(null)} className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+                    <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
                             <div>
-                                <h3 className="font-black text-slate-900 text-xl">Manage Subjects</h3>
-                                <p className="text-[13px] font-bold text-blue-600 mt-0.5">{manageSubjectsClass.className}</p>
+                                <h3 className="font-black text-slate-900 text-xl">Manage Class</h3>
+                                <p className="text-[13px] font-bold text-blue-600 mt-0.5">{manageClass.className}</p>
                             </div>
-                            <button onClick={() => setManageSubjectsClass(null)} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600"><span className="material-symbols-outlined text-[20px]">close</span></button>
+                            <button onClick={() => setManageClass(null)} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600"><span className="material-symbols-outlined text-[20px]">close</span></button>
                         </div>
-                        <div className="px-6 py-5 overflow-y-auto space-y-4">
-                            <div className="flex gap-2">
-                                <input value={subjectInput} onChange={(e) => setSubjectInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubjectChip(); } }} placeholder="Add a subject (e.g. Mathematics)" className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all" />
-                                <button onClick={addSubjectChip} className="px-4 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors">Add</button>
-                            </div>
-                            <div className="flex flex-wrap gap-2 min-h-[40px]">
-                                {editSubjects.length === 0 ? (
-                                    <span className="text-sm text-slate-400 font-semibold">No subjects yet. Add some above.</span>
-                                ) : editSubjects.map((s) => (
-                                    <span key={s} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100">
-                                        {s}
-                                        <button onClick={() => removeSubjectChip(s)} className="w-5 h-5 grid place-items-center rounded text-blue-400 hover:text-rose-500 hover:bg-white"><span className="material-symbols-outlined text-[15px]">close</span></button>
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
-                            <button onClick={() => setManageSubjectsClass(null)} className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition-colors">Cancel</button>
-                            <button onClick={saveSubjects} disabled={savingManage} className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-60 transition-colors">{savingManage ? 'Saving…' : 'Save Subjects'}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Manage Sections Modal */}
-            {manageSectionsClass && (
-                <div onClick={() => setManageSectionsClass(null)} className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-                    <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                        <div className="px-6 py-5 overflow-y-auto space-y-7">
+                            {/* Sections */}
                             <div>
-                                <h3 className="font-black text-slate-900 text-xl">Manage Sections</h3>
-                                <p className="text-[13px] font-bold text-blue-600 mt-0.5">{manageSectionsClass.className}</p>
-                            </div>
-                            <button onClick={() => setManageSectionsClass(null)} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600"><span className="material-symbols-outlined text-[20px]">close</span></button>
-                        </div>
-                        <div className="px-6 py-5 overflow-y-auto space-y-4">
-                            <div className="flex gap-2">
-                                <input value={newSecName} onChange={(e) => setNewSecName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSection(); } }} placeholder="New section name (e.g. A)" className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all" />
-                                <button onClick={addSection} disabled={savingManage} className="px-4 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors disabled:opacity-60">Add</button>
-                            </div>
-                            <div className="space-y-2">
-                                {sectionsOf(manageSectionsClass._id).length === 0 ? (
-                                    <span className="text-sm text-slate-400 font-semibold">No sections yet. Add one above.</span>
-                                ) : sectionsOf(manageSectionsClass._id).map((sec) => (
-                                    <div key={sec._id} className="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-4 py-3 border border-slate-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 grid place-items-center font-black">{sec.sectionName?.charAt(0) || '?'}</div>
-                                            <div>
-                                                <p className="font-bold text-slate-800 text-sm">Section {sec.sectionName}</p>
-                                                {sec.classTeacherId?.fullName && <p className="text-[11px] font-semibold text-slate-500">Class Teacher: {sec.classTeacherId.fullName}</p>}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-blue-600 text-[20px]">layers</span>
+                                    <h4 className="font-black text-slate-800">Sections</h4>
+                                </div>
+                                <div className="flex gap-2 mb-3">
+                                    <input value={newSecName} onChange={(e) => setNewSecName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSection(); } }} placeholder="New section (e.g. A)" className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all" />
+                                    <button onClick={addSection} disabled={savingManage} className="px-4 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors disabled:opacity-60">Add</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {sectionsOf(manageClass._id).length === 0 ? (
+                                        <span className="text-sm text-slate-400 font-semibold">No sections yet — class works with just its subjects below.</span>
+                                    ) : sectionsOf(manageClass._id).map((sec) => (
+                                        <div key={sec._id} className="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-4 py-2.5 border border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 grid place-items-center font-black">{sec.sectionName?.charAt(0) || '?'}</div>
+                                                <div>
+                                                    <p className="font-bold text-slate-800 text-sm">Section {sec.sectionName}</p>
+                                                    {sec.classTeacherId?.fullName && <p className="text-[11px] font-semibold text-slate-500">Class Teacher: {sec.classTeacherId.fullName}</p>}
+                                                </div>
                                             </div>
+                                            <button onClick={() => deleteSection(sec._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors"><span className="material-symbols-outlined text-[18px]">delete</span></button>
                                         </div>
-                                        <button onClick={() => deleteSection(sec._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors"><span className="material-symbols-outlined text-[18px]">delete</span></button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Subjects */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-blue-600 text-[20px]">menu_book</span>
+                                    <h4 className="font-black text-slate-800">Subjects</h4>
+                                    <span className="text-[11px] font-bold text-slate-400">(apply to the whole class)</span>
+                                </div>
+                                <div className="flex gap-2 mb-3">
+                                    <input value={subjectInput} onChange={(e) => setSubjectInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubjectChip(); } }} placeholder="Add a subject (e.g. Mathematics)" className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all" />
+                                    <button onClick={addSubjectChip} className="px-4 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Add</button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 min-h-[36px]">
+                                    {editSubjects.length === 0 ? (
+                                        <span className="text-sm text-slate-400 font-semibold">No subjects yet. Add some above.</span>
+                                    ) : editSubjects.map((s) => (
+                                        <span key={s} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100">
+                                            {s}
+                                            <button onClick={() => removeSubjectChip(s)} className="w-5 h-5 grid place-items-center rounded text-blue-400 hover:text-rose-500 hover:bg-white"><span className="material-symbols-outlined text-[15px]">close</span></button>
+                                        </span>
+                                    ))}
+                                </div>
+                                <button onClick={saveSubjects} disabled={savingManage} className={`mt-3 h-10 px-5 rounded-xl font-bold text-sm transition-colors disabled:opacity-60 ${subjectsSaved ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+                                    {savingManage ? 'Saving…' : subjectsSaved ? '✓ Subjects saved' : 'Save Subjects'}
+                                </button>
                             </div>
                         </div>
-                        <div className="px-6 py-4 border-t border-slate-100">
-                            <button onClick={() => setManageSectionsClass(null)} className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors">Done</button>
+
+                        <div className="px-6 py-4 border-t border-slate-100 shrink-0">
+                            <button onClick={() => setManageClass(null)} className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Done</button>
                         </div>
                     </div>
                 </div>
