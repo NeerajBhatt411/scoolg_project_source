@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Loader2, User, Phone, MapPin, Globe, Mail, BadgeCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Save, Loader2, User, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X } from 'lucide-react';
 import { ADMIN_API_BASE } from '../lib/api';
 
+// Only these fields are editable; everything else is identity/system data.
+const EDITABLE_KEYS = ['schoolDescription', 'phone', 'address', 'city', 'vision', 'mission'];
+
 const Profile = () => {
-    const [formData, setFormData] = useState(null);
+    const [formData, setFormData] = useState(null); // server truth
+    const [draft, setDraft] = useState({});         // working copy while editing
+    const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(null);   // { type: 'ok'|'err', text }
 
     const schoolId = localStorage.getItem('scoolg_school_id');
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+
+    useEffect(() => { fetchProfile(); /* eslint-disable-next-line */ }, []);
 
     const fetchProfile = async () => {
         try {
@@ -26,30 +29,31 @@ const Profile = () => {
         }
     };
 
-    const handleUpdate = async (e) => {
-        e.preventDefault();
-        setSaving(true);
-        setMessage('');
+    const startEdit = () => { setDraft({ ...formData }); setEditing(true); setMessage(null); };
+    const cancelEdit = () => { setEditing(false); setMessage(null); };
+    const setField = (k, v) => setDraft((p) => ({ ...p, [k]: v }));
 
+    const handleSave = async () => {
+        setSaving(true); setMessage(null);
         try {
-            await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, formData);
-            setMessage('Profile updated successfully!');
-            setTimeout(() => setMessage(''), 3000);
+            const payload = {};
+            EDITABLE_KEYS.forEach((k) => { payload[k] = draft[k] ?? ''; });
+            await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, payload);
+            setFormData((prev) => ({ ...prev, ...payload }));
+            setEditing(false);
+            setMessage({ type: 'ok', text: 'Profile updated successfully!' });
+            setTimeout(() => setMessage(null), 3000);
         } catch (err) {
-            setMessage('Error updating profile.');
+            setMessage({ type: 'err', text: err.response?.data?.error || 'Could not update profile.' });
         } finally {
             setSaving(false);
         }
     };
 
-    const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
     if (loading) return (
-        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div className="p-6 sm:p-10 max-w-[1000px] mx-auto">
             <div className="h-40 rounded-[28px] bg-slate-100 animate-pulse mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
                 <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
             </div>
@@ -57,12 +61,13 @@ const Profile = () => {
     );
 
     if (!formData) return (
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Profile Not Found</h1>
-            <p style={{ color: '#64748b' }}>We couldn't load your school profile. Please try again later.</p>
+        <div className="p-10 text-center">
+            <h1 className="text-2xl font-extrabold text-slate-900">Profile Not Found</h1>
+            <p className="text-slate-500">We couldn't load your school profile. Please try again later.</p>
         </div>
     );
 
+    const src = editing ? draft : formData;
     const code = ((formData.schoolName || 'SCH').substring(0, 3) + (schoolId || '').slice(-4)).toUpperCase();
     const logo = formData.logo || formData.schoolLogo;
     const st = (formData.status || '').toUpperCase();
@@ -71,25 +76,68 @@ const Profile = () => {
         : (st === 'SUSPENDED' || st === 'INACTIVE') ? 'bg-rose-50 text-rose-600'
         : 'bg-slate-100 text-slate-500';
 
+    const inputCls = 'w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all';
+
+    const Field = ({ label, k, locked, textarea }) => {
+        const val = src[k];
+        return (
+            <div>
+                <label className="flex items-center gap-1 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                    {label}{locked && <Lock size={11} className="text-slate-300" />}
+                </label>
+                {editing && !locked ? (
+                    textarea
+                        ? <textarea value={val || ''} onChange={(e) => setField(k, e.target.value)} className={inputCls + ' h-24 py-2.5 resize-none'} />
+                        : <input value={val || ''} onChange={(e) => setField(k, e.target.value)} className={inputCls} />
+                ) : (
+                    <p className={`text-[14.5px] font-semibold ${val ? 'text-slate-800' : 'text-slate-300'} ${textarea ? 'leading-relaxed whitespace-pre-wrap' : ''}`}>{val || '—'}</p>
+                )}
+            </div>
+        );
+    };
+
+    const SectionCard = ({ icon, iconBg, iconColor, title, children, full }) => (
+        <div className={`bg-white rounded-3xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-6 ${full ? 'lg:col-span-2' : ''}`}>
+            <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-9 h-9 rounded-xl grid place-items-center" style={{ background: iconBg }}>{React.cloneElement(icon, { size: 18, color: iconColor })}</div>
+                <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            </div>
+            {children}
+        </div>
+    );
+
     return (
-        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="p-6 sm:p-10 max-w-[1000px] mx-auto">
+            {/* title + actions */}
+            <div className="flex items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800' }}>My Profile</h1>
-                    <p style={{ color: '#64748b', fontWeight: '500' }}>Review and edit your school information.</p>
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Profile</h1>
+                    <p className="text-slate-500 font-medium text-sm">{editing ? 'Update your school information.' : 'Your school information at a glance.'}</p>
                 </div>
-                <button
-                    onClick={handleUpdate}
-                    className="btn btn-primary"
-                    style={{ padding: '14px 28px', fontSize: '16px' }}
-                    disabled={saving}
-                >
-                    {saving ? <Loader2 className="animate-spin" /> : <><Save size={20} /> Save Changes</>}
-                </button>
+                {editing ? (
+                    <div className="flex items-center gap-2">
+                        <button onClick={cancelEdit} disabled={saving} className="px-4 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm inline-flex items-center gap-1.5 transition-colors disabled:opacity-50">
+                            <X size={18} /> Cancel
+                        </button>
+                        <button onClick={handleSave} disabled={saving} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-1.5 transition-colors disabled:opacity-60 shadow-lg shadow-blue-600/25">
+                            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} {saving ? 'Saving…' : 'Save Changes'}
+                        </button>
+                    </div>
+                ) : (
+                    <button onClick={startEdit} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-1.5 transition-colors shadow-lg shadow-blue-600/25">
+                        <Pencil size={17} /> Edit Profile
+                    </button>
+                )}
             </div>
 
-            {/* Premium identity header — all key details at a glance */}
-            <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-8 flex flex-col sm:flex-row sm:items-center gap-6">
+            {message && (
+                <div className={`px-4 py-3 rounded-xl mb-6 text-sm font-bold ${message.type === 'ok' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                    {message.text}
+                </div>
+            )}
+
+            {/* identity header (read-only) */}
+            <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
                 <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shrink-0 overflow-hidden shadow-lg shadow-blue-600/20">
                     {logo ? <img src={logo} alt="" className="w-full h-full object-cover" /> : (formData.schoolName?.charAt(0) || 'S').toUpperCase()}
                 </div>
@@ -111,72 +159,30 @@ const Profile = () => {
                 </div>
             </div>
 
-            {message && (
-                <div style={{ padding: '16px', background: message.includes('Error') ? '#fef2f2' : '#f0fdf4', color: message.includes('Error') ? '#ef4444' : '#16a34a', borderRadius: '12px', marginBottom: '32px', border: '1px solid currentColor', opacity: 0.8 }}>
-                    {message}
-                </div>
-            )}
+            {/* editable sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SectionCard icon={<User />} iconBg="#eff6ff" iconColor="#2563eb" title="Basic Information">
+                    <div className="space-y-5">
+                        <Field label="School Name" k="schoolName" locked />
+                        <Field label="Established Year" k="establishedYear" locked />
+                        <Field label="Description" k="schoolDescription" textarea />
+                    </div>
+                </SectionCard>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px' }}>
-                {/* Basic Info */}
-                <div className="stat-card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px' }}><User size={20} color="#2563eb" /></div>
-                        <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Basic Information</h3>
+                <SectionCard icon={<Phone />} iconBg="#fef2f2" iconColor="#ef4444" title="Contact Details">
+                    <div className="space-y-5">
+                        <Field label="Official Phone" k="phone" />
+                        <Field label="Full Address" k="address" textarea />
+                        <Field label="City" k="city" />
                     </div>
+                </SectionCard>
 
-                    <div className="form-group">
-                        <label className="form-label">School Name</label>
-                        <input className="form-input" value={formData.schoolName} onChange={(e) => handleChange('schoolName', e.target.value)} />
+                <SectionCard icon={<Globe />} iconBg="#fffbeb" iconColor="#f59e0b" title="Academic Overview" full>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Field label="Vision Statement" k="vision" textarea />
+                        <Field label="Mission Statement" k="mission" textarea />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Established Year</label>
-                        <input className="form-input" value={formData.establishedYear} onChange={(e) => handleChange('establishedYear', e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Description</label>
-                        <textarea className="form-input" style={{ height: '100px' }} value={formData.schoolDescription} onChange={(e) => handleChange('schoolDescription', e.target.value)} />
-                    </div>
-                </div>
-
-                {/* Contact Info */}
-                <div className="stat-card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{ background: '#fef2f2', padding: '8px', borderRadius: '8px' }}><Phone size={20} color="#ef4444" /></div>
-                        <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Contact Details</h3>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Official Phone</label>
-                        <input className="form-input" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Full Address</label>
-                        <textarea className="form-input" style={{ height: '80px' }} value={formData.address} onChange={(e) => handleChange('address', e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">City</label>
-                        <input className="form-input" value={formData.city} onChange={(e) => handleChange('city', e.target.value)} />
-                    </div>
-                </div>
-
-                {/* Vision & Mission */}
-                <div className="stat-card" style={{ gridColumn: 'span 2' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{ background: '#fffbeb', padding: '8px', borderRadius: '8px' }}><Globe size={20} color="#f59e0b" /></div>
-                        <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Academic Overview</h3>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                        <div className="form-group">
-                            <label className="form-label">Vision Statement</label>
-                            <textarea className="form-input" style={{ height: '120px' }} value={formData.vision} onChange={(e) => handleChange('vision', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Mission Statement</label>
-                            <textarea className="form-input" style={{ height: '120px' }} value={formData.mission} onChange={(e) => handleChange('mission', e.target.value)} />
-                        </div>
-                    </div>
-                </div>
+                </SectionCard>
             </div>
         </div>
     );
