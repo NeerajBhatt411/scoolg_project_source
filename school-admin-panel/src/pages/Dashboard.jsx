@@ -1,9 +1,34 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 
+const CAT_META = {
+    'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
+    'Annual Function': { icon: 'celebration', color: '#7c3aed', bg: '#f5f3ff' },
+    'Sports Day': { icon: 'sports_soccer', color: '#059669', bg: '#ecfdf5' },
+    'Exam': { icon: 'history_edu', color: '#d97706', bg: '#fffbeb' },
+    'Meeting': { icon: 'groups', color: '#2563eb', bg: '#eff6ff' },
+    'Event': { icon: 'event', color: '#0891b2', bg: '#ecfeff' },
+    'Other': { icon: 'push_pin', color: '#64748b', bg: '#f1f5f9' },
+};
+const catMeta = (k) => CAT_META[k] || CAT_META['Other'];
+const eventDayLabel = (ds) => {
+    const d = new Date(ds + 'T00:00:00');
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.round((d - today) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    if (diff > 1 && diff < 7) return `In ${diff} days`;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
 const Dashboard = () => {
-    const { stats, loadingStats, refreshStats, can } = useAdmin();
+    const { stats, loadingStats, refreshStats, can, schoolId } = useAdmin();
+    const navigate = useNavigate();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
+    const [upcoming, setUpcoming] = useState([]);
 
     const StatValue = ({ children }) =>
         (loadingStats && !stats)
@@ -21,6 +46,13 @@ const Dashboard = () => {
         // Refresh silently in background when landing on dashboard
         refreshStats(true);
     }, []);
+
+    useEffect(() => {
+        if (!schoolId) return;
+        axios.get(`${ADMIN_API_BASE}/calendar/upcoming?schoolId=${schoolId}&limit=5`)
+            .then((res) => setUpcoming(Array.isArray(res.data) ? res.data : []))
+            .catch((e) => console.error('Upcoming events fetch failed', e));
+    }, [schoolId]);
 
     const Shimmer = ({ className }) => (
         <div className={`animate-pulse bg-slate-200 rounded ${className}`}></div>
@@ -243,34 +275,44 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Recent Notices Card */}
+                    {/* Scheduled Events Card (from School Calendar) */}
                     <div className="bg-white p-6 sm:p-8 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-50 group transition-all duration-500">
                         <div className="flex justify-between items-center mb-8 px-2">
                             <h5 className="text-xl text-slate-900 font-black flex items-center gap-3 tracking-tight">
                                 <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></span>
-                                Recent Updates
+                                Scheduled Events
                             </h5>
-                            <div className="p-2 bg-slate-50 text-slate-400 rounded-xl">
-                                <span className="material-symbols-outlined text-xl">notifications_active</span>
-                            </div>
+                            <button onClick={() => navigate('/calendar')} className="text-blue-600 font-black text-[10px] uppercase tracking-widest hover:text-blue-700 transition-all flex items-center gap-1">
+                                Calendar <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </button>
                         </div>
                         <div className="space-y-4">
-                            {[
-                                { title: "PTM on 15 Apr", desc: "Parent Teacher Meeting for Grade 5-10", time: "2h ago", icon: "groups" },
-                                { title: "Holiday: Holi", desc: "School will remain closed on 25th March", time: "1d ago", icon: "celebration" },
-                                { title: "Basketball Finals", desc: "Inter-school tournament at Main Court", time: "2d ago", icon: "sports_basketball" }
-                            ].map((notice, idx) => (
-                                <div key={idx} className="group flex items-center gap-4 p-4 rounded-[24px] hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-100">
-                                    <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[18px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
-                                        <span className="material-symbols-outlined text-2xl">{notice.icon}</span>
+                            {upcoming.length === 0 ? (
+                                <div className="text-center py-10">
+                                    <div className="w-14 h-14 mx-auto bg-slate-50 text-slate-300 rounded-[18px] flex items-center justify-center border border-slate-100 mb-3">
+                                        <span className="material-symbols-outlined text-2xl">event_upcoming</span>
                                     </div>
-                                    <div className="flex-1">
-                                        <h6 className="font-bold text-slate-900 text-sm tracking-tight">{notice.title}</h6>
-                                        <p className="text-slate-500 text-[11px] font-medium mt-0.5 line-clamp-1">{notice.desc}</p>
-                                    </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{notice.time}</span>
+                                    <p className="text-slate-500 text-sm font-bold">No scheduled events yet.</p>
+                                    <button onClick={() => navigate('/calendar')} className="mt-3 text-blue-600 text-[13px] font-black hover:underline">Add events on the calendar →</button>
                                 </div>
-                            ))}
+                            ) : (
+                                upcoming.map((ev) => {
+                                    const c = catMeta(ev.category);
+                                    return (
+                                        <div key={ev._id} onClick={() => navigate('/calendar')} className="group flex items-center gap-4 p-4 rounded-[24px] hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-100">
+                                            <div className="w-14 h-14 rounded-[18px] flex items-center justify-center border border-slate-100 shadow-sm shrink-0" style={{ background: c.bg, color: c.color }}>
+                                                <span className="material-symbols-outlined text-2xl">{c.icon}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h6 className="font-bold text-slate-900 text-sm tracking-tight truncate">{ev.title}</h6>
+                                                <p className="text-[11px] font-bold mt-0.5" style={{ color: c.color }}>{ev.category}</p>
+                                                {ev.description && <p className="text-slate-500 text-[11px] font-medium mt-0.5 line-clamp-1">{ev.description}</p>}
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{eventDayLabel(ev.date)}</span>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>
