@@ -49,7 +49,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${ADMIN_API_BASE}/calendar/upcoming?schoolId=${schoolId}&limit=5`)
+        axios.get(`${ADMIN_API_BASE}/calendar/upcoming?schoolId=${schoolId}&limit=5&_=${Date.now()}`)
             .then((res) => setUpcoming(Array.isArray(res.data) ? res.data : []))
             .catch((e) => console.error('Upcoming events fetch failed', e));
     }, [schoolId]);

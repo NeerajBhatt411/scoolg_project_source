@@ -43,7 +43,8 @@ const Calendar = () => {
         if (!schoolId) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${ADMIN_API_BASE}/calendar?schoolId=${schoolId}&year=${year}`);
+            // _ cache-buster so a freshly added/deleted event is never served stale.
+            const res = await axios.get(`${ADMIN_API_BASE}/calendar?schoolId=${schoolId}&year=${year}&_=${Date.now()}`);
             setEvents(Array.isArray(res.data) ? res.data : []);
         } catch (e) {
             console.error('Calendar load failed', e);
@@ -83,15 +84,20 @@ const Calendar = () => {
         if (!selectedDate) { setError('Please pick a day.'); return; }
         setSaving(true); setError('');
         try {
-            await axios.post(`${ADMIN_API_BASE}/calendar`, {
+            const res = await axios.post(`${ADMIN_API_BASE}/calendar`, {
                 schoolId,
                 title: form.title.trim(),
                 category: form.category,
                 date: selectedDate,
                 description: form.description.trim(),
             });
+            // Optimistic: drop the saved event straight into state so it shows
+            // immediately (and reliably) — then refresh from the server.
+            if (res.data && res.data._id) {
+                setEvents((prev) => [...prev.filter((e) => e._id !== res.data._id), res.data]);
+            }
             setForm({ title: '', category: 'Event', description: '' });
-            await load();
+            load();
         } catch (e) {
             setError(e.response?.data?.error || 'Could not add event.');
         } finally {
@@ -205,12 +211,17 @@ const Calendar = () => {
                 <div onClick={closeModal} className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
                     <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-3xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
                         {/* header */}
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-                            <h3 className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
-                                <span className="material-symbols-outlined text-blue-600">calendar_month</span>
-                                {MONTHS[openMonth]} {year}
-                            </h3>
-                            <button onClick={closeModal} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600 transition-colors">
+                        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-blue-600">calendar_month</span>
+                                    {MONTHS[openMonth]} {year}
+                                </h3>
+                                <p className="text-[12.5px] font-semibold text-slate-500 mt-1 ml-0.5">
+                                    <span className="text-blue-600 font-bold">1.</span> Tap a day &nbsp;·&nbsp; <span className="text-blue-600 font-bold">2.</span> Fill the event &nbsp;·&nbsp; <span className="text-blue-600 font-bold">3.</span> Schedule
+                                </p>
+                            </div>
+                            <button onClick={closeModal} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600 transition-colors shrink-0">
                                 <span className="material-symbols-outlined text-[20px]">close</span>
                             </button>
                         </div>
@@ -253,7 +264,13 @@ const Calendar = () => {
                             <div className="p-6 bg-slate-50/50 space-y-4">
                                 {selectedDate ? (
                                     <>
-                                        <p className="text-[13px] font-black text-slate-900">{prettyDate(selectedDate)}</p>
+                                        <div className="flex items-center gap-2.5 bg-blue-50 border border-blue-100 rounded-2xl px-3.5 py-2.5">
+                                            <span className="material-symbols-outlined text-blue-600">event</span>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-wider text-blue-600">Selected day</p>
+                                                <p className="text-[14px] font-black text-slate-900 leading-tight">{prettyDate(selectedDate)}</p>
+                                            </div>
+                                        </div>
 
                                         {/* existing events */}
                                         <div className="space-y-2">
