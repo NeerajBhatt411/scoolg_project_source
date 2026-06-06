@@ -47,8 +47,11 @@ const TeacherProfile = () => {
     }, [teacher?._id]);
 
     const diaryClassObj = classesList.find(c => c.className === diaryForm.className);
-    const diarySubjects = diaryClassObj?.subjects || [];
     const diarySections = diaryClassObj ? sectionsList.filter(s => String(s.classId?._id || s.classId) === String(diaryClassObj._id)) : [];
+    // Subjects = this class's subjects + the teacher's own subjects/specialization.
+    const teacherSubjectNames = (teacher.subjects || []).map(s => (typeof s === 'string' ? s : s?.subjectName)).filter(Boolean);
+    const specSubjects = (teacher.specialization || '').split(/[,&/]|\band\b/i).map(s => s.trim()).filter(Boolean);
+    const diarySubjects = [...new Set([...(diaryClassObj?.subjects || []), ...teacherSubjectNames, ...specSubjects])];
     const addDiary = async () => {
         if (!diaryForm.className || !diaryForm.note.trim()) { alert('Class and note are required.'); return; }
         setSavingDiary(true);
