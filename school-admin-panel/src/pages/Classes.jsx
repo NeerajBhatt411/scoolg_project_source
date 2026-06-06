@@ -123,10 +123,29 @@ const Classes = () => {
                     </button>
                 </div>
 
-                {/* Loading State */}
+                {/* Loading State — shimmer cards */}
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="w-10 h-10 border-4 border-blue-200 border-t-[#2563eb] rounded-full animate-spin"></div>
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-white rounded-[24px] p-6 premium-shadow">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="flex gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-100 animate-pulse shrink-0"></div>
+                                        <div className="flex flex-col justify-center gap-2">
+                                            <div className="h-5 w-32 bg-slate-100 rounded-lg animate-pulse"></div>
+                                            <div className="h-3 w-44 bg-slate-100 rounded-lg animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>
+                                </div>
+                                <div className="h-[1px] w-full bg-slate-100 my-4"></div>
+                                <div className="flex flex-wrap gap-2">
+                                    <div className="h-6 w-16 bg-slate-100 rounded-lg animate-pulse"></div>
+                                    <div className="h-6 w-20 bg-slate-100 rounded-lg animate-pulse"></div>
+                                    <div className="h-6 w-14 bg-slate-100 rounded-lg animate-pulse"></div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : classes.length === 0 ? (
                     <div className="bg-white rounded-[24px] p-10 text-center text-slate-500 premium-shadow">

@@ -224,9 +224,21 @@ const Attendance = () => {
                     </div>
 
                     {loading ? (
-                        <div className="py-32 text-center flex flex-col items-center gap-4">
-                            <div className="w-12 h-12 border-4 border-[#2563eb] border-t-transparent rounded-full animate-spin"></div>
-                            <span className="text-[12px] font-black text-slate-900 uppercase tracking-widest">Fetching records...</span>
+                        <div className="divide-y divide-slate-200">
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <div key={i} className="px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center">
+                                    <div className="h-4 w-6 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="h-4 w-32 bg-slate-100 rounded animate-pulse"></div>
+                                            <div className="h-2.5 w-20 bg-slate-100 rounded animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div className="h-7 w-24 bg-slate-100 rounded-lg animate-pulse"></div>
+                                    <div className="h-9 w-full bg-slate-100 rounded-lg animate-pulse"></div>
+                                </div>
+                            ))}
                         </div>
                     ) : students.length === 0 ? (
                         <div className="py-32 text-center text-slate-500 font-black text-sm uppercase tracking-widest">
