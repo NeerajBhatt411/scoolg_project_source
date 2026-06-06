@@ -142,6 +142,7 @@ const Homework = () => {
     const handleSave = async () => {
         if (!form.title.trim()) return alert('Title is required');
         if (!selectedClassObj) return alert('Please select a class');
+        if (!form.dueDate) return alert('Due date is required');
         setIsSaving(true);
         try {
             const payload = {
@@ -349,17 +350,17 @@ const Homework = () => {
                                 </div>
                                 <div className="flex flex-col">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Subject</label>
-                                    <input
-                                        type="text"
-                                        list="hwSubjects"
+                                    <select
                                         value={form.subject}
                                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                                        placeholder="e.g. Math"
                                         className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
-                                    />
-                                    <datalist id="hwSubjects">
-                                        {selectedClassObj?.subjects?.map(s => <option key={s} value={s} />)}
-                                    </datalist>
+                                    >
+                                        <option value="">Select subject</option>
+                                        {(selectedClassObj?.subjects || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                    {selectedClassObj && (selectedClassObj.subjects || []).length === 0 && (
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 ml-1">No subjects in this class — add them in Classes → Manage Class.</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -385,9 +386,10 @@ const Homework = () => {
                             </div>
 
                             <div className="flex flex-col">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Due Date</label>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Due Date <span className="text-red-500">*</span></label>
                                 <input
                                     type="date"
+                                    required
                                     value={form.dueDate}
                                     onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
                                     className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
