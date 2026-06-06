@@ -1030,6 +1030,32 @@ app.get('/api/admin/sections', async (req, res) => {
     }
 });
 
+// Delete a section.
+app.delete('/api/admin/sections/:id', async (req, res) => {
+    try {
+        const deleted = await Section.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: "Section not found" });
+        res.json({ message: "Section deleted" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to delete section" });
+    }
+});
+
+// Update a class (subjects / name / order).
+app.patch('/api/admin/classes/:id', async (req, res) => {
+    try {
+        const update = {};
+        if (req.body.subjects !== undefined) update.subjects = req.body.subjects;
+        if (req.body.className !== undefined) update.className = req.body.className;
+        if (req.body.order !== undefined) update.order = req.body.order;
+        const cls = await ClassModel.findByIdAndUpdate(req.params.id, update, { new: true });
+        if (!cls) return res.status(404).json({ error: "Class not found" });
+        res.json(cls);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update class", details: err.message });
+    }
+});
+
 // --- Subjects API ---
 app.post('/api/admin/subjects', async (req, res) => {
     try {
