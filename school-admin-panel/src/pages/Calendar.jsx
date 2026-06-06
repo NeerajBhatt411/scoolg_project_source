@@ -71,7 +71,6 @@ const Calendar = () => {
     const openMonthModal = (mIdx) => {
         setOpenMonth(mIdx);
         setError('');
-        // preselect today if it's in this month/year, else first day
         const now = new Date();
         if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
         else setSelectedDate(dateStr(year, mIdx, 1));
@@ -115,13 +114,13 @@ const Calendar = () => {
     };
 
     const totalEvents = events.length;
+    const selectedDayEvents = (selectedDate && byDate[selectedDate]) || [];
 
     return (
         <>
             {/* Top bar */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
                 <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight w-full md:w-auto">School Calendar</h2>
-                {/* Year selector */}
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm">
                     <button onClick={() => setYear((y) => y - 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chevron_left</span>
@@ -206,149 +205,156 @@ const Calendar = () => {
                 </div>
             </div>
 
-            {/* Month modal */}
+            {/* Add-event modal — clean vertical form */}
             {openMonth !== null && (
                 <div onClick={closeModal} className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-                    <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-3xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
+                    <div onClick={(e) => e.stopPropagation()} className="bg-white w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl max-h-[94vh] flex flex-col overflow-hidden">
                         {/* header */}
-                        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
                             <div>
-                                <h3 className="font-black text-slate-900 text-xl tracking-tight flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-blue-600">calendar_month</span>
-                                    {MONTHS[openMonth]} {year}
-                                </h3>
-                                <p className="text-[12.5px] font-semibold text-slate-500 mt-1 ml-0.5">
-                                    <span className="text-blue-600 font-bold">1.</span> Tap a day &nbsp;·&nbsp; <span className="text-blue-600 font-bold">2.</span> Fill the event &nbsp;·&nbsp; <span className="text-blue-600 font-bold">3.</span> Schedule
-                                </p>
+                                <h3 className="font-black text-slate-900 text-xl tracking-tight">Add an event</h3>
+                                <p className="text-[13px] font-bold text-blue-600 mt-0.5">{MONTHS[openMonth]} {year}</p>
                             </div>
                             <button onClick={closeModal} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 grid place-items-center text-slate-600 transition-colors shrink-0">
                                 <span className="material-symbols-outlined text-[20px]">close</span>
                             </button>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-0 overflow-y-auto">
-                            {/* day grid */}
-                            <div className="p-6 md:border-r border-slate-100">
-                                <div className="grid grid-cols-7 gap-1 mb-2">
-                                    {WEEKDAYS.map((w, i) => <div key={i} className="text-center text-[11px] font-black text-slate-400">{w}</div>)}
+                        {/* scrollable form body */}
+                        <div className="overflow-y-auto px-6 py-5 space-y-6">
+                            {/* 1. Title */}
+                            <div>
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                    <span className="text-blue-600">1.</span> Event name
+                                </label>
+                                <input
+                                    value={form.title}
+                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                    placeholder="e.g. Annual Function, Diwali Holiday"
+                                    className="w-full h-12 px-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[15px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
+                                />
+                            </div>
+
+                            {/* 2. Date */}
+                            <div>
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                    <span className="text-blue-600">2.</span> Which day?
+                                </label>
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                                    <div className="grid grid-cols-7 gap-1 mb-1">
+                                        {WEEKDAYS.map((w, i) => <div key={i} className="text-center text-[11px] font-black text-slate-400">{w}</div>)}
+                                    </div>
+                                    <div className="grid grid-cols-7 gap-1">
+                                        {Array.from({ length: firstWeekday(year, openMonth) }).map((_, i) => <div key={`b${i}`} />)}
+                                        {Array.from({ length: daysInMonth(year, openMonth) }).map((_, i) => {
+                                            const day = i + 1;
+                                            const ds = dateStr(year, openMonth, day);
+                                            const dayEvents = byDate[ds] || [];
+                                            const isSel = selectedDate === ds;
+                                            const isToday = ds === todayStr();
+                                            return (
+                                                <button
+                                                    key={day}
+                                                    onClick={() => { setSelectedDate(ds); setError(''); }}
+                                                    className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 text-[13px] font-bold transition-all ${isSel ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
+                                                >
+                                                    <span className="tabular-nums">{day}</span>
+                                                    {dayEvents.length > 0 && (
+                                                        <span className="flex gap-0.5">
+                                                            {dayEvents.slice(0, 3).map((ev, k) => (
+                                                                <span key={k} className="w-1 h-1 rounded-full" style={{ background: isSel ? '#fff' : catOf(ev.category).color }}></span>
+                                                            ))}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-7 gap-1">
-                                    {Array.from({ length: firstWeekday(year, openMonth) }).map((_, i) => <div key={`b${i}`} />)}
-                                    {Array.from({ length: daysInMonth(year, openMonth) }).map((_, i) => {
-                                        const day = i + 1;
-                                        const ds = dateStr(year, openMonth, day);
-                                        const dayEvents = byDate[ds] || [];
-                                        const isSel = selectedDate === ds;
-                                        const isToday = ds === todayStr();
+                                {selectedDate && (
+                                    <p className="text-[12.5px] font-bold text-slate-600 mt-2 flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-[16px] text-blue-600">event_available</span>
+                                        {prettyDate(selectedDate)}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* 3. Category */}
+                            <div>
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                    <span className="text-blue-600">3.</span> Type of event
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {CATEGORIES.map((c) => {
+                                        const active = form.category === c.key;
                                         return (
                                             <button
-                                                key={day}
-                                                onClick={() => { setSelectedDate(ds); setError(''); }}
-                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 text-[13px] font-bold transition-all relative ${isSel ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : isToday ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100 text-slate-700'}`}
+                                                key={c.key}
+                                                onClick={() => setForm({ ...form, category: c.key })}
+                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[12.5px] font-bold transition-all ${active ? 'border-transparent text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                                                style={active ? { background: c.color } : {}}
                                             >
-                                                <span className="tabular-nums">{day}</span>
-                                                {dayEvents.length > 0 && (
-                                                    <span className="flex gap-0.5">
-                                                        {dayEvents.slice(0, 3).map((ev, k) => (
-                                                            <span key={k} className="w-1.5 h-1.5 rounded-full" style={{ background: isSel ? '#fff' : catOf(ev.category).color }}></span>
-                                                        ))}
-                                                    </span>
-                                                )}
+                                                <span className="material-symbols-outlined text-[18px]" style={active ? {} : { color: c.color }}>{c.icon}</span>
+                                                <span className="truncate">{c.key}</span>
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* selected day panel */}
-                            <div className="p-6 bg-slate-50/50 space-y-4">
-                                {selectedDate ? (
-                                    <>
-                                        <div className="flex items-center gap-2.5 bg-blue-50 border border-blue-100 rounded-2xl px-3.5 py-2.5">
-                                            <span className="material-symbols-outlined text-blue-600">event</span>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-wider text-blue-600">Selected day</p>
-                                                <p className="text-[14px] font-black text-slate-900 leading-tight">{prettyDate(selectedDate)}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* existing events */}
-                                        <div className="space-y-2">
-                                            {(byDate[selectedDate] || []).map((ev) => {
-                                                const c = catOf(ev.category);
-                                                return (
-                                                    <div key={ev._id} className="flex items-start gap-3 bg-white rounded-2xl p-3 border border-slate-100">
-                                                        <div className="w-9 h-9 rounded-xl grid place-items-center shrink-0" style={{ background: c.bg, color: c.color }}>
-                                                            <span className="material-symbols-outlined text-[18px]">{c.icon}</span>
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-slate-900 text-[14px] leading-tight">{ev.title}</p>
-                                                            <p className="text-[11px] font-bold mt-0.5" style={{ color: c.color }}>{ev.category}</p>
-                                                            {ev.description && <p className="text-[12px] text-slate-500 mt-1 leading-snug">{ev.description}</p>}
-                                                        </div>
-                                                        <button onClick={() => deleteEvent(ev._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0">
-                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                            {(byDate[selectedDate] || []).length === 0 && (
-                                                <p className="text-[12px] text-slate-400 font-semibold py-1">No events yet on this day.</p>
-                                            )}
-                                        </div>
-
-                                        {/* add form */}
-                                        <div className="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
-                                            <p className="text-[12px] font-black text-slate-400 uppercase tracking-wider">Add new event</p>
-                                            <input
-                                                value={form.title}
-                                                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                                placeholder="Event title (e.g. Annual Day)"
-                                                className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
-                                            />
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {CATEGORIES.map((c) => {
-                                                    const active = form.category === c.key;
-                                                    return (
-                                                        <button
-                                                            key={c.key}
-                                                            onClick={() => setForm({ ...form, category: c.key })}
-                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11.5px] font-bold border transition-all"
-                                                            style={active
-                                                                ? { background: c.color, color: '#fff', borderColor: c.color }
-                                                                : { background: c.bg, color: c.color, borderColor: 'transparent' }}
-                                                        >
-                                                            <span className="material-symbols-outlined text-[15px]">{c.icon}</span>{c.key}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                            <textarea
-                                                value={form.description}
-                                                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                                placeholder="Description (optional)"
-                                                className="w-full h-20 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[13px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
-                                            />
-                                            {error && <p className="text-[12px] font-bold text-rose-600 bg-rose-50 rounded-lg px-3 py-2">{error}</p>}
-                                            <button
-                                                onClick={addEvent}
-                                                disabled={saving}
-                                                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[14px] inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
-                                            >
-                                                <span className="material-symbols-outlined text-[19px]">add_circle</span>
-                                                {saving ? 'Scheduling…' : 'Schedule event'}
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="h-full grid place-items-center text-center text-slate-400 py-10">
-                                        <div>
-                                            <span className="material-symbols-outlined text-4xl opacity-40">touch_app</span>
-                                            <p className="text-[13px] font-bold mt-2">Pick a day to add an event</p>
-                                        </div>
-                                    </div>
-                                )}
+                            {/* Description */}
+                            <div>
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                    Description <span className="text-slate-400">(optional)</span>
+                                </label>
+                                <textarea
+                                    value={form.description}
+                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                    placeholder="Add a note for this event…"
+                                    className="w-full h-20 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
+                                />
                             </div>
+
+                            {error && <p className="text-[13px] font-bold text-rose-600 bg-rose-50 rounded-xl px-3.5 py-2.5">{error}</p>}
+
+                            {/* already scheduled on this day */}
+                            {selectedDayEvents.length > 0 && (
+                                <div>
+                                    <p className="text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">Already on this day</p>
+                                    <div className="space-y-2">
+                                        {selectedDayEvents.map((ev) => {
+                                            const c = catOf(ev.category);
+                                            return (
+                                                <div key={ev._id} className="flex items-start gap-3 bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                                                    <div className="w-9 h-9 rounded-xl grid place-items-center shrink-0" style={{ background: c.bg, color: c.color }}>
+                                                        <span className="material-symbols-outlined text-[18px]">{c.icon}</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-slate-900 text-[14px] leading-tight">{ev.title}</p>
+                                                        <p className="text-[11px] font-bold mt-0.5" style={{ color: c.color }}>{ev.category}</p>
+                                                        {ev.description && <p className="text-[12px] text-slate-500 mt-1 leading-snug">{ev.description}</p>}
+                                                    </div>
+                                                    <button onClick={() => deleteEvent(ev._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0">
+                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* sticky footer action */}
+                        <div className="px-6 py-4 border-t border-slate-100 shrink-0">
+                            <button
+                                onClick={addEvent}
+                                disabled={saving}
+                                className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-lg shadow-blue-600/25"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                                {saving ? 'Scheduling…' : 'Schedule event'}
+                            </button>
                         </div>
                     </div>
                 </div>
