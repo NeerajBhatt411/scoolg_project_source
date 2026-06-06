@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -315,38 +315,60 @@ const Timetable = () => {
         }
     };
 
+    // Build display rows for export: period rows + lunch-break rows (gap >= 20 min).
+    const buildTimetableRows = (schedule) => {
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayMap = {};
+        (schedule || []).forEach(d => { dayMap[d.dayOfWeek] = d.periods || []; });
+        const useDays = days.filter(d => (dayMap[d] || []).length);
+        const periodNums = [...new Set((schedule || []).flatMap(d => (d.periods || []).map(p => p.periodNumber)))].sort((a, b) => a - b);
+        const startBy = {}, endBy = {};
+        (schedule || []).forEach(d => (d.periods || []).forEach(p => {
+            if (startBy[p.periodNumber] === undefined) { startBy[p.periodNumber] = p.startTime || ''; endBy[p.periodNumber] = p.endTime || ''; }
+        }));
+        const rows = [];
+        periodNums.forEach((pn, i) => {
+            if (i > 0) {
+                const gap = getTimeGap(endBy[periodNums[i - 1]], startBy[pn]);
+                if (gap >= 20) rows.push({ type: 'lunch', mins: gap });
+            }
+            const time = `${startBy[pn] || ''}${endBy[pn] ? ' - ' + endBy[pn] : ''}`;
+            const cells = useDays.map(day => {
+                const p = (dayMap[day] || []).find(x => x.periodNumber === pn);
+                return p && p.subject ? { subject: p.subject, teacher: p.teacherName || '' } : null;
+            });
+            rows.push({ type: 'period', pn, time, cells });
+        });
+        return { useDays: useDays.length ? useDays : days, rows };
+    };
+
     // Download the current class-section timetable as a print-to-PDF document.
     const downloadPDF = () => {
         if (!timetable?.schedule?.length) return;
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayMap = {};
-        timetable.schedule.forEach(d => { dayMap[d.dayOfWeek] = d.periods || []; });
-        const presentDays = days.filter(d => (dayMap[d] || []).length);
-        const periodNums = [...new Set(timetable.schedule.flatMap(d => (d.periods || []).map(p => p.periodNumber)))].sort((a, b) => a - b);
-        const timeByPeriod = {};
-        timetable.schedule.forEach(d => (d.periods || []).forEach(p => {
-            if (!timeByPeriod[p.periodNumber]) timeByPeriod[p.periodNumber] = `${p.startTime || ''}${p.endTime ? ' - ' + p.endTime : ''}`;
-        }));
-        const cell = (day, pn) => {
-            const p = (dayMap[day] || []).find(x => x.periodNumber === pn);
-            return p && p.subject ? `<div class="subj">${p.subject}</div><div class="tch">${p.teacherName || ''}</div>` : '<span class="free">—</span>';
-        };
+        const { useDays, rows } = buildTimetableRows(timetable.schedule);
         const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
         const title = `Timetable · Class ${selectedClassObj?.className || ''}-${selectedSectionObj?.sectionName || ''}`;
-        const rows = periodNums.map(pn =>
-            `<tr><td class="ph"><b>P${pn}</b><div class="tm">${timeByPeriod[pn] || ''}</div></td>${presentDays.map(d => `<td>${cell(d, pn)}</td>`).join('')}</tr>`
-        ).join('');
+        const body = rows.map(row => {
+            if (row.type === 'lunch') {
+                return `<tr><td class="lunch" colspan="${useDays.length + 1}">🍴 LUNCH BREAK · ${row.mins} mins</td></tr>`;
+            }
+            const tds = row.cells.map(c => c
+                ? `<td><div class="subj">${c.subject}</div>${c.teacher ? `<div class="tch">${c.teacher}</div>` : ''}</td>`
+                : `<td><span class="free">—</span></td>`).join('');
+            return `<tr><td class="ph"><b>P${row.pn}</b><div class="tm">${row.time}</div></td>${tds}</tr>`;
+        }).join('');
         const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>
             body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;}
-            h1{font-size:20px;margin:0;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;}
-            table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:8px;font-size:12px;text-align:center;vertical-align:middle;}
-            th{background:#eff6ff;color:#1d4ed8;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
-            .ph{background:#f8fafc;font-weight:700;white-space:nowrap;} .tm{font-size:10px;color:#64748b;font-weight:600;}
+            h1{font-size:20px;margin:0;color:#1d4ed8;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;font-weight:600;}
+            table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:9px;font-size:12px;text-align:center;vertical-align:middle;}
+            th{background:#2563eb;color:#fff;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+            .ph{background:#f8fafc;font-weight:700;white-space:nowrap;color:#1d4ed8;} .tm{font-size:10px;color:#64748b;font-weight:600;}
             .subj{font-weight:700;} .tch{font-size:10px;color:#64748b;} .free{color:#cbd5e1;}
+            .lunch{background:#fff7ed;color:#b45309;font-weight:800;letter-spacing:.15em;font-size:11px;}
             @media print{body{padding:0;} @page{size:landscape;}}
         </style></head><body>
             <h1>${schoolName}</h1><div class="sub">${title}</div>
-            <table><thead><tr><th>Period</th>${presentDays.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+            <table><thead><tr><th>Period</th>${useDays.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
             <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>
         </body></html>`;
         const w = window.open('', '_blank');
@@ -355,40 +377,87 @@ const Timetable = () => {
         w.document.close();
     };
 
-    // Export ALL class-section timetables to an Excel workbook (one sheet each).
+    // Export ALL class-section timetables to a styled Excel workbook (one sheet each).
     const downloadExcel = async () => {
         try {
             const res = await axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`);
             const list = Array.isArray(res.data) ? res.data : [];
             if (!list.length) { alert('No timetables to export yet.'); return; }
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const wb = XLSX.utils.book_new();
-            list.forEach((tt) => {
-                const dayMap = {};
-                (tt.schedule || []).forEach(d => { dayMap[d.dayOfWeek] = d.periods || []; });
-                const presentDays = days.filter(d => (dayMap[d] || []).length);
-                const useDays = presentDays.length ? presentDays : days;
-                const periodNums = [...new Set((tt.schedule || []).flatMap(d => (d.periods || []).map(p => p.periodNumber)))].sort((a, b) => a - b);
-                const timeByPeriod = {};
-                (tt.schedule || []).forEach(d => (d.periods || []).forEach(p => {
-                    if (!timeByPeriod[p.periodNumber]) timeByPeriod[p.periodNumber] = `${p.startTime || ''}${p.endTime ? '-' + p.endTime : ''}`;
-                }));
-                const header = ['Period', ...useDays];
-                const rows = periodNums.map((pn) => {
-                    const r = [`P${pn}${timeByPeriod[pn] ? ` (${timeByPeriod[pn]})` : ''}`];
-                    useDays.forEach((d) => {
-                        const p = (dayMap[d] || []).find(x => x.periodNumber === pn);
-                        r.push(p && p.subject ? `${p.subject}${p.teacherName ? ` — ${p.teacherName}` : ''}` : '');
-                    });
-                    return r;
-                });
-                const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-                ws['!cols'] = header.map((_, i) => ({ wch: i === 0 ? 16 : 22 }));
-                const name = `${tt.className}-${tt.sectionName}`.replace(/[\\/?*[\]:]/g, '').substring(0, 31) || 'Sheet';
-                XLSX.utils.book_append_sheet(wb, ws, name);
-            });
             const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
-            XLSX.writeFile(wb, `Timetable_${schoolName.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+            const wb = new ExcelJS.Workbook();
+            const border = {
+                top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            };
+            list.forEach((tt) => {
+                const { useDays, rows } = buildTimetableRows(tt.schedule);
+                const colCount = useDays.length + 1;
+                const sheetName = `${tt.className}-${tt.sectionName}`.replace(/[\\/?*[\]:]/g, '').substring(0, 31) || 'Sheet';
+                const ws = wb.addWorksheet(sheetName, { views: [{ state: 'frozen', ySplit: 2 }] });
+
+                ws.mergeCells(1, 1, 1, colCount);
+                const t = ws.getCell(1, 1);
+                t.value = `${schoolName}   ·   Class ${tt.className}-${tt.sectionName}`;
+                t.font = { bold: true, size: 14, color: { argb: 'FF0F172A' } };
+                t.alignment = { vertical: 'middle', horizontal: 'left' };
+                ws.getRow(1).height = 26;
+
+                const header = ['Period', ...useDays];
+                const hr = ws.getRow(2);
+                header.forEach((h, i) => {
+                    const c = hr.getCell(i + 1);
+                    c.value = h;
+                    c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+                    c.alignment = { vertical: 'middle', horizontal: 'center' };
+                    c.border = border;
+                });
+                hr.height = 20;
+
+                let r = 3;
+                rows.forEach((row) => {
+                    if (row.type === 'lunch') {
+                        ws.mergeCells(r, 1, r, colCount);
+                        const c = ws.getCell(r, 1);
+                        c.value = `LUNCH BREAK  —  ${row.mins} mins`;
+                        c.font = { bold: true, color: { argb: 'FFB45309' } };
+                        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF7ED' } };
+                        c.alignment = { vertical: 'middle', horizontal: 'center' };
+                        for (let i = 1; i <= colCount; i++) ws.getCell(r, i).border = border;
+                        ws.getRow(r).height = 18;
+                    } else {
+                        const pc = ws.getCell(r, 1);
+                        pc.value = `P${row.pn}${row.time ? `\n${row.time}` : ''}`;
+                        pc.font = { bold: true, color: { argb: 'FF1D4ED8' } };
+                        pc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                        pc.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                        pc.border = border;
+                        row.cells.forEach((cell, i) => {
+                            const c = ws.getCell(r, i + 2);
+                            c.value = cell ? `${cell.subject}${cell.teacher ? `\n${cell.teacher}` : ''}` : '—';
+                            c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                            c.font = cell ? { color: { argb: 'FF0F172A' }, bold: true, size: 10 } : { color: { argb: 'FFCBD5E1' } };
+                            c.border = border;
+                        });
+                        ws.getRow(r).height = 32;
+                    }
+                    r++;
+                });
+
+                ws.getColumn(1).width = 16;
+                for (let i = 2; i <= colCount; i++) ws.getColumn(i).width = 22;
+            });
+
+            const buf = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Timetable_${schoolName.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
         } catch (e) {
             console.error('Excel export failed', e);
             alert('Failed to export Excel.');
