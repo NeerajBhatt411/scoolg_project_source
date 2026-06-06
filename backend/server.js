@@ -1241,6 +1241,56 @@ app.get('/api/admin/teachers', async (req, res) => {
     }
 });
 
+// Update a teacher document (admin edit).
+app.patch('/api/admin/teachers/:id', async (req, res) => {
+    try {
+        const allowed = ['fullName', 'gender', 'email', 'phone', 'highestQualification',
+            'specialization', 'experienceYears', 'residentialAddress', 'description',
+            'status', 'profileImageUrl', 'dateOfBirth', 'dateOfJoining'];
+        const update = {};
+        for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
+        const teacher = await Teacher.findByIdAndUpdate(req.params.id, update, { new: true }).populate('subjects');
+        if (!teacher) return res.status(404).json({ error: "Teacher not found" });
+        res.json(teacher);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update teacher", details: err.message });
+    }
+});
+
+// A teacher's weekly schedule (derived from timetables) + the sections they're class-teacher of.
+app.get('/api/admin/teachers/:id/schedule', async (req, res) => {
+    try {
+        const teacher = await Teacher.findById(req.params.id);
+        if (!teacher) return res.status(404).json({ error: "Teacher not found" });
+        const tid = teacher._id.toString();
+
+        const timetables = await Timetable.find({ schoolId: teacher.schoolId });
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const byDay = {};
+        days.forEach(d => { byDay[d] = []; });
+        for (const tt of timetables) {
+            for (const day of tt.schedule || []) {
+                for (const p of day.periods || []) {
+                    if (p.teacherId && p.teacherId.toString() === tid) {
+                        byDay[day.dayOfWeek]?.push({
+                            periodNumber: p.periodNumber, startTime: p.startTime, endTime: p.endTime,
+                            subject: p.subject, className: tt.className, sectionName: tt.sectionName
+                        });
+                    }
+                }
+            }
+        }
+        days.forEach(d => byDay[d].sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0)));
+
+        const sections = await Section.find({ classTeacherId: teacher._id }).populate('classId');
+        const classTeacherOf = sections.map(s => ({ className: s.classId?.className, sectionName: s.sectionName }));
+
+        res.json({ schedule: days.map(d => ({ dayOfWeek: d, periods: byDay[d] })), classTeacherOf });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch teacher schedule", details: err.message });
+    }
+});
+
 // --- Students API ---
 
 

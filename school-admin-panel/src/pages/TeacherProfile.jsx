@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ADMIN_API_BASE } from '../lib/api';
 
 const TeacherProfile = () => {
     const location = useLocation();
@@ -15,6 +16,15 @@ const TeacherProfile = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [activeTab, setActiveTab] = useState('Personal');
+    const [schedule, setSchedule] = useState(null);
+    const [classTeacherOf, setClassTeacherOf] = useState([]);
+
+    useEffect(() => {
+        if (!teacher?._id) return;
+        axios.get(`${ADMIN_API_BASE}/teachers/${teacher._id}/schedule`)
+            .then((res) => { setSchedule(res.data?.schedule || []); setClassTeacherOf(res.data?.classTeacherOf || []); })
+            .catch(() => setSchedule([]));
+    }, [teacher?._id]);
 
     if (!teacher) {
         return (
@@ -30,22 +40,27 @@ const TeacherProfile = () => {
     const handleStatusChange = async () => {
         const newStatus = isFrozen ? 'Active' : 'Inactive';
         if (!window.confirm(`Are you sure you want to mark this teacher as ${newStatus}?`)) return;
-
-        // Since update API is not fully implemented in backend, we simulate it
-        setTeacher({ ...teacher, status: newStatus });
-        setEditData({ ...editData, status: newStatus });
-        alert(`Simulated: Status changed to ${newStatus}`);
+        try {
+            const res = await axios.patch(`${ADMIN_API_BASE}/teachers/${teacher._id}`, { status: newStatus });
+            setTeacher(res.data);
+            setEditData(res.data);
+        } catch (e) {
+            alert(e.response?.data?.error || 'Failed to update status');
+        }
     };
 
     const handleSaveEdit = async () => {
         setIsSaving(true);
-        // Simulate save delay
-        setTimeout(() => {
-            setTeacher(editData);
+        try {
+            const res = await axios.patch(`${ADMIN_API_BASE}/teachers/${teacher._id}`, editData);
+            setTeacher(res.data);
+            setEditData(res.data);
             setIsEditing(false);
+        } catch (e) {
+            alert(e.response?.data?.error || 'Failed to update teacher');
+        } finally {
             setIsSaving(false);
-            alert("Simulated: Profile Updated Successfully");
-        }, 1000);
+        }
     };
 
     const handleInputChange = (e) => {
@@ -105,6 +120,12 @@ const TeacherProfile = () => {
                             <span className="material-symbols-outlined text-[18px]">badge</span>
                             App ID: <span className="font-mono text-slate-700">{teacher.teacherAppId}</span>
                         </div>
+                        {classTeacherOf.length > 0 && (
+                            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 mt-2">
+                                <span className="material-symbols-outlined text-[18px]">supervisor_account</span>
+                                Class Teacher of: <span className="text-blue-700 font-bold">{classTeacherOf.map(c => `${c.className || '?'}-${c.sectionName}`).join(', ')}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -209,6 +230,14 @@ const TeacherProfile = () => {
                                                 <span className="font-medium text-slate-600 px-2 py-1">{teacher.residentialAddress}</span>
                                             )}
                                         </div>
+                                        <div className="sm:col-span-2">
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Description <span className="text-slate-300 normal-case tracking-normal">(optional)</span></span>
+                                            {isEditing ? (
+                                                <textarea name="description" value={editData.description || ''} onChange={handleInputChange} rows="3" placeholder="Short bio / notes about this teacher" className="w-full border-b-2 border-blue-500 bg-blue-50/50 outline-none px-2 py-1 font-medium text-slate-800 resize-none" />
+                                            ) : (
+                                                <span className="font-medium text-slate-600 px-2 py-1">{teacher.description || 'Not Provided'}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -273,12 +302,45 @@ const TeacherProfile = () => {
                             </div>
                         )}
 
-                        {/* Stubs for empty sections */}
-                        {(activeTab === 'Schedule') && (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-400 animate-fade-in">
-                                <span className="material-symbols-outlined text-6xl mb-4 text-slate-200">event_available</span>
-                                <h3 className="text-lg font-bold text-slate-600 mb-1">No Schedule Assigned</h3>
-                                <p className="text-sm text-slate-400">This faculty member has no active classes mapped.</p>
+                        {/* Weekly schedule (derived from timetables) */}
+                        {activeTab === 'Schedule' && (
+                            <div className="animate-fade-in">
+                                <h3 className="flex items-center gap-2 text-lg font-extrabold text-slate-800 mb-6">
+                                    <span className="material-symbols-outlined text-blue-600">calendar_month</span>
+                                    Weekly Schedule
+                                </h3>
+                                {schedule === null ? (
+                                    <div className="space-y-3">{[0, 1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-2xl animate-pulse"></div>)}</div>
+                                ) : schedule.every(d => d.periods.length === 0) ? (
+                                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                                        <span className="material-symbols-outlined text-6xl mb-4 text-slate-200">event_available</span>
+                                        <h3 className="text-lg font-bold text-slate-600 mb-1">No Schedule Assigned</h3>
+                                        <p className="text-sm text-slate-400">This teacher isn't mapped to any timetable periods yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {schedule.filter(d => d.periods.length > 0).map(d => (
+                                            <div key={d.dayOfWeek}>
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">{d.dayOfWeek}</p>
+                                                <div className="space-y-2">
+                                                    {d.periods.map((p, i) => (
+                                                        <div key={i} className="flex items-center gap-4 p-3 rounded-2xl border border-slate-100 bg-slate-50/60">
+                                                            <div className="text-center w-16 shrink-0">
+                                                                <p className="text-xs font-black text-blue-600">{p.startTime || '--'}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400">Period {p.periodNumber}</p>
+                                                            </div>
+                                                            <div className="w-px h-9 bg-slate-200"></div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-bold text-slate-800 text-sm">{p.subject || '—'}</p>
+                                                                <p className="text-xs font-semibold text-slate-500">Class {p.className}-{p.sectionName}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

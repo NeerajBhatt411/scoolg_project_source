@@ -16,6 +16,7 @@ const TeacherSchema = new mongoose.Schema({
     experienceYears: { type: Number },
     dateOfJoining: { type: Date },
     residentialAddress: { type: String },
+    description: { type: String, default: '' }, // Optional short bio / notes
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }], // Subjects they can teach
     status: { type: String, enum: ['Active', 'Inactive', 'Left'], default: 'Active' }
 }, { timestamps: true });
