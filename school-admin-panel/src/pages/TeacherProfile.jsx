@@ -283,8 +283,8 @@ const TeacherProfile = () => {
                         )}
                     </div>
 
-                    {/* Right Sidebar Widget Canvas */}
-                    <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-50/50 space-y-6 flex-shrink-0">
+                    {/* Right Sidebar Widget Canvas — attendance & performance hidden for now */}
+                    <div className="hidden">
                         {/* Fake Calendar Widget */}
                         <div className="bg-[#f8fafc] border border-slate-100 rounded-3xl p-6 shadow-sm">
                             <h4 className="font-extrabold text-slate-800 mb-4 flex items-center justify-between">
