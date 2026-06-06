@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -354,6 +355,46 @@ const Timetable = () => {
         w.document.close();
     };
 
+    // Export ALL class-section timetables to an Excel workbook (one sheet each).
+    const downloadExcel = async () => {
+        try {
+            const res = await axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`);
+            const list = Array.isArray(res.data) ? res.data : [];
+            if (!list.length) { alert('No timetables to export yet.'); return; }
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const wb = XLSX.utils.book_new();
+            list.forEach((tt) => {
+                const dayMap = {};
+                (tt.schedule || []).forEach(d => { dayMap[d.dayOfWeek] = d.periods || []; });
+                const presentDays = days.filter(d => (dayMap[d] || []).length);
+                const useDays = presentDays.length ? presentDays : days;
+                const periodNums = [...new Set((tt.schedule || []).flatMap(d => (d.periods || []).map(p => p.periodNumber)))].sort((a, b) => a - b);
+                const timeByPeriod = {};
+                (tt.schedule || []).forEach(d => (d.periods || []).forEach(p => {
+                    if (!timeByPeriod[p.periodNumber]) timeByPeriod[p.periodNumber] = `${p.startTime || ''}${p.endTime ? '-' + p.endTime : ''}`;
+                }));
+                const header = ['Period', ...useDays];
+                const rows = periodNums.map((pn) => {
+                    const r = [`P${pn}${timeByPeriod[pn] ? ` (${timeByPeriod[pn]})` : ''}`];
+                    useDays.forEach((d) => {
+                        const p = (dayMap[d] || []).find(x => x.periodNumber === pn);
+                        r.push(p && p.subject ? `${p.subject}${p.teacherName ? ` — ${p.teacherName}` : ''}` : '');
+                    });
+                    return r;
+                });
+                const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+                ws['!cols'] = header.map((_, i) => ({ wch: i === 0 ? 16 : 22 }));
+                const name = `${tt.className}-${tt.sectionName}`.replace(/[\\/?*[\]:]/g, '').substring(0, 31) || 'Sheet';
+                XLSX.utils.book_append_sheet(wb, ws, name);
+            });
+            const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
+            XLSX.writeFile(wb, `Timetable_${schoolName.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+        } catch (e) {
+            console.error('Excel export failed', e);
+            alert('Failed to export Excel.');
+        }
+    };
+
     const handleCopy = async () => {
         const targetClassObj = classes.find(c => c._id === copyToClass);
         const targetSectionObj = copyToSections.find(s => s._id === copyToSection);
@@ -550,6 +591,10 @@ const Timetable = () => {
                                         </button>
                                     </>
                                 )}
+                                <button onClick={downloadExcel} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100">
+                                    <span className="material-symbols-outlined text-[18px]">table_view</span>
+                                    Download Excel
+                                </button>
                                 <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">{timetable ? 'edit' : 'add'}</span>
                                     {timetable ? 'Edit Timetable' : 'Create Timetable'}
