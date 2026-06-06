@@ -9,6 +9,8 @@ const TeacherDiary = () => {
     const schoolId = localStorage.getItem('scoolg_school_id');
     const [entries, setEntries] = useState([]);
     const [teachers, setTeachers] = useState([]);
+    const [classesList, setClassesList] = useState([]);
+    const [sectionsList, setSectionsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [fTeacher, setFTeacher] = useState('');
     const [fDate, setFDate] = useState('');
@@ -22,15 +24,27 @@ const TeacherDiary = () => {
         Promise.all([
             axios.get(`${ADMIN_API_BASE}/teacher-diary?schoolId=${schoolId}&_=${Date.now()}`),
             axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`),
-        ]).then(([d, t]) => {
+            axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`),
+            axios.get(`${ADMIN_API_BASE}/sections?schoolId=${schoolId}`),
+        ]).then(([d, t, c, s]) => {
             setEntries(Array.isArray(d.data) ? d.data : []);
             setTeachers(Array.isArray(t.data) ? t.data : []);
+            setClassesList(Array.isArray(c.data) ? c.data : []);
+            setSectionsList(Array.isArray(s.data) ? s.data : []);
         }).catch((e) => console.error('Diary load failed', e)).finally(() => setLoading(false));
     }, [schoolId]);
 
-    const classOptions = useMemo(() => [...new Set(entries.map(e => e.className).filter(Boolean))].sort(), [entries]);
-    const subjectOptions = useMemo(() => [...new Set(entries.map(e => e.subject).filter(Boolean))].sort(), [entries]);
-    const sectionOptions = useMemo(() => [...new Set(entries.filter(e => !fClass || e.className === fClass).map(e => e.sectionName).filter(Boolean))].sort(), [entries, fClass]);
+    // Filter options come from the real classes/sections (not just existing entries).
+    const classOptions = useMemo(() => [...new Set(classesList.map(c => c.className).filter(Boolean))], [classesList]);
+    const selClassObj = classesList.find(c => c.className === fClass);
+    const sectionOptions = useMemo(() => {
+        if (!selClassObj) return [];
+        return [...new Set(sectionsList.filter(s => String(s.classId?._id || s.classId) === String(selClassObj._id)).map(s => s.sectionName).filter(Boolean))];
+    }, [sectionsList, selClassObj]);
+    const subjectOptions = useMemo(() => {
+        const fromClass = selClassObj?.subjects || classesList.flatMap(c => c.subjects || []);
+        return [...new Set(fromClass.filter(Boolean))].sort();
+    }, [selClassObj, classesList]);
 
     const filtered = useMemo(() => entries.filter((e) => {
         if (fTeacher && String(e.teacherId?._id || e.teacherId) !== fTeacher) return false;
@@ -60,11 +74,11 @@ const TeacherDiary = () => {
                         <option value="">All teachers</option>
                         {teachers.map((t) => <option key={t._id} value={t._id}>{t.fullName}</option>)}
                     </select>
-                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); }} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setFSubject(''); }} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
                         <option value="">All classes</option>
                         {classOptions.map((c) => <option key={c} value={c}>Class {c}</option>)}
                     </select>
-                    <select value={fSection} onChange={(e) => setFSection(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                    <select value={fSection} onChange={(e) => setFSection(e.target.value)} disabled={!fClass} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 disabled:opacity-50">
                         <option value="">All sections</option>
                         {sectionOptions.map((s) => <option key={s} value={s}>Section {s}</option>)}
                     </select>
