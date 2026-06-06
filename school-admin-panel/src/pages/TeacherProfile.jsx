@@ -19,12 +19,46 @@ const TeacherProfile = () => {
     const [schedule, setSchedule] = useState(null);
     const [classTeacherOf, setClassTeacherOf] = useState([]);
 
+    // Teacher diary state
+    const [diary, setDiary] = useState([]);
+    const [classesList, setClassesList] = useState([]);
+    const todayISO = new Date().toISOString().split('T')[0];
+    const [diaryForm, setDiaryForm] = useState({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
+    const [savingDiary, setSavingDiary] = useState(false);
+    const adminSchoolId = localStorage.getItem('scoolg_school_id');
+
     useEffect(() => {
         if (!teacher?._id) return;
         axios.get(`${ADMIN_API_BASE}/teachers/${teacher._id}/schedule`)
             .then((res) => { setSchedule(res.data?.schedule || []); setClassTeacherOf(res.data?.classTeacherOf || []); })
             .catch(() => setSchedule([]));
+        axios.get(`${ADMIN_API_BASE}/teacher-diary?teacherId=${teacher._id}`)
+            .then((res) => setDiary(Array.isArray(res.data) ? res.data : []))
+            .catch(() => { });
+        axios.get(`${ADMIN_API_BASE}/classes?schoolId=${adminSchoolId}`)
+            .then((res) => setClassesList(Array.isArray(res.data) ? res.data : []))
+            .catch(() => { });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [teacher?._id]);
+
+    const diarySubjects = classesList.find(c => c.className === diaryForm.className)?.subjects || [];
+    const addDiary = async () => {
+        if (!diaryForm.className || !diaryForm.note.trim()) { alert('Class and note are required.'); return; }
+        setSavingDiary(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/teacher-diary`, { schoolId: adminSchoolId, teacherId: teacher._id, ...diaryForm });
+            setDiary(prev => [res.data, ...prev]);
+            setDiaryForm({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
+        } catch (e) {
+            alert(e.response?.data?.error || 'Failed to add entry');
+        } finally { setSavingDiary(false); }
+    };
+    const deleteDiary = async (id) => {
+        if (!window.confirm('Delete this diary entry?')) return;
+        try { await axios.delete(`${ADMIN_API_BASE}/teacher-diary/${id}`); setDiary(prev => prev.filter(e => e._id !== id)); }
+        catch (e) { alert('Failed to delete'); }
+    };
+    const fmtDiaryDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
     if (!teacher) {
         return (
@@ -34,7 +68,7 @@ const TeacherProfile = () => {
         );
     }
 
-    const tabs = ['Personal', 'Professional', 'Schedule', 'Documents'];
+    const tabs = ['Personal', 'Professional', 'Schedule', 'Diary', 'Documents'];
     const isFrozen = teacher.status === 'Inactive';
 
     const handleStatusChange = async () => {
@@ -278,6 +312,57 @@ const TeacherProfile = () => {
                                         <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Date of Joining</span>
                                         <span className="font-bold text-slate-800 px-2 py-1">{teacher.dateOfJoining ? new Date(teacher.dateOfJoining).toLocaleDateString() : 'N/A'}</span>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'Diary' && (
+                            <div className="animate-fade-in space-y-6">
+                                <h3 className="flex items-center gap-2 text-lg font-extrabold text-slate-800">
+                                    <span className="material-symbols-outlined text-blue-600">menu_book</span>
+                                    Teaching Diary
+                                </h3>
+
+                                {/* Add entry (admin) */}
+                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Add entry</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <input type="date" value={diaryForm.date} onChange={(e) => setDiaryForm({ ...diaryForm, date: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
+                                        <select value={diaryForm.className} onChange={(e) => setDiaryForm({ ...diaryForm, className: e.target.value, subject: '' })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                                            <option value="">Class</option>
+                                            {classesList.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
+                                        </select>
+                                        <input value={diaryForm.sectionName} onChange={(e) => setDiaryForm({ ...diaryForm, sectionName: e.target.value })} placeholder="Section" className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
+                                        <select value={diaryForm.subject} onChange={(e) => setDiaryForm({ ...diaryForm, subject: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                                            <option value="">Subject</option>
+                                            {diarySubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                    <input value={diaryForm.note} onChange={(e) => setDiaryForm({ ...diaryForm, note: e.target.value })} placeholder="What was taught? (one-liner)" className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500" />
+                                    <button onClick={addDiary} disabled={savingDiary} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-2 transition-colors disabled:opacity-60">
+                                        <span className="material-symbols-outlined text-[18px]">add</span>{savingDiary ? 'Saving…' : 'Add to diary'}
+                                    </button>
+                                </div>
+
+                                {/* Diary records */}
+                                <div className="space-y-2">
+                                    {diary.length === 0 ? (
+                                        <p className="text-sm text-slate-400 font-semibold py-6 text-center">No diary entries yet.</p>
+                                    ) : diary.map((e) => (
+                                        <div key={e._id} className="flex items-start gap-3 bg-white border border-slate-100 rounded-2xl p-3">
+                                            <div className="w-14 shrink-0 text-center">
+                                                <p className="text-[11px] font-black text-blue-600 leading-tight">{fmtDiaryDate(e.date)}</p>
+                                            </div>
+                                            <div className="w-px self-stretch bg-slate-100"></div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-slate-800 text-sm">{e.note}</p>
+                                                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                                                    Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}{e.createdByRole === 'teacher' ? ' · by teacher' : ''}
+                                                </p>
+                                            </div>
+                                            <button onClick={() => deleteDiary(e._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0"><span className="material-symbols-outlined text-[18px]">delete</span></button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
