@@ -22,7 +22,6 @@ const firstWeekday = (y, m) => new Date(y, m, 1).getDay();
 const pad = (n) => String(n).padStart(2, '0');
 const dateStr = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
 const todayStr = () => new Date().toISOString().split('T')[0];
-const isPast = (ds) => !!ds && ds < todayStr(); // before today => locked
 const prettyDate = (s) => {
     const d = new Date(s + 'T00:00:00');
     return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -78,14 +77,8 @@ const Calendar = () => {
         setOpenMonth(mIdx);
         setError('');
         const now = new Date();
-        // Default the picker to a date you can actually schedule on (today / future).
-        if (now.getFullYear() === year && now.getMonth() === mIdx) {
-            setSelectedDate(todayStr());
-        } else if (year > now.getFullYear() || (year === now.getFullYear() && mIdx > now.getMonth())) {
-            setSelectedDate(dateStr(year, mIdx, 1)); // future month
-        } else {
-            setSelectedDate(null); // past month → nothing schedulable
-        }
+        if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
+        else setSelectedDate(dateStr(year, mIdx, 1));
         setForm({ title: '', category: 'Event', description: '' });
         setOtherType('');
         setJustAdded(false);
@@ -93,8 +86,7 @@ const Calendar = () => {
     const closeModal = () => { setOpenMonth(null); setSelectedDate(null); };
 
     const addEvent = async () => {
-        if (!selectedDate) { setError('Please pick a day (today or later).'); return; }
-        if (isPast(selectedDate)) { setError('Past dates are locked — schedule for today or later.'); return; }
+        if (!selectedDate) { setError('Please pick a day.'); return; }
         if (!form.title.trim()) { setError('Please enter an event title.'); return; }
         // When "Other" is chosen, use the custom type the user typed (falls back to "Other").
         const category = form.category === 'Other' && otherType.trim() ? otherType.trim() : form.category;
@@ -133,6 +125,8 @@ const Calendar = () => {
         }
     };
 
+    const CUR_YEAR = new Date().getFullYear();
+    const yearLocked = year < CUR_YEAR; // whole past years are locked; current + future are open
     const totalEvents = events.length;
     const selectedDayEvents = (selectedDate && byDate[selectedDate]) || [];
 
@@ -149,8 +143,8 @@ const Calendar = () => {
                     <button onClick={() => setYear((y) => y + 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                     </button>
-                    {year !== new Date().getFullYear() && (
-                        <button onClick={() => setYear(new Date().getFullYear())} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors">This year</button>
+                    {year !== CUR_YEAR && (
+                        <button onClick={() => setYear(CUR_YEAR)} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors whitespace-nowrap">Go to {CUR_YEAR}</button>
                     )}
                 </div>
             </header>
@@ -197,15 +191,17 @@ const Calendar = () => {
                         return (
                             <div
                                 key={name}
-                                onClick={() => openMonthModal(mIdx)}
-                                className={`group bg-white rounded-[28px] p-5 border transition-all duration-300 cursor-pointer active:scale-[0.98] ${isCurrent ? 'border-blue-200 shadow-[0_20px_45px_rgba(37,99,235,0.10)]' : 'border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_24px_55px_rgba(37,99,235,0.10)] hover:border-blue-100'}`}
+                                onClick={() => { if (!yearLocked) openMonthModal(mIdx); }}
+                                className={`group bg-white rounded-[28px] p-5 border transition-all duration-300 ${yearLocked ? 'border-slate-100 opacity-75 cursor-default' : `cursor-pointer active:scale-[0.98] ${isCurrent ? 'border-blue-200 shadow-[0_20px_45px_rgba(37,99,235,0.10)]' : 'border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_24px_55px_rgba(37,99,235,0.10)] hover:border-blue-100'}`}`}
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-black text-slate-900 tracking-tight text-[17px]">{name}</h3>
                                         {isCurrent && <span className="text-[9px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Now</span>}
                                     </div>
-                                    {list.length > 0 && <span className="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full tabular-nums">{list.length}</span>}
+                                    {yearLocked
+                                        ? <span className="material-symbols-outlined text-[18px] text-slate-300">lock</span>
+                                        : (list.length > 0 && <span className="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full tabular-nums">{list.length}</span>)}
                                 </div>
 
                                 <div className="space-y-1.5 min-h-[84px]">
@@ -229,10 +225,11 @@ const Calendar = () => {
                                 </div>
 
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); openMonthModal(mIdx); }}
-                                    className="mt-4 w-full h-10 rounded-xl border border-dashed border-slate-200 text-slate-500 group-hover:border-blue-300 group-hover:text-blue-600 group-hover:bg-blue-50/50 text-[13px] font-bold inline-flex items-center justify-center gap-1.5 transition-all"
+                                    disabled={yearLocked}
+                                    onClick={(e) => { e.stopPropagation(); if (!yearLocked) openMonthModal(mIdx); }}
+                                    className={`mt-4 w-full h-10 rounded-xl border border-dashed text-[13px] font-bold inline-flex items-center justify-center gap-1.5 transition-all ${yearLocked ? 'border-slate-200 text-slate-300 cursor-not-allowed' : 'border-slate-200 text-slate-500 group-hover:border-blue-300 group-hover:text-blue-600 group-hover:bg-blue-50/50'}`}
                                 >
-                                    <span className="material-symbols-outlined text-[18px]">add</span>Add event
+                                    <span className="material-symbols-outlined text-[18px]">{yearLocked ? 'lock' : 'add'}</span>{yearLocked ? 'Locked' : 'Add event'}
                                 </button>
                             </div>
                         );
@@ -292,14 +289,11 @@ const Calendar = () => {
                                             const dayEvents = byDate[ds] || [];
                                             const isSel = selectedDate === ds;
                                             const isToday = ds === todayStr();
-                                            const past = isPast(ds);
                                             return (
                                                 <button
                                                     key={day}
-                                                    disabled={past}
-                                                    title={past ? 'Past date — locked' : undefined}
                                                     onClick={() => { setSelectedDate(ds); setError(''); }}
-                                                    className={`h-9 rounded-lg flex items-center justify-center text-[13px] font-bold transition-all relative ${past ? 'text-slate-300 bg-slate-50/60 cursor-not-allowed' : isSel ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
+                                                    className={`h-9 rounded-lg flex items-center justify-center text-[13px] font-bold transition-all relative ${isSel ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
                                                 >
                                                     <span className="tabular-nums">{day}</span>
                                                     {dayEvents.length > 0 && (
@@ -314,12 +308,6 @@ const Calendar = () => {
                                         })}
                                     </div>
                                 </div>
-                                {!selectedDate && (
-                                    <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                                        <span className="material-symbols-outlined text-[16px]">lock</span>
-                                        Past dates are locked — open a current or upcoming month to schedule.
-                                    </p>
-                                )}
                             </div>
 
                             {/* 3. Category */}
@@ -416,11 +404,11 @@ const Calendar = () => {
                             )}
                             <button
                                 onClick={addEvent}
-                                disabled={saving || !selectedDate || isPast(selectedDate)}
+                                disabled={saving || !selectedDate}
                                 className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25"
                             >
-                                <span className="material-symbols-outlined text-[20px]">{(!selectedDate || isPast(selectedDate)) ? 'lock' : 'add_circle'}</span>
-                                {saving ? 'Scheduling…' : (!selectedDate || isPast(selectedDate)) ? 'Past dates are locked' : 'Schedule event'}
+                                <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                                {saving ? 'Scheduling…' : 'Schedule event'}
                             </button>
                         </div>
                     </div>
