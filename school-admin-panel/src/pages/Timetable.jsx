@@ -381,15 +381,17 @@ const Timetable = () => {
             const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
             const sheets = list.map((tt, i) => timetableSectionHTML(tt, schoolName, i > 0)).join('');
             const html = `<!doctype html><html><head><meta charset="utf-8"><title>Timetables · ${schoolName}</title><style>
-                body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;}
+                *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;box-sizing:border-box;}
+                body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;margin:0;}
                 .sheet{margin-bottom:28px;}
                 h1{font-size:20px;margin:0;color:#1d4ed8;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;font-weight:600;}
-                table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:9px;font-size:12px;text-align:center;vertical-align:middle;}
+                table{width:100%;border-collapse:collapse;table-layout:fixed;}
+                th,td{border:1px solid #cbd5e1;padding:9px 6px;font-size:12px;text-align:center;vertical-align:middle;word-wrap:break-word;}
                 th{background:#2563eb;color:#fff;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
-                .ph{background:#f8fafc;font-weight:700;white-space:nowrap;color:#1d4ed8;} .tm{font-size:10px;color:#64748b;font-weight:600;}
-                .subj{font-weight:700;} .tch{font-size:10px;} .free{color:#cbd5e1;}
+                .ph{background:#f1f5f9;font-weight:700;white-space:nowrap;color:#1d4ed8;width:70px;} .tm{font-size:10px;color:#64748b;font-weight:600;}
+                .subj{font-weight:700;font-size:12px;line-height:1.2;} .tch{font-size:10px;margin-top:2px;line-height:1.2;} .free{color:#cbd5e1;}
                 .lunch{background:#fff7ed;color:#b45309;font-weight:800;letter-spacing:.15em;font-size:11px;}
-                @media print{body{padding:0;} @page{size:landscape;}}
+                @media print{body{padding:0;} @page{size:landscape;margin:12mm;}}
             </style></head><body>
                 ${sheets}
                 <script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script>
