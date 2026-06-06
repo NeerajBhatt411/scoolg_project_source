@@ -18,6 +18,7 @@ import { Attendance } from './models/Attendance.js';
 import { Homework } from './models/Homework.js';
 import { StaffUser } from './models/StaffUser.js';
 import { CalendarEvent } from './models/CalendarEvent.js';
+import { TeacherDiary } from './models/TeacherDiary.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
@@ -1314,6 +1315,62 @@ app.get('/api/admin/teachers/:id/schedule', async (req, res) => {
         res.json({ schedule: days.map(d => ({ dayOfWeek: d, periods: byDay[d] })), classTeacherOf });
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch teacher schedule", details: err.message });
+    }
+});
+
+/* =========================================================================
+ *  Teacher Diary — record of what a teacher taught (class/section/subject/date)
+ * ========================================================================= */
+
+// List diary entries (filter by teacherId and/or date/className). Newest first.
+app.get('/api/admin/teacher-diary', async (req, res) => {
+    try {
+        const { schoolId, teacherId, date, className } = req.query;
+        const query = {};
+        if (teacherId) query.teacherId = teacherId;
+        if (date) query.date = date;
+        if (className) query.className = className;
+        if (!teacherId) {
+            const school = await School.findOne({ id: schoolId });
+            if (!school) return res.status(404).json({ error: "School not found" });
+            query.schoolId = school._id;
+        }
+        const entries = await TeacherDiary.find(query).sort({ date: -1, createdAt: -1 }).limit(500);
+        res.json(entries);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch diary", details: err.message });
+    }
+});
+
+// Create a diary entry (admin filling on behalf, or via teacher app later).
+app.post('/api/admin/teacher-diary', async (req, res) => {
+    try {
+        const { schoolId, teacherId, date, className, sectionName, subject, note, createdByRole } = req.body;
+        if (!teacherId || !date || !className || !note?.trim()) {
+            return res.status(400).json({ error: "teacherId, date, class and note are required" });
+        }
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const entry = new TeacherDiary({
+            schoolId: school._id, teacherId, date, className,
+            sectionName: sectionName || 'All', subject: subject || '',
+            note: note.trim(), createdByRole: createdByRole || 'admin',
+        });
+        await entry.save();
+        res.status(201).json(entry);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to add diary entry", details: err.message });
+    }
+});
+
+// Delete a diary entry.
+app.delete('/api/admin/teacher-diary/:id', async (req, res) => {
+    try {
+        const deleted = await TeacherDiary.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: "Entry not found" });
+        res.json({ message: "Entry deleted" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to delete entry" });
     }
 });
 
