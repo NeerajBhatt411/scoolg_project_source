@@ -172,9 +172,13 @@ const Profile = () => {
 
             {/* identity header (read-only) */}
             <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
-                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shrink-0 overflow-hidden shadow-lg shadow-blue-600/20">
-                    {logo ? <img src={logo} alt="" className="w-full h-full object-cover" /> : (formData.schoolName?.charAt(0) || 'S').toUpperCase()}
-                </div>
+                {logo ? (
+                    <img src={logo} alt="School logo" className="h-24 w-24 rounded-3xl object-contain shrink-0" />
+                ) : (
+                    <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shrink-0 shadow-lg shadow-blue-600/20">
+                        {(formData.schoolName?.charAt(0) || 'S').toUpperCase()}
+                    </div>
+                )}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">{formData.schoolName || 'Your School'}</h2>
