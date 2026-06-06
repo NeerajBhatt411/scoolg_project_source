@@ -36,8 +36,13 @@ const Calendar = () => {
     const [openMonth, setOpenMonth] = useState(null); // 0-11 or null
     const [selectedDate, setSelectedDate] = useState(null);
     const [form, setForm] = useState({ title: '', category: 'Event', description: '' });
+    const [otherType, setOtherType] = useState(''); // custom label when category = Other
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [justAdded, setJustAdded] = useState(false); // brief "scheduled" confirmation
+
+    const TITLE_MAX = 60;
+    const OTHER_MAX = 20;
 
     const load = async () => {
         if (!schoolId) return;
@@ -75,18 +80,22 @@ const Calendar = () => {
         if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
         else setSelectedDate(dateStr(year, mIdx, 1));
         setForm({ title: '', category: 'Event', description: '' });
+        setOtherType('');
+        setJustAdded(false);
     };
     const closeModal = () => { setOpenMonth(null); setSelectedDate(null); };
 
     const addEvent = async () => {
         if (!form.title.trim()) { setError('Please enter an event title.'); return; }
         if (!selectedDate) { setError('Please pick a day.'); return; }
+        // When "Other" is chosen, use the custom type the user typed (falls back to "Other").
+        const category = form.category === 'Other' && otherType.trim() ? otherType.trim() : form.category;
         setSaving(true); setError('');
         try {
             const res = await axios.post(`${ADMIN_API_BASE}/calendar`, {
                 schoolId,
                 title: form.title.trim(),
-                category: form.category,
+                category,
                 date: selectedDate,
                 description: form.description.trim(),
             });
@@ -96,6 +105,9 @@ const Calendar = () => {
                 setEvents((prev) => [...prev.filter((e) => e._id !== res.data._id), res.data]);
             }
             setForm({ title: '', category: 'Event', description: '' });
+            setOtherType('');
+            setJustAdded(true);
+            setTimeout(() => setJustAdded(false), 2200);
             load();
         } catch (e) {
             setError(e.response?.data?.error || 'Could not add event.');
@@ -239,12 +251,16 @@ const Calendar = () => {
                         <div className="overflow-y-auto px-6 py-4 space-y-4">
                             {/* 1. Title */}
                             <div>
-                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
-                                    <span className="text-blue-600">1.</span> Event name <span className="text-rose-500">*</span>
-                                </label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-[12px] font-black text-slate-500 uppercase tracking-wider">
+                                        <span className="text-blue-600">1.</span> Event name <span className="text-rose-500">*</span>
+                                    </label>
+                                    <span className={`text-[11px] font-bold tabular-nums ${form.title.length >= TITLE_MAX ? 'text-rose-500' : 'text-slate-400'}`}>{form.title.length}/{TITLE_MAX}</span>
+                                </div>
                                 <input
                                     value={form.title}
                                     onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                    maxLength={TITLE_MAX}
                                     placeholder="e.g. Annual Function, Diwali Holiday"
                                     className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[15px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
                                 />
@@ -311,6 +327,21 @@ const Calendar = () => {
                                         );
                                     })}
                                 </div>
+                                {form.category === 'Other' && (
+                                    <div className="mt-2">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[11px] font-bold text-slate-500">Name this type</span>
+                                            <span className={`text-[11px] font-bold tabular-nums ${otherType.length >= OTHER_MAX ? 'text-rose-500' : 'text-slate-400'}`}>{otherType.length}/{OTHER_MAX}</span>
+                                        </div>
+                                        <input
+                                            value={otherType}
+                                            onChange={(e) => setOtherType(e.target.value)}
+                                            maxLength={OTHER_MAX}
+                                            placeholder="e.g. PTM, Workshop, Trip"
+                                            className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Description */}
@@ -360,6 +391,12 @@ const Calendar = () => {
 
                         {/* sticky footer action */}
                         <div className="px-6 py-4 border-t border-slate-100 shrink-0">
+                            {justAdded && (
+                                <p className="mb-2.5 flex items-center justify-center gap-1.5 text-[13px] font-bold text-emerald-600 bg-emerald-50 rounded-xl py-2">
+                                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                    Event scheduled — add another or close
+                                </p>
+                            )}
                             <button
                                 onClick={addEvent}
                                 disabled={saving}
