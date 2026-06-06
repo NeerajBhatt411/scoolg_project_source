@@ -11,6 +11,7 @@ const Teachers = lazy(() => import('./pages/Teachers'));
 const AddTeacher = lazy(() => import('./pages/AddTeacher'));
 const TeacherProfile = lazy(() => import('./pages/TeacherProfile'));
 const Timetable = lazy(() => import('./pages/Timetable'));
+const Calendar = lazy(() => import('./pages/Calendar'));
 const Homework = lazy(() => import('./pages/Homework'));
 const Roles = lazy(() => import('./pages/Roles'));
 const Classes = lazy(() => import('./pages/Classes'));
@@ -144,6 +145,10 @@ function App() {
                         <Route
                             path="/timetable"
                             element={<ModuleRoute module="timetable"><Timetable /></ModuleRoute>}
+                        />
+                        <Route
+                            path="/calendar"
+                            element={<ModuleRoute module="calendar"><Calendar /></ModuleRoute>}
                         />
                         <Route
                             path="/homework"
