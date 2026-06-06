@@ -1640,6 +1640,19 @@ app.get('/api/admin/timetable', async (req, res) => {
     }
 });
 
+// All timetables for a school (for the full class-wise/section-wise report export).
+app.get('/api/admin/timetables', async (req, res) => {
+    try {
+        const { schoolId } = req.query;
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const timetables = await Timetable.find({ schoolId: school._id }).sort({ className: 1, sectionName: 1 });
+        res.json(timetables);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 /**
  * @swagger
  * /api/admin/timetable:
