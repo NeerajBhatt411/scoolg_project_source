@@ -746,11 +746,15 @@ app.patch('/api/admin/profile/:id', async (req, res) => {
         const school = await School.findOne({ id: req.params.id });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        school.formData = { ...school.formData, ...req.body };
+        // Never let system/identity fields leak into the editable formData blob.
+        const { email, status, isPasswordChanged, _id, campusCode, id, ...editable } = req.body || {};
+        school.formData = { ...(school.formData || {}), ...editable };
+        school.markModified('formData'); // Mixed type needs an explicit dirty flag to persist
         await school.save();
         res.json({ message: "Profile updated successfully!", data: school.formData });
     } catch (err) {
-        res.status(500).json({ error: "Update failed" });
+        console.error('Profile update error:', err);
+        res.status(500).json({ error: "Update failed", details: err.message });
     }
 });
 
