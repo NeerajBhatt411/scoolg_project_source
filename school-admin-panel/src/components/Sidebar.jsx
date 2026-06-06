@@ -38,7 +38,6 @@ const Sidebar = () => {
         { name: 'Exams', icon: 'description', path: '/exams', module: 'exams' },
         { name: 'Notices', icon: 'campaign', path: '/notices', module: 'notices' },
         { name: 'Roles', icon: 'verified_user', path: '/roles', module: 'roles' },
-        { name: 'Settings', icon: 'settings', path: '/settings', module: 'settings' },
     ];
 
     // Dashboard + Settings are always visible; other modules respect permissions.
