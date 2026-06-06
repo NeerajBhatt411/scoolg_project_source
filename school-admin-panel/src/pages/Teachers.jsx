@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -51,6 +52,7 @@ const Teachers = () => {
                             type="text"
                         />
                     </div>
+                    <ProfileButton size={40} />
                 </div>
             </header>
 

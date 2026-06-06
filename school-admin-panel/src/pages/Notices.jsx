@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ProfileButton from '../components/ProfileButton';
 
 const Notices = () => {
     const [activeTab, setActiveTab] = useState('All Notices');
@@ -25,19 +26,7 @@ const Notices = () => {
                         <button className="h-10 w-10 flex items-center justify-center bg-transparent hover:bg-slate-100 transition-colors rounded-full text-slate-600">
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[11px] font-bold text-slate-800">Admin Principal</p>
-                                <p className="text-[9px] font-semibold text-slate-500">St. Xaviers High</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer bg-slate-100">
-                                <img
-                                    alt="Admin Avatar"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        </div>
+                        <ProfileButton size={40} />
                     </div>
                 </div>
             </header>

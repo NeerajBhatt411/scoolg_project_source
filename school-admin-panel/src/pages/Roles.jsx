@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 
@@ -142,10 +143,13 @@ const Roles = () => {
                         <h2 className="text-2xl font-black text-slate-800 tracking-tight">Roles & Staff</h2>
                         <p className="text-slate-500 text-xs font-bold">Manage staff access to your admin panel</p>
                     </div>
-                    <button onClick={openCreate} className="flex items-center gap-2 px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
-                        <span className="material-symbols-outlined text-[18px]">person_add</span>
-                        Add Staff
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button onClick={openCreate} className="flex items-center gap-2 px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
+                            <span className="material-symbols-outlined text-[18px]">person_add</span>
+                            Add Staff
+                        </button>
+                        <ProfileButton size={40} />
+                    </div>
                 </div>
 
                 {/* Owner note */}

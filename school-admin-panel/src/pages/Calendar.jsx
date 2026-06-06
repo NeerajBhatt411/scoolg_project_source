@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import ProfileButton from '../components/ProfileButton';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -135,6 +136,7 @@ const Calendar = () => {
             {/* Top bar */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
                 <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight w-full md:w-auto">School Calendar</h2>
+                <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm">
                     <button onClick={() => setYear((y) => y - 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chevron_left</span>
@@ -146,6 +148,8 @@ const Calendar = () => {
                     {year !== CUR_YEAR && (
                         <button onClick={() => setYear(CUR_YEAR)} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors whitespace-nowrap">Go to {CUR_YEAR}</button>
                     )}
+                </div>
+                    <ProfileButton size={40} />
                 </div>
             </header>
 
@@ -204,24 +208,27 @@ const Calendar = () => {
                                         : (list.length > 0 && <span className="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full tabular-nums">{list.length}</span>)}
                                 </div>
 
-                                <div className="space-y-1.5 min-h-[84px]">
-                                    {list.slice(0, 3).map((ev) => {
-                                        const c = catOf(ev.category);
-                                        const day = Number(ev.date.split('-')[2]);
-                                        return (
-                                            <div key={ev._id} className="flex items-center gap-2">
-                                                <span className="w-7 text-[11px] font-black text-slate-400 tabular-nums">{pad(day)}</span>
-                                                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c.color }}></span>
-                                                <span className="text-[12px] font-semibold text-slate-700 truncate">{ev.title}</span>
-                                            </div>
-                                        );
-                                    })}
-                                    {list.length === 0 && (
+                                <div className="min-h-[84px]">
+                                    {list.length === 0 ? (
                                         <div className="h-[84px] grid place-items-center text-slate-300">
                                             <span className="text-[12px] font-semibold">No events</span>
                                         </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                                            {list.slice(0, 4).map((ev) => {
+                                                const c = catOf(ev.category);
+                                                const day = Number(ev.date.split('-')[2]);
+                                                return (
+                                                    <div key={ev._id} className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.color }}></span>
+                                                        <span className="text-[10.5px] font-black text-slate-400 tabular-nums shrink-0">{pad(day)}</span>
+                                                        <span className="text-[11.5px] font-semibold text-slate-700 truncate">{ev.title}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
-                                    {list.length > 3 && <p className="text-[11px] font-bold text-blue-600 pl-9">+{list.length - 3} more</p>}
+                                    {list.length > 4 && <p className="text-[11px] font-bold text-blue-600 mt-1.5">+{list.length - 4} more</p>}
                                 </div>
 
                                 <button
