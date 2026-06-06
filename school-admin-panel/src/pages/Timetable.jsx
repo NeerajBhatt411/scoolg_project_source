@@ -352,12 +352,9 @@ const Timetable = () => {
         return { useDays: useDays.length ? useDays : days, rows };
     };
 
-    // Download the current class-section timetable as a print-to-PDF document.
-    const downloadPDF = () => {
-        if (!timetable?.schedule?.length) return;
-        const { useDays, rows } = buildTimetableRows(timetable.schedule);
-        const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
-        const title = `Timetable · Class ${selectedClassObj?.className || ''}-${selectedSectionObj?.sectionName || ''}`;
+    // Builds the inner HTML (heading + table) for one class-section timetable.
+    const timetableSectionHTML = (tt, schoolName, pageBreak) => {
+        const { useDays, rows } = buildTimetableRows(tt.schedule);
         const body = rows.map(row => {
             if (row.type === 'lunch') {
                 return `<tr><td class="lunch" colspan="${useDays.length + 1}">🍴 LUNCH BREAK · ${row.mins} mins</td></tr>`;
@@ -369,24 +366,42 @@ const Timetable = () => {
             }).join('');
             return `<tr><td class="ph"><b>P${row.pn}</b><div class="tm">${row.time}</div></td>${tds}</tr>`;
         }).join('');
-        const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>
-            body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;}
-            h1{font-size:20px;margin:0;color:#1d4ed8;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;font-weight:600;}
-            table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:9px;font-size:12px;text-align:center;vertical-align:middle;}
-            th{background:#2563eb;color:#fff;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
-            .ph{background:#f8fafc;font-weight:700;white-space:nowrap;color:#1d4ed8;} .tm{font-size:10px;color:#64748b;font-weight:600;}
-            .subj{font-weight:700;} .tch{font-size:10px;color:#64748b;} .free{color:#cbd5e1;}
-            .lunch{background:#fff7ed;color:#b45309;font-weight:800;letter-spacing:.15em;font-size:11px;}
-            @media print{body{padding:0;} @page{size:landscape;}}
-        </style></head><body>
-            <h1>${schoolName}</h1><div class="sub">${title}</div>
+        return `<div class="sheet" style="${pageBreak ? 'page-break-before:always;' : ''}">
+            <h1>${schoolName}</h1><div class="sub">Class ${tt.className}-${tt.sectionName} · Weekly Timetable</div>
             <table><thead><tr><th>Period</th>${useDays.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
-            <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>
-        </body></html>`;
-        const w = window.open('', '_blank');
-        if (!w) { alert('Please allow pop-ups to download the timetable PDF.'); return; }
-        w.document.write(html);
-        w.document.close();
+        </div>`;
+    };
+
+    // Download ALL class-section timetables as a single multi-page print-to-PDF.
+    const downloadPDF = async () => {
+        try {
+            const res = await axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`);
+            const list = (Array.isArray(res.data) ? res.data : []).filter(tt => (tt.schedule || []).length);
+            if (!list.length) { alert('No timetables to export yet.'); return; }
+            const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
+            const sheets = list.map((tt, i) => timetableSectionHTML(tt, schoolName, i > 0)).join('');
+            const html = `<!doctype html><html><head><meta charset="utf-8"><title>Timetables · ${schoolName}</title><style>
+                body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;}
+                .sheet{margin-bottom:28px;}
+                h1{font-size:20px;margin:0;color:#1d4ed8;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;font-weight:600;}
+                table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:9px;font-size:12px;text-align:center;vertical-align:middle;}
+                th{background:#2563eb;color:#fff;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+                .ph{background:#f8fafc;font-weight:700;white-space:nowrap;color:#1d4ed8;} .tm{font-size:10px;color:#64748b;font-weight:600;}
+                .subj{font-weight:700;} .tch{font-size:10px;} .free{color:#cbd5e1;}
+                .lunch{background:#fff7ed;color:#b45309;font-weight:800;letter-spacing:.15em;font-size:11px;}
+                @media print{body{padding:0;} @page{size:landscape;}}
+            </style></head><body>
+                ${sheets}
+                <script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script>
+            </body></html>`;
+            const w = window.open('', '_blank');
+            if (!w) { alert('Please allow pop-ups to download the timetable PDF.'); return; }
+            w.document.write(html);
+            w.document.close();
+        } catch (e) {
+            console.error('PDF export failed', e);
+            alert('Failed to export PDF.');
+        }
     };
 
     // Export ALL class-section timetables to a styled Excel workbook (one sheet each).
@@ -668,10 +683,6 @@ const Timetable = () => {
                             <>
                                 {timetable && (
                                     <>
-                                        <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-600 font-bold text-sm rounded-xl hover:bg-rose-100 transition-all">
-                                            <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
-                                            Download PDF
-                                        </button>
                                         <button onClick={() => setShowCopyModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">content_copy</span>
                                             Copy to Class
@@ -682,6 +693,10 @@ const Timetable = () => {
                                         </button>
                                     </>
                                 )}
+                                <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-600 font-bold text-sm rounded-xl hover:bg-rose-100 transition-all border border-rose-100">
+                                    <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                                    Download PDF
+                                </button>
                                 <button onClick={downloadExcel} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100">
                                     <span className="material-symbols-outlined text-[18px]">table_view</span>
                                     Download Excel
