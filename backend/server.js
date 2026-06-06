@@ -1335,7 +1335,9 @@ app.get('/api/admin/teacher-diary', async (req, res) => {
             if (!school) return res.status(404).json({ error: "School not found" });
             query.schoolId = school._id;
         }
-        const entries = await TeacherDiary.find(query).sort({ date: -1, createdAt: -1 }).limit(500);
+        const entries = await TeacherDiary.find(query)
+            .populate('teacherId', 'fullName teacherAppId')
+            .sort({ date: -1, createdAt: -1 }).limit(500);
         res.json(entries);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch diary", details: err.message });

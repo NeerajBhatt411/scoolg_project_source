@@ -30,6 +30,7 @@ const Sidebar = () => {
         { name: 'Dashboard', icon: 'dashboard', path: '/dashboard', module: 'dashboard' },
         { name: 'Students', icon: 'group', path: '/students', module: 'students' },
         { name: 'Teachers', icon: 'school', path: '/teachers', module: 'teachers' },
+        { name: 'Teacher Diary', icon: 'menu_book', path: '/teacher-diary', module: 'teachers' },
         { name: 'Classes', icon: 'class', path: '/classes', module: 'classes' },
         { name: 'Timetable', icon: 'calendar_today', path: '/timetable', module: 'timetable' },
         { name: 'School Calendar', icon: 'calendar_month', path: '/calendar', module: 'calendar' },
