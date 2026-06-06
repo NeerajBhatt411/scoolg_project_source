@@ -12,6 +12,7 @@ const MainLayout = () => {
     { name: 'My Classes', path: '/classes', icon: 'groups' },
     { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
     { name: 'Homework', path: '/homework', icon: 'assignment' },
+    { name: 'Diary', path: '/diary', icon: 'menu_book' },
     { name: 'Profile', path: '/profile', icon: 'account_circle' },
   ];
 
@@ -108,8 +109,8 @@ const MainLayout = () => {
         <div className="flex items-stretch px-2 pt-2 pb-5">
           {[
             { name: 'Home', path: '/dashboard', icon: 'home' },
-            { name: 'Schedule', path: '/timetable', icon: 'calendar_month' },
             { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
+            { name: 'Diary', path: '/diary', icon: 'menu_book' },
             { name: 'Homework', path: '/homework', icon: 'assignment' },
             { name: 'Profile', path: '/profile', icon: 'person' },
           ].map((item) => (

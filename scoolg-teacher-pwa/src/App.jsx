@@ -10,6 +10,7 @@ import Timetable from './pages/Timetable';
 import MyClasses from './pages/MyClasses';
 import Attendance from './pages/Attendance';
 import Homework from './pages/Homework';
+import Diary from './pages/Diary';
 import Profile from './pages/Profile';
 import InstallPrompt from './components/InstallPrompt';
 
@@ -29,6 +30,7 @@ const App = () => {
         <Route path="/classes" element={<MyClasses />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/homework" element={<Homework />} />
+        <Route path="/diary" element={<Diary />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
 
