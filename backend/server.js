@@ -1867,6 +1867,27 @@ app.post('/api/admin/homework', async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
+        // Auto-resolve the subject teacher from the timetable (class+section+subject).
+        let resolvedName = createdByName;
+        let resolvedId = createdById;
+        if (createdByRole !== 'teacher' && subject) {
+            const q = { schoolId: school._id, className };
+            if (sectionName && sectionName !== 'All') q.sectionName = sectionName;
+            const tts = await Timetable.find(q);
+            const subLower = subject.trim().toLowerCase();
+            outer: for (const tt of tts) {
+                for (const day of tt.schedule || []) {
+                    for (const p of day.periods || []) {
+                        if (p.subject && p.subject.trim().toLowerCase() === subLower && p.teacherName) {
+                            resolvedName = p.teacherName;
+                            resolvedId = p.teacherId;
+                            break outer;
+                        }
+                    }
+                }
+            }
+        }
+
         const homework = await Homework.create({
             schoolId: school._id,
             className,
@@ -1877,8 +1898,8 @@ app.post('/api/admin/homework', async (req, res) => {
             dueDate: dueDate ? new Date(dueDate) : undefined,
             attachments: Array.isArray(attachments) ? attachments : [],
             createdByRole: createdByRole === 'teacher' ? 'teacher' : 'admin',
-            createdById: createdById || undefined,
-            createdByName: createdByName || 'School Admin'
+            createdById: resolvedId || undefined,
+            createdByName: resolvedName || 'School Admin'
         });
 
         res.status(201).json(homework);
