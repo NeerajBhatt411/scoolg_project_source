@@ -11,6 +11,7 @@ const TeacherDiarySchema = new mongoose.Schema({
     subject: { type: String, default: '' },
     note: { type: String, required: true }, // one-liner: what was taught
     createdByRole: { type: String, enum: ['admin', 'teacher'], default: 'admin' },
+    locked: { type: Boolean, default: false }, // once locked by teacher, can't be edited/deleted
 }, { timestamps: true });
 
 TeacherDiarySchema.index({ schoolId: 1, teacherId: 1, date: -1 });

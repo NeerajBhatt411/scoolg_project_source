@@ -46,6 +46,21 @@ const Diary = () => {
     } finally { setSaving(false); }
   };
 
+  const lockEntry = async (id) => {
+    if (!window.confirm('Lock this entry? After locking you cannot edit or delete it.')) return;
+    try {
+      const res = await api.post(`/teacher/diary/${id}/lock`);
+      setEntries(prev => prev.map(e => e._id === id ? res.data : e));
+    } catch (e) { alert('Failed to lock.'); }
+  };
+  const deleteEntry = async (id) => {
+    if (!window.confirm('Delete this entry?')) return;
+    try {
+      await api.delete(`/teacher/diary/${id}`);
+      setEntries(prev => prev.filter(e => e._id !== id));
+    } catch (e) { alert(e.response?.data?.error || 'Failed to delete.'); }
+  };
+
   const field = 'h-12 px-4 rounded-2xl bg-surface-container-low border border-surface-container font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all';
 
   return (
@@ -96,6 +111,16 @@ const Diary = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-body-md font-bold text-on-surface">{e.note}</p>
                 <p className="text-label-md text-on-surface-variant mt-0.5">Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}</p>
+              </div>
+              <div className="shrink-0">
+                {e.locked ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full"><span className="material-symbols-outlined text-[13px]">lock</span>Locked</span>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => lockEntry(e._id)} title="Lock" className="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface-variant grid place-items-center active:scale-90 transition-transform"><span className="material-symbols-outlined text-[17px]">lock_open</span></button>
+                    <button onClick={() => deleteEntry(e._id)} title="Delete" className="w-8 h-8 rounded-lg bg-surface-container-low text-error grid place-items-center active:scale-90 transition-transform"><span className="material-symbols-outlined text-[17px]">delete</span></button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

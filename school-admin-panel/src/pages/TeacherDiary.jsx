@@ -103,7 +103,7 @@ const TeacherDiary = () => {
                                     <span className="text-sm font-bold text-slate-800">{e.teacherId?.fullName || 'Teacher'}{e.createdByRole === 'teacher' ? '' : ' '}<span className="text-[10px] font-bold text-slate-400">{e.createdByRole === 'admin' ? '(admin)' : ''}</span></span>
                                     <span className="text-sm font-semibold text-slate-600">{e.className}-{e.sectionName}</span>
                                     <span className="text-sm font-semibold text-slate-600">{e.subject || '—'}</span>
-                                    <span className="text-sm font-medium text-slate-800">{e.note}</span>
+                                    <span className="text-sm font-medium text-slate-800 flex items-center gap-1.5">{e.locked && <span className="material-symbols-outlined text-[15px] text-emerald-500 shrink-0" title="Locked by teacher">lock</span>}{e.note}</span>
                                 </div>
                             ))}
                         </div>
