@@ -23,6 +23,7 @@ const Login = () => {
     const [fpEmail, setFpEmail] = useState('');
     const [fpOtp, setFpOtp] = useState('');
     const [fpNewPwd, setFpNewPwd] = useState('');
+    const [fpConfirmPwd, setFpConfirmPwd] = useState('');
     const [fpShowPwd, setFpShowPwd] = useState(false);
     const [fpLoading, setFpLoading] = useState(false);
     const [fpError, setFpError] = useState('');
@@ -34,6 +35,7 @@ const Login = () => {
         setFpEmail(email); // carry over whatever they typed in the login box
         setFpOtp('');
         setFpNewPwd('');
+        setFpConfirmPwd('');
         setFpError('');
         setFpInfo('');
     };
@@ -94,6 +96,7 @@ const Login = () => {
         setFpError('');
         if (!fpOtp.trim()) return setFpError('Enter the 6-digit code from your email.');
         if (fpNewPwd.length < 6) return setFpError('Password must be at least 6 characters.');
+        if (fpNewPwd !== fpConfirmPwd) return setFpError('Passwords do not match.');
         setFpLoading(true);
         try {
             await axios.post(`${ADMIN_API_BASE}/reset-password`, {
@@ -311,6 +314,18 @@ const Login = () => {
                                             >
                                                 {fpShowPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
+                                        </div>
+                                        <div className="input-container-premium">
+                                            <Lock size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+                                            <input
+                                                type={fpShowPwd ? 'text' : 'password'}
+                                                className="form-input-premium"
+                                                placeholder="Confirm new password"
+                                                value={fpConfirmPwd}
+                                                onChange={(e) => setFpConfirmPwd(e.target.value)}
+                                                required
+                                                style={{ paddingLeft: '56px' }}
+                                            />
                                         </div>
                                         <button type="submit" className="btn-premium-login" style={{ marginTop: '8px' }} disabled={fpLoading}>
                                             {fpLoading ? <Loader2 className="animate-spin" size={20} /> : 'Reset password'}
