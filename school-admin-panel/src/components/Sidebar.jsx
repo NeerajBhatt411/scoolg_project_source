@@ -46,14 +46,13 @@ const Sidebar = () => {
 
     return (
         <aside className="w-16 md:w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-2 md:px-4 z-50">
-            <button onClick={() => navigate('/dashboard')} title={schoolName} className="mb-10 px-2 md:px-4 flex items-center justify-center md:justify-start gap-2.5 w-full">
+            <button onClick={() => navigate('/dashboard')} title={schoolName} className="mb-5 px-2 md:px-4 flex flex-col items-center md:items-start gap-2.5 w-full">
                 {logo
-                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-16 w-16 rounded-xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-0.5" />
-                    : <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-2xl font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
-                <div className="hidden md:block">
-                    <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight">Admin Panel</p>
-                </div>
+                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-11 w-11 md:h-20 md:w-20 rounded-2xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-1" />
+                    : <div className="h-11 w-11 md:h-20 md:w-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-lg md:text-3xl font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
+                <p className="hidden md:block text-[15px] font-extrabold text-[#191c1e] leading-tight">Admin Panel</p>
             </button>
+            <div className="border-b border-slate-200/70 mb-6"></div>
             <nav className="flex-1 space-y-1">
                 {navItems.map((item) => (
                     <NavLink
