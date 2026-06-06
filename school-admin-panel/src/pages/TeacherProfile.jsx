@@ -25,6 +25,7 @@ const TeacherProfile = () => {
     const todayISO = new Date().toISOString().split('T')[0];
     const [diaryForm, setDiaryForm] = useState({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
     const [savingDiary, setSavingDiary] = useState(false);
+    const [showDiaryAdd, setShowDiaryAdd] = useState(false);
     const adminSchoolId = localStorage.getItem('scoolg_school_id');
 
     useEffect(() => {
@@ -317,15 +318,20 @@ const TeacherProfile = () => {
                         )}
 
                         {activeTab === 'Diary' && (
-                            <div className="animate-fade-in space-y-6">
-                                <h3 className="flex items-center gap-2 text-lg font-extrabold text-slate-800">
-                                    <span className="material-symbols-outlined text-blue-600">menu_book</span>
-                                    Teaching Diary
-                                </h3>
+                            <div className="animate-fade-in space-y-5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h3 className="flex items-center gap-2 text-lg font-extrabold text-slate-800">
+                                        <span className="material-symbols-outlined text-blue-600">menu_book</span>
+                                        Teaching Record <span className="text-sm font-bold text-slate-400">({diary.length})</span>
+                                    </h3>
+                                    <button onClick={() => setShowDiaryAdd(s => !s)} className="px-4 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-1.5 transition-colors">
+                                        <span className="material-symbols-outlined text-[18px]">{showDiaryAdd ? 'close' : 'add'}</span>{showDiaryAdd ? 'Close' : 'Add entry'}
+                                    </button>
+                                </div>
 
-                                {/* Add entry (admin) */}
+                                {/* Add entry (admin) — collapsible */}
+                                {showDiaryAdd && (
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Add entry</p>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         <input type="date" value={diaryForm.date} onChange={(e) => setDiaryForm({ ...diaryForm, date: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
                                         <select value={diaryForm.className} onChange={(e) => setDiaryForm({ ...diaryForm, className: e.target.value, subject: '' })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
@@ -343,11 +349,16 @@ const TeacherProfile = () => {
                                         <span className="material-symbols-outlined text-[18px]">add</span>{savingDiary ? 'Saving…' : 'Add to diary'}
                                     </button>
                                 </div>
+                                )}
 
-                                {/* Diary records */}
+                                {/* Teaching record list */}
                                 <div className="space-y-2">
                                     {diary.length === 0 ? (
-                                        <p className="text-sm text-slate-400 font-semibold py-6 text-center">No diary entries yet.</p>
+                                        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl py-10 text-center text-slate-400">
+                                            <span className="material-symbols-outlined text-4xl opacity-40">menu_book</span>
+                                            <p className="text-sm font-bold text-slate-500 mt-2">No teaching records yet.</p>
+                                            <p className="text-xs px-6">Entries the teacher adds (from the app) or you add here will appear with class, section &amp; subject.</p>
+                                        </div>
                                     ) : diary.map((e) => (
                                         <div key={e._id} className="flex items-start gap-3 bg-white border border-slate-100 rounded-2xl p-3">
                                             <div className="w-14 shrink-0 text-center">
