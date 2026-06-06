@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Loader2, User, Phone, MapPin, Globe, Award, Briefcase, Camera } from 'lucide-react';
+import { Save, Loader2, User, Phone, MapPin, Globe, Mail, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ADMIN_API_BASE } from '../lib/api';
 
@@ -46,7 +46,15 @@ const Profile = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={48} color="#2563eb" /></div>;
+    if (loading) return (
+        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+            <div className="h-40 rounded-[28px] bg-slate-100 animate-pulse mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
+                <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
+            </div>
+        </div>
+    );
 
     if (!formData) return (
         <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -55,21 +63,52 @@ const Profile = () => {
         </div>
     );
 
+    const code = ((formData.schoolName || 'SCH').substring(0, 3) + (schoolId || '').slice(-4)).toUpperCase();
+    const logo = formData.logo || formData.schoolLogo;
+    const st = (formData.status || '').toUpperCase();
+    const statusCls = (st === 'COMPLETED' || st === 'ACTIVE') ? 'bg-emerald-50 text-emerald-600'
+        : st === 'PENDING' ? 'bg-amber-50 text-amber-600'
+        : (st === 'SUSPENDED' || st === 'INACTIVE') ? 'bg-rose-50 text-rose-600'
+        : 'bg-slate-100 text-slate-500';
+
     return (
         <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800' }}>Manage Profile</h1>
-                    <p style={{ color: '#64748b', fontWeight: '500' }}>Review and edit your school public information.</p>
+                    <h1 style={{ fontSize: '32px', fontWeight: '800' }}>My Profile</h1>
+                    <p style={{ color: '#64748b', fontWeight: '500' }}>Review and edit your school information.</p>
                 </div>
-                <button 
-                    onClick={handleUpdate} 
-                    className="btn btn-primary" 
+                <button
+                    onClick={handleUpdate}
+                    className="btn btn-primary"
                     style={{ padding: '14px 28px', fontSize: '16px' }}
                     disabled={saving}
                 >
                     {saving ? <Loader2 className="animate-spin" /> : <><Save size={20} /> Save Changes</>}
                 </button>
+            </div>
+
+            {/* Premium identity header — all key details at a glance */}
+            <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-8 flex flex-col sm:flex-row sm:items-center gap-6">
+                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shrink-0 overflow-hidden shadow-lg shadow-blue-600/20">
+                    {logo ? <img src={logo} alt="" className="w-full h-full object-cover" /> : (formData.schoolName?.charAt(0) || 'S').toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">{formData.schoolName || 'Your School'}</h2>
+                        {st && <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusCls}`}><BadgeCheck size={12} />{st}</span>}
+                    </div>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3">
+                        <span className="flex items-center gap-2 text-slate-600 text-sm font-semibold min-w-0"><Mail size={16} className="text-slate-400 shrink-0" /><span className="truncate">{formData.email || '—'}</span></span>
+                        <span className="flex items-center gap-2 text-slate-600 text-sm font-semibold"><Phone size={16} className="text-slate-400 shrink-0" />{formData.phone || '—'}</span>
+                        <span className="flex items-center gap-2 text-slate-600 text-sm font-semibold"><MapPin size={16} className="text-slate-400 shrink-0" />{formData.city || '—'}</span>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">School Code</span>
+                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-sm font-black tabular-nums">{code}</span>
+                        {formData.establishedYear && <span className="ml-2 text-[12px] font-bold text-slate-400">Est. {formData.establishedYear}</span>}
+                    </div>
+                </div>
             </div>
 
             {message && (

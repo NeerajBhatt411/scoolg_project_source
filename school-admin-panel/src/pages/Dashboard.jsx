@@ -69,12 +69,9 @@ const Dashboard = () => {
                         <button className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
                             <span className="material-symbols-outlined text-[20px] text-[#434655]">notifications</span>
                         </button>
-                        <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                            <img
-                                alt="User Avatar"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                            />
-                        </div>
+                        <button onClick={() => navigate('/profile')} title="View profile" className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-sm ring-2 ring-white active:scale-95 transition-all shrink-0">
+                            {schoolName.charAt(0).toUpperCase()}
+                        </button>
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto">
@@ -90,12 +87,9 @@ const Dashboard = () => {
                         <button className="hover:bg-[#e6e8ea] rounded-full p-2 transition-all active:scale-95">
                             <span className="material-symbols-outlined text-[#434655]">notifications</span>
                         </button>
-                        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer">
-                            <img
-                                alt="User Avatar"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHgLzAW4q9gKYtvpNlK9SDBOmEmZz_cbEGEcME0yuZXD71yssyHMP13nfuOD4qP1vztDL0ZoCvw1CmCEgHBiWXvvviZ-7FGhK6plEy587L9lEQKffCVIqQA4SWKS0-hxXVpCcVvnnCfwC0nbrOoSz6GsCX7ZbdvRQM4dY9W2eE8uFyaO0Hwx89fnLwF0ynHHsxREW2jn5OWmvBy-hTc3OsUn9M47f0ADOiTkqrl-pw5XT_-8QgssdjtypuBEOaxitVXKoX5_Jp5489"
-                            />
-                        </div>
+                        <button onClick={() => navigate('/profile')} title="View profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shadow-sm ring-2 ring-white hover:ring-blue-100 active:scale-95 transition-all shrink-0">
+                            {schoolName.charAt(0).toUpperCase()}
+                        </button>
                     </div>
                 </div>
             </header>
