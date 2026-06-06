@@ -85,6 +85,15 @@ const Homework = () => {
         return '';
     };
 
+    // Subjects for the selected class: from Manage Class + whatever is in its timetable.
+    const classSubjects = [...new Set([
+        ...((selectedClassObj?.subjects) || []),
+        ...allTimetables
+            .filter(tt => tt.className === selectedClassObj?.className)
+            .flatMap(tt => (tt.schedule || []).flatMap(d => (d.periods || []).map(p => p.subject)))
+            .filter(Boolean),
+    ])];
+
     // Load sections when class changes (cached per class in context).
     useEffect(() => {
         let active = true;
@@ -381,10 +390,10 @@ const Homework = () => {
                                         className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
                                     >
                                         <option value="">Select subject</option>
-                                        {(selectedClassObj?.subjects || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                        {classSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
-                                    {selectedClassObj && (selectedClassObj.subjects || []).length === 0 && (
-                                        <p className="text-[10px] font-bold text-slate-400 mt-1 ml-1">No subjects in this class — add them in Classes → Manage Class.</p>
+                                    {selectedClassObj && classSubjects.length === 0 && (
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 ml-1">No subjects for this class yet — add them in Classes → Manage Class (or set them in the timetable).</p>
                                     )}
                                     {form.subject && (
                                         <p className="text-[11px] font-bold text-blue-600 mt-1.5 ml-1 flex items-center gap-1">
