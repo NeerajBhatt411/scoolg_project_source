@@ -315,6 +315,16 @@ const Timetable = () => {
         }
     };
 
+    // Subject -> hex colour (matches the colourful on-screen cells); used by PDF + Excel.
+    const subjectHex = (subject) => {
+        const s = (subject || '').toLowerCase();
+        const MAP = { math: '2563EB', english: '059669', physic: 'EA580C', chem: '0D9488', comp: '4F46E5', computer: '4F46E5', history: '9333EA', geograph: 'D97706', game: 'E11D48', sport: 'E11D48', lib: '0891B2', art: 'C026D3', hindi: 'DB2777', evs: '16A34A', scien: '0D9488', bio: '16A34A', sst: '9333EA', social: '9333EA', music: 'DB2777', moral: '0891B2' };
+        for (const k in MAP) if (s.includes(k)) return MAP[k];
+        const PAL = ['2563EB', '059669', 'EA580C', '4F46E5', '9333EA', '0891B2', 'E11D48', 'D97706', '0D9488', 'C026D3'];
+        let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        return PAL[h % PAL.length];
+    };
+
     // Build display rows for export: period rows + lunch-break rows (gap >= 20 min).
     const buildTimetableRows = (schedule) => {
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -352,9 +362,11 @@ const Timetable = () => {
             if (row.type === 'lunch') {
                 return `<tr><td class="lunch" colspan="${useDays.length + 1}">🍴 LUNCH BREAK · ${row.mins} mins</td></tr>`;
             }
-            const tds = row.cells.map(c => c
-                ? `<td><div class="subj">${c.subject}</div>${c.teacher ? `<div class="tch">${c.teacher}</div>` : ''}</td>`
-                : `<td><span class="free">—</span></td>`).join('');
+            const tds = row.cells.map(c => {
+                if (!c) return `<td><span class="free">—</span></td>`;
+                const hex = subjectHex(c.subject);
+                return `<td style="background:#${hex};"><div class="subj" style="color:#fff">${c.subject}</div>${c.teacher ? `<div class="tch" style="color:rgba(255,255,255,0.85)">${c.teacher}</div>` : ''}</td>`;
+            }).join('');
             return `<tr><td class="ph"><b>P${row.pn}</b><div class="tm">${row.time}</div></td>${tds}</tr>`;
         }).join('');
         const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>
@@ -436,10 +448,20 @@ const Timetable = () => {
                         pc.border = border;
                         row.cells.forEach((cell, i) => {
                             const c = ws.getCell(r, i + 2);
-                            c.value = cell ? `${cell.subject}${cell.teacher ? `\n${cell.teacher}` : ''}` : '—';
                             c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                            c.font = cell ? { color: { argb: 'FF0F172A' }, bold: true, size: 10 } : { color: { argb: 'FFCBD5E1' } };
                             c.border = border;
+                            if (cell) {
+                                c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + subjectHex(cell.subject) } };
+                                c.value = {
+                                    richText: [
+                                        { text: cell.subject, font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 } },
+                                        ...(cell.teacher ? [{ text: '\n' + cell.teacher, font: { color: { argb: 'FFEAF2FF' }, size: 9, italic: true } }] : []),
+                                    ],
+                                };
+                            } else {
+                                c.value = '—';
+                                c.font = { color: { argb: 'FFCBD5E1' } };
+                            }
                         });
                         ws.getRow(r).height = 32;
                     }
