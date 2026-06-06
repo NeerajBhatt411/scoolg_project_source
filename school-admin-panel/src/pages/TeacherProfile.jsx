@@ -22,6 +22,7 @@ const TeacherProfile = () => {
     // Teacher diary state
     const [diary, setDiary] = useState([]);
     const [classesList, setClassesList] = useState([]);
+    const [sectionsList, setSectionsList] = useState([]);
     const todayISO = new Date().toISOString().split('T')[0];
     const [diaryForm, setDiaryForm] = useState({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
     const [savingDiary, setSavingDiary] = useState(false);
@@ -39,10 +40,15 @@ const TeacherProfile = () => {
         axios.get(`${ADMIN_API_BASE}/classes?schoolId=${adminSchoolId}`)
             .then((res) => setClassesList(Array.isArray(res.data) ? res.data : []))
             .catch(() => { });
+        axios.get(`${ADMIN_API_BASE}/sections?schoolId=${adminSchoolId}`)
+            .then((res) => setSectionsList(Array.isArray(res.data) ? res.data : []))
+            .catch(() => { });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [teacher?._id]);
 
-    const diarySubjects = classesList.find(c => c.className === diaryForm.className)?.subjects || [];
+    const diaryClassObj = classesList.find(c => c.className === diaryForm.className);
+    const diarySubjects = diaryClassObj?.subjects || [];
+    const diarySections = diaryClassObj ? sectionsList.filter(s => String(s.classId?._id || s.classId) === String(diaryClassObj._id)) : [];
     const addDiary = async () => {
         if (!diaryForm.className || !diaryForm.note.trim()) { alert('Class and note are required.'); return; }
         setSavingDiary(true);
@@ -334,11 +340,14 @@ const TeacherProfile = () => {
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         <input type="date" value={diaryForm.date} onChange={(e) => setDiaryForm({ ...diaryForm, date: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
-                                        <select value={diaryForm.className} onChange={(e) => setDiaryForm({ ...diaryForm, className: e.target.value, subject: '' })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                                        <select value={diaryForm.className} onChange={(e) => setDiaryForm({ ...diaryForm, className: e.target.value, subject: '', sectionName: '' })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
                                             <option value="">Class</option>
                                             {classesList.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
                                         </select>
-                                        <input value={diaryForm.sectionName} onChange={(e) => setDiaryForm({ ...diaryForm, sectionName: e.target.value })} placeholder="Section" className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
+                                        <select value={diaryForm.sectionName} onChange={(e) => setDiaryForm({ ...diaryForm, sectionName: e.target.value })} disabled={!diaryForm.className} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 disabled:opacity-50">
+                                            <option value="">Section</option>
+                                            {diarySections.map(s => <option key={s._id} value={s.sectionName}>{s.sectionName}</option>)}
+                                        </select>
                                         <select value={diaryForm.subject} onChange={(e) => setDiaryForm({ ...diaryForm, subject: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
                                             <option value="">Subject</option>
                                             {diarySubjects.map(s => <option key={s} value={s}>{s}</option>)}
