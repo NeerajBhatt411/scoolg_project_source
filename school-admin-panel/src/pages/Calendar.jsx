@@ -38,7 +38,6 @@ const Calendar = () => {
     const [form, setForm] = useState({ title: '', category: 'Event', description: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [showDesc, setShowDesc] = useState(false);
 
     const load = async () => {
         if (!schoolId) return;
@@ -76,7 +75,6 @@ const Calendar = () => {
         if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
         else setSelectedDate(dateStr(year, mIdx, 1));
         setForm({ title: '', category: 'Event', description: '' });
-        setShowDesc(false);
     };
     const closeModal = () => { setOpenMonth(null); setSelectedDate(null); };
 
@@ -278,7 +276,11 @@ const Calendar = () => {
                                                 >
                                                     <span className="tabular-nums">{day}</span>
                                                     {dayEvents.length > 0 && (
-                                                        <span className="absolute bottom-1 w-1 h-1 rounded-full" style={{ background: isSel ? '#fff' : catOf(dayEvents[0].category).color }}></span>
+                                                        <span className="absolute bottom-1 flex gap-0.5">
+                                                            {dayEvents.slice(0, 3).map((ev, k) => (
+                                                                <span key={k} className="w-1 h-1 rounded-full" style={{ background: isSel ? '#fff' : catOf(ev.category).color }}></span>
+                                                            ))}
+                                                        </span>
                                                     )}
                                                 </button>
                                             );
@@ -311,31 +313,28 @@ const Calendar = () => {
                                 </div>
                             </div>
 
-                            {/* Description (collapsible to keep the form short) */}
-                            {showDesc ? (
-                                <div>
-                                    <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
-                                    <textarea
-                                        value={form.description}
-                                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                        placeholder="Add a note for this event…"
-                                        autoFocus
-                                        className="w-full h-16 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
-                                    />
-                                </div>
-                            ) : (
-                                <button onClick={() => setShowDesc(true)} className="inline-flex items-center gap-1.5 text-[13px] font-bold text-blue-600 hover:text-blue-700 transition-colors">
-                                    <span className="material-symbols-outlined text-[18px]">add</span>Add a note (optional)
-                                </button>
-                            )}
+                            {/* Description */}
+                            <div>
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                    Description <span className="text-slate-400">(optional)</span>
+                                </label>
+                                <textarea
+                                    value={form.description}
+                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                    placeholder="Add a note for this event…"
+                                    className="w-full h-16 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
+                                />
+                            </div>
 
                             {error && <p className="text-[13px] font-bold text-rose-600 bg-rose-50 rounded-xl px-3.5 py-2.5">{error}</p>}
 
-                            {/* already scheduled on this day */}
+                            {/* already scheduled on this day (multiple events supported, scrolls if many) */}
                             {selectedDayEvents.length > 0 && (
                                 <div>
-                                    <p className="text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">Already on this day</p>
-                                    <div className="space-y-2">
+                                    <p className="text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                        Already on this day <span className="text-blue-600">({selectedDayEvents.length})</span>
+                                    </p>
+                                    <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                                         {selectedDayEvents.map((ev) => {
                                             const c = catOf(ev.category);
                                             return (
