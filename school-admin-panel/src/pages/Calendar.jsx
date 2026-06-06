@@ -22,6 +22,7 @@ const firstWeekday = (y, m) => new Date(y, m, 1).getDay();
 const pad = (n) => String(n).padStart(2, '0');
 const dateStr = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
 const todayStr = () => new Date().toISOString().split('T')[0];
+const isPast = (ds) => !!ds && ds < todayStr(); // before today => locked
 const prettyDate = (s) => {
     const d = new Date(s + 'T00:00:00');
     return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -77,8 +78,14 @@ const Calendar = () => {
         setOpenMonth(mIdx);
         setError('');
         const now = new Date();
-        if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
-        else setSelectedDate(dateStr(year, mIdx, 1));
+        // Default the picker to a date you can actually schedule on (today / future).
+        if (now.getFullYear() === year && now.getMonth() === mIdx) {
+            setSelectedDate(todayStr());
+        } else if (year > now.getFullYear() || (year === now.getFullYear() && mIdx > now.getMonth())) {
+            setSelectedDate(dateStr(year, mIdx, 1)); // future month
+        } else {
+            setSelectedDate(null); // past month → nothing schedulable
+        }
         setForm({ title: '', category: 'Event', description: '' });
         setOtherType('');
         setJustAdded(false);
@@ -86,8 +93,9 @@ const Calendar = () => {
     const closeModal = () => { setOpenMonth(null); setSelectedDate(null); };
 
     const addEvent = async () => {
+        if (!selectedDate) { setError('Please pick a day (today or later).'); return; }
+        if (isPast(selectedDate)) { setError('Past dates are locked — schedule for today or later.'); return; }
         if (!form.title.trim()) { setError('Please enter an event title.'); return; }
-        if (!selectedDate) { setError('Please pick a day.'); return; }
         // When "Other" is chosen, use the custom type the user typed (falls back to "Other").
         const category = form.category === 'Other' && otherType.trim() ? otherType.trim() : form.category;
         setSaving(true); setError('');
@@ -142,7 +150,7 @@ const Calendar = () => {
                         <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                     </button>
                     {year !== new Date().getFullYear() && (
-                        <button onClick={() => setYear(new Date().getFullYear())} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors">Today</button>
+                        <button onClick={() => setYear(new Date().getFullYear())} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors">This year</button>
                     )}
                 </div>
             </header>
@@ -284,11 +292,14 @@ const Calendar = () => {
                                             const dayEvents = byDate[ds] || [];
                                             const isSel = selectedDate === ds;
                                             const isToday = ds === todayStr();
+                                            const past = isPast(ds);
                                             return (
                                                 <button
                                                     key={day}
+                                                    disabled={past}
+                                                    title={past ? 'Past date — locked' : undefined}
                                                     onClick={() => { setSelectedDate(ds); setError(''); }}
-                                                    className={`h-9 rounded-lg flex items-center justify-center text-[13px] font-bold transition-all relative ${isSel ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
+                                                    className={`h-9 rounded-lg flex items-center justify-center text-[13px] font-bold transition-all relative ${past ? 'text-slate-300 bg-slate-50/60 cursor-not-allowed' : isSel ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
                                                 >
                                                     <span className="tabular-nums">{day}</span>
                                                     {dayEvents.length > 0 && (
@@ -303,6 +314,12 @@ const Calendar = () => {
                                         })}
                                     </div>
                                 </div>
+                                {!selectedDate && (
+                                    <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                                        <span className="material-symbols-outlined text-[16px]">lock</span>
+                                        Past dates are locked — open a current or upcoming month to schedule.
+                                    </p>
+                                )}
                             </div>
 
                             {/* 3. Category */}
@@ -399,11 +416,11 @@ const Calendar = () => {
                             )}
                             <button
                                 onClick={addEvent}
-                                disabled={saving}
-                                className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-lg shadow-blue-600/25"
+                                disabled={saving || !selectedDate || isPast(selectedDate)}
+                                className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25"
                             >
-                                <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                                {saving ? 'Scheduling…' : 'Schedule event'}
+                                <span className="material-symbols-outlined text-[20px]">{(!selectedDate || isPast(selectedDate)) ? 'lock' : 'add_circle'}</span>
+                                {saving ? 'Scheduling…' : (!selectedDate || isPast(selectedDate)) ? 'Past dates are locked' : 'Schedule event'}
                             </button>
                         </div>
                     </div>
