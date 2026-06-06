@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -128,11 +129,7 @@ const Attendance = () => {
                         <button className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100/50 text-slate-600 hover:bg-slate-100 transition-colors">
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                         </button>
-                        <div className="flex items-center gap-3 cursor-pointer">
-                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1e40af] flex items-center justify-center text-white font-black shadow-lg shadow-blue-600/20 hover:scale-105 transition-transform">
-                                A
-                            </div>
-                        </div>
+                        <ProfileButton size={44} />
                     </div>
                 </div>
             </header>

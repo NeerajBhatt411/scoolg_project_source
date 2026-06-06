@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -103,6 +104,7 @@ const Classes = () => {
                             type="text"
                         />
                     </div>
+                    <ProfileButton size={40} />
                 </div>
             </header>
 

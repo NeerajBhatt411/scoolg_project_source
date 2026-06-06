@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -437,6 +438,7 @@ const Timetable = () => {
                         <h2 className="text-2xl font-black text-slate-800 tracking-tight">Timetable Matrix</h2>
                         <p className="text-slate-500 text-xs font-bold">Academic Session 2024-25</p>
                     </div>
+                    <ProfileButton size={40} />
                 </div>
 
                 {/* Top Controls */}

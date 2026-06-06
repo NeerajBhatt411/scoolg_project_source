@@ -1,4 +1,5 @@
 import React from 'react';
+import ProfileButton from '../components/ProfileButton';
 
 const Exams = () => {
     return (
@@ -21,15 +22,7 @@ const Exams = () => {
                         <button className="h-10 w-10 flex items-center justify-center bg-transparent hover:bg-slate-100 transition-colors rounded-full text-slate-600">
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[11px] font-bold text-slate-800">Admin User</p>
-                                <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest">Registrar Office</p>
-                            </div>
-                            <div className="h-10 w-10 bg-[#1e293b] rounded-full flex items-center justify-center border-2 border-white shadow-sm cursor-pointer">
-                                <span className="material-symbols-outlined text-white text-[20px]">person</span>
-                            </div>
-                        </div>
+                        <ProfileButton size={40} />
                     </div>
                 </div>
             </header>

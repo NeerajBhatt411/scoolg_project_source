@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileButton from '../components/ProfileButton';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 
@@ -43,6 +44,7 @@ const Students = () => {
                             type="text"
                         />
                     </div>
+                    <ProfileButton size={40} />
                 </div>
             </header>
 
