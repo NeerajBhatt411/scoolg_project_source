@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ADMIN_LOGIN_URL } from '../adminUrl';
 
 const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -13,9 +14,8 @@ const SchoolOnboarding = () => {
   const [formError, setFormError] = useState('');
   const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
 
-  // --- Safe URL Builder --- 
+  // --- Safe URL Builder ---
   const API_BASE_URL = 'https://scoolg-backend.netlify.app/api';
-  const ADMIN_PANEL_URL = import.meta.env.VITE_ADMIN_PANEL_URL || '';
   const SCHOOL_WEBSITE_URL = import.meta.env.VITE_SCHOOL_WEBSITE_URL || '';
 
   const joinURL = (base, endpoint) => {
@@ -1166,7 +1166,7 @@ const SchoolOnboarding = () => {
 
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
-                  onClick={() => window.open('http://localhost:5174/login', '_blank')}
+                  onClick={() => window.open(ADMIN_LOGIN_URL, '_blank')}
                   className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 text-white font-black text-[15px] rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 flex items-center justify-center gap-2"
                 >
                   🚀 Login to Admin Panel
