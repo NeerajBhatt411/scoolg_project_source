@@ -24,6 +24,7 @@ const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const StudentProfile = lazy(() => import('./pages/StudentProfile'));
 const Support = lazy(() => import('./pages/Support'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const TeacherDiary = lazy(() => import('./pages/TeacherDiary'));
 
 // Loading Fallback
 const PageLoading = () => (
@@ -146,6 +147,10 @@ function App() {
                         <Route
                             path="/teachers/profile"
                             element={<ModuleRoute module="teachers"><TeacherProfile /></ModuleRoute>}
+                        />
+                        <Route
+                            path="/teacher-diary"
+                            element={<ModuleRoute module="teachers"><TeacherDiary /></ModuleRoute>}
                         />
                         <Route
                             path="/timetable"
