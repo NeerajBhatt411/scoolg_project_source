@@ -49,9 +49,18 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${ADMIN_API_BASE}/calendar/upcoming?schoolId=${schoolId}&limit=5&_=${Date.now()}`)
-            .then((res) => setUpcoming(Array.isArray(res.data) ? res.data : []))
-            .catch((e) => console.error('Upcoming events fetch failed', e));
+        // Pull ALL calendar events (across years), then show upcoming first;
+        // if there are none upcoming, fall back to the most recent so the
+        // events you scheduled always appear here.
+        axios.get(`${ADMIN_API_BASE}/calendar?schoolId=${schoolId}&_=${Date.now()}`)
+            .then((res) => {
+                const all = Array.isArray(res.data) ? res.data : [];
+                const today = new Date().toISOString().split('T')[0];
+                const future = all.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+                const list = future.length ? future : [...all].sort((a, b) => b.date.localeCompare(a.date));
+                setUpcoming(list.slice(0, 5));
+            })
+            .catch((e) => console.error('Calendar events fetch failed', e));
     }, [schoolId]);
 
     const Shimmer = ({ className }) => (
