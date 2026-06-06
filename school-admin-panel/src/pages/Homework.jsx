@@ -54,11 +54,36 @@ const Homework = () => {
     const [form, setForm] = useState(emptyForm);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [allTimetables, setAllTimetables] = useState([]);
 
     // Pick a default class once the shared classes list is available.
     useEffect(() => {
         setSelectedClassObj((prev) => prev || (classes.length > 0 ? classes[0] : null));
     }, [classes]);
+
+    // Load all timetables once — used to auto-resolve the subject teacher.
+    useEffect(() => {
+        if (!schoolId) return;
+        axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`)
+            .then(r => setAllTimetables(Array.isArray(r.data) ? r.data : []))
+            .catch(() => { });
+    }, [schoolId]);
+
+    // Find the teacher who teaches a subject in a class/section (from the timetable).
+    const resolveTeacher = (className, sectionName, subject) => {
+        if (!subject || !className) return '';
+        const sub = subject.trim().toLowerCase();
+        for (const tt of allTimetables) {
+            if (tt.className !== className) continue;
+            if (sectionName && sectionName !== 'All' && tt.sectionName !== sectionName) continue;
+            for (const day of tt.schedule || []) {
+                for (const p of day.periods || []) {
+                    if (p.subject && p.subject.trim().toLowerCase() === sub && p.teacherName) return p.teacherName;
+                }
+            }
+        }
+        return '';
+    };
 
     // Load sections when class changes (cached per class in context).
     useEffect(() => {
@@ -360,6 +385,12 @@ const Homework = () => {
                                     </select>
                                     {selectedClassObj && (selectedClassObj.subjects || []).length === 0 && (
                                         <p className="text-[10px] font-bold text-slate-400 mt-1 ml-1">No subjects in this class — add them in Classes → Manage Class.</p>
+                                    )}
+                                    {form.subject && (
+                                        <p className="text-[11px] font-bold text-blue-600 mt-1.5 ml-1 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">person</span>
+                                            Assigned by: {resolveTeacher(selectedClassObj?.className, form.sectionName, form.subject) || 'subject teacher (set in timetable)'}
+                                        </p>
                                     )}
                                 </div>
                             </div>
