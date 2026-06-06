@@ -48,8 +48,8 @@ const Sidebar = () => {
         <aside className="w-16 md:w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-2 md:px-4 z-50">
             <button onClick={() => navigate('/dashboard')} title={schoolName} className="mb-10 px-2 md:px-4 flex items-center justify-center md:justify-start gap-2.5 w-full">
                 {logo
-                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-10 w-10 rounded-xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-0.5" />
-                    : <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
+                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-14 w-14 rounded-xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-0.5" />
+                    : <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xl font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
                 <div className="hidden md:block">
                     <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight">School Admin Panel</p>
                 </div>
