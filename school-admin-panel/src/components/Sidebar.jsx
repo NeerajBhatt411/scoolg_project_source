@@ -51,8 +51,7 @@ const Sidebar = () => {
                     ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-10 w-10 rounded-xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-0.5" />
                     : <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
                 <div className="hidden md:block">
-                    <p className="text-[15px] font-extrabold text-[#191c1e] leading-none">Admin Panel</p>
-                    <p className="text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">Scoolg ERP</p>
+                    <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight">School Admin Panel</p>
                 </div>
             </button>
             <nav className="flex-1 space-y-1">
