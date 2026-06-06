@@ -317,7 +317,7 @@ app.patch('/api/onboarding/update/:id', async (req, res) => {
  * so already-logged-in school admins keep working. Only staff users are
  * restricted to their `allowedModules`.
  */
-const ADMIN_PUBLIC_PATHS = ['/login'];
+const ADMIN_PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password'];
 // Map a request path (relative to /api/admin) to the module it belongs to.
 const MODULE_BY_PREFIX = [
     ['/student-attendance', 'students'],
@@ -536,6 +536,101 @@ app.post('/api/admin/change-password', async (req, res) => {
     } catch (err) {
         console.error("Change password error:", err);
         res.status(500).json({ error: "Password change failed" });
+    }
+});
+
+/**
+ * Forgot Password — find an admin account (school owner OR staff user) by email
+ * and email it a 6-digit reset code. The code + expiry are stored on the account
+ * document (serverless-safe; survives cold starts unlike an in-memory map).
+ * Always returns a generic success to avoid leaking which emails exist.
+ */
+const findAdminAccountByEmail = async (email) => {
+    const school = await School.findOne({ $or: [{ email }, { "formData.email": email }] });
+    if (school) return { account: school, kind: 'owner' };
+    const staff = await StaffUser.findOne({ email });
+    if (staff) return { account: staff, kind: 'staff' };
+    return { account: null, kind: null };
+};
+
+app.post('/api/admin/forgot-password', async (req, res) => {
+    let { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+    email = email.toLowerCase().trim();
+
+    const genericOk = { message: "If an account exists for this email, a reset code has been sent." };
+
+    try {
+        const { account, kind } = await findAdminAccountByEmail(email);
+        if (!account) return res.json(genericOk); // don't reveal non-existence
+
+        if (kind === 'staff' && account.status !== 'Active') {
+            // Inactive staff shouldn't be able to reset into a frozen account.
+            return res.json(genericOk);
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        account.resetOtp = otp;
+        account.resetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        await account.save();
+
+        try {
+            await transporter.sendMail({
+                from: `"Scoolg Support" <${process.env.GMAIL_USER}>`,
+                to: email,
+                subject: "Your Scoolg password reset code",
+                text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes. If you didn't request this, you can ignore this email.`
+            });
+            console.log(`✅ Reset OTP sent to ${email}: ${otp}`);
+        } catch (mailErr) {
+            console.error("❌ Reset email failed:", mailErr.message);
+            return res.status(500).json({ error: "Could not send reset email. Please try again later." });
+        }
+
+        return res.json(genericOk);
+    } catch (err) {
+        console.error("Forgot password error:", err);
+        return res.status(500).json({ error: "Could not process request" });
+    }
+});
+
+/**
+ * Reset Password — verify the emailed code and set a new password.
+ */
+app.post('/api/admin/reset-password', async (req, res) => {
+    let { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ error: "Email, OTP and new password are required" });
+    }
+    email = email.toLowerCase().trim();
+    otp = String(otp).trim();
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    try {
+        const { account } = await findAdminAccountByEmail(email);
+        if (!account || !account.resetOtp) {
+            return res.status(400).json({ error: "Invalid or expired reset code" });
+        }
+        if (account.resetOtp !== otp) {
+            return res.status(400).json({ error: "Invalid reset code" });
+        }
+        if (!account.resetOtpExpires || account.resetOtpExpires < Date.now()) {
+            return res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        account.password = await bcrypt.hash(newPassword, salt);
+        account.isPasswordChanged = true;
+        account.resetOtp = undefined;
+        account.resetOtpExpires = undefined;
+        await account.save();
+
+        return res.json({ message: "Password reset successfully. You can now log in." });
+    } catch (err) {
+        console.error("Reset password error:", err);
+        return res.status(500).json({ error: "Could not reset password" });
     }
 });
 
