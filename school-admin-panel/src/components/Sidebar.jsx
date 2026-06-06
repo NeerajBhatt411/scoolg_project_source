@@ -48,7 +48,7 @@ const Sidebar = () => {
         <aside className="w-16 md:w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-2 md:px-4 z-50">
             <button onClick={() => navigate('/dashboard')} title={schoolName} className="mb-5 px-2 md:px-4 flex flex-col items-center md:items-start gap-2.5 w-full">
                 {logo
-                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-11 w-11 md:h-20 md:w-20 rounded-2xl object-contain bg-white border border-slate-200 shadow-sm shrink-0 p-1" />
+                    ? <img src={logo} alt="School logo" onError={() => setLogo('')} className="h-12 w-12 md:h-24 md:w-24 object-contain shrink-0" />
                     : <div className="h-11 w-11 md:h-20 md:w-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-lg md:text-3xl font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
                 <p className="hidden md:block text-[15px] font-extrabold text-[#191c1e] leading-tight">Admin Panel</p>
             </button>
