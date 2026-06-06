@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import logo from '../assets/logo.png';
 
 
 const Sidebar = () => {
     const navigate = useNavigate();
     const { logout, can } = useAdmin();
+    const schoolName = localStorage.getItem('scoolg_school_name') || 'My School';
 
     const handleLogout = () => {
         logout();
@@ -33,14 +33,15 @@ const Sidebar = () => {
 
     return (
         <aside className="w-16 md:w-[280px] h-screen fixed left-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col py-6 px-2 md:px-4 z-50">
-            <div className="mb-10 px-2 md:px-4 flex items-center justify-center md:justify-start gap-2">
-                <img src={logo} alt="Scoolg" className="h-8 w-auto rounded-lg" />
-
-                <div className="hidden md:block">
-                    <h1 className="text-xl font-extrabold text-[#191c1e] flex items-center gap-2">SCOOLG</h1>
-                    <p className="text-[11px] uppercase font-semibold text-on-surface-variant tracking-wider mt-1">School ERP</p>
+            <button onClick={() => navigate('/dashboard')} className="mb-10 px-2 md:px-4 flex items-center justify-center md:justify-start gap-2.5 w-full text-left">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center shrink-0 shadow-sm">
+                    {schoolName.charAt(0).toUpperCase()}
                 </div>
-            </div>
+                <div className="hidden md:block min-w-0">
+                    <h1 className="text-[15px] font-extrabold text-[#191c1e] truncate" title={schoolName}>{schoolName}</h1>
+                    <p className="text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mt-0.5">Admin Panel</p>
+                </div>
+            </button>
             <nav className="flex-1 space-y-1">
                 {navItems.map((item) => (
                     <NavLink

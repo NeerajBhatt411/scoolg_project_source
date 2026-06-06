@@ -66,7 +66,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between w-full md:w-auto">
                     <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Dashboard</h2>
                     <div className="flex md:hidden items-center gap-3">
-                        <button className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
+                        <button onClick={() => navigate('/notifications')} title="Notifications" className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
                             <span className="material-symbols-outlined text-[20px] text-[#434655]">notifications</span>
                         </button>
                         <button onClick={() => navigate('/profile')} title="View profile" className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-sm ring-2 ring-white active:scale-95 transition-all shrink-0">
@@ -74,17 +74,9 @@ const Dashboard = () => {
                         </button>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64 group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-                        <input
-                            className="w-full h-10 pl-10 pr-4 rounded-xl border-none bg-surface-container-high focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all text-xs font-semibold"
-                            placeholder="Quick search..."
-                            type="text"
-                        />
-                    </div>
+                <div className="flex items-center gap-4 md:w-auto justify-end">
                     <div className="hidden md:flex items-center gap-3">
-                        <button className="hover:bg-[#e6e8ea] rounded-full p-2 transition-all active:scale-95">
+                        <button onClick={() => navigate('/notifications')} title="Notifications" className="hover:bg-[#e6e8ea] rounded-full p-2 transition-all active:scale-95">
                             <span className="material-symbols-outlined text-[#434655]">notifications</span>
                         </button>
                         <button onClick={() => navigate('/profile')} title="View profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shadow-sm ring-2 ring-white hover:ring-blue-100 active:scale-95 transition-all shrink-0">
@@ -110,7 +102,7 @@ const Dashboard = () => {
 
                 {/* Stat Cards Bento */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
+                    <div onClick={() => navigate('/students')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Total Students
@@ -126,7 +118,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
+                    <div onClick={() => navigate('/teachers')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Teachers
@@ -142,7 +134,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
+                    <div onClick={() => navigate('/profile')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         {(() => {
                             const sid = localStorage.getItem('scoolg_school_id') || "";
                             const suffix = sid.slice(-4);
@@ -174,7 +166,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
+                    <div onClick={() => navigate('/classes')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
                                 Classes
