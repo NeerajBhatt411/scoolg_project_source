@@ -12,7 +12,9 @@ const StaffUserSchema = new mongoose.Schema({
     // Module-level access: list of sidebar module keys this user can open.
     allowedModules: [{ type: String }],
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
-    isPasswordChanged: { type: Boolean, default: false }
+    isPasswordChanged: { type: Boolean, default: false },
+    resetOtp: { type: String }, // Forgot-password: 6-digit reset code
+    resetOtpExpires: { type: Number } // Forgot-password: epoch-ms expiry
 }, { timestamps: true });
 
 export const StaffUser = mongoose.models.StaffUser || mongoose.model('StaffUser', StaffUserSchema);
