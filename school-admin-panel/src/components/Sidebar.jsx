@@ -19,7 +19,7 @@ const Sidebar = () => {
         { name: 'Teachers', icon: 'school', path: '/teachers', module: 'teachers' },
         { name: 'Classes', icon: 'class', path: '/classes', module: 'classes' },
         { name: 'Timetable', icon: 'calendar_today', path: '/timetable', module: 'timetable' },
-        { name: 'Calendar', icon: 'calendar_month', path: '/calendar', module: 'calendar' },
+        { name: 'School Calendar', icon: 'calendar_month', path: '/calendar', module: 'calendar' },
         { name: 'Homework', icon: 'assignment', path: '/homework', module: 'homework' },
         { name: 'Attendance', icon: 'fact_check', path: '/attendance', module: 'attendance' },
         { name: 'Exams', icon: 'description', path: '/exams', module: 'exams' },
