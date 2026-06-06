@@ -1862,6 +1862,7 @@ app.post('/api/admin/homework', async (req, res) => {
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
         if (!className) return res.status(400).json({ error: "Class is required" });
         if (!title || !title.trim()) return res.status(400).json({ error: "Title is required" });
+        if (!dueDate) return res.status(400).json({ error: "Due date is required" });
 
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
