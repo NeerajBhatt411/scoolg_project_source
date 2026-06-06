@@ -52,10 +52,44 @@ const Profile = () => {
 
     if (loading) return (
         <div className="p-6 sm:p-10 max-w-[1000px] mx-auto">
-            <div className="h-40 rounded-[28px] bg-slate-100 animate-pulse mb-8"></div>
+            {/* title row */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="space-y-2">
+                    <div className="h-7 w-44 bg-slate-200 rounded-lg animate-pulse"></div>
+                    <div className="h-3.5 w-64 bg-slate-100 rounded-lg animate-pulse"></div>
+                </div>
+                <div className="h-11 w-32 bg-slate-100 rounded-xl animate-pulse"></div>
+            </div>
+            {/* identity header */}
+            <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
+                <div className="h-24 w-24 rounded-3xl bg-slate-100 animate-pulse shrink-0"></div>
+                <div className="flex-1 space-y-3">
+                    <div className="h-6 w-56 bg-slate-100 rounded-lg animate-pulse"></div>
+                    <div className="flex gap-4">
+                        <div className="h-4 w-40 bg-slate-100 rounded animate-pulse"></div>
+                        <div className="h-4 w-28 bg-slate-100 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-6 w-32 bg-slate-100 rounded-lg animate-pulse"></div>
+                </div>
+            </div>
+            {/* section cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
-                <div className="h-64 rounded-3xl bg-slate-100 animate-pulse"></div>
+                {[0, 1].map((i) => (
+                    <div key={i} className="bg-white rounded-3xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-6">
+                        <div className="flex items-center gap-2.5 mb-5">
+                            <div className="w-9 h-9 rounded-xl bg-slate-100 animate-pulse"></div>
+                            <div className="h-5 w-36 bg-slate-100 rounded animate-pulse"></div>
+                        </div>
+                        <div className="space-y-5">
+                            {[0, 1, 2].map((j) => (
+                                <div key={j} className="space-y-2">
+                                    <div className="h-2.5 w-24 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-5 w-3/4 bg-slate-100 rounded animate-pulse"></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
