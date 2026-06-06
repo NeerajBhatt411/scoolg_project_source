@@ -8,6 +8,7 @@ const Classes = () => {
     const { invalidateAcademic } = useAdmin();
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
+    const [teachersList, setTeachersList] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Add Class Modal State
@@ -29,7 +30,21 @@ const Classes = () => {
     useEffect(() => {
         fetchClasses();
         fetchSections();
+        axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`)
+            .then(r => setTeachersList(Array.isArray(r.data) ? r.data : []))
+            .catch(() => { });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const assignClassTeacher = async (sectionId, teacherId) => {
+        try {
+            await axios.patch(`${ADMIN_API_BASE}/sections/${sectionId}`, { classTeacherId: teacherId || null });
+            await fetchSections();
+            invalidateAcademic();
+        } catch (err) {
+            alert('Failed to assign class teacher');
+        }
+    };
 
     const fetchSections = async () => {
         try {
@@ -372,14 +387,17 @@ const Classes = () => {
                                         <span className="text-sm text-slate-400 font-semibold">No sections yet — class works with just its subjects below.</span>
                                     ) : sectionsOf(manageClass._id).map((sec) => (
                                         <div key={sec._id} className="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-4 py-2.5 border border-slate-100">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 grid place-items-center font-black">{sec.sectionName?.charAt(0) || '?'}</div>
-                                                <div>
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 grid place-items-center font-black shrink-0">{sec.sectionName?.charAt(0) || '?'}</div>
+                                                <div className="min-w-0">
                                                     <p className="font-bold text-slate-800 text-sm">Section {sec.sectionName}</p>
-                                                    {sec.classTeacherId?.fullName && <p className="text-[11px] font-semibold text-slate-500">Class Teacher: {sec.classTeacherId.fullName}</p>}
+                                                    <select value={sec.classTeacherId?._id || ''} onChange={(e) => assignClassTeacher(sec._id, e.target.value)} className="mt-1 h-7 max-w-[150px] text-[11px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 outline-none focus:border-blue-500">
+                                                        <option value="">No class teacher</option>
+                                                        {teachersList.map(t => <option key={t._id} value={t._id}>{t.fullName}</option>)}
+                                                    </select>
                                                 </div>
                                             </div>
-                                            <button onClick={() => deleteSection(sec._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors"><span className="material-symbols-outlined text-[18px]">delete</span></button>
+                                            <button onClick={() => deleteSection(sec._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0"><span className="material-symbols-outlined text-[18px]">delete</span></button>
                                         </div>
                                     ))}
                                 </div>

@@ -357,7 +357,7 @@ const TeacherProfile = () => {
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-bold text-slate-800 text-sm">{e.note}</p>
                                                 <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                                                    Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}{e.createdByRole === 'teacher' ? ' · by teacher' : ''}
+                                                    Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}{e.createdByRole === 'teacher' ? ' · by teacher' : ''}{e.locked ? ' · 🔒 locked' : ''}
                                                 </p>
                                             </div>
                                             <button onClick={() => deleteDiary(e._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0"><span className="material-symbols-outlined text-[18px]">delete</span></button>

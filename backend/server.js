@@ -1042,6 +1042,21 @@ app.delete('/api/admin/sections/:id', async (req, res) => {
     }
 });
 
+// Update a section (assign class teacher / rename).
+app.patch('/api/admin/sections/:id', async (req, res) => {
+    try {
+        const update = {};
+        if (req.body.sectionName !== undefined) update.sectionName = req.body.sectionName;
+        if (req.body.classTeacherId !== undefined) update.classTeacherId = req.body.classTeacherId || null;
+        if (req.body.maxCapacity !== undefined) update.maxCapacity = req.body.maxCapacity;
+        const section = await Section.findByIdAndUpdate(req.params.id, update, { new: true }).populate('classTeacherId');
+        if (!section) return res.status(404).json({ error: "Section not found" });
+        res.json(section);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update section", details: err.message });
+    }
+});
+
 // Update a class (subjects / name / order).
 app.patch('/api/admin/classes/:id', async (req, res) => {
     try {
@@ -2554,6 +2569,38 @@ app.post('/api/teacher/diary', async (req, res) => {
         });
         await entry.save();
         res.status(201).json(entry);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+// Teacher locks own entry — after this it can't be edited/deleted.
+app.post('/api/teacher/diary/:id/lock', async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const entry = await TeacherDiary.findById(req.params.id);
+        if (!entry || entry.teacherId.toString() !== teacher._id.toString()) {
+            return res.status(404).json({ error: "Entry not found" });
+        }
+        entry.locked = true;
+        await entry.save();
+        res.json(entry);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+// Teacher deletes own entry — only if not locked.
+app.delete('/api/teacher/diary/:id', async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const entry = await TeacherDiary.findById(req.params.id);
+        if (!entry || entry.teacherId.toString() !== teacher._id.toString()) {
+            return res.status(404).json({ error: "Entry not found" });
+        }
+        if (entry.locked) return res.status(400).json({ error: "Locked entries can't be deleted" });
+        await entry.deleteOne();
+        res.json({ message: "Entry deleted" });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
