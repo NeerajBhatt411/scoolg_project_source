@@ -240,7 +240,7 @@ const Calendar = () => {
                             {/* 1. Title */}
                             <div>
                                 <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
-                                    <span className="text-blue-600">1.</span> Event name
+                                    <span className="text-blue-600">1.</span> Event name <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     value={form.title}
@@ -253,7 +253,7 @@ const Calendar = () => {
                             {/* 2. Date */}
                             <div>
                                 <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
-                                    <span className="text-blue-600">2.</span> Which day?
+                                    <span className="text-blue-600">2.</span> Which day? <span className="text-rose-500">*</span>
                                     {selectedDate && <span className="ml-2 text-blue-600 normal-case tracking-normal">{prettyDate(selectedDate)}</span>}
                                 </label>
                                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
