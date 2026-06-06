@@ -38,6 +38,7 @@ const Calendar = () => {
     const [form, setForm] = useState({ title: '', category: 'Event', description: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [showDesc, setShowDesc] = useState(false);
 
     const load = async () => {
         if (!schoolId) return;
@@ -75,6 +76,7 @@ const Calendar = () => {
         if (now.getFullYear() === year && now.getMonth() === mIdx) setSelectedDate(todayStr());
         else setSelectedDate(dateStr(year, mIdx, 1));
         setForm({ title: '', category: 'Event', description: '' });
+        setShowDesc(false);
     };
     const closeModal = () => { setOpenMonth(null); setSelectedDate(null); };
 
@@ -156,7 +158,22 @@ const Calendar = () => {
 
                 {/* 3 x 4 month grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-                    {MONTHS.map((name, mIdx) => {
+                    {(loading && events.length === 0) ? (
+                        Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="bg-white rounded-[28px] p-5 border border-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.04)]">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="h-4 w-24 bg-slate-200 rounded-full animate-pulse"></div>
+                                    <div className="h-4 w-6 bg-slate-100 rounded-full animate-pulse"></div>
+                                </div>
+                                <div className="space-y-2.5 min-h-[84px]">
+                                    <div className="h-3 w-full bg-slate-100 rounded-full animate-pulse"></div>
+                                    <div className="h-3 w-4/5 bg-slate-100 rounded-full animate-pulse"></div>
+                                    <div className="h-3 w-3/5 bg-slate-100 rounded-full animate-pulse"></div>
+                                </div>
+                                <div className="mt-4 h-10 w-full bg-slate-100 rounded-xl animate-pulse"></div>
+                            </div>
+                        ))
+                    ) : MONTHS.map((name, mIdx) => {
                         const list = byMonth[mIdx] || [];
                         const isCurrent = new Date().getFullYear() === year && new Date().getMonth() === mIdx;
                         return (
@@ -221,28 +238,29 @@ const Calendar = () => {
                         </div>
 
                         {/* scrollable form body */}
-                        <div className="overflow-y-auto px-6 py-5 space-y-6">
+                        <div className="overflow-y-auto px-6 py-4 space-y-4">
                             {/* 1. Title */}
                             <div>
-                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
                                     <span className="text-blue-600">1.</span> Event name
                                 </label>
                                 <input
                                     value={form.title}
                                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                                     placeholder="e.g. Annual Function, Diwali Holiday"
-                                    className="w-full h-12 px-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[15px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
+                                    className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-[15px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all"
                                 />
                             </div>
 
                             {/* 2. Date */}
                             <div>
-                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
                                     <span className="text-blue-600">2.</span> Which day?
+                                    {selectedDate && <span className="ml-2 text-blue-600 normal-case tracking-normal">{prettyDate(selectedDate)}</span>}
                                 </label>
-                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
                                     <div className="grid grid-cols-7 gap-1 mb-1">
-                                        {WEEKDAYS.map((w, i) => <div key={i} className="text-center text-[11px] font-black text-slate-400">{w}</div>)}
+                                        {WEEKDAYS.map((w, i) => <div key={i} className="text-center text-[10px] font-black text-slate-400">{w}</div>)}
                                     </div>
                                     <div className="grid grid-cols-7 gap-1">
                                         {Array.from({ length: firstWeekday(year, openMonth) }).map((_, i) => <div key={`b${i}`} />)}
@@ -256,64 +274,60 @@ const Calendar = () => {
                                                 <button
                                                     key={day}
                                                     onClick={() => { setSelectedDate(ds); setError(''); }}
-                                                    className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 text-[13px] font-bold transition-all ${isSel ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
+                                                    className={`h-9 rounded-lg flex items-center justify-center text-[13px] font-bold transition-all relative ${isSel ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-700 hover:bg-blue-50'}`}
                                                 >
                                                     <span className="tabular-nums">{day}</span>
                                                     {dayEvents.length > 0 && (
-                                                        <span className="flex gap-0.5">
-                                                            {dayEvents.slice(0, 3).map((ev, k) => (
-                                                                <span key={k} className="w-1 h-1 rounded-full" style={{ background: isSel ? '#fff' : catOf(ev.category).color }}></span>
-                                                            ))}
-                                                        </span>
+                                                        <span className="absolute bottom-1 w-1 h-1 rounded-full" style={{ background: isSel ? '#fff' : catOf(dayEvents[0].category).color }}></span>
                                                     )}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
-                                {selectedDate && (
-                                    <p className="text-[12.5px] font-bold text-slate-600 mt-2 flex items-center gap-1.5">
-                                        <span className="material-symbols-outlined text-[16px] text-blue-600">event_available</span>
-                                        {prettyDate(selectedDate)}
-                                    </p>
-                                )}
                             </div>
 
                             {/* 3. Category */}
                             <div>
-                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
                                     <span className="text-blue-600">3.</span> Type of event
                                 </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <div className="flex flex-wrap gap-1.5">
                                     {CATEGORIES.map((c) => {
                                         const active = form.category === c.key;
                                         return (
                                             <button
                                                 key={c.key}
                                                 onClick={() => setForm({ ...form, category: c.key })}
-                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[12.5px] font-bold transition-all ${active ? 'border-transparent text-white shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'}`}
-                                                style={active ? { background: c.color } : {}}
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border transition-all"
+                                                style={active
+                                                    ? { background: c.color, color: '#fff', borderColor: c.color }
+                                                    : { background: c.bg, color: c.color, borderColor: 'transparent' }}
                                             >
-                                                <span className="material-symbols-outlined text-[18px]" style={active ? {} : { color: c.color }}>{c.icon}</span>
-                                                <span className="truncate">{c.key}</span>
+                                                <span className="material-symbols-outlined text-[15px]">{c.icon}</span>{c.key}
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* Description */}
-                            <div>
-                                <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-2">
-                                    Description <span className="text-slate-400">(optional)</span>
-                                </label>
-                                <textarea
-                                    value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    placeholder="Add a note for this event…"
-                                    className="w-full h-20 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
-                                />
-                            </div>
+                            {/* Description (collapsible to keep the form short) */}
+                            {showDesc ? (
+                                <div>
+                                    <label className="block text-[12px] font-black text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+                                    <textarea
+                                        value={form.description}
+                                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                        placeholder="Add a note for this event…"
+                                        autoFocus
+                                        className="w-full h-16 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all resize-none"
+                                    />
+                                </div>
+                            ) : (
+                                <button onClick={() => setShowDesc(true)} className="inline-flex items-center gap-1.5 text-[13px] font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                                    <span className="material-symbols-outlined text-[18px]">add</span>Add a note (optional)
+                                </button>
+                            )}
 
                             {error && <p className="text-[13px] font-bold text-rose-600 bg-rose-50 rounded-xl px-3.5 py-2.5">{error}</p>}
 
