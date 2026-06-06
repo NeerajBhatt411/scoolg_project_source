@@ -12,6 +12,9 @@ const TeacherDiary = () => {
     const [loading, setLoading] = useState(true);
     const [fTeacher, setFTeacher] = useState('');
     const [fDate, setFDate] = useState('');
+    const [fClass, setFClass] = useState('');
+    const [fSection, setFSection] = useState('');
+    const [fSubject, setFSubject] = useState('');
 
     useEffect(() => {
         if (!schoolId) return;
@@ -25,11 +28,19 @@ const TeacherDiary = () => {
         }).catch((e) => console.error('Diary load failed', e)).finally(() => setLoading(false));
     }, [schoolId]);
 
+    const classOptions = useMemo(() => [...new Set(entries.map(e => e.className).filter(Boolean))].sort(), [entries]);
+    const subjectOptions = useMemo(() => [...new Set(entries.map(e => e.subject).filter(Boolean))].sort(), [entries]);
+    const sectionOptions = useMemo(() => [...new Set(entries.filter(e => !fClass || e.className === fClass).map(e => e.sectionName).filter(Boolean))].sort(), [entries, fClass]);
+
     const filtered = useMemo(() => entries.filter((e) => {
         if (fTeacher && String(e.teacherId?._id || e.teacherId) !== fTeacher) return false;
         if (fDate && e.date !== fDate) return false;
+        if (fClass && e.className !== fClass) return false;
+        if (fSection && e.sectionName !== fSection) return false;
+        if (fSubject && e.subject !== fSubject) return false;
         return true;
-    }), [entries, fTeacher, fDate]);
+    }), [entries, fTeacher, fDate, fClass, fSection, fSubject]);
+    const anyFilter = fTeacher || fDate || fClass || fSection || fSubject;
 
     return (
         <>
@@ -49,9 +60,21 @@ const TeacherDiary = () => {
                         <option value="">All teachers</option>
                         {teachers.map((t) => <option key={t._id} value={t._id}>{t.fullName}</option>)}
                     </select>
+                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); }} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                        <option value="">All classes</option>
+                        {classOptions.map((c) => <option key={c} value={c}>Class {c}</option>)}
+                    </select>
+                    <select value={fSection} onChange={(e) => setFSection(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                        <option value="">All sections</option>
+                        {sectionOptions.map((s) => <option key={s} value={s}>Section {s}</option>)}
+                    </select>
+                    <select value={fSubject} onChange={(e) => setFSubject(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                        <option value="">All subjects</option>
+                        {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
                     <input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
-                    {(fTeacher || fDate) && (
-                        <button onClick={() => { setFTeacher(''); setFDate(''); }} className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold transition-colors">Clear</button>
+                    {anyFilter && (
+                        <button onClick={() => { setFTeacher(''); setFDate(''); setFClass(''); setFSection(''); setFSubject(''); }} className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold transition-colors">Clear</button>
                     )}
                     <span className="ml-auto inline-flex items-center gap-2 text-[12px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>{filtered.length} record{filtered.length === 1 ? '' : 's'}
