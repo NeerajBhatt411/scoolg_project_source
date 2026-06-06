@@ -2861,6 +2861,7 @@ app.post('/api/teacher/homework', async (req, res) => {
         const { className, sectionName, subject, title, description, dueDate, attachments } = req.body;
         if (!className) return res.status(400).json({ error: "Class is required" });
         if (!title?.trim()) return res.status(400).json({ error: "Title is required" });
+        if (!dueDate) return res.status(400).json({ error: "Due date is required" });
 
         const homework = await Homework.create({
             schoolId: teacher.schoolId,
