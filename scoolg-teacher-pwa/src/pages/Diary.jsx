@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
 const Diary = () => {
-  const { teacher } = useAuth();
   const [classes, setClasses] = useState([]);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +28,7 @@ const Diary = () => {
   const classOptions = [...new Set(classes.map(c => c.className).filter(Boolean))];
   const sectionOptions = [...new Set(classes.filter(c => c.className === form.className).map(c => c.sectionName).filter(Boolean))];
   const classObj = classes.find(c => c.className === form.className);
-  const teacherSubs = (teacher?.subjects || []).map(s => (typeof s === 'string' ? s : s?.subjectName)).filter(Boolean);
-  const specSubs = (teacher?.specialization || '').split(/[,&/]|\band\b/i).map(s => s.trim()).filter(Boolean);
-  const subjects = [...new Set([...(classObj?.subjects || []), ...teacherSubs, ...specSubs])];
+  const subjects = classObj?.subjects || [];
 
   const save = async () => {
     if (!form.className) { setError('Please select a class.'); return; }
