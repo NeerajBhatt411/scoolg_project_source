@@ -314,6 +314,46 @@ const Timetable = () => {
         }
     };
 
+    // Download the current class-section timetable as a print-to-PDF document.
+    const downloadPDF = () => {
+        if (!timetable?.schedule?.length) return;
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayMap = {};
+        timetable.schedule.forEach(d => { dayMap[d.dayOfWeek] = d.periods || []; });
+        const presentDays = days.filter(d => (dayMap[d] || []).length);
+        const periodNums = [...new Set(timetable.schedule.flatMap(d => (d.periods || []).map(p => p.periodNumber)))].sort((a, b) => a - b);
+        const timeByPeriod = {};
+        timetable.schedule.forEach(d => (d.periods || []).forEach(p => {
+            if (!timeByPeriod[p.periodNumber]) timeByPeriod[p.periodNumber] = `${p.startTime || ''}${p.endTime ? ' - ' + p.endTime : ''}`;
+        }));
+        const cell = (day, pn) => {
+            const p = (dayMap[day] || []).find(x => x.periodNumber === pn);
+            return p && p.subject ? `<div class="subj">${p.subject}</div><div class="tch">${p.teacherName || ''}</div>` : '<span class="free">—</span>';
+        };
+        const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
+        const title = `Timetable · Class ${selectedClassObj?.className || ''}-${selectedSectionObj?.sectionName || ''}`;
+        const rows = periodNums.map(pn =>
+            `<tr><td class="ph"><b>P${pn}</b><div class="tm">${timeByPeriod[pn] || ''}</div></td>${presentDays.map(d => `<td>${cell(d, pn)}</td>`).join('')}</tr>`
+        ).join('');
+        const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>
+            body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:24px;}
+            h1{font-size:20px;margin:0;} .sub{color:#64748b;font-size:13px;margin:2px 0 16px;}
+            table{width:100%;border-collapse:collapse;} th,td{border:1px solid #e2e8f0;padding:8px;font-size:12px;text-align:center;vertical-align:middle;}
+            th{background:#eff6ff;color:#1d4ed8;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+            .ph{background:#f8fafc;font-weight:700;white-space:nowrap;} .tm{font-size:10px;color:#64748b;font-weight:600;}
+            .subj{font-weight:700;} .tch{font-size:10px;color:#64748b;} .free{color:#cbd5e1;}
+            @media print{body{padding:0;} @page{size:landscape;}}
+        </style></head><body>
+            <h1>${schoolName}</h1><div class="sub">${title}</div>
+            <table><thead><tr><th>Period</th>${presentDays.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+            <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>
+        </body></html>`;
+        const w = window.open('', '_blank');
+        if (!w) { alert('Please allow pop-ups to download the timetable PDF.'); return; }
+        w.document.write(html);
+        w.document.close();
+    };
+
     const handleCopy = async () => {
         const targetClassObj = classes.find(c => c._id === copyToClass);
         const targetSectionObj = copyToSections.find(s => s._id === copyToSection);
@@ -496,6 +536,10 @@ const Timetable = () => {
                             <>
                                 {timetable && (
                                     <>
+                                        <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-600 font-bold text-sm rounded-xl hover:bg-rose-100 transition-all">
+                                            <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                                            Download PDF
+                                        </button>
                                         <button onClick={() => setShowCopyModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">content_copy</span>
                                             Copy to Class
@@ -526,7 +570,7 @@ const Timetable = () => {
                                 </button>
                                 <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-sm shadow-emerald-500/30 hover:scale-95 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">save</span>
-                                    {isSaving ? 'Saving...' : 'Save Matrix'}
+                                    {isSaving ? 'Saving...' : 'Save Timetable'}
                                 </button>
                             </>
                         )}
