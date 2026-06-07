@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const AddStudent = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const { classes, getSections } = useAdmin();
     const [currentStep, setCurrentStep] = useState(1);
     const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
@@ -171,12 +173,12 @@ const AddStudent = () => {
                 setCurrentStep(currentStep + 1);
             } else {
                 // Flash error or alert
-                alert("Please fill all required fields marked with *");
+                toast.warning("Please fill all required fields marked with *");
             }
         } else {
             // Step 4 = Submit
             if (!schoolId) {
-                alert("School ID is missing. Please log in again.");
+                toast.error("School ID is missing. Please log in again.");
                 return;
             }
             setIsLoading(true);
@@ -190,7 +192,7 @@ const AddStudent = () => {
                 }
             } catch (err) {
                 console.error(err);
-                alert("Failed to register student. Check console or make sure all required * fields are filled.");
+                toast.error("Failed to register student. Check console or make sure all required * fields are filled.");
             } finally {
                 setIsLoading(false);
             }

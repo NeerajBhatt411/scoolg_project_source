@@ -3,9 +3,11 @@ import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const Classes = () => {
     const { invalidateAcademic } = useAdmin();
+    const { toast } = useToast();
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
     const [teachersList, setTeachersList] = useState([]);
@@ -42,7 +44,7 @@ const Classes = () => {
             await fetchSections();
             invalidateAcademic();
         } catch (err) {
-            alert('Failed to assign class teacher');
+            toast.error('Failed to assign class teacher');
         }
     };
 
@@ -70,7 +72,8 @@ const Classes = () => {
     const handleAddClass = async (e) => {
         e.preventDefault();
         if (!newClassName.trim() || !newClassSubjects.trim()) {
-            return alert("Class Name and Subjects are compulsory");
+            toast.warning("Class Name and Subjects are compulsory");
+            return;
         }
 
         const sectionToCreate = newSectionName.trim() || "General";
@@ -104,7 +107,7 @@ const Classes = () => {
             setNewClassSubjects('');
         } catch (err) {
             console.error("Failed to add class", err);
-            alert("Error adding class: " + (err.response?.data?.error || err.message));
+            toast.error("Error adding class: " + (err.response?.data?.error || err.message));
         } finally {
             setIsSubmitting(false);
         }
@@ -129,7 +132,7 @@ const Classes = () => {
             setSubjectsSaved(true);
             setTimeout(() => setSubjectsSaved(false), 2000);
         } catch (err) {
-            alert('Failed to save subjects: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to save subjects: ' + (err.response?.data?.error || err.message));
         } finally { setSavingManage(false); }
     };
 
@@ -143,7 +146,7 @@ const Classes = () => {
             invalidateAcademic();
             setNewSecName('');
         } catch (err) {
-            alert('Failed to add section: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to add section: ' + (err.response?.data?.error || err.message));
         } finally { setSavingManage(false); }
     };
     const deleteSection = async (id) => {
@@ -153,7 +156,7 @@ const Classes = () => {
             await fetchSections();
             invalidateAcademic();
         } catch (err) {
-            alert('Failed to delete section');
+            toast.error('Failed to delete section');
         }
     };
 

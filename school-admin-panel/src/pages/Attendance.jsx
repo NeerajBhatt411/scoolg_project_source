@@ -3,9 +3,11 @@ import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const Attendance = () => {
     const { classes, getSections } = useAdmin();
+    const { toast } = useToast();
     const [sections, setSections] = useState([]);
     const [students, setStudents] = useState([]);
     const [attendanceData, setAttendanceData] = useState({});
@@ -91,8 +93,8 @@ const Attendance = () => {
                 date: selectedDate, records
             });
             setIsLocked(true);
-            alert("Attendance Submitted Successfully!");
-        } catch (err) { alert("Failed to submit"); }
+            toast.success("Attendance Submitted Successfully!");
+        } catch (err) { toast.error("Failed to submit"); }
         finally { setSaving(false); }
     };
 

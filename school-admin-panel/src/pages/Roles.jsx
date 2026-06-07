@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 // Modules a staff user can be granted. Dashboard is always available.
 const MODULES = [
@@ -26,6 +27,7 @@ const ROLE_TEMPLATES = {
 };
 
 const Roles = () => {
+    const { toast } = useToast();
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -131,7 +133,7 @@ const Roles = () => {
             await axios.delete(`${ADMIN_API_BASE}/staff/${deleteTarget._id}`);
             setDeleteTarget(null);
             fetchStaff();
-        } catch (err) { console.error(err); alert('Failed to remove staff'); }
+        } catch (err) { console.error(err); toast.error('Failed to remove staff'); }
     };
 
     return (

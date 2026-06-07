@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import { AdminProvider, useAdmin } from './context/AdminContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Lazy load components
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -97,99 +98,101 @@ const ModuleRoute = ({ module, children }) => {
 
 function App() {
     return (
-        <AdminProvider>
-            <Router basename="/admin">
-                <Suspense fallback={<PageLoading />}>
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/change-password" element={<ChangePassword />} />
+        <ToastProvider>
+            <AdminProvider>
+                <Router basename="/admin">
+                    <Suspense fallback={<PageLoading />}>
+                        <Routes>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/change-password" element={<ChangePassword />} />
 
-                        <Route
-                            path="/support"
-                            element={<ProtectedRoute><Support /></ProtectedRoute>}
-                        />
-                        <Route
-                            path="/dashboard"
-                            element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
-                        />
-                        <Route
-                            path="/profile"
-                            element={<ProtectedRoute><Profile /></ProtectedRoute>}
-                        />
-                        <Route
-                            path="/notifications"
-                            element={<ProtectedRoute><Notifications /></ProtectedRoute>}
-                        />
-                        <Route
-                            path="/gallery"
-                            element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Gallery Coming Soon</h2></div></ProtectedRoute>}
-                        />
-                        <Route
-                            path="/students"
-                            element={<ModuleRoute module="students"><Students /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/students/add"
-                            element={<ModuleRoute module="students"><AddStudent /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/students/profile"
-                            element={<ModuleRoute module="students"><StudentProfile /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/teachers"
-                            element={<ModuleRoute module="teachers"><Teachers /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/teachers/add"
-                            element={<ModuleRoute module="teachers"><AddTeacher /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/teachers/profile"
-                            element={<ModuleRoute module="teachers"><TeacherProfile /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/teacher-diary"
-                            element={<ModuleRoute module="teachers"><TeacherDiary /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/timetable"
-                            element={<ModuleRoute module="timetable"><Timetable /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/calendar"
-                            element={<ModuleRoute module="calendar"><Calendar /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/homework"
-                            element={<ModuleRoute module="homework"><Homework /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/classes"
-                            element={<ModuleRoute module="classes"><Classes /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/attendance"
-                            element={<ModuleRoute module="attendance"><Attendance /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/exams"
-                            element={<ModuleRoute module="exams"><Exams /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/notices"
-                            element={<ModuleRoute module="notices"><Notices /></ModuleRoute>}
-                        />
-                        <Route
-                            path="/roles"
-                            element={<ModuleRoute module="roles"><Roles /></ModuleRoute>}
-                        />
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                    </Routes>
-                </Suspense>
-            </Router>
-        </AdminProvider>
+                            <Route
+                                path="/support"
+                                element={<ProtectedRoute><Support /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/dashboard"
+                                element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/profile"
+                                element={<ProtectedRoute><Profile /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/notifications"
+                                element={<ProtectedRoute><Notifications /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/gallery"
+                                element={<ProtectedRoute><div style={{ padding: '80px', textAlign: 'center' }}><h2>Gallery Coming Soon</h2></div></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/students"
+                                element={<ModuleRoute module="students"><Students /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/students/add"
+                                element={<ModuleRoute module="students"><AddStudent /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/students/profile"
+                                element={<ModuleRoute module="students"><StudentProfile /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/teachers"
+                                element={<ModuleRoute module="teachers"><Teachers /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/teachers/add"
+                                element={<ModuleRoute module="teachers"><AddTeacher /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/teachers/profile"
+                                element={<ModuleRoute module="teachers"><TeacherProfile /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/teacher-diary"
+                                element={<ModuleRoute module="teachers"><TeacherDiary /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/timetable"
+                                element={<ModuleRoute module="timetable"><Timetable /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/calendar"
+                                element={<ModuleRoute module="calendar"><Calendar /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/homework"
+                                element={<ModuleRoute module="homework"><Homework /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/classes"
+                                element={<ModuleRoute module="classes"><Classes /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/attendance"
+                                element={<ModuleRoute module="attendance"><Attendance /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/exams"
+                                element={<ModuleRoute module="exams"><Exams /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/notices"
+                                element={<ModuleRoute module="notices"><Notices /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/roles"
+                                element={<ModuleRoute module="roles"><Roles /></ModuleRoute>}
+                            />
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                    </Suspense>
+                </Router>
+            </AdminProvider>
+        </ToastProvider>
     );
 }
 

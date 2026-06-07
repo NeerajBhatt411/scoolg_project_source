@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const CAT_META = {
     'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
@@ -26,6 +27,7 @@ const eventDayLabel = (ds) => {
 
 const Dashboard = () => {
     const { stats, loadingStats, refreshStats, can, schoolId } = useAdmin();
+    const { toast } = useToast();
     const navigate = useNavigate();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
     const [upcoming, setUpcoming] = useState([]);
@@ -156,7 +158,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-2">
                                         <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(code); alert('Copied!') }}
+                                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(code); toast.success('Copied!') }}
                                             title="Copy Code"
                                             className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
                                         >
