@@ -4,11 +4,13 @@ import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const Timetable = () => {
     const schoolId = localStorage.getItem('scoolg_school_id');
     // classes & teachers come from the shared cache; sections are cached per class.
     const { classes, teachers, getSections, invalidateAcademic } = useAdmin();
+    const { toast } = useToast();
     const [sections, setSections] = useState([]);
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const [periodNumbers, setPeriodNumbers] = useState([1, 2, 3, 4, 5, 6]);
@@ -32,6 +34,7 @@ const Timetable = () => {
     const [editSchedule, setEditSchedule] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isCopying, setIsCopying] = useState(false);
 
     // Copy Modal state
     const [showCopyModal, setShowCopyModal] = useState(false);
@@ -184,12 +187,12 @@ const Timetable = () => {
     };
 
     const handleAutoGenerateTimes = () => {
-        if (!autoStartTime || !autoDuration) return alert("Please set start time and duration.");
+        if (!autoStartTime || !autoDuration) { toast.warning("Please set start time and duration."); return; }
         const durationMins = parseInt(autoDuration);
         const lunchMins = parseInt(lunchDuration) || 0;
         const lunchAfter = parseInt(lunchAfterPeriod) || 0;
 
-        if (isNaN(durationMins) || durationMins <= 0) return alert("Invalid duration");
+        if (isNaN(durationMins) || durationMins <= 0) { toast.warning("Invalid duration"); return; }
 
         const newSchedule = [...editSchedule];
         let currentStartStr = autoStartTime;
@@ -222,7 +225,7 @@ const Timetable = () => {
     };
 
     const handleCopyDaySubmit = () => {
-        if (!copyDaySource || copyDayTargets.length === 0) return alert("Select source and at least one target day.");
+        if (!copyDaySource || copyDayTargets.length === 0) { toast.warning("Select source and at least one target day."); return; }
 
         let newSchedule = [...editSchedule];
         const sourceDayObj = newSchedule.find(d => d.dayOfWeek === copyDaySource);
@@ -242,8 +245,10 @@ const Timetable = () => {
     };
 
     const handleCreateClassSection = async () => {
-        if (!newClassName.trim() || !newClassSubjects.trim())
-            return alert("Class Name and at least one Subject are compulsory");
+        if (!newClassName.trim() || !newClassSubjects.trim()) {
+            toast.warning("Class Name and at least one Subject are compulsory");
+            return;
+        }
 
         const sectionToCreate = newSectionName.trim() || "General";
 
@@ -281,10 +286,10 @@ const Timetable = () => {
                 setSelectedClassObj(classDoc);
             }, 500);
 
-            alert("Class and Section added successfully!");
+            toast.success("Class and Section added successfully!");
         } catch (error) {
             console.error("Failed to add class/section", error);
-            alert("Failed to create Class/Section");
+            toast.error("Failed to create Class/Section");
         }
     };
 
@@ -309,7 +314,7 @@ const Timetable = () => {
             fetchTimetable();
         } catch (error) {
             console.error("Save Error:", error.response?.data || error.message);
-            alert("Failed to save timetable");
+            toast.error("Failed to save timetable");
         } finally {
             setIsSaving(false);
         }
@@ -377,7 +382,7 @@ const Timetable = () => {
         try {
             const res = await axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`);
             const list = (Array.isArray(res.data) ? res.data : []).filter(tt => (tt.schedule || []).length);
-            if (!list.length) { alert('No timetables to export yet.'); return; }
+            if (!list.length) { toast.warning('No timetables to export yet.'); return; }
             const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
             const sheets = list.map((tt, i) => timetableSectionHTML(tt, schoolName, i > 0)).join('');
             const html = `<!doctype html><html><head><meta charset="utf-8"><title>Timetables · ${schoolName}</title><style>
@@ -397,12 +402,12 @@ const Timetable = () => {
                 <script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script>
             </body></html>`;
             const w = window.open('', '_blank');
-            if (!w) { alert('Please allow pop-ups to download the timetable PDF.'); return; }
+            if (!w) { toast.warning('Please allow pop-ups to download the timetable PDF.'); return; }
             w.document.write(html);
             w.document.close();
         } catch (e) {
             console.error('PDF export failed', e);
-            alert('Failed to export PDF.');
+            toast.error('Failed to export PDF.');
         }
     };
 
@@ -411,7 +416,7 @@ const Timetable = () => {
         try {
             const res = await axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`);
             const list = Array.isArray(res.data) ? res.data : [];
-            if (!list.length) { alert('No timetables to export yet.'); return; }
+            if (!list.length) { toast.warning('No timetables to export yet.'); return; }
             const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
             const wb = new ExcelJS.Workbook();
             const border = {
@@ -499,7 +504,7 @@ const Timetable = () => {
             URL.revokeObjectURL(url);
         } catch (e) {
             console.error('Excel export failed', e);
-            alert('Failed to export Excel.');
+            toast.error('Failed to export Excel.');
         }
     };
 
@@ -508,19 +513,24 @@ const Timetable = () => {
         const targetSectionObj = copyToSections.find(s => s._id === copyToSection);
 
         if (!targetClassObj || !targetSectionObj) {
-            return alert("Please select a target Class and Section");
+            toast.warning("Please select a target Class and Section");
+            return;
         }
 
         if (selectedClassObj?._id === copyToClass && selectedSectionObj?._id === copyToSection) {
-            return alert("Source and Target cannot be the same!");
+            toast.warning("Source and Target cannot be the same!");
+            return;
         }
 
+        setIsCopying(true);
         try {
             // Use current active schedule (either from DB or current edits)
             const scheduleToCopy = editSchedule.length > 0 ? editSchedule : (timetable?.schedule || []);
 
             if (scheduleToCopy.length === 0) {
-                return alert("No schedule to copy!");
+                setIsCopying(false);
+                toast.warning("No schedule to copy!");
+                return;
             }
 
             const cleanSchedule = scheduleToCopy.map(day => ({
@@ -538,11 +548,13 @@ const Timetable = () => {
                 schedule: cleanSchedule
             });
 
-            alert(`Successfully cloned timetable to ${targetClassObj.className}-${targetSectionObj.sectionName}`);
+            toast.success(`Successfully cloned timetable to ${targetClassObj.className}-${targetSectionObj.sectionName}`);
             setShowCopyModal(false);
         } catch (error) {
             console.error("Copy Error:", error.response?.data || error.message);
-            alert("Failed to copy timetable: " + (error.response?.data?.error || error.message));
+            toast.error("Failed to copy timetable: " + (error.response?.data?.error || error.message));
+        } finally {
+            setIsCopying(false);
         }
     };
 
@@ -592,26 +604,26 @@ const Timetable = () => {
     const SubjectCard = ({ period }) => {
         const isDefault = !period?.subject || !getSubjectStyle(period.subject).includes('text-white');
         return (
-            <div className={`p-4 rounded-2xl h-full flex flex-col justify-between min-w-[140px] shadow-sm hover:shadow-md transition-all relative overflow-hidden group border-2 ${getSubjectStyle(period?.subject)} ${!period?.subject ? 'border-dashed border-slate-300 bg-slate-50' : 'border-white/40'}`}>
+            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl h-full flex flex-col justify-between min-w-[90px] sm:min-w-[140px] shadow-sm hover:shadow-md transition-all relative overflow-hidden group border sm:border-2 ${getSubjectStyle(period?.subject)} ${!period?.subject ? 'border-dashed border-slate-300 bg-slate-50' : 'border-white/40'}`}>
                 {period?.subject ? (
                     <>
-                        <div className="flex justify-between items-start mb-3 relative z-10">
-                            <div className={`px-2 py-0.5 rounded-lg backdrop-blur-md text-[9px] font-black shadow-sm border ${isDefault ? 'bg-white/60 border-slate-200/50 text-slate-500' : 'bg-white/20 border-white/30 text-white'}`}>
-                                PERIOD {period.periodNumber}
+                        <div className="flex justify-between items-start mb-1.5 sm:mb-3 relative z-10">
+                            <div className={`px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg backdrop-blur-md text-[7px] sm:text-[9px] font-black shadow-sm border ${isDefault ? 'bg-white/60 border-slate-200/50 text-slate-500' : 'bg-white/20 border-white/30 text-white'}`}>
+                                P{period.periodNumber}
                             </div>
                         </div>
                         <div className="relative z-10">
-                            <p className="font-black text-[14px] leading-tight tracking-tight drop-shadow-sm uppercase">{period.subject}</p>
-                            <div className="h-px w-8 bg-current opacity-20 my-2"></div>
-                            <p className={`text-[10px] font-extrabold flex items-center gap-1 ${isDefault ? 'text-slate-500' : 'text-white/90'}`}>
+                            <p className="font-black text-[11px] sm:text-[14px] leading-tight tracking-tight drop-shadow-sm uppercase line-clamp-2">{period.subject}</p>
+                            <div className="h-px w-6 sm:w-8 bg-current opacity-20 my-1 sm:my-2"></div>
+                            <p className={`text-[8px] sm:text-[10px] font-extrabold flex items-center gap-1 ${isDefault ? 'text-slate-500' : 'text-white/90'} line-clamp-1`}>
                                 {period.teacherName || 'NOT ASSIGNED'}
                             </p>
                         </div>
-                        <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                        <div className="absolute -bottom-6 -right-6 w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full py-4 opacity-60">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Free Slot</p>
+                    <div className="flex flex-col items-center justify-center h-full py-2 sm:py-4 opacity-60">
+                        <p className="text-[9px] sm:text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] text-center">Free Slot</p>
                     </div>
                 )}
             </div>
@@ -631,9 +643,11 @@ const Timetable = () => {
                 </div>
 
                 {/* Top Controls */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <div className="flex items-center gap-4 w-full md:w-auto flex-wrap">
-                        <div className="flex flex-col min-w-[120px]">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    
+                    {/* Left Side: Selectors & New Class - Guaranteed Inline */}
+                    <div className="flex items-end gap-3 w-full xl:w-auto overflow-x-auto no-scrollbar pb-1 xl:pb-0">
+                        <div className="flex flex-col min-w-[100px] shrink-0">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Class</label>
                             <select
                                 value={selectedClassObj?._id || ''}
@@ -641,14 +655,15 @@ const Timetable = () => {
                                     const found = classes.find(c => c._id === e.target.value);
                                     setSelectedClassObj(found);
                                 }}
-                                className="w-full h-10 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
+                                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
                             >
                                 {classes.length === 0 && <option value="">No Classes</option>}
                                 {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
                             </select>
                         </div>
+                        
                         {sections.length > 1 ? (
-                            <div className="flex flex-col min-w-[120px]">
+                            <div className="flex flex-col min-w-[100px] shrink-0">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Section</label>
                                 <select
                                     value={selectedSectionObj?._id || ''}
@@ -656,72 +671,80 @@ const Timetable = () => {
                                         const found = sections.find(s => s._id === e.target.value);
                                         setSelectedSectionObj(found);
                                     }}
-                                    className="w-full h-10 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
+                                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
                                 >
                                     {sections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
                                 </select>
                             </div>
                         ) : selectedSectionObj && (
-                            <div className="flex flex-col">
+                            <div className="flex flex-col min-w-[100px] shrink-0">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Current Section</label>
-                                <div className="h-10 px-4 flex items-center bg-blue-50 text-blue-600 font-black text-xs rounded-xl border border-blue-100 uppercase tracking-wider">
+                                <div className="h-10 px-3 flex items-center bg-blue-50 text-blue-600 font-black text-xs rounded-xl border border-blue-100 uppercase tracking-wider">
                                     {selectedSectionObj.sectionName}
                                 </div>
                             </div>
                         )}
 
-                        <button onClick={() => setShowAddClassModal(true)} className="mt-5 text-blue-600 hover:bg-blue-50 h-10 px-3 rounded-xl flex items-center gap-1 font-bold text-xs transition-colors border border-dashed border-blue-200">
+                        <button onClick={() => setShowAddClassModal(true)} className="shrink-0 text-blue-600 hover:bg-blue-50 h-10 px-3 rounded-xl flex items-center gap-1.5 font-bold text-xs transition-colors border border-dashed border-blue-200">
                             <span className="material-symbols-outlined text-[16px]">add</span>
                             NEW CLASS
                         </button>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="mr-4 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-slate-400 text-sm">groups</span>
-                            <span className="text-[10px] font-black text-slate-500 uppercase">{sections.length} Sections</span>
+                    {/* Right Side: Action Buttons */}
+                    <div className="flex items-center gap-2 overflow-x-auto w-full xl:w-auto pb-1 xl:pb-0 no-scrollbar">
+                        <div className="mr-1 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col justify-center items-center shrink-0 min-w-[70px]">
+                            <span className="text-[10px] font-black text-slate-500 uppercase leading-none mb-0.5">{sections.length}</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase leading-none">Sections</span>
                         </div>
+                        
                         {!isEditing ? (
                             <>
                                 {timetable && (
                                     <>
-                                        <button onClick={() => setShowCopyModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-all">
+                                        <button onClick={() => setShowCopyModal(true)} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">content_copy</span>
                                             Copy to Class
                                         </button>
-                                        <button onClick={() => { setIsEditing(true); setShowCopyDayModal(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-fuchsia-50 text-fuchsia-600 font-bold text-sm rounded-xl hover:bg-fuchsia-100 transition-all">
+                                        <button onClick={() => { setIsEditing(true); setShowCopyDayModal(true); }} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-fuchsia-50 text-fuchsia-600 font-bold text-sm rounded-xl hover:bg-fuchsia-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">file_copy</span>
                                             Copy Day
                                         </button>
                                     </>
                                 )}
-                                <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 text-rose-600 font-bold text-sm rounded-xl hover:bg-rose-100 transition-all border border-rose-100">
-                                    <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
-                                    Download PDF
+                                <button onClick={downloadPDF} className="shrink-0 flex items-center gap-2 px-3 h-[42px] bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-100 group">
+                                    <span className="material-symbols-outlined text-[22px] text-rose-500 group-hover:-translate-y-0.5 transition-transform">picture_as_pdf</span>
+                                    <div className="flex flex-col items-start justify-center">
+                                        <span className="text-[8px] font-black uppercase text-rose-400 leading-none tracking-widest mb-0.5">Download</span>
+                                        <span className="text-xs font-bold leading-none">PDF</span>
+                                    </div>
                                 </button>
-                                <button onClick={downloadExcel} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100">
-                                    <span className="material-symbols-outlined text-[18px]">table_view</span>
-                                    Download Excel
+                                <button onClick={downloadExcel} className="shrink-0 flex items-center gap-2 px-3 h-[42px] bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100 group">
+                                    <span className="material-symbols-outlined text-[22px] text-emerald-500 group-hover:-translate-y-0.5 transition-transform">table_view</span>
+                                    <div className="flex flex-col items-start justify-center">
+                                        <span className="text-[8px] font-black uppercase text-emerald-400 leading-none tracking-widest mb-0.5">Download</span>
+                                        <span className="text-xs font-bold leading-none">Excel</span>
+                                    </div>
                                 </button>
-                                <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
+                                <button onClick={() => setIsEditing(true)} className="shrink-0 flex items-center gap-1.5 px-4 h-[42px] bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">{timetable ? 'edit' : 'add'}</span>
                                     {timetable ? 'Edit Timetable' : 'Create Timetable'}
                                 </button>
                             </>
                         ) : (
                             <>
-                                <button onClick={() => setShowCopyDayModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-fuchsia-50 text-fuchsia-600 font-bold text-sm rounded-xl hover:bg-fuchsia-100 transition-all border border-fuchsia-100">
+                                <button onClick={() => setShowCopyDayModal(true)} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-fuchsia-50 text-fuchsia-600 font-bold text-sm rounded-xl hover:bg-fuchsia-100 transition-all border border-fuchsia-100">
                                     <span className="material-symbols-outlined text-[18px]">file_copy</span>
                                     Copy Day
                                 </button>
-                                <button onClick={() => setShowTimeModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-600 font-bold text-sm rounded-xl hover:bg-orange-100 transition-all border border-orange-100">
+                                <button onClick={() => setShowTimeModal(true)} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-orange-50 text-orange-600 font-bold text-sm rounded-xl hover:bg-orange-100 transition-all border border-orange-100">
                                     <span className="material-symbols-outlined text-[18px]">schedule</span>
-                                    Set School Timings
+                                    Set Timings
                                 </button>
-                                <button onClick={() => { setIsEditing(false); fetchTimetable(); }} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all">
+                                <button onClick={() => { setIsEditing(false); fetchTimetable(); }} className="shrink-0 flex items-center gap-1.5 px-4 h-[42px] bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all">
                                     Cancel
                                 </button>
-                                <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-sm shadow-emerald-500/30 hover:scale-95 transition-all">
+                                <button onClick={handleSave} disabled={isSaving} className="shrink-0 flex items-center gap-1.5 px-5 h-[42px] bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-sm shadow-emerald-500/30 hover:scale-95 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">save</span>
                                     {isSaving ? 'Saving...' : 'Save Timetable'}
                                 </button>
@@ -955,8 +978,15 @@ const Timetable = () => {
                             <button onClick={() => setShowCopyModal(false)} className="flex-1 py-3.5 text-slate-500 font-black text-xs rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest">
                                 Cancel
                             </button>
-                            <button onClick={handleCopy} className="flex-1 py-3.5 bg-indigo-600 text-white font-black text-xs rounded-2xl shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-[0.98] transition-all uppercase tracking-widest">
-                                Clone Now
+                            <button onClick={handleCopy} disabled={isCopying} className={`flex-1 py-3.5 text-white font-black text-xs rounded-2xl shadow-xl shadow-indigo-500/30 transition-all uppercase tracking-widest flex items-center justify-center gap-2 ${isCopying ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:scale-[0.98]'}`}>
+                                {isCopying ? (
+                                    <>
+                                        <span className="material-symbols-outlined animate-spin text-[16px]">sync</span>
+                                        Cloning...
+                                    </>
+                                ) : (
+                                    'Clone Now'
+                                )}
                             </button>
                         </div>
                     </div>

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 const TeacherProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { toast } = useToast();
     
     // Store original teacher to fallback/init
     const [teacher, setTeacher] = useState(location.state?.teacher);
@@ -51,20 +53,20 @@ const TeacherProfile = () => {
     // Subjects strictly from the selected class (set via Manage Class).
     const diarySubjects = diaryClassObj?.subjects || [];
     const addDiary = async () => {
-        if (!diaryForm.className || !diaryForm.note.trim()) { alert('Class and note are required.'); return; }
+        if (!diaryForm.className || !diaryForm.note.trim()) { toast.warning('Class and note are required.'); return; }
         setSavingDiary(true);
         try {
             const res = await axios.post(`${ADMIN_API_BASE}/teacher-diary`, { schoolId: adminSchoolId, teacherId: teacher._id, ...diaryForm });
             setDiary(prev => [res.data, ...prev]);
             setDiaryForm({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
         } catch (e) {
-            alert(e.response?.data?.error || 'Failed to add entry');
+            toast.error(e.response?.data?.error || 'Failed to add entry');
         } finally { setSavingDiary(false); }
     };
     const deleteDiary = async (id) => {
         if (!window.confirm('Delete this diary entry?')) return;
         try { await axios.delete(`${ADMIN_API_BASE}/teacher-diary/${id}`); setDiary(prev => prev.filter(e => e._id !== id)); }
-        catch (e) { alert('Failed to delete'); }
+        catch (e) { toast.error('Failed to delete'); }
     };
     const fmtDiaryDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
@@ -87,7 +89,7 @@ const TeacherProfile = () => {
             setTeacher(res.data);
             setEditData(res.data);
         } catch (e) {
-            alert(e.response?.data?.error || 'Failed to update status');
+            toast.error(e.response?.data?.error || 'Failed to update status');
         }
     };
 
@@ -99,7 +101,7 @@ const TeacherProfile = () => {
             setEditData(res.data);
             setIsEditing(false);
         } catch (e) {
-            alert(e.response?.data?.error || 'Failed to update teacher');
+            toast.error(e.response?.data?.error || 'Failed to update teacher');
         } finally {
             setIsSaving(false);
         }

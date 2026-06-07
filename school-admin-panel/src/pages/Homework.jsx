@@ -3,6 +3,7 @@ import ProfileButton from '../components/ProfileButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 // /api/admin -> /api/upload
 const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
@@ -39,6 +40,7 @@ const Homework = () => {
     // Classes come from the shared cache (loaded once at app start), so this
     // page renders instantly instead of re-fetching on every visit.
     const { classes, getSections } = useAdmin();
+    const { toast } = useToast();
     const [sections, setSections] = useState([]);
     const [selectedClassObj, setSelectedClassObj] = useState(null);
     const [selectedSectionName, setSelectedSectionName] = useState('All');
@@ -162,7 +164,7 @@ const Homework = () => {
             setForm((f) => ({ ...f, attachments: [...f.attachments, ...uploaded] }));
         } catch (err) {
             console.error('Upload failed', err);
-            alert('File upload failed. File too large ya invalid ho sakti hai.');
+            toast.error('File upload failed. File too large ya invalid ho sakti hai.');
         } finally {
             setIsUploading(false);
             e.target.value = '';
@@ -174,9 +176,9 @@ const Homework = () => {
     };
 
     const handleSave = async () => {
-        if (!form.title.trim()) return alert('Title is required');
-        if (!selectedClassObj) return alert('Please select a class');
-        if (!form.dueDate) return alert('Due date is required');
+        if (!form.title.trim()) { toast.warning('Title is required'); return; }
+        if (!selectedClassObj) { toast.warning('Please select a class'); return; }
+        if (!form.dueDate) { toast.warning('Due date is required'); return; }
         setIsSaving(true);
         try {
             const payload = {
@@ -202,7 +204,7 @@ const Homework = () => {
             fetchHomework();
         } catch (err) {
             console.error('Save error', err.response?.data || err.message);
-            alert('Failed to save homework: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to save homework: ' + (err.response?.data?.error || err.message));
         } finally {
             setIsSaving(false);
         }
@@ -216,7 +218,7 @@ const Homework = () => {
             fetchHomework();
         } catch (err) {
             console.error('Delete error', err);
-            alert('Failed to delete homework');
+            toast.error('Failed to delete homework');
         }
     };
 

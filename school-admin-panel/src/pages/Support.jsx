@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useToast } from '../context/ToastContext';
 
 const Support = () => {
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
     const [showModal, setShowModal] = useState(false);
+    const { toast } = useToast();
     
     // Initializing with empty array so only user raised issues show up
     const [tickets, setTickets] = useState([]);
@@ -38,7 +40,7 @@ const Support = () => {
         setTickets([submittedTicket, ...tickets]);
         setShowModal(false);
         setNewTicket({ subject: '', category: 'Technical Issue', description: '', priority: 'Medium' });
-        alert('Complaint submitted successfully!');
+        toast.success('Complaint submitted successfully!');
     };
 
     const openWhatsApp = () => {

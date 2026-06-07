@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 const StudentProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { toast } = useToast();
     
     // Store original student to fallback/init
     const [student, setStudent] = useState(location.state?.student);
@@ -85,7 +87,7 @@ const StudentProfile = () => {
             setStudent(res.data.student);
             setEditData(res.data.student);
         } catch (err) {
-            alert('Failed to update status.');
+            toast.error('Failed to update status.');
         }
     };
 
@@ -96,7 +98,7 @@ const StudentProfile = () => {
             setStudent(res.data.student);
             setIsEditing(false);
         } catch (err) {
-            alert('Failed to update details. Check console.');
+            toast.error('Failed to update details. Check console.');
             console.error(err);
         } finally {
             setIsSaving(false);

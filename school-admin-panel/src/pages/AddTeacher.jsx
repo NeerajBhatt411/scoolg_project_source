@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const AddTeacher = () => {
     const navigate = useNavigate();
     const { refreshTeachers } = useAdmin();
+    const { toast } = useToast();
     const [currentStep, setCurrentStep] = useState(1);
     const schoolName = localStorage.getItem('scoolg_school_name') || 'Admin Portal';
     const schoolId = localStorage.getItem('scoolg_school_id'); 
@@ -216,11 +218,11 @@ const AddTeacher = () => {
             if (validationResult === true) {
                 setCurrentStep(currentStep + 1);
             } else {
-                alert(validationResult);
+                toast.warning(validationResult);
             }
         } else {
             if (!schoolId) {
-                alert("School ID is missing. Please log in again.");
+                toast.error("School ID is missing. Please log in again.");
                 return;
             }
             setIsLoading(true);
@@ -235,7 +237,7 @@ const AddTeacher = () => {
                 }
             } catch (err) {
                 console.error(err);
-                alert(err.response?.data?.error || "Failed to register teacher. Check console or make sure all required fields are filled.");
+                toast.error(err.response?.data?.error || "Failed to register teacher. Check console or make sure all required fields are filled.");
             } finally {
                 setIsLoading(false);
             }
