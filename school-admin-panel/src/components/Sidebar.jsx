@@ -9,7 +9,7 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const { logout, can, schoolId } = useAdmin();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'My School';
-    const [logo, setLogo] = useState(localStorage.getItem('scoolg_school_logo') || '');
+    const [logo, setLogo] = useState(localStorage.getItem('scoolg_school_logo') || '/logo.png');
 
     useEffect(() => {
         if (!schoolId) return;
