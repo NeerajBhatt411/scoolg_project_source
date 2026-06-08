@@ -1,0 +1,76 @@
+// Icon — maps the redesign's kebab-case icon names to lucide-react components.
+import React from 'react';
+import {
+  LayoutDashboard, Calendar, CalendarDays, CalendarRange, CalendarX,
+  Users, User, ClipboardCheck, BookOpen, Settings, LifeBuoy, Search, Bell,
+  Info, LogOut, Clock, ChevronRight, ChevronDown, ChevronUp, ArrowUpRight,
+  ArrowRight, TrendingUp, TrendingDown, Plus, Check, X, CircleCheck, Star,
+  MapPin, Mail, Phone, Award, Lock, ShieldCheck, Eye, EyeOff, Paperclip,
+  FileText, FilePlus, Image, Upload, Send, Zap, Smartphone, Monitor, Coffee,
+  RotateCcw, Save, IdCard, GraduationCap, Wifi, Signal, BatteryFull, Funnel,
+  Circle,
+} from 'lucide-react';
+
+const MAP = {
+  'layout-dashboard': LayoutDashboard,
+  calendar: Calendar,
+  'calendar-days': CalendarDays,
+  'calendar-range': CalendarRange,
+  'calendar-x': CalendarX,
+  users: Users,
+  user: User,
+  'clipboard-check': ClipboardCheck,
+  'book-open': BookOpen,
+  settings: Settings,
+  'life-buoy': LifeBuoy,
+  search: Search,
+  bell: Bell,
+  'help-circle': Info,
+  'log-out': LogOut,
+  clock: Clock,
+  'chevron-right': ChevronRight,
+  'chevron-down': ChevronDown,
+  'chevron-up': ChevronUp,
+  'arrow-up-right': ArrowUpRight,
+  'arrow-right': ArrowRight,
+  'trending-up': TrendingUp,
+  'trending-down': TrendingDown,
+  plus: Plus,
+  check: Check,
+  x: X,
+  'check-circle': CircleCheck,
+  star: Star,
+  'map-pin': MapPin,
+  mail: Mail,
+  phone: Phone,
+  award: Award,
+  lock: Lock,
+  'shield-check': ShieldCheck,
+  eye: Eye,
+  'eye-off': EyeOff,
+  paperclip: Paperclip,
+  'file-text': FileText,
+  'file-plus': FilePlus,
+  image: Image,
+  upload: Upload,
+  send: Send,
+  zap: Zap,
+  smartphone: Smartphone,
+  monitor: Monitor,
+  coffee: Coffee,
+  'rotate-ccw': RotateCcw,
+  save: Save,
+  'id-card': IdCard,
+  'graduation-cap': GraduationCap,
+  wifi: Wifi,
+  signal: Signal,
+  'battery-full': BatteryFull,
+  filter: Funnel,
+};
+
+export default function Icon({ name, size = 20, className = '', strokeWidth = 1.75, style, fill }) {
+  const Cmp = MAP[name] || Circle;
+  return (
+    <Cmp size={size} className={className} strokeWidth={strokeWidth} style={style} fill={fill || 'none'} />
+  );
+}
