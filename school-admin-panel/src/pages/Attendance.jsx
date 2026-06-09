@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -147,23 +148,23 @@ const Attendance = () => {
                             <div className="grid grid-cols-3 gap-2 sm:gap-5 flex-1">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Class</label>
-                                    <select
+                                    <Dropdown
                                         value={selectedClassObj?._id || ''}
-                                        onChange={(e) => setSelectedClassObj(classes.find(c => c._id === e.target.value))}
-                                        className="w-full h-10 sm:h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-2 sm:px-4 text-xs sm:text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
-                                    >
-                                        {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
-                                    </select>
+                                        onChange={(v) => setSelectedClassObj(classes.find(c => c._id === v))}
+                                        options={classes.map(c => ({ value: c._id, label: c.className }))}
+                                        placeholder="Class"
+                                        buttonClassName="h-10 sm:h-11"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Section</label>
-                                    <select
+                                    <Dropdown
                                         value={selectedSectionObj?._id || ''}
-                                        onChange={(e) => setSelectedSectionObj(sections.find(s => s._id === e.target.value))}
-                                        className="w-full h-10 sm:h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-2 sm:px-4 text-xs sm:text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
-                                    >
-                                        {sections.length === 0 ? <option value="">None</option> : sections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
-                                    </select>
+                                        onChange={(v) => setSelectedSectionObj(sections.find(s => s._id === v))}
+                                        options={sections.map(s => ({ value: s._id, label: s.sectionName }))}
+                                        placeholder="None"
+                                        buttonClassName="h-10 sm:h-11"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Date</label>

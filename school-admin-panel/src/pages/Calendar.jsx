@@ -135,22 +135,22 @@ const Calendar = () => {
     return (
         <>
             {/* Top bar */}
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center gap-2 w-full md:w-auto">
+            <header className="h-16 md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-row justify-between items-center gap-2 px-4 md:px-8">
+                <div className="flex items-center gap-2 min-w-0">
                     <MenuButton />
-                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">School Calendar</h2>
+                    <h2 className="text-lg sm:text-[1.8rem] font-[900] text-on-surface tracking-tight truncate">School Calendar</h2>
                 </div>
-                <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm">
-                    <button onClick={() => setYear((y) => y - 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <div className="flex items-center gap-0.5 sm:gap-2 bg-white border border-slate-200 rounded-2xl p-1 sm:p-1.5 shadow-sm">
+                    <button onClick={() => setYear((y) => y - 1)} className="w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                     </button>
-                    <span className="font-black text-slate-900 text-lg tabular-nums w-16 text-center">{year}</span>
-                    <button onClick={() => setYear((y) => y + 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
+                    <span className="font-black text-slate-900 text-base sm:text-lg tabular-nums w-11 sm:w-16 text-center">{year}</span>
+                    <button onClick={() => setYear((y) => y + 1)} className="w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                     </button>
                     {year !== CUR_YEAR && (
-                        <button onClick={() => setYear(CUR_YEAR)} className="ml-1 px-3 h-9 rounded-xl bg-blue-50 text-blue-600 text-[12px] font-bold hover:bg-blue-100 transition-colors whitespace-nowrap">Go to {CUR_YEAR}</button>
+                        <button onClick={() => setYear(CUR_YEAR)} className="ml-0.5 sm:ml-1 px-2 sm:px-3 h-8 sm:h-9 rounded-xl bg-blue-50 text-blue-600 text-[11px] sm:text-[12px] font-bold hover:bg-blue-100 transition-colors whitespace-nowrap">{CUR_YEAR}</button>
                     )}
                 </div>
                     <ProfileButton size={40} />
