@@ -649,8 +649,8 @@ const Timetable = () => {
                 {/* Top Controls */}
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                     
-                    {/* Left Side: Selectors & New Class - Guaranteed Inline */}
-                    <div className="flex items-end gap-3 w-full xl:w-auto overflow-x-auto no-scrollbar pb-1 xl:pb-0">
+                    {/* Left Side: Selectors & New Class - wrap on mobile instead of scrolling */}
+                    <div className="flex flex-wrap items-end gap-3 w-full xl:w-auto">
                         <div className="flex flex-col min-w-[100px] shrink-0">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Class</label>
                             <select
@@ -695,8 +695,8 @@ const Timetable = () => {
                         </button>
                     </div>
 
-                    {/* Right Side: Action Buttons */}
-                    <div className="flex items-center gap-2 overflow-x-auto w-full xl:w-auto pb-1 xl:pb-0 no-scrollbar">
+                    {/* Right Side: Action Buttons - wrap to multiple rows on mobile */}
+                    <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
                         <div className="mr-1 px-2.5 py-1.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col justify-center items-center shrink-0 min-w-[70px]">
                             <span className="text-[10px] font-black text-slate-500 uppercase leading-none mb-0.5">{sections.length}</span>
                             <span className="text-[8px] font-bold text-slate-400 uppercase leading-none">Sections</span>

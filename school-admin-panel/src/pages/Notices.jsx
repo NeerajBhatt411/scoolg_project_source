@@ -141,10 +141,7 @@ const Notices = () => {
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <MenuButton />
-                    <div className="flex flex-col">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Academic Curator</p>
-                        <h2 className="text-[1.3rem] md:text-[1.6rem] font-[900] text-[#1e293b] tracking-tight leading-tight">Scoolg Admin</h2>
-                    </div>
+                    <h2 className="text-[1.3rem] md:text-[1.6rem] font-[900] text-[#1e293b] tracking-tight leading-tight">Notices</h2>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">
                     <div className="relative group hidden sm:block">
@@ -170,10 +167,10 @@ const Notices = () => {
                 {/* Header Title Section */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 tracking-tight">Notices & Announcements</h1>
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Notices & Announcements</h1>
                         <p className="text-sm font-medium text-slate-500 mt-1">Broadcast critical information to students, staff, and parents.</p>
                     </div>
-                    <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-6 py-3 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 shrink-0">
+                    <button onClick={() => setShowModal(true)} className="hidden sm:flex items-center gap-2 px-6 py-3 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 shrink-0">
                         <span className="material-symbols-outlined text-[20px]">add</span>
                         Create Notice
                     </button>
@@ -238,7 +235,7 @@ const Notices = () => {
                                         </div>
                                         <div className="flex-1 w-full flex flex-col">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                                                <div className="flex flex-wrap items-center gap-3">
+                                                <div className="flex flex-wrap items-center gap-3 pr-16 sm:pr-0">
                                                     <h3 className="text-lg font-bold text-slate-800 leading-tight">{notice.title}</h3>
                                                     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${pStyle.bg}`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full bg-current ${pStyle.text}`}></span>
@@ -283,7 +280,7 @@ const Notices = () => {
                                             </div>
 
                                             {/* Action Buttons: Edit/Delete on Hover */}
-                                            <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute top-5 right-5 sm:top-6 sm:right-6 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 {notice.status === 'draft' && (
                                                     <button onClick={() => handleEdit(notice)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:scale-105 transition-all shadow-sm">
                                                         <span className="material-symbols-outlined text-[16px]">edit</span>
