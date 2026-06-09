@@ -9,16 +9,21 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const navigate = useNavigate();
     const { logout, can, schoolId } = useAdmin();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'My School';
-    const [logo, setLogo] = useState(localStorage.getItem('scoolg_school_logo') || '/logo.png');
+    const cachedLogo = localStorage.getItem('scoolg_school_logo') || '';
+    const [logo, setLogo] = useState(cachedLogo);
+    const [logoReady, setLogoReady] = useState(false);
+    // Whether the profile API (which carries the logo URL) has responded yet.
+    const [apiDone, setApiDone] = useState(!!cachedLogo);
 
     useEffect(() => {
-        if (!schoolId) return;
+        if (!schoolId) { setApiDone(true); return; }
         axios.get(`${ADMIN_API_BASE}/profile/${schoolId}`)
             .then((res) => {
                 const l = res.data?.logo || res.data?.schoolLogo || '';
                 if (l) { setLogo(l); localStorage.setItem('scoolg_school_logo', l); }
             })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setApiDone(true));
     }, [schoolId]);
 
     const handleLogout = () => {
@@ -48,9 +53,24 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
         <aside className={`w-[280px] h-screen fixed left-0 top-0 overflow-y-auto bg-[#f7f9fb] border-r-[1.5px] border-[#e0e7ff] flex flex-col pt-3 pb-6 px-4 z-50 transition-transform duration-300 md:translate-x-0 ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
             <div className="flex items-center justify-between gap-2">
                 <button onClick={() => { navigate('/dashboard'); onClose(); }} title={schoolName} className="mb-3 px-2 flex items-center justify-start gap-3 flex-1 min-w-0">
-                    {logo
-                        ? <div className="h-16 w-16 shrink-0 flex items-center justify-center overflow-hidden"><img src={logo} alt="School logo" onError={() => setLogo('')} className="max-h-full max-w-full object-contain" /></div>
-                        : <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-2xl font-black flex items-center justify-center shadow-sm shrink-0">{schoolName.charAt(0).toUpperCase()}</div>}
+                    <div className="h-16 w-16 shrink-0 relative flex items-center justify-center overflow-hidden rounded-2xl">
+                        {logo ? (
+                            <>
+                                {!logoReady && <span className="absolute inset-0 animate-pulse bg-slate-200 rounded-2xl"></span>}
+                                <img
+                                    src={logo}
+                                    alt="School logo"
+                                    onLoad={() => setLogoReady(true)}
+                                    onError={() => { setLogo(''); setLogoReady(false); }}
+                                    className={`max-h-full max-w-full object-contain transition-opacity duration-300 ${logoReady ? 'opacity-100' : 'opacity-0'}`}
+                                />
+                            </>
+                        ) : !apiDone ? (
+                            <span className="w-full h-full animate-pulse bg-slate-200 rounded-2xl"></span>
+                        ) : (
+                            <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-2xl font-black flex items-center justify-center shadow-sm">{schoolName.charAt(0).toUpperCase()}</span>
+                        )}
+                    </div>
                     <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight">Admin Panel</p>
                 </button>
                 <button onClick={onClose} className="md:hidden w-9 h-9 rounded-xl bg-white border border-slate-200 grid place-items-center text-slate-500 shrink-0 mb-3"><span className="material-symbols-outlined text-[20px]">close</span></button>
