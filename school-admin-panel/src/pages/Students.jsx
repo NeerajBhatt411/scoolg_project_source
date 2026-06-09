@@ -110,8 +110,8 @@ const Students = () => {
                     </button>
                 </div>
 
-                {/* Data Table Card */}
-                <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden max-w-full">
+                {/* Data Table Card (desktop) */}
+                <div className="hidden md:block bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden max-w-full">
                     <div className="overflow-x-auto w-full">
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
@@ -190,6 +190,49 @@ const Students = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Mobile card list */}
+                <div className="md:hidden space-y-3">
+                    {loadingStudents && students.length === 0 ? (
+                        [...Array(5)].map((_, i) => (
+                            <div key={i} className="bg-surface-container-lowest rounded-2xl premium-shadow p-4 flex items-center gap-3">
+                                <Shimmer className="h-12 w-12 rounded-full" />
+                                <div className="flex-1 space-y-2">
+                                    <Shimmer className="h-3 w-32" />
+                                    <Shimmer className="h-2 w-24" />
+                                </div>
+                            </div>
+                        ))
+                    ) : filteredStudents.length === 0 ? (
+                        <div className="text-center py-10 font-bold text-slate-400 bg-surface-container-lowest rounded-2xl premium-shadow">No students found</div>
+                    ) : (
+                        filteredStudents.map((student) => (
+                            <button
+                                key={student._id}
+                                onClick={() => navigate('/students/profile', { state: { student } })}
+                                className="w-full text-left bg-surface-container-lowest rounded-2xl premium-shadow p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center font-bold text-slate-500 overflow-hidden shrink-0">
+                                    {student.profileImageUrl ? (
+                                        <img src={student.profileImageUrl} alt="avatar" className="w-full h-full object-cover" />
+                                    ) : student.firstName?.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-sm font-bold text-on-surface truncate">{student.firstName} {student.lastName}</p>
+                                        <span className="text-xs font-bold text-blue-600 shrink-0">#{student.rollNumber || 'NA'}</span>
+                                    </div>
+                                    <p className="text-[11px] font-medium text-on-surface-variant truncate">ID: {student.studentAppId}</p>
+                                    <div className="flex items-center gap-3 mt-1.5 text-[11px] font-semibold text-on-surface-variant">
+                                        <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">class</span>{student.class} - {student.section}</span>
+                                        <span className="inline-flex items-center gap-1 truncate"><span className="material-symbols-outlined text-[14px]">call</span>{student.primaryContact}</span>
+                                    </div>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 shrink-0">chevron_right</span>
+                            </button>
+                        ))
+                    )}
                 </div>
 
                 {/* Dashboard Stats Summary */}
