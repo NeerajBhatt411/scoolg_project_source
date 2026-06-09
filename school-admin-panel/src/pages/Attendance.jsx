@@ -138,19 +138,19 @@ const Attendance = () => {
                 </div>
             </header>
 
-            <main className="p-4 sm:p-8 space-y-8 max-w-full w-full pb-32">
+            <main className="p-4 sm:p-8 space-y-4 sm:space-y-8 max-w-full w-full pb-32">
                 {/* 3D-Styled Control Panel */}
-                <section className="flex flex-col xl:flex-row gap-5">
+                <section className="flex flex-col xl:flex-row gap-3 sm:gap-5">
                     {/* Filters & Actions Combined - 3D Feel */}
-                    <div className="bg-white rounded-[28px] p-5 border border-slate-300 border-b-[5px] border-b-slate-200/80 shadow-md flex-1">
-                        <div className="flex flex-col lg:flex-row lg:items-end gap-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 flex-1">
+                    <div className="bg-white rounded-2xl sm:rounded-[28px] p-3 sm:p-5 border border-slate-300 sm:border-b-[5px] border-b-slate-200/80 shadow-md flex-1">
+                        <div className="flex flex-col lg:flex-row lg:items-end gap-3 sm:gap-6">
+                            <div className="grid grid-cols-3 gap-2 sm:gap-5 flex-1">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Classroom</label>
+                                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Class</label>
                                     <select
                                         value={selectedClassObj?._id || ''}
                                         onChange={(e) => setSelectedClassObj(classes.find(c => c._id === e.target.value))}
-                                        className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
+                                        className="w-full h-10 sm:h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-2 sm:px-4 text-xs sm:text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     >
                                         {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
                                     </select>
@@ -160,55 +160,57 @@ const Attendance = () => {
                                     <select
                                         value={selectedSectionObj?._id || ''}
                                         onChange={(e) => setSelectedSectionObj(sections.find(s => s._id === e.target.value))}
-                                        className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
+                                        className="w-full h-10 sm:h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-2 sm:px-4 text-xs sm:text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     >
                                         {sections.length === 0 ? <option value="">None</option> : sections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Calendar Date</label>
+                                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em] ml-1">Date</label>
                                     <input
                                         type="date"
                                         value={selectedDate}
                                         max={today}
                                         onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="w-full h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-4 text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
+                                        className="w-full h-10 sm:h-11 bg-slate-50 border-2 border-slate-200 hover:border-blue-400 transition-all rounded-xl px-2 sm:px-4 text-xs sm:text-[13px] font-black text-slate-900 outline-none cursor-pointer shadow-sm"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 pb-0.5">
+                            <div className="grid grid-cols-2 lg:flex gap-2 sm:gap-3 pb-0.5">
                                 <button
                                     onClick={() => handleMarkAll('P')}
                                     disabled={isLocked}
-                                    className="h-11 px-6 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-emerald-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2 border-b-4 border-emerald-800"
+                                    className="h-10 sm:h-11 px-3 sm:px-6 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-emerald-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2 border-b-4 border-emerald-800"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">done_all</span>
-                                    Mark All P
+                                    <span className="sm:hidden">All P</span>
+                                    <span className="hidden sm:inline">Mark All P</span>
                                 </button>
                                 <button
                                     onClick={() => handleMarkAll('A')}
                                     disabled={isLocked}
-                                    className="h-11 px-6 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-red-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center gap-2 border-b-4 border-red-800"
+                                    className="h-10 sm:h-11 px-3 sm:px-6 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:shadow-xl hover:shadow-red-600/30 active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-2 border-b-4 border-red-800"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">block</span>
-                                    Mark All A
+                                    <span className="sm:hidden">All A</span>
+                                    <span className="hidden sm:inline">Mark All A</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     {/* Premium White Stats Panels with 3D Depth */}
-                    <div className="flex gap-4 shrink-0">
-                        <div className="bg-white min-w-[120px] rounded-[28px] border border-slate-300 border-b-[5px] border-b-emerald-600/30 shadow-md flex flex-col items-center justify-center py-4 relative overflow-hidden group">
-                            <h3 className="text-3xl font-black text-emerald-600 leading-none tracking-tighter">{stats.P}</h3>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Present</p>
-                            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-emerald-600"></div>
+                    <div className="grid grid-cols-2 gap-3 sm:flex sm:gap-4 shrink-0">
+                        <div className="bg-white sm:min-w-[120px] rounded-2xl sm:rounded-[28px] border border-slate-300 border-b-[3px] sm:border-b-[5px] border-b-emerald-600/30 shadow-md flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-0 py-2.5 sm:py-4 relative overflow-hidden">
+                            <h3 className="text-xl sm:text-3xl font-black text-emerald-600 leading-none tracking-tighter">{stats.P}</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:mt-2">Present</p>
+                            <div className="absolute bottom-0 left-0 w-full h-1 sm:h-1.5 bg-emerald-600"></div>
                         </div>
-                        <div className="bg-white min-w-[120px] rounded-[28px] border border-slate-300 border-b-[5px] border-b-red-600/30 shadow-md flex flex-col items-center justify-center py-4 relative overflow-hidden group">
-                            <h3 className="text-3xl font-black text-red-600 leading-none tracking-tighter">{stats.A}</h3>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Absent</p>
-                            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600"></div>
+                        <div className="bg-white sm:min-w-[120px] rounded-2xl sm:rounded-[28px] border border-slate-300 border-b-[3px] sm:border-b-[5px] border-b-red-600/30 shadow-md flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-0 py-2.5 sm:py-4 relative overflow-hidden">
+                            <h3 className="text-xl sm:text-3xl font-black text-red-600 leading-none tracking-tighter">{stats.A}</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:mt-2">Absent</p>
+                            <div className="absolute bottom-0 left-0 w-full h-1 sm:h-1.5 bg-red-600"></div>
                         </div>
                     </div>
                 </section>
@@ -227,7 +229,7 @@ const Attendance = () => {
                     {loading ? (
                         <div className="divide-y divide-slate-200">
                             {Array.from({ length: 7 }).map((_, i) => (
-                                <div key={i} className="px-4 sm:px-6 py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-4 md:items-center md:min-w-[640px]">
+                                <div key={i} className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-4 md:items-center md:min-w-[640px]">
                                     <div className="h-4 w-6 bg-slate-100 rounded animate-pulse"></div>
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
@@ -248,7 +250,7 @@ const Attendance = () => {
                     ) : (
                         <div className="divide-y divide-slate-200">
                             {students.map((s, idx) => (
-                                <div key={s._id} className={`px-4 sm:px-6 py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-3 md:gap-4 md:items-center transition-colors md:min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
+                                <div key={s._id} className={`px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-3 md:gap-4 md:items-center transition-colors md:min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
                                     {/* Index - desktop only */}
                                     <div className="hidden md:block text-sm font-black text-slate-500">
                                         {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
@@ -280,18 +282,20 @@ const Attendance = () => {
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'P')}
                                             disabled={isLocked}
-                                            className={`h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
+                                            className={`h-10 sm:h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[13px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
                                         >
-                                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                                            Present
+                                            <span className="material-symbols-outlined text-[18px] hidden sm:inline">check_circle</span>
+                                            <span className="sm:hidden">P</span>
+                                            <span className="hidden sm:inline">Present</span>
                                         </button>
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'A')}
                                             disabled={isLocked}
-                                            className={`h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
+                                            className={`h-10 sm:h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[13px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
                                         >
-                                            <span className="material-symbols-outlined text-[18px]">cancel</span>
-                                            Absent
+                                            <span className="material-symbols-outlined text-[18px] hidden sm:inline">cancel</span>
+                                            <span className="sm:hidden">A</span>
+                                            <span className="hidden sm:inline">Absent</span>
                                         </button>
                                     </div>
                                 </div>
