@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
+import MenuButton from '../components/MenuButton';
 
 const Support = () => {
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
@@ -52,7 +53,10 @@ const Support = () => {
             {/* Header Section */}
             <header className="max-w-full flex flex-col md:flex-row justify-between items-end gap-6">
                 <div className="space-y-2">
-                    <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">Support & Help</h1>
+                    <div className="flex items-center gap-2">
+                        <MenuButton />
+                        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">Support & Help</h1>
+                    </div>
                     <p className="text-slate-500 font-bold text-sm tracking-tight uppercase opacity-60">Helpdesk for {schoolName}</p>
                 </div>
                 <button 

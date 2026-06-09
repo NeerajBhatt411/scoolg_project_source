@@ -873,11 +873,3 @@ button {
   justify-content: center;
   margin-bottom: 16px;
 }
-/* Mobile: leave room for the floating top-left nav button so it doesn't
-   overlap a page's title bar. Pads only the header's first child (the title),
-   not the search/action row below it. */
-@media (max-width: 767px) {
-  main > header > :first-child {
-    padding-left: 3.25rem;
-  }
-}

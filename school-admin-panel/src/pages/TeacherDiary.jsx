@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import ProfileButton from '../components/ProfileButton';
+import MenuButton from '../components/MenuButton';
 
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return d; } };
 
@@ -59,7 +60,10 @@ const TeacherDiary = () => {
     return (
         <>
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight w-full md:w-auto">Teacher Diary</h2>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <MenuButton />
+                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Teacher Diary</h2>
+                </div>
                 <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                     <ProfileButton size={40} />
                 </div>

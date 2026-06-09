@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
+import MenuButton from '../components/MenuButton';
 
 const CAT_META = {
     'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
@@ -74,9 +75,10 @@ const Dashboard = () => {
         <>
             {/* TopNavBar Shell */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center justify-between w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <MenuButton />
                     <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Dashboard</h2>
-                    <div className="flex md:hidden items-center gap-3">
+                    <div className="flex md:hidden items-center gap-3 ml-auto">
                         <button onClick={() => navigate('/notifications')} title="Notifications" className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
                             <span className="material-symbols-outlined text-[20px] text-[#434655]">notifications</span>
                         </button>
