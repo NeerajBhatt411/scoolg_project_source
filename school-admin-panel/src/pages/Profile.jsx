@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save, Loader2, User, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X } from 'lucide-react';
 import { ADMIN_API_BASE } from '../lib/api';
+import MenuButton from '../components/MenuButton';
 
 // Only these fields are editable; everything else is identity/system data.
 const EDITABLE_KEYS = ['schoolDescription', 'phone', 'address', 'city', 'vision', 'mission'];
@@ -143,10 +144,13 @@ const Profile = () => {
     return (
         <div className="p-6 sm:p-10 max-w-[1000px] mx-auto">
             {/* title + actions */}
-            <div className="flex items-center justify-between gap-4 mb-6 pl-14 md:pl-0">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Profile</h1>
-                    <p className="text-slate-500 font-medium text-sm">{editing ? 'Update your school information.' : 'Your school information at a glance.'}</p>
+            <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-2 min-w-0">
+                    <MenuButton />
+                    <div className="min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate">My Profile</h1>
+                        <p className="text-slate-500 font-medium text-sm hidden sm:block">{editing ? 'Update your school information.' : 'Your school information at a glance.'}</p>
+                    </div>
                 </div>
                 {editing ? (
                     <div className="flex items-center gap-2">

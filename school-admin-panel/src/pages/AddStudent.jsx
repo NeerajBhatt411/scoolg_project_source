@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
+import MenuButton from '../components/MenuButton';
 
 const AddStudent = () => {
     const navigate = useNavigate();
@@ -211,7 +212,8 @@ const AddStudent = () => {
         <div className="min-h-screen bg-[#f8fafc] flex flex-col relative pb-20">
             {/* TopNavBar */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center justify-between w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <MenuButton />
                     <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-[#1e293b] tracking-tight">New Student Admission</h2>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">

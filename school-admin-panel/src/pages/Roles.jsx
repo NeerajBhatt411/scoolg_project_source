@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
+import MenuButton from '../components/MenuButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -140,15 +141,18 @@ const Roles = () => {
         <div className="min-h-screen bg-slate-50/50 pb-10 relative">
             <div className="p-4 sm:p-8 space-y-6 max-w-full w-full">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-2 pl-14 md:pl-0">
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Roles & Staff</h2>
-                        <p className="text-slate-500 text-xs font-bold">Manage staff access to your admin panel</p>
+                <div className="flex justify-between items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <MenuButton />
+                        <div className="min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight truncate">Roles & Staff</h2>
+                            <p className="text-slate-500 text-xs font-bold hidden sm:block">Manage staff access to your admin panel</p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={openCreate} className="flex items-center gap-2 px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
+                    <div className="flex items-center gap-3 shrink-0">
+                        <button onClick={openCreate} className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
                             <span className="material-symbols-outlined text-[18px]">person_add</span>
-                            Add Staff
+                            <span className="hidden sm:inline">Add Staff</span>
                         </button>
                         <ProfileButton size={40} />
                     </div>

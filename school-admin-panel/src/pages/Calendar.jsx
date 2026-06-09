@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import ProfileButton from '../components/ProfileButton';
+import MenuButton from '../components/MenuButton';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -135,7 +136,10 @@ const Calendar = () => {
         <>
             {/* Top bar */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight w-full md:w-auto">School Calendar</h2>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <MenuButton />
+                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">School Calendar</h2>
+                </div>
                 <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm">
                     <button onClick={() => setYear((y) => y - 1)} className="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors">

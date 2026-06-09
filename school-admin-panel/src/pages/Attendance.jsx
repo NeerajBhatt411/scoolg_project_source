@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
+import MenuButton from '../components/MenuButton';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -108,6 +109,7 @@ const Attendance = () => {
             <header className="h-[80px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-6 md:px-10">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-3">
+                        <MenuButton />
                         <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none">Attendance</h2>
                         {isLocked && (
                             <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-100">

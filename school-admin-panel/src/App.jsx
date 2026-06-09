@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import { AdminProvider, useAdmin } from './context/AdminContext';
@@ -35,13 +35,12 @@ const PageLoading = () => (
 );
 
 const ProtectedRoute = ({ children }) => {
-    const { schoolId, status, checkCurrentStatus } = useAdmin();
+    const { schoolId, status, checkCurrentStatus, mobileNavOpen, setMobileNavOpen } = useAdmin();
     const token = localStorage.getItem('scoolg_token');
     const location = useLocation();
-    const [drawerOpen, setDrawerOpen] = useState(false);
 
     // Close the mobile nav drawer whenever the route changes.
-    useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+    useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
 
     // Sync status on navigation, but throttled (context limits to once / 60s)
     // so moving between pages doesn't fire an API call on every click.
@@ -83,21 +82,12 @@ const ProtectedRoute = ({ children }) => {
 
     return (
         <div className="bg-background text-on-surface min-h-screen flex">
-            <Sidebar mobileOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            <Sidebar mobileOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
             {/* Mobile drawer overlay */}
-            {drawerOpen && (
-                <div onClick={() => setDrawerOpen(false)} className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
+            {mobileNavOpen && (
+                <div onClick={() => setMobileNavOpen(false)} className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
             )}
-
-            {/* Mobile menu button (top-left, app-bar style) */}
-            <button
-                onClick={() => setDrawerOpen(true)}
-                aria-label="Open menu"
-                className="md:hidden fixed top-3 left-3 z-[45] w-11 h-11 rounded-xl bg-white/95 backdrop-blur border border-slate-200 text-slate-700 shadow-sm grid place-items-center active:scale-90 transition-transform"
-            >
-                <span className="material-symbols-outlined text-[24px]">menu</span>
-            </button>
 
             <main className="w-full pl-0 md:pl-[280px] min-h-screen bg-surface-container-low overflow-x-hidden">
                 {children}

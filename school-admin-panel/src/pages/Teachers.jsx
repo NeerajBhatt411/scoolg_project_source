@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
+import MenuButton from '../components/MenuButton';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -44,7 +45,8 @@ const Teachers = () => {
         <>
             {/* TopNavBar */}
             <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center justify-between w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <MenuButton />
                     <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Faculty & Staff</h2>
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto">

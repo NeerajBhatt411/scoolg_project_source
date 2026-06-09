@@ -38,6 +38,9 @@ export const AdminProvider = ({ children }) => {
     const [loadingStudents, setLoadingStudents] = useState(students.length === 0);
     const [loadingClasses, setLoadingClasses] = useState(classes.length === 0);
 
+    // Mobile nav drawer open/close (controlled globally so any page header can open it).
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
     // Throttle status checks so navigating between pages doesn't spam the API.
     const lastStatusCheck = useRef(0);
     // In-memory cache of sections keyed by classId (sections change rarely).
@@ -173,6 +176,7 @@ export const AdminProvider = ({ children }) => {
             role, allowedModules, setAuth, can,
             stats, students, classes, teachers,
             loadingStats, loadingStudents, loadingClasses,
+            mobileNavOpen, setMobileNavOpen,
             refreshStats, refreshStudents, refreshClasses, refreshTeachers,
             getSections, invalidateAcademic,
             checkCurrentStatus,
