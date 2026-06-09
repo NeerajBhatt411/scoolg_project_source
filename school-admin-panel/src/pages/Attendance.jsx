@@ -106,11 +106,11 @@ const Attendance = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col relative font-sans">
-            <header className="h-[80px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-6 md:px-10">
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-3">
+            <header className="h-16 md:h-[80px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 md:px-10">
+                <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <MenuButton />
-                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none">Attendance</h2>
+                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none truncate">Attendance</h2>
                         {isLocked && (
                             <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-100">
                                 <span className="material-symbols-outlined text-[14px] font-bold">lock</span>
@@ -118,9 +118,9 @@ const Attendance = () => {
                             </div>
                         )}
                     </div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">Management Portal</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5 hidden sm:block">Management Portal</p>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 md:gap-6 shrink-0">
                     <div className="relative group hidden lg:block">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input
@@ -129,7 +129,7 @@ const Attendance = () => {
                             type="text"
                         />
                     </div>
-                    <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
+                    <div className="flex items-center gap-3 md:gap-4 md:pl-6 md:border-l border-slate-200">
                         <button className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-100/50 text-slate-600 hover:bg-slate-100 transition-colors">
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                         </button>

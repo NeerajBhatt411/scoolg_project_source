@@ -166,15 +166,15 @@ const Classes = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-10 relative">
             {/* TopNavBar */}
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center gap-2 w-full md:w-auto">
+            <header className="h-16 md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-row justify-between items-center gap-4 px-4 md:px-8">
+                <div className="flex items-center gap-2 min-w-0">
                     <MenuButton />
-                    <div className="flex flex-col">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin Console</p>
-                        <h2 className="text-[1.3rem] md:text-[1.6rem] font-[900] text-[#2563eb] tracking-tight leading-tight">Class & Section Management</h2>
-                    </div>
+                    <h2 className="text-lg sm:text-[1.6rem] font-[900] text-[#2563eb] tracking-tight leading-tight truncate">
+                        <span className="sm:hidden">Classes</span>
+                        <span className="hidden sm:inline">Class & Section Management</span>
+                    </h2>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-3 md:gap-4 shrink-0 justify-end">
                     <div className="relative group hidden sm:block">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input
