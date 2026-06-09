@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
-import MenuButton from '../components/MenuButton';
 
 const StudentProfile = () => {
     const location = useLocation();
@@ -113,35 +112,25 @@ const StudentProfile = () => {
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20 relative">
-            {/* Header: Title */}
-            <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2 min-w-0">
-                    <MenuButton />
-                    <h1 className="text-2xl sm:text-3xl font-black text-blue-700 tracking-tight truncate">Student Profile</h1>
-                </div>
-                <div className="hidden md:flex items-center gap-4 shrink-0">
-                    <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                        <input type="text" placeholder="Search students, records..." className="pl-9 pr-4 py-2 bg-white rounded-full border border-slate-200 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-100" />
-                    </div>
-                </div>
+            {/* Header: back + title */}
+            <div className="flex items-center gap-2 mb-4">
+                <button onClick={() => navigate('/students')} aria-label="Back to students" className="shrink-0 -ml-1 w-9 h-9 grid place-items-center rounded-lg text-slate-700 hover:bg-slate-100 active:scale-90 transition-all">
+                    <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+                </button>
+                <h1 className="text-xl sm:text-3xl font-black text-blue-700 tracking-tight truncate">Student Profile</h1>
             </div>
 
             {/* Top Identity Card */}
-            <div className={`bg-white rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm border ${isFrozen ? 'border-red-200 bg-red-50/20' : 'border-slate-100'}`}>
-                <div className="flex items-start gap-6">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-md flex-shrink-0 bg-slate-100 border-4 border-white flex items-center justify-center text-3xl font-bold text-slate-400">
+            <div className={`bg-white rounded-3xl p-5 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 shadow-sm border ${isFrozen ? 'border-red-200 bg-red-50/20' : 'border-slate-100'}`}>
+                <div className="flex items-start gap-4 sm:gap-6 min-w-0">
+                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-md flex-shrink-0 bg-slate-100 border-4 border-white flex items-center justify-center text-3xl font-bold text-slate-400">
                         {student.profileImageUrl ? (
                             <img src={student.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : student.firstName.charAt(0)}
                     </div>
-                    <div className="space-y-1 mt-1">
-                        <button onClick={() => navigate('/students')} className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:text-blue-800 transition-colors mb-1">
-                            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                            Back to Student Directory
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{student.firstName} {student.lastName}</h2>
+                    <div className="space-y-1 mt-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <h2 className="text-xl sm:text-3xl font-extrabold text-slate-800">{student.firstName} {student.lastName}</h2>
                             {isFrozen ? (
                                 <span className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-black uppercase rounded-full tracking-wider flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div> Inactive
@@ -169,22 +158,22 @@ const StudentProfile = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 w-full sm:w-auto shrink-0">
                     {isEditing ? (
                         <>
-                            <button onClick={handleSaveEdit} disabled={isSaving} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center gap-2 transition-colors text-sm">
+                            <button onClick={handleSaveEdit} disabled={isSaving} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
                                 <span className="material-symbols-outlined text-[18px]">save</span> {isSaving ? 'Saving...' : 'Save Details'}
                             </button>
-                            <button onClick={() => { setIsEditing(false); setEditData(student); }} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center gap-2 transition-colors text-sm">
+                            <button onClick={() => { setIsEditing(false); setEditData(student); }} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
                                 Cancel
                             </button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span className="material-symbols-outlined text-[18px]">edit</span> Edit
                             </button>
-                            <button onClick={handleStatusChange} className={`px-5 py-2.5 font-bold rounded-xl flex items-center gap-2 transition-colors text-sm ${isFrozen ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
+                            <button onClick={handleStatusChange} className={`px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm ${isFrozen ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
                                 <span className="material-symbols-outlined text-[18px]">sync_alt</span> {isFrozen ? 'Mark Active' : 'Mark Inactive'}
                             </button>
                         </>
@@ -196,7 +185,7 @@ const StudentProfile = () => {
             <div className="relative bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col min-h-[600px]">
                 
                 {/* Tabs */}
-                <div className="flex items-center gap-8 px-8 border-b border-slate-100 pt-2 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center gap-5 sm:gap-8 px-4 sm:px-8 border-b border-slate-100 pt-2 overflow-x-auto custom-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -213,7 +202,7 @@ const StudentProfile = () => {
 
                 <div className="flex flex-col lg:flex-row flex-1">
                     {/* Left Detail Form Canvas */}
-                    <div className="flex-1 p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
+                    <div className="flex-1 p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
                         {activeTab === 'Personal' && (
                             <div className="space-y-10 animate-fade-in">
                                 <div>

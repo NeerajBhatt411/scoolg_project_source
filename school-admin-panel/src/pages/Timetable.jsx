@@ -792,7 +792,56 @@ const Timetable = () => {
                         )}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-3xl premium-shadow overflow-x-auto w-full border border-slate-100 p-2 sm:p-4 lg:p-6">
+                    <>
+                    {/* Mobile day-by-day view (read-only). The editable grid below stays a table. */}
+                    {!isEditing && (
+                        <div className="md:hidden space-y-4">
+                            {editSchedule.map((dayObj) => (
+                                <div key={dayObj.dayOfWeek} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                                        <p className="text-sm font-black text-slate-800 tracking-wide">{dayObj.dayOfWeek}</p>
+                                    </div>
+                                    <div className="divide-y divide-slate-50">
+                                        {dayObj.periods.length === 0 && (
+                                            <div className="px-4 py-4 text-xs font-bold text-slate-300 uppercase tracking-widest">No periods</div>
+                                        )}
+                                        {dayObj.periods.map((period, pIndex) => {
+                                            const prevEnd = pIndex > 0 ? editSchedule[0]?.periods?.[pIndex - 1]?.endTime : null;
+                                            const currStart = editSchedule[0]?.periods?.[pIndex]?.startTime;
+                                            const gap = getTimeGap(prevEnd, currStart);
+                                            return (
+                                                <React.Fragment key={pIndex}>
+                                                    {gap >= 20 && (
+                                                        <div className="flex items-center gap-2 px-4 py-2 bg-orange-50/60 text-orange-500">
+                                                            <span className="material-symbols-outlined text-[18px]">restaurant</span>
+                                                            <span className="text-[11px] font-black uppercase tracking-wider">Lunch Break · {gap} mins</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-3 px-4 py-3">
+                                                        <div className="w-11 shrink-0 text-center">
+                                                            <p className="text-[11px] font-black text-blue-600 leading-none">P{period.periodNumber}</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 leading-tight mt-1">{editSchedule[0]?.periods?.[pIndex]?.startTime || '--:--'}</p>
+                                                        </div>
+                                                        <div className="w-px self-stretch bg-slate-100"></div>
+                                                        {period.subject ? (
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-bold text-slate-800 text-sm uppercase truncate">{period.subject}</p>
+                                                                <p className="text-[11px] font-semibold text-slate-500 truncate">{period.teacherName || 'Not assigned'}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex-1 text-[11px] font-bold text-slate-300 uppercase tracking-widest">Free Slot</div>
+                                                        )}
+                                                    </div>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className={`bg-white rounded-3xl premium-shadow overflow-x-auto w-full border border-slate-100 p-2 sm:p-4 lg:p-6 ${!isEditing ? 'hidden md:block' : ''}`}>
                         <datalist id="subjectsList">
                             {selectedClassObj?.subjects?.map(s => (
                                 <option key={s} value={s} />
@@ -914,6 +963,7 @@ const Timetable = () => {
                             </tbody>
                         </table>
                     </div>
+                    </>
                 )}
             </div>
 
