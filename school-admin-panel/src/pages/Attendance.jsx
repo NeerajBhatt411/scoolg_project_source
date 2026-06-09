@@ -215,9 +215,9 @@ const Attendance = () => {
 
 
                 {/* High-Contrast Table Student List */}
-                <section className="bg-white rounded-[32px] border border-slate-300 overflow-x-auto shadow-md">
-                    {/* Darker Table Header for Visibility */}
-                    <div className="bg-slate-100 border-b-2 border-slate-200 px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center min-w-[640px]">
+                <section className="bg-white rounded-[32px] border border-slate-300 overflow-hidden md:overflow-x-auto shadow-md">
+                    {/* Table header — desktop only; mobile rows render as cards */}
+                    <div className="hidden md:grid bg-slate-100 border-b-2 border-slate-200 px-6 py-4 grid-cols-[60px_1fr_150px_280px] gap-4 items-center md:min-w-[640px]">
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">#</span>
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Student Profile</span>
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Roll No</span>
@@ -227,7 +227,7 @@ const Attendance = () => {
                     {loading ? (
                         <div className="divide-y divide-slate-200">
                             {Array.from({ length: 7 }).map((_, i) => (
-                                <div key={i} className="px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center min-w-[640px]">
+                                <div key={i} className="px-4 sm:px-6 py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-4 md:items-center md:min-w-[640px]">
                                     <div className="h-4 w-6 bg-slate-100 rounded animate-pulse"></div>
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
@@ -248,9 +248,9 @@ const Attendance = () => {
                     ) : (
                         <div className="divide-y divide-slate-200">
                             {students.map((s, idx) => (
-                                <div key={s._id} className={`px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center transition-colors min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
-                                    {/* Index - Darker */}
-                                    <div className="text-sm font-black text-slate-500">
+                                <div key={s._id} className={`px-4 sm:px-6 py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-3 md:gap-4 md:items-center transition-colors md:min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
+                                    {/* Index - desktop only */}
+                                    <div className="hidden md:block text-sm font-black text-slate-500">
                                         {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                                     </div>
 
@@ -259,25 +259,28 @@ const Attendance = () => {
                                         <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
                                             {s.firstName ? s.firstName[0] : ''}
                                         </div>
-                                        <div className="flex flex-col">
-                                            <h5 className="text-[16px] font-black text-slate-950 leading-none">{s.firstName} {s.lastName}</h5>
-                                            <p className="text-[10px] font-black text-slate-600 uppercase mt-1.5 tracking-tight">Grade {selectedClassObj?.className}</p>
+                                        <div className="flex flex-col min-w-0">
+                                            <h5 className="text-[15px] sm:text-[16px] font-black text-slate-950 leading-none truncate">{s.firstName} {s.lastName}</h5>
+                                            <p className="text-[10px] font-black text-slate-600 uppercase mt-1.5 tracking-tight">
+                                                Grade {selectedClassObj?.className}
+                                                <span className="md:hidden text-blue-700"> · Roll {s.rollNumber || '00'}</span>
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Roll Number Column - Bold & Clear */}
-                                    <div>
+                                    {/* Roll Number Column - desktop only (shown inline on mobile) */}
+                                    <div className="hidden md:block">
                                         <span className="px-4 py-1.5 bg-blue-100 text-blue-900 rounded-lg text-[12px] font-black border-2 border-blue-200 inline-block shadow-sm">
                                             ROLL: {s.rollNumber || '00'}
                                         </span>
                                     </div>
 
-                                    {/* Action Buttons - High Contrast */}
-                                    <div className="flex items-center justify-center gap-3">
+                                    {/* Action Buttons - full width (2-col) on mobile */}
+                                    <div className="grid grid-cols-2 md:flex md:items-center md:justify-center gap-2 md:gap-3">
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'P')}
                                             disabled={isLocked}
-                                            className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
+                                            className={`h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
                                         >
                                             <span className="material-symbols-outlined text-[18px]">check_circle</span>
                                             Present
@@ -285,7 +288,7 @@ const Attendance = () => {
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'A')}
                                             disabled={isLocked}
-                                            className={`h-11 px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
+                                            className={`h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
                                         >
                                             <span className="material-symbols-outlined text-[18px]">cancel</span>
                                             Absent
