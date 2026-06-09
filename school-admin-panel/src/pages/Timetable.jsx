@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ExcelJS from 'exceljs';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -653,32 +654,33 @@ const Timetable = () => {
                     <div className="flex flex-wrap items-end gap-3 w-full xl:w-auto">
                         <div className="flex flex-col min-w-[100px] shrink-0">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Class</label>
-                            <select
+                            <Dropdown
                                 value={selectedClassObj?._id || ''}
-                                onChange={(e) => {
-                                    const found = classes.find(c => c._id === e.target.value);
+                                onChange={(v) => {
+                                    const found = classes.find(c => c._id === v);
                                     setSelectedClassObj(found);
                                 }}
-                                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
-                            >
-                                {classes.length === 0 && <option value="">No Classes</option>}
-                                {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
-                            </select>
+                                options={classes.map(c => ({ value: c._id, label: c.className }))}
+                                placeholder="No Classes"
+                                className="w-full"
+                                buttonClassName="h-10"
+                            />
                         </div>
                         
                         {sections.length > 1 ? (
                             <div className="flex flex-col min-w-[100px] shrink-0">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Section</label>
-                                <select
+                                <Dropdown
                                     value={selectedSectionObj?._id || ''}
-                                    onChange={(e) => {
-                                        const found = sections.find(s => s._id === e.target.value);
+                                    onChange={(v) => {
+                                        const found = sections.find(s => s._id === v);
                                         setSelectedSectionObj(found);
                                     }}
-                                    className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
-                                >
-                                    {sections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
-                                </select>
+                                    options={sections.map(s => ({ value: s._id, label: s.sectionName }))}
+                                    placeholder="Section"
+                                    className="w-full"
+                                    buttonClassName="h-10"
+                                />
                             </div>
                         ) : selectedSectionObj && (
                             <div className="flex flex-col min-w-[100px] shrink-0">

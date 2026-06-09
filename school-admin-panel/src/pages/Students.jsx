@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 
@@ -82,29 +83,35 @@ const Students = () => {
                 <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl premium-shadow grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="space-y-1">
                         <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Class</label>
-                        <select
+                        <Dropdown
                             value={classFilter}
-                            onChange={(e) => setClassFilter(e.target.value)}
-                            className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none"
-                        >
-                            {uniqueClasses.map(c => <option key={c} value={c}>{c === 'All' ? 'All Classes' : c}</option>)}
-                        </select>
+                            onChange={(v) => setClassFilter(v)}
+                            options={uniqueClasses.map(c => ({ value: c, label: c === 'All' ? 'All Classes' : c }))}
+                            placeholder="All Classes"
+                            className="w-full"
+                            buttonClassName="h-11"
+                        />
                     </div>
                     <div className="space-y-1">
                         <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Section</label>
-                        <select
+                        <Dropdown
                             value={sectionFilter}
-                            onChange={(e) => setSectionFilter(e.target.value)}
-                            className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none"
-                        >
-                            {uniqueSections.map(s => <option key={s} value={s}>{s === 'All' ? 'All Sections' : s}</option>)}
-                        </select>
+                            onChange={(v) => setSectionFilter(v)}
+                            options={uniqueSections.map(s => ({ value: s, label: s === 'All' ? 'All Sections' : s }))}
+                            placeholder="All Sections"
+                            className="w-full"
+                            buttonClassName="h-11"
+                        />
                     </div>
                     <div className="hidden lg:block space-y-1">
                         <label className="text-[10px] uppercase font-bold text-on-surface-variant ml-1">Status</label>
-                        <select className="w-full h-11 px-3 bg-surface-container-low border-none rounded-xl text-xs font-semibold outline-none appearance-none">
-                            <option>Active</option>
-                        </select>
+                        <Dropdown
+                            value="Active"
+                            onChange={() => {}}
+                            options={[{ value: 'Active', label: 'Active' }]}
+                            className="w-full"
+                            buttonClassName="h-11"
+                        />
                     </div>
                     <button className="mt-auto h-11 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2 justify-center" onClick={() => { setClassFilter('All'); setSectionFilter('All'); }}>
                         <span className="material-symbols-outlined text-[18px]">clear</span>
