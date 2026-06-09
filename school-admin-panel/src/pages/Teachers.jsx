@@ -90,8 +90,8 @@ const Teachers = () => {
                     </div>
                 </div>
 
-                {/* Data Table Card */}
-                <div className="bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden max-w-full">
+                {/* Data Table Card (desktop) */}
+                <div className="hidden md:block bg-surface-container-lowest rounded-xl premium-shadow overflow-hidden max-w-full">
                     <div className="overflow-x-auto w-full">
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
@@ -169,26 +169,69 @@ const Teachers = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    {/* Pagination */}
-                    {!loading && filteredTeachers.length > PER_PAGE && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 pt-5">
-                            <p className="text-xs font-bold text-slate-400">
-                                Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filteredTeachers.length)} of {filteredTeachers.length} teachers
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                                    className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Prev</button>
-                                {Array.from({ length: totalPages }).map((_, i) => (
-                                    <button key={i} onClick={() => setPage(i + 1)}
-                                        className={`h-9 w-9 rounded-xl text-sm font-bold transition-colors ${page === i + 1 ? 'bg-[#2563eb] text-white shadow-sm shadow-blue-500/30' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}>{i + 1}</button>
-                                ))}
-                                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                                    className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+                {/* Mobile card list */}
+                <div className="md:hidden space-y-3">
+                    {loading ? (
+                        [...Array(5)].map((_, i) => (
+                            <div key={i} className="bg-surface-container-lowest rounded-2xl premium-shadow p-4 flex items-center gap-3">
+                                <Shimmer className="h-12 w-12 rounded-full" />
+                                <div className="flex-1 space-y-2">
+                                    <Shimmer className="h-3 w-32" />
+                                    <Shimmer className="h-2 w-24" />
+                                </div>
                             </div>
-                        </div>
+                        ))
+                    ) : filteredTeachers.length === 0 ? (
+                        <div className="text-center py-10 font-bold text-slate-400 bg-surface-container-lowest rounded-2xl premium-shadow">No teachers found</div>
+                    ) : (
+                        pageTeachers.map((teacher) => (
+                            <button
+                                key={teacher._id}
+                                onClick={() => navigate('/teachers/profile', { state: { teacher } })}
+                                className="w-full text-left bg-surface-container-lowest rounded-2xl premium-shadow p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center font-bold text-slate-500 overflow-hidden shrink-0">
+                                    {teacher.profileImageUrl ? (
+                                        <img src={teacher.profileImageUrl} alt="avatar" className="w-full h-full object-cover" />
+                                    ) : teacher.fullName?.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-sm font-bold text-on-surface truncate">{teacher.fullName}</p>
+                                        <span className="inline-flex items-center gap-1 shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span className="text-[10px] font-bold text-emerald-600 uppercase">{teacher.status}</span></span>
+                                    </div>
+                                    <p className="text-[11px] font-medium text-on-surface-variant truncate">ID: {teacher.teacherAppId}</p>
+                                    <div className="flex items-center gap-3 mt-1.5 text-[11px] font-semibold text-on-surface-variant">
+                                        <span className="inline-flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">work</span>{teacher.experienceYears || '0'} yrs</span>
+                                        <span className="inline-flex items-center gap-1 truncate"><span className="material-symbols-outlined text-[14px]">call</span>{teacher.phone}</span>
+                                    </div>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 shrink-0">chevron_right</span>
+                            </button>
+                        ))
                     )}
                 </div>
+
+                {/* Pagination (shared) */}
+                {!loading && filteredTeachers.length > PER_PAGE && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2">
+                        <p className="text-xs font-bold text-slate-400">
+                            Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filteredTeachers.length)} of {filteredTeachers.length} teachers
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                                className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Prev</button>
+                            {Array.from({ length: totalPages }).map((_, i) => (
+                                <button key={i} onClick={() => setPage(i + 1)}
+                                    className={`h-9 w-9 rounded-xl text-sm font-bold transition-colors ${page === i + 1 ? 'bg-[#2563eb] text-white shadow-sm shadow-blue-500/30' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}>{i + 1}</button>
+                            ))}
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                                className="h-9 px-3 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+                        </div>
+                    </div>
+                )}
             </div>
             <div className="mt-auto h-12"></div>
         </>
