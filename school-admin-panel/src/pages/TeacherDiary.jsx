@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return d; } };
 
@@ -74,22 +75,39 @@ const TeacherDiary = () => {
 
                 {/* Filters */}
                 <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <select value={fTeacher} onChange={(e) => setFTeacher(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                        <option value="">All teachers</option>
-                        {teachers.map((t) => <option key={t._id} value={t._id}>{t.fullName}</option>)}
-                    </select>
-                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setFSubject(''); }} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                        <option value="">All classes</option>
-                        {classOptions.map((c) => <option key={c} value={c}>Class {c}</option>)}
-                    </select>
-                    <select value={fSection} onChange={(e) => setFSection(e.target.value)} disabled={!fClass} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 disabled:opacity-50">
-                        <option value="">All sections</option>
-                        {sectionOptions.map((s) => <option key={s} value={s}>Section {s}</option>)}
-                    </select>
-                    <select value={fSubject} onChange={(e) => setFSubject(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                        <option value="">All subjects</option>
-                        {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Dropdown
+                        value={fTeacher}
+                        onChange={(v) => setFTeacher(v)}
+                        options={[{ value: '', label: 'All teachers' }, ...teachers.map((t) => ({ value: t._id, label: t.fullName }))]}
+                        placeholder="All teachers"
+                        className="w-44"
+                        buttonClassName="h-10"
+                    />
+                    <Dropdown
+                        value={fClass}
+                        onChange={(v) => { setFClass(v); setFSection(''); setFSubject(''); }}
+                        options={[{ value: '', label: 'All classes' }, ...classOptions.map((c) => ({ value: c, label: `Class ${c}` }))]}
+                        placeholder="All classes"
+                        className="w-44"
+                        buttonClassName="h-10"
+                    />
+                    <Dropdown
+                        value={fSection}
+                        onChange={(v) => setFSection(v)}
+                        disabled={!fClass}
+                        options={[{ value: '', label: 'All sections' }, ...sectionOptions.map((s) => ({ value: s, label: `Section ${s}` }))]}
+                        placeholder="All sections"
+                        className="w-44"
+                        buttonClassName="h-10"
+                    />
+                    <Dropdown
+                        value={fSubject}
+                        onChange={(v) => setFSubject(v)}
+                        options={[{ value: '', label: 'All subjects' }, ...subjectOptions.map((s) => ({ value: s, label: s }))]}
+                        placeholder="All subjects"
+                        className="w-44"
+                        buttonClassName="h-10"
+                    />
                     <input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} className="h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
                     {anyFilter && (
                         <button onClick={() => { setFTeacher(''); setFDate(''); setFClass(''); setFSection(''); setFSubject(''); }} className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold transition-colors">Clear</button>
