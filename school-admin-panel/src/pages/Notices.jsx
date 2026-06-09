@@ -6,12 +6,15 @@ import { useToast } from '../context/ToastContext';
 
 const initialNotices = [];
 
+const NOTICE_TYPES = ['All', 'Common Notice', 'Schedule / Calendar', 'Exam Update', 'Event / Activity', 'Holiday'];
+
 const Notices = () => {
     const { classes } = useAdmin();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState('All Notices');
     const tabs = ['All Notices', 'Scheduled', 'Drafts'];
     const [typeFilter, setTypeFilter] = useState('All');
+    const [filterOpen, setFilterOpen] = useState(false);
 
     const [notices, setNotices] = useState(initialNotices);
     const [showModal, setShowModal] = useState(false);
@@ -138,12 +141,12 @@ const Notices = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col relative pb-20">
             {/* TopNavBar */}
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center gap-2 w-full md:w-auto">
+            <header className="h-16 md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-row justify-between items-center gap-4 px-4 md:px-8">
+                <div className="flex items-center gap-2 min-w-0">
                     <MenuButton />
                     <h2 className="text-[1.3rem] md:text-[1.6rem] font-[900] text-[#1e293b] tracking-tight leading-tight">Notices</h2>
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-3 md:gap-4 shrink-0 justify-end">
                     <div className="relative group hidden sm:block">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input
@@ -194,20 +197,33 @@ const Notices = () => {
                         ))}
                     </div>
                     
-                    <div className="relative shrink-0 w-full sm:w-auto">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">filter_alt</span>
-                        <select 
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full sm:w-48 h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none text-xs"
+                    <div className="relative shrink-0 w-full sm:w-48">
+                        <button
+                            type="button"
+                            onClick={() => setFilterOpen(o => !o)}
+                            className="w-full h-10 pl-10 pr-9 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 text-xs text-left flex items-center outline-none focus:border-blue-500 transition-all"
                         >
-                            <option value="All">All Types</option>
-                            <option value="Common Notice">Common Notice</option>
-                            <option value="Schedule / Calendar">Schedule / Calendar</option>
-                            <option value="Exam Update">Exam Update</option>
-                            <option value="Event / Activity">Event / Activity</option>
-                            <option value="Holiday">Holiday</option>
-                        </select>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">filter_alt</span>
+                            <span className="truncate">{typeFilter === 'All' ? 'All Types' : typeFilter}</span>
+                            <span className={`material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] transition-transform ${filterOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                        </button>
+                        {filterOpen && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)}></div>
+                                <div className="absolute z-20 top-full mt-1.5 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl py-1 overflow-hidden animate-fade-in">
+                                    {NOTICE_TYPES.map(opt => (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => { setTypeFilter(opt); setFilterOpen(false); }}
+                                            className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors ${typeFilter === opt ? 'bg-blue-50 text-[#2563eb]' : 'text-slate-600 hover:bg-slate-50'}`}
+                                        >
+                                            {opt === 'All' ? 'All Types' : opt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 

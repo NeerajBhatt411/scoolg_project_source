@@ -708,31 +708,32 @@ const Timetable = () => {
                                     <>
                                         <button onClick={() => setShowCopyModal(true)} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl hover:bg-indigo-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                                            Copy to Class
+                                            <span className="hidden sm:inline">Copy to Class</span>
                                         </button>
                                         <button onClick={() => { setIsEditing(true); setShowCopyDayModal(true); }} className="shrink-0 flex items-center gap-1.5 px-3 h-[42px] bg-fuchsia-50 text-fuchsia-600 font-bold text-sm rounded-xl hover:bg-fuchsia-100 transition-all">
                                             <span className="material-symbols-outlined text-[18px]">file_copy</span>
-                                            Copy Day
+                                            <span className="hidden sm:inline">Copy Day</span>
                                         </button>
                                     </>
                                 )}
                                 <button onClick={downloadPDF} className="shrink-0 flex items-center gap-2 px-3 h-[42px] bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-100 group">
                                     <span className="material-symbols-outlined text-[22px] text-rose-500 group-hover:-translate-y-0.5 transition-transform">picture_as_pdf</span>
-                                    <div className="flex flex-col items-start justify-center">
+                                    <div className="hidden sm:flex flex-col items-start justify-center">
                                         <span className="text-[8px] font-black uppercase text-rose-400 leading-none tracking-widest mb-0.5">Download</span>
                                         <span className="text-xs font-bold leading-none">PDF</span>
                                     </div>
                                 </button>
                                 <button onClick={downloadExcel} className="shrink-0 flex items-center gap-2 px-3 h-[42px] bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100 group">
                                     <span className="material-symbols-outlined text-[22px] text-emerald-500 group-hover:-translate-y-0.5 transition-transform">table_view</span>
-                                    <div className="flex flex-col items-start justify-center">
+                                    <div className="hidden sm:flex flex-col items-start justify-center">
                                         <span className="text-[8px] font-black uppercase text-emerald-400 leading-none tracking-widest mb-0.5">Download</span>
                                         <span className="text-xs font-bold leading-none">Excel</span>
                                     </div>
                                 </button>
                                 <button onClick={() => setIsEditing(true)} className="shrink-0 flex items-center gap-1.5 px-4 h-[42px] bg-[#2563eb] text-white font-bold text-sm rounded-xl shadow-sm shadow-blue-500/30 hover:scale-95 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">{timetable ? 'edit' : 'add'}</span>
-                                    {timetable ? 'Edit Timetable' : 'Create Timetable'}
+                                    <span className="hidden sm:inline">{timetable ? 'Edit Timetable' : 'Create Timetable'}</span>
+                                    <span className="sm:hidden">{timetable ? 'Edit' : 'Create'}</span>
                                 </button>
                             </>
                         ) : (
