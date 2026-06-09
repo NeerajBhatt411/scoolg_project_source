@@ -873,3 +873,14 @@ button {
   justify-content: center;
   margin-bottom: 16px;
 }
+
+/* Custom dropdown chevron for every appearance-none <select> (Tailwind's
+   appearance-none strips the native arrow, leaving the box looking empty).
+   Adds a slate chevron on the right + reserves space so text never overlaps it. */
+select.appearance-none {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2394a3b8'%20stroke-width='2.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1.05rem;
+  padding-right: 2.4rem !important;
+}

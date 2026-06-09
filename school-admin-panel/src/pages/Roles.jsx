@@ -281,7 +281,7 @@ const Roles = () => {
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Role</label>
                                 <select value={form.role} onChange={(e) => handleRoleChange(e.target.value)}
-                                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer">
+                                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none">
                                     {Object.keys(ROLE_TEMPLATES).map(r => <option key={r} value={r}>{r}</option>)}
                                 </select>
                             </div>
