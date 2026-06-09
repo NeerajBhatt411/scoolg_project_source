@@ -447,7 +447,7 @@ const AddTeacher = () => {
                                 {currentStep === 4 && (
                                     <div className="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                                         <h3 className="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Review Details</h3>
-                                        <div className="grid grid-cols-2 gap-4 text-sm font-medium">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-medium">
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Name</span>{formData.fullName}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Gender</span>{formData.gender}</div>
                                             <div><span className="text-slate-500 block text-[10px] uppercase font-bold">Phone</span>{formData.phone}</div>
@@ -465,16 +465,16 @@ const AddTeacher = () => {
 
                         {/* Step Navigation Actions */}
                         <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-100">
-                            <button 
-                                className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all"
+                            <button
+                                className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all"
                                 onClick={handleBack}
                                 disabled={isLoading}
                             >
                                 <span className="material-symbols-outlined text-[18px]">arrow_back</span>
                                 Back
                             </button>
-                            <button 
-                                className={`flex items-center gap-2 px-8 py-3 font-bold text-sm rounded-xl transition-all active:scale-95 ${
+                            <button
+                                className={`flex items-center gap-2 px-5 sm:px-8 py-3 font-bold text-sm rounded-xl transition-all active:scale-95 ${
                                     !isStepValid(currentStep) 
                                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
                                     : (currentStep === 4 ? 'bg-green-600 text-white hover:shadow-green-500/30 hover:shadow-lg' : 'bg-[#2563eb] text-white hover:shadow-blue-500/30 hover:shadow-lg')

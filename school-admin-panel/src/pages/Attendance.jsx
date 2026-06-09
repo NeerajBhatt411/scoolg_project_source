@@ -215,9 +215,9 @@ const Attendance = () => {
 
 
                 {/* High-Contrast Table Student List */}
-                <section className="bg-white rounded-[32px] border border-slate-300 overflow-hidden shadow-md">
+                <section className="bg-white rounded-[32px] border border-slate-300 overflow-x-auto shadow-md">
                     {/* Darker Table Header for Visibility */}
-                    <div className="bg-slate-100 border-b-2 border-slate-200 px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center">
+                    <div className="bg-slate-100 border-b-2 border-slate-200 px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center min-w-[640px]">
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">#</span>
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Student Profile</span>
                         <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Roll No</span>
@@ -227,7 +227,7 @@ const Attendance = () => {
                     {loading ? (
                         <div className="divide-y divide-slate-200">
                             {Array.from({ length: 7 }).map((_, i) => (
-                                <div key={i} className="px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center">
+                                <div key={i} className="px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center min-w-[640px]">
                                     <div className="h-4 w-6 bg-slate-100 rounded animate-pulse"></div>
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
@@ -248,7 +248,7 @@ const Attendance = () => {
                     ) : (
                         <div className="divide-y divide-slate-200">
                             {students.map((s, idx) => (
-                                <div key={s._id} className={`px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center transition-colors ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
+                                <div key={s._id} className={`px-6 py-4 grid grid-cols-[60px_1fr_150px_280px] gap-4 items-center transition-colors min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
                                     {/* Index - Darker */}
                                     <div className="text-sm font-black text-slate-500">
                                         {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
@@ -299,12 +299,12 @@ const Attendance = () => {
 
 
 
-                <div className="fixed bottom-0 left-16 md:left-[280px] right-0 p-6 bg-white/80 backdrop-blur-2xl border-t border-slate-200 flex justify-end gap-5 z-50">
-                    <div className="max-w-[1400px] mx-auto w-full flex justify-end gap-5">
+                <div className="fixed bottom-0 left-0 md:left-[280px] right-0 p-4 sm:p-6 bg-white/80 backdrop-blur-2xl border-t border-slate-200 flex justify-end gap-5 z-50">
+                    <div className="max-w-[1400px] mx-auto w-full flex flex-wrap justify-end gap-3 sm:gap-5">
                         {isLocked ? (
                             <button
                                 onClick={() => setIsLocked(false)}
-                                className="px-10 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
+                                className="px-6 sm:px-10 py-4 sm:py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
                             >
                                 <span className="material-symbols-outlined text-[20px]">edit</span>
                                 Edit Attendance
@@ -313,14 +313,14 @@ const Attendance = () => {
                             <>
                                 <button
                                     onClick={() => setIsLocked(true)}
-                                    className="px-10 py-5 bg-white border-2 border-slate-200 text-slate-500 font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] hover:bg-slate-50 transition-all active:scale-95"
+                                    className="px-6 sm:px-10 py-4 sm:py-5 bg-white border-2 border-slate-200 text-slate-500 font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] hover:bg-slate-50 transition-all active:scale-95"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSubmit}
                                     disabled={saving || students.length === 0}
-                                    className="px-12 py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                    className="px-6 sm:px-12 py-4 sm:py-5 bg-[#2563eb] text-white font-black text-[12px] uppercase tracking-[0.2em] rounded-[24px] shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                                 >
                                     {saving ? 'Processing...' : 'Submit Attendance'}
                                 </button>
