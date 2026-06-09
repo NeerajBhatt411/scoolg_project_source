@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import { AdminProvider, useAdmin } from './context/AdminContext';
@@ -38,6 +38,10 @@ const ProtectedRoute = ({ children }) => {
     const { schoolId, status, checkCurrentStatus } = useAdmin();
     const token = localStorage.getItem('scoolg_token');
     const location = useLocation();
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // Close the mobile nav drawer whenever the route changes.
+    useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
     // Sync status on navigation, but throttled (context limits to once / 60s)
     // so moving between pages doesn't fire an API call on every click.
@@ -79,8 +83,23 @@ const ProtectedRoute = ({ children }) => {
 
     return (
         <div className="bg-background text-on-surface min-h-screen flex">
-            <Sidebar />
-            <main className="w-full pl-16 md:pl-[280px] min-h-screen bg-surface-container-low overflow-x-hidden">
+            <Sidebar mobileOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+            {/* Mobile drawer overlay */}
+            {drawerOpen && (
+                <div onClick={() => setDrawerOpen(false)} className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
+            )}
+
+            {/* Mobile menu button */}
+            <button
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Open menu"
+                className="md:hidden fixed bottom-5 left-5 z-[45] w-[52px] h-[52px] rounded-full bg-[#2563eb] text-white shadow-lg shadow-blue-600/30 grid place-items-center active:scale-90 transition-transform"
+            >
+                <span className="material-symbols-outlined text-[26px]">menu</span>
+            </button>
+
+            <main className="w-full pl-0 md:pl-[280px] min-h-screen bg-surface-container-low overflow-x-hidden">
                 {children}
             </main>
         </div>
