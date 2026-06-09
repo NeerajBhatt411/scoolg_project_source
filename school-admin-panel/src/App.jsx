@@ -90,13 +90,13 @@ const ProtectedRoute = ({ children }) => {
                 <div onClick={() => setDrawerOpen(false)} className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
             )}
 
-            {/* Mobile menu button */}
+            {/* Mobile menu button (top-left, app-bar style) */}
             <button
                 onClick={() => setDrawerOpen(true)}
                 aria-label="Open menu"
-                className="md:hidden fixed bottom-5 left-5 z-[45] w-[52px] h-[52px] rounded-full bg-[#2563eb] text-white shadow-lg shadow-blue-600/30 grid place-items-center active:scale-90 transition-transform"
+                className="md:hidden fixed top-3 left-3 z-[45] w-11 h-11 rounded-xl bg-white/95 backdrop-blur border border-slate-200 text-slate-700 shadow-sm grid place-items-center active:scale-90 transition-transform"
             >
-                <span className="material-symbols-outlined text-[26px]">menu</span>
+                <span className="material-symbols-outlined text-[24px]">menu</span>
             </button>
 
             <main className="w-full pl-0 md:pl-[280px] min-h-screen bg-surface-container-low overflow-x-hidden">

@@ -143,7 +143,7 @@ const Profile = () => {
     return (
         <div className="p-6 sm:p-10 max-w-[1000px] mx-auto">
             {/* title + actions */}
-            <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex items-center justify-between gap-4 mb-6 pl-14 md:pl-0">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Profile</h1>
                     <p className="text-slate-500 font-medium text-sm">{editing ? 'Update your school information.' : 'Your school information at a glance.'}</p>
