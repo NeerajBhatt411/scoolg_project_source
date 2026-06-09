@@ -5,12 +5,12 @@ import MenuButton from '../components/MenuButton';
 const Notifications = () => {
     return (
         <>
-            <header className="h-auto md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4 px-4 md:px-8 py-4 md:py-0">
-                <div className="flex items-center gap-2 w-full md:w-auto">
+            <header className="h-16 md:h-[72px] w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b-[1px] border-slate-200/50 flex flex-row justify-between items-center gap-3 px-4 md:px-8">
+                <div className="flex items-center gap-2 min-w-0">
                     <MenuButton />
-                    <h2 className="text-[1.5rem] md:text-[1.8rem] font-[900] text-on-surface tracking-tight">Notifications</h2>
+                    <h2 className="text-xl sm:text-[1.8rem] font-[900] text-on-surface tracking-tight truncate">Notifications</h2>
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-3 shrink-0 justify-end">
                     <ProfileButton size={40} />
                 </div>
             </header>
