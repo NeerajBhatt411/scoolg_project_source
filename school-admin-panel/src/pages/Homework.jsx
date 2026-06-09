@@ -226,7 +226,7 @@ const Homework = () => {
         <div className="min-h-screen bg-slate-50/50 pb-10 relative">
             <div className="p-4 sm:p-8 space-y-6 max-w-full w-full">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 pl-14 md:pl-0">
                     <div>
                         <h2 className="text-2xl font-black text-slate-800 tracking-tight">Homework & Assignments</h2>
                         <p className="text-slate-500 text-xs font-bold">Academic Session 2024-25</p>

@@ -113,7 +113,7 @@ const StudentProfile = () => {
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20 relative">
             {/* Header: Title */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 pl-14 md:pl-0">
                 <h1 className="text-3xl font-black text-blue-700 tracking-tight">Student Profile</h1>
                 <div className="flex items-center gap-4">
                     <div className="relative">
