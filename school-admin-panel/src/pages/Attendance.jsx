@@ -251,39 +251,34 @@ const Attendance = () => {
                     ) : (
                         <div className="divide-y divide-slate-200">
                             {students.map((s, idx) => (
-                                <div key={s._id} className={`px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:grid md:grid-cols-[60px_1fr_150px_280px] gap-3 md:gap-4 md:items-center transition-colors md:min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
+                                <div key={s._id} className={`px-3 sm:px-6 py-2.5 sm:py-4 flex items-center gap-3 md:grid md:grid-cols-[60px_1fr_150px_280px] md:gap-4 transition-colors md:min-w-[640px] ${isLocked ? 'bg-slate-50/80' : 'hover:bg-blue-50/50'}`}>
                                     {/* Index - desktop only */}
                                     <div className="hidden md:block text-sm font-black text-slate-500">
                                         {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                                     </div>
 
-                                    {/* Student Info - Sharp Contrast */}
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
+                                    {/* Roll chip (mobile) / Avatar (desktop) + Name */}
+                                    <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
+                                        <span className="md:hidden shrink-0 min-w-[2rem] h-8 px-2 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[13px] font-black">{s.rollNumber || '0'}</span>
+                                        <div className="hidden md:flex w-10 h-10 rounded-full bg-slate-900 items-center justify-center text-white font-black text-xs shadow-md shrink-0">
                                             {s.firstName ? s.firstName[0] : ''}
                                         </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <h5 className="text-[15px] sm:text-[16px] font-black text-slate-950 leading-none truncate">{s.firstName} {s.lastName}</h5>
-                                            <p className="text-[10px] font-black text-slate-600 uppercase mt-1.5 tracking-tight">
-                                                Grade {selectedClassObj?.className}
-                                                <span className="md:hidden text-blue-700"> · Roll {s.rollNumber || '00'}</span>
-                                            </p>
-                                        </div>
+                                        <h5 className="text-[15px] sm:text-[16px] font-black text-slate-950 leading-tight truncate">{s.firstName} {s.lastName}</h5>
                                     </div>
 
-                                    {/* Roll Number Column - desktop only (shown inline on mobile) */}
+                                    {/* Roll Number Column - desktop only */}
                                     <div className="hidden md:block">
                                         <span className="px-4 py-1.5 bg-blue-100 text-blue-900 rounded-lg text-[12px] font-black border-2 border-blue-200 inline-block shadow-sm">
                                             ROLL: {s.rollNumber || '00'}
                                         </span>
                                     </div>
 
-                                    {/* Action Buttons - full width (2-col) on mobile */}
-                                    <div className="grid grid-cols-2 md:flex md:items-center md:justify-center gap-2 md:gap-3">
+                                    {/* Action Buttons - compact on mobile (right), full on desktop */}
+                                    <div className="flex items-center gap-2 md:gap-3 shrink-0 md:justify-center">
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'P')}
                                             disabled={isLocked}
-                                            className={`h-10 sm:h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[13px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
+                                            className={`w-10 sm:w-auto h-9 sm:h-11 px-0 sm:px-7 rounded-full flex items-center justify-center gap-2 text-[14px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'P' ? 'bg-emerald-700 text-white shadow-lg' : 'bg-white text-emerald-800 border-2 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50'}`}
                                         >
                                             <span className="material-symbols-outlined text-[18px] hidden sm:inline">check_circle</span>
                                             <span className="sm:hidden">P</span>
@@ -292,7 +287,7 @@ const Attendance = () => {
                                         <button
                                             onClick={() => handleStatusChange(s._id, 'A')}
                                             disabled={isLocked}
-                                            className={`h-10 sm:h-11 px-3 md:px-7 rounded-full flex items-center justify-center gap-2 text-[13px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
+                                            className={`w-10 sm:w-auto h-9 sm:h-11 px-0 sm:px-7 rounded-full flex items-center justify-center gap-2 text-[14px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${attendanceData[s._id] === 'A' ? 'bg-red-700 text-white shadow-lg' : 'bg-white text-red-800 border-2 border-red-200 hover:bg-red-50 disabled:opacity-50'}`}
                                         >
                                             <span className="material-symbols-outlined text-[18px] hidden sm:inline">cancel</span>
                                             <span className="sm:hidden">A</span>
