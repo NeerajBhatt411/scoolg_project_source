@@ -5,6 +5,12 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
+import AttendanceTrendChart from '../components/AttendanceTrendChart';
+
+// Illustrative weekly attendance %. TODO: wire to a real attendance-trend endpoint.
+const WEEK_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEK_ATTENDANCE = [94, 91, 96, 89, 93, 88];
+const WEEK_AVG = Math.round(WEEK_ATTENDANCE.reduce((a, b) => a + b, 0) / WEEK_ATTENDANCE.length);
 
 const CAT_META = {
     'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
@@ -234,43 +240,17 @@ const Dashboard = () => {
                                 View Analytics
                             </button>
                         </div>
-                        <div className="space-y-6 px-2">
-                            {[
-                                { class: "Grade 1", val: 96 },
-                                { class: "Grade 2", val: 88 },
-                                { class: "Grade 3", val: 92 },
-                                { class: "Grade 4", val: 74 }
-                            ].map((item, idx) => {
-                                // Dynamic color logic
-                                let barColor = "bg-blue-600";
-                                let textColor = "text-blue-600";
-
-                                if (item.val >= 90) {
-                                    barColor = "bg-emerald-500";
-                                    textColor = "text-emerald-600";
-                                } else if (item.val >= 80) {
-                                    barColor = "bg-lime-500";
-                                    textColor = "text-lime-600";
-                                } else if (item.val < 75) {
-                                    barColor = "bg-rose-500";
-                                    textColor = "text-rose-600";
-                                }
-
-                                return (
-                                    <div key={idx} className="space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-900 font-bold text-sm tracking-tight">{item.class}</span>
-                                            <span className={`text-[12px] font-black ${textColor}`}>{item.val}%</span>
-                                        </div>
-                                        <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${barColor} rounded-full transition-all duration-1000 shadow-sm`}
-                                                style={{ width: `${item.val}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <div className="px-2">
+                            <div className="flex items-end justify-between mb-5">
+                                <div>
+                                    <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{WEEK_AVG}%</p>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Avg this week</p>
+                                </div>
+                                <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                                    <span className="material-symbols-outlined text-[14px]">trending_up</span> Healthy
+                                </span>
+                            </div>
+                            <AttendanceTrendChart labels={WEEK_LABELS} values={WEEK_ATTENDANCE} />
                         </div>
                     </div>
 
