@@ -13,7 +13,7 @@ import { Line } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
 // Smooth area-line chart (shadcn-style) for the dashboard attendance snapshot.
-const AttendanceTrendChart = ({ labels, values }) => {
+const AttendanceTrendChart = ({ labels, values, height = 'h-56' }) => {
     const data = {
         labels,
         datasets: [
@@ -80,7 +80,7 @@ const AttendanceTrendChart = ({ labels, values }) => {
     };
 
     return (
-        <div className="h-56">
+        <div className={height}>
             <Line data={data} options={options} />
         </div>
     );

@@ -235,7 +235,7 @@ const Dashboard = () => {
                                 <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></span>
                                 Attendance Snapshot
                             </h5>
-                            <button className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all flex items-center gap-2">
+                            <button onClick={() => navigate('/attendance/analytics')} className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all flex items-center gap-2">
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                 View Analytics
                             </button>
