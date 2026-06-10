@@ -17,6 +17,7 @@ const Homework = lazy(() => import('./pages/Homework'));
 const Roles = lazy(() => import('./pages/Roles'));
 const Classes = lazy(() => import('./pages/Classes'));
 const Attendance = lazy(() => import('./pages/Attendance'));
+const AttendanceAnalytics = lazy(() => import('./pages/AttendanceAnalytics'));
 const Exams = lazy(() => import('./pages/Exams'));
 const Notices = lazy(() => import('./pages/Notices'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -182,6 +183,10 @@ function App() {
                             <Route
                                 path="/attendance"
                                 element={<ModuleRoute module="attendance"><Attendance /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/attendance/analytics"
+                                element={<ModuleRoute module="attendance"><AttendanceAnalytics /></ModuleRoute>}
                             />
                             <Route
                                 path="/exams"
