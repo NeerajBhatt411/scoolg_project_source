@@ -41,7 +41,7 @@ const MyClasses = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {classes.map((c) => (
-            <div key={c.sectionId} className="bg-white border border-surface-container rounded-3xl p-5 shadow-sm">
+            <div key={c.sectionId} onClick={() => navigate('/classes/detail', { state: c })} className="bg-white border border-surface-container rounded-3xl p-5 shadow-sm cursor-pointer">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black">
@@ -54,6 +54,7 @@ const MyClasses = () => {
                     )}
                   </div>
                 </div>
+                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
               </div>
 
               {c.subjects?.length > 0 && (
@@ -65,11 +66,11 @@ const MyClasses = () => {
               )}
 
               <div className="flex gap-2">
-                <button onClick={() => navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } })}
+                <button onClick={(e) => { e.stopPropagation(); navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } }); }}
                   className="flex-1 py-2.5 rounded-xl bg-primary-container text-on-primary-container text-label-md font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform">
                   <span className="material-symbols-outlined text-[18px]">fact_check</span> Attendance
                 </button>
-                <button onClick={() => navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } })}
+                <button onClick={(e) => { e.stopPropagation(); navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } }); }}
                   className="flex-1 py-2.5 rounded-xl bg-surface-container-high text-on-surface text-label-md font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform">
                   <span className="material-symbols-outlined text-[18px]">assignment</span> Homework
                 </button>

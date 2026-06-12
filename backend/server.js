@@ -2901,6 +2901,26 @@ app.get('/api/teacher/students', async (req, res) => {
 
 /**
  * @swagger
+ * /api/teacher/events:
+ *   get:
+ *     summary: Upcoming school-calendar events for the teacher's school
+ *     tags: [Teacher App]
+ */
+app.get('/api/teacher/events', async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const today = new Date().toISOString().split('T')[0];
+        const events = await CalendarEvent.find({ schoolId: teacher.schoolId, date: { $gte: today } })
+            .sort({ date: 1 })
+            .limit(Number(req.query.limit) || 6);
+        res.json(events);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+/**
+ * @swagger
  * /api/teacher/attendance:
  *   get:
  *     summary: Fetch saved attendance for a section/date
