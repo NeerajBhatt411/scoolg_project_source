@@ -7,6 +7,28 @@ import { useAuth } from '../context/AuthContext';
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const EVENT_CATEGORIES = {
+  'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
+  'Annual Function': { icon: 'celebration', color: '#7c3aed', bg: '#f5f3ff' },
+  'Sports Day': { icon: 'sports_soccer', color: '#059669', bg: '#ecfdf5' },
+  'Exam': { icon: 'history_edu', color: '#d97706', bg: '#fffbeb' },
+  'Meeting': { icon: 'groups', color: '#2563eb', bg: '#eff6ff' },
+  'Event': { icon: 'event', color: '#0891b2', bg: '#ecfeff' },
+  'Other': { icon: 'push_pin', color: '#64748b', bg: '#f1f5f9' },
+};
+
+const eventDayLabel = (dateStr) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  if (diff > 1 && diff < 7) return `In ${diff} days`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
 const Dashboard = () => {
   const { teacher, school } = useAuth();
   const navigate = useNavigate();
@@ -15,6 +37,7 @@ const Dashboard = () => {
   const [classCount, setClassCount] = useState(0);
   const [weekDays, setWeekDays] = useState([]);
   const [myClasses, setMyClasses] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const now = new Date();
@@ -27,9 +50,10 @@ const Dashboard = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [ttRes, clsRes] = await Promise.all([
+        const [ttRes, clsRes, evRes] = await Promise.all([
           api.get('/teacher/timetable'),
           api.get('/teacher/my-classes'),
+          api.get('/teacher/events?limit=5').catch(() => ({ data: [] })),
         ]);
         const sched = ttRes.data?.schedule || [];
         setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
@@ -38,6 +62,7 @@ const Dashboard = () => {
         const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
         setClassCount(cls.length);
         setMyClasses(cls);
+        setEvents(Array.isArray(evRes.data) ? evRes.data : []);
       } catch (e) {
         console.error('Dashboard load failed', e);
       } finally {
@@ -177,6 +202,30 @@ const Dashboard = () => {
                     {c.isClassTeacher && <span className="material-symbols-outlined text-[16px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }} title="Class Teacher">star</span>}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming events */}
+          {events.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-title-lg font-bold text-on-surface mb-3 px-1">Upcoming Events</h3>
+              <div className="bg-white border border-surface-container rounded-3xl overflow-hidden shadow-[0_6px_20px_-12px_rgba(15,23,42,0.15)]">
+                {events.map((ev, i) => {
+                  const cat = EVENT_CATEGORIES[ev.category] || EVENT_CATEGORIES['Other'];
+                  return (
+                    <div key={ev._id || i} className={`flex items-center gap-3 p-4 ${i !== events.length - 1 ? 'border-b border-surface-container/70' : ''}`}>
+                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: cat.bg, color: cat.color }}>
+                        <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>{cat.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-label-md font-extrabold text-on-surface leading-tight truncate">{ev.title}</p>
+                        <p className="text-[11px] text-on-surface-variant mt-0.5">{ev.category}</p>
+                      </div>
+                      <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest whitespace-nowrap">{eventDayLabel(ev.date)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

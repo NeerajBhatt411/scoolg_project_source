@@ -19,6 +19,13 @@ const Timetable = () => {
   const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday');
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [nowHM, setNowHM] = useState(() => new Date().toTimeString().slice(0, 5));
+
+  // Keep the "now" clock fresh so the live highlight moves between periods
+  useEffect(() => {
+    const tick = setInterval(() => setNowHM(new Date().toTimeString().slice(0, 5)), 30000);
+    return () => clearInterval(tick);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -36,11 +43,23 @@ const Timetable = () => {
 
   const periods = schedule.find(d => d.dayOfWeek === activeDay)?.periods || [];
 
+  const isLive = (p) =>
+    activeDay === today &&
+    !!p.startTime && !!p.endTime &&
+    p.startTime <= nowHM && nowHM < p.endTime;
+
   return (
     <div className="min-h-full px-container-margin lg:px-8 pt-6 pb-32 lg:pb-10 space-y-6 max-w-4xl mx-auto">
-      <div className="space-y-1">
-        <p className="text-label-md font-label-md text-secondary uppercase tracking-widest">My Schedule</p>
-        <h2 className="text-display-lg font-display-lg text-on-surface">Weekly Timetable</h2>
+      <div className="flex items-end justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-label-md font-label-md text-secondary uppercase tracking-widest">My Schedule</p>
+          <h2 className="text-display-lg font-display-lg text-on-surface">Weekly Timetable</h2>
+        </div>
+        {!loading && (
+          <span className="shrink-0 px-3 py-1.5 mb-0.5 rounded-full bg-surface-container-low border border-surface-container text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">
+            {periods.length} {periods.length === 1 ? 'period' : 'periods'}
+          </span>
+        )}
       </div>
 
       {/* Day tabs */}
@@ -49,11 +68,16 @@ const Timetable = () => {
           <button
             key={day}
             onClick={() => setActiveDay(day)}
-            className={`px-5 py-2.5 rounded-full text-label-md font-bold whitespace-nowrap transition-all ${activeDay === day
+            className={`px-5 py-2.5 rounded-full text-label-md font-bold whitespace-nowrap transition-all active:scale-95 ${activeDay === day
               ? 'bg-primary text-on-primary shadow-md shadow-primary/20'
               : 'bg-white text-on-surface-variant border border-surface-container'}`}
           >
-            {day.substring(0, 3)}
+            <span className="inline-flex items-center gap-1.5">
+              {day.substring(0, 3)}
+              {day === today && activeDay !== day && (
+                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-label="Today"></span>
+              )}
+            </span>
           </button>
         ))}
       </div>
@@ -69,22 +93,37 @@ const Timetable = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {periods.map((p, i) => (
-            <div key={i} className="bg-white border border-surface-container rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-              <div className="w-16 text-center shrink-0">
-                <p className="text-label-md font-bold text-primary leading-none">{p.startTime || '--'}</p>
-                <p className="text-[10px] text-on-surface-variant mt-1">{p.endTime || ''}</p>
-              </div>
-              <div className="w-px h-12 bg-surface-container-high"></div>
-              <div className="flex-1">
-                <div className={`inline-block px-2.5 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider mb-1 ${subjectTone(p.subject)}`}>
-                  Period {p.periodNumber}
+          {periods.map((p, i) => {
+            const live = isLive(p);
+            return (
+              <div
+                key={i}
+                className={`bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border transition-all ${live
+                  ? 'ring-2 ring-primary/40 border-primary/30'
+                  : 'border-surface-container'}`}
+              >
+                <div className="w-16 text-center shrink-0">
+                  <p className="text-label-md font-bold text-primary leading-none">{p.startTime || '--'}</p>
+                  <p className="text-[10px] text-on-surface-variant mt-1">{p.endTime || ''}</p>
                 </div>
-                <p className="text-title-lg font-bold text-on-surface leading-tight">{p.subject || 'Free'}</p>
-                <p className="text-label-md text-on-surface-variant">Class {p.className}-{p.sectionName}</p>
+                <div className="w-px h-12 bg-surface-container-high"></div>
+                <div className="flex-1">
+                  <div className={`inline-block px-2.5 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider mb-1 ${subjectTone(p.subject)}`}>
+                    Period {p.periodNumber}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-title-lg font-bold text-on-surface leading-tight">{p.subject || 'Free'}</p>
+                    {live && (
+                      <span className="text-[9px] font-black uppercase bg-primary text-white px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                        Now
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-label-md text-on-surface-variant">Class {p.className}-{p.sectionName}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Timetable from './pages/Timetable';
 import MyClasses from './pages/MyClasses';
+import ClassDetail from './pages/ClassDetail';
 import Attendance from './pages/Attendance';
 import Homework from './pages/Homework';
 import Diary from './pages/Diary';
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/classes" element={<MyClasses />} />
+        <Route path="/classes/detail" element={<ClassDetail />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/homework" element={<Homework />} />
         <Route path="/diary" element={<Diary />} />
