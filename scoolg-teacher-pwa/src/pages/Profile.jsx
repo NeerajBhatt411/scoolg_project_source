@@ -42,12 +42,12 @@ const Profile = () => {
 
   const InfoRow = ({ icon, label, value }) => (
     <div className="flex items-center gap-3.5 px-4 py-3.5">
-      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
         <span className="material-symbols-outlined text-[20px]">{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</p>
-        <p className="text-body-md font-bold text-on-surface truncate mt-0.5">{value || '—'}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+        <p className="text-sm font-bold text-slate-900 truncate mt-0.5">{value || '—'}</p>
       </div>
     </div>
   );
@@ -61,17 +61,17 @@ const Profile = () => {
             <div className="absolute -top-8 -right-6 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           </div>
           {/* premium identity card pulled up under cover */}
-          <div className="bg-white border border-surface-container rounded-[28px] -mt-10 relative shadow-[0_10px_30px_-16px_rgba(15,23,42,0.18)] px-5 pb-5">
+          <div className="bg-white border border-slate-50 rounded-[28px] sm:rounded-[36px] -mt-10 relative shadow-[0_20px_50px_rgba(0,0,0,0.03)] px-5 pb-5">
             <div className="flex items-end gap-4">
               <img
                 src={avatar}
                 alt=""
-                className="w-24 h-24 rounded-3xl object-cover -mt-10 ring-4 ring-white shadow-lg bg-surface-container-low shrink-0"
+                className="w-24 h-24 rounded-3xl object-cover -mt-10 ring-4 ring-white shadow-lg bg-slate-50 shrink-0"
               />
               <div className="flex-1 min-w-0 pt-4 pb-1">
-                <h2 className="text-[22px] font-manrope font-extrabold text-on-surface leading-tight truncate">{teacher?.fullName || 'Teacher'}</h2>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight truncate">{teacher?.fullName || 'Teacher'}</h2>
                 {teacher?.teacherAppId && (
-                  <span className="inline-block mt-1.5 font-mono text-[11px] font-bold text-on-surface-variant bg-surface-container-low rounded-lg px-2 py-0.5">
+                  <span className="inline-block mt-1.5 font-mono text-[11px] font-bold text-slate-500 bg-slate-100 rounded-lg px-2 py-0.5">
                     {teacher.teacherAppId}
                   </span>
                 )}
@@ -79,21 +79,21 @@ const Profile = () => {
             </div>
 
             {/* school row */}
-            <div className="flex items-center gap-2.5 mt-4 bg-surface-container-low rounded-2xl px-3 py-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white border border-surface-container overflow-hidden flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2.5 mt-4 bg-slate-50 rounded-2xl px-3 py-2.5 border border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
                 {school?.logo
                   ? <img src={school.logo} alt="" className="w-full h-full object-cover" />
-                  : <span className="material-symbols-outlined text-primary text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>}
+                  : <span className="material-symbols-outlined text-blue-600 text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>}
               </div>
-              <p className="text-label-md font-bold text-on-surface truncate flex-1">{school?.name || 'School'}</p>
+              <p className="text-xs font-bold text-slate-900 truncate flex-1">{school?.name || 'School'}</p>
             </div>
 
             {/* stat tiles */}
             <div className="grid grid-cols-3 gap-3 mt-4 text-center">
               {stats.map((s, i) => (
-                <div key={i} className="bg-surface-container-low rounded-2xl py-3">
-                  <p className="text-[22px] font-manrope font-extrabold text-on-surface leading-none">{s.value}</p>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mt-1">{s.label}</p>
+                <div key={i} className="bg-slate-50 rounded-2xl py-3 border border-slate-100">
+                  <p className="text-[22px] font-black text-slate-900 tracking-tighter leading-none">{s.value}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -103,8 +103,8 @@ const Profile = () => {
 
       <div className="px-container-margin lg:px-8 mt-5 space-y-4">
         {/* Details */}
-        <div className="bg-white border border-surface-container rounded-3xl overflow-hidden shadow-sm divide-y divide-surface-container/70">
-          <p className="px-4 pt-4 pb-1 text-[11px] font-bold text-on-surface-variant/70 uppercase tracking-widest">Details</p>
+        <div className="bg-white border border-slate-50 rounded-[28px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.03)] divide-y divide-slate-50">
+          <p className="px-4 pt-4 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Details</p>
           <InfoRow icon="mail" label="Email" value={teacher?.email} />
           <InfoRow icon="call" label="Phone" value={teacher?.phone} />
           <InfoRow icon="workspace_premium" label="Qualification" value={teacher?.highestQualification} />
@@ -112,22 +112,22 @@ const Profile = () => {
         </div>
 
         {/* Change password */}
-        <div className="bg-white border border-surface-container rounded-3xl shadow-sm overflow-hidden">
-          <button onClick={() => setShowPwd(s => !s)} className="w-full flex items-center gap-3 px-4 py-4">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+        <div className="bg-white border border-slate-50 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden">
+          <button onClick={() => setShowPwd(s => !s)} className="w-full flex items-center gap-3 px-4 py-4 group">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
               <span className="material-symbols-outlined text-[19px]">lock</span>
             </div>
-            <span className="text-body-md font-bold text-on-surface flex-1 text-left">Change Password</span>
-            <span className="material-symbols-outlined text-on-surface-variant">{showPwd ? 'expand_less' : 'chevron_right'}</span>
+            <span className="text-sm font-bold text-slate-900 tracking-tight flex-1 text-left">Change Password</span>
+            <span className="material-symbols-outlined text-slate-400">{showPwd ? 'expand_less' : 'chevron_right'}</span>
           </button>
           {showPwd && (
             <div className="px-4 pb-4 space-y-3">
               <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="New password"
-                className="w-full h-12 px-4 rounded-2xl bg-surface-container-low border border-surface-container font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" />
+                className="w-full h-12 px-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all" />
               <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Confirm password"
-                className="w-full h-12 px-4 rounded-2xl bg-surface-container-low border border-surface-container font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" />
-              {msg && <p className={`text-label-md font-bold px-3 py-2 rounded-xl ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-error/10 text-error'}`}>{msg.text}</p>}
-              <button onClick={handleChangePassword} disabled={saving} className="w-full h-12 bg-primary text-on-primary rounded-2xl font-bold text-label-md disabled:opacity-50">
+                className="w-full h-12 px-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all" />
+              {msg && <p className={`text-xs font-bold px-3 py-2 rounded-xl ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{msg.text}</p>}
+              <button onClick={handleChangePassword} disabled={saving} className="w-full h-12 bg-blue-600 text-white rounded-2xl font-black text-xs shadow-[0_10px_30px_rgba(37,99,235,0.25)] disabled:opacity-50">
                 {saving ? 'Updating...' : 'Update Password'}
               </button>
             </div>
@@ -136,7 +136,7 @@ const Profile = () => {
 
         {/* Logout */}
         <button onClick={() => { logout(); navigate('/login'); }}
-          className="w-full flex items-center justify-center gap-2 h-12 bg-error/10 text-error rounded-2xl font-bold text-body-md active:scale-95 transition-transform">
+          className="w-full h-12 rounded-2xl bg-red-50 text-red-600 font-black flex items-center justify-center gap-2 active:scale-95 transition-transform">
           <span className="material-symbols-outlined text-[20px]">logout</span> Logout
         </button>
       </div>
