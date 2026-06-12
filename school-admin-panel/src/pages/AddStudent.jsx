@@ -5,6 +5,7 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 
 const AddStudent = () => {
     const navigate = useNavigate();
@@ -350,27 +351,26 @@ const AddStudent = () => {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <select value={formData.gender} onChange={e=>handleInputChange('gender', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.gender ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}>
-                                                <option value="" disabled>Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
-                                            </select>
+                                            <Dropdown
+                                                value={formData.gender}
+                                                onChange={(v) => handleInputChange('gender', v)}
+                                                options={['Male', 'Female', 'Other']}
+                                                placeholder="Select Gender"
+                                                className="w-full"
+                                                buttonClassName={`h-12 ${errors.gender ? 'border-red-500 bg-red-50/30' : 'bg-slate-50'}`}
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Blood Group</label>
-                                            <select value={formData.bloodGroup} onChange={e=>handleInputChange('bloodGroup', e.target.value)} className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none">
-                                                <option value="" disabled>Select Group</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                            </select>
+                                            <Dropdown
+                                                value={formData.bloodGroup}
+                                                onChange={(v) => handleInputChange('bloodGroup', v)}
+                                                options={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']}
+                                                placeholder="Select Group"
+                                                className="w-full"
+                                                buttonClassName="h-12 bg-slate-50"
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
@@ -411,14 +411,14 @@ const AddStudent = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Class/Grade <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <select 
-                                                value={formData.class} 
-                                                onChange={e=>handleInputChange('class', e.target.value)} 
-                                                className={`w-full h-12 px-4 rounded-xl border ${errors.class ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}
-                                            >
-                                                <option value="">Select Class</option>
-                                                {classes.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
-                                            </select>
+                                            <Dropdown
+                                                value={formData.class}
+                                                onChange={(v) => handleInputChange('class', v)}
+                                                options={classes.map(c => ({ value: c.className, label: c.className }))}
+                                                placeholder="Select Class"
+                                                className="w-full"
+                                                buttonClassName={`h-12 ${errors.class ? 'border-red-500 bg-red-50/30' : 'bg-slate-50'}`}
+                                            />
                                             {classes.length === 0 && (
                                                 <p className="text-[9px] text-red-500 font-bold uppercase tracking-tighter mt-1">
                                                     No classes found. <span className="underline cursor-pointer" onClick={() => navigate('/classes')}>Add Class First</span>
@@ -427,14 +427,14 @@ const AddStudent = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Section <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <select 
-                                                value={formData.section} 
-                                                onChange={e=>handleInputChange('section', e.target.value)} 
-                                                className={`w-full h-12 px-4 rounded-xl border ${errors.section ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}
-                                            >
-                                                <option value="">Select Section</option>
-                                                {availableSections.map(s => <option key={s._id} value={s.sectionName}>{s.sectionName}</option>)}
-                                            </select>
+                                            <Dropdown
+                                                value={formData.section}
+                                                onChange={(v) => handleInputChange('section', v)}
+                                                options={availableSections.map(s => ({ value: s.sectionName, label: s.sectionName }))}
+                                                placeholder="Select Section"
+                                                className="w-full"
+                                                buttonClassName={`h-12 ${errors.section ? 'border-red-500 bg-red-50/30' : 'bg-slate-50'}`}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>

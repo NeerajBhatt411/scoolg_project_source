@@ -5,6 +5,7 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 
 const AddTeacher = () => {
     const navigate = useNavigate();
@@ -391,12 +392,14 @@ const AddTeacher = () => {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Gender <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <select value={formData.gender} onChange={e=>handleInputChange('gender', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.gender ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`}>
-                                                <option value="" disabled>Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
-                                            </select>
+                                            <Dropdown
+                                                value={formData.gender}
+                                                onChange={(v) => handleInputChange('gender', v)}
+                                                options={['Male', 'Female', 'Other']}
+                                                placeholder="Select Gender"
+                                                className="w-full"
+                                                buttonClassName={`h-12 ${errors.gender ? 'border-red-500 bg-red-50/30' : 'bg-slate-50'}`}
+                                            />
                                         </div>
                                     </>
                                 )}

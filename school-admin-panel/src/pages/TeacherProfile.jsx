@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Dropdown from '../components/Dropdown';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 
@@ -336,18 +337,9 @@ const TeacherProfile = () => {
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         <input type="date" value={diaryForm.date} onChange={(e) => setDiaryForm({ ...diaryForm, date: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" />
-                                        <select value={diaryForm.className} onChange={(e) => setDiaryForm({ ...diaryForm, className: e.target.value, subject: '', sectionName: '' })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                                            <option value="">Class</option>
-                                            {classesList.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
-                                        </select>
-                                        <select value={diaryForm.sectionName} onChange={(e) => setDiaryForm({ ...diaryForm, sectionName: e.target.value })} disabled={!diaryForm.className} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 disabled:opacity-50">
-                                            <option value="">Section</option>
-                                            {diarySections.map(s => <option key={s._id} value={s.sectionName}>{s.sectionName}</option>)}
-                                        </select>
-                                        <select value={diaryForm.subject} onChange={(e) => setDiaryForm({ ...diaryForm, subject: e.target.value })} className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                                            <option value="">Subject</option>
-                                            {diarySubjects.map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
+                                        <Dropdown value={diaryForm.className} onChange={(v) => setDiaryForm({ ...diaryForm, className: v, subject: '', sectionName: '' })} options={classesList.map(c => ({ value: c.className, label: c.className }))} placeholder="Class" buttonClassName="h-10" />
+                                        <Dropdown value={diaryForm.sectionName} onChange={(v) => setDiaryForm({ ...diaryForm, sectionName: v })} disabled={!diaryForm.className} options={diarySections.map(s => ({ value: s.sectionName, label: s.sectionName }))} placeholder="Section" buttonClassName="h-10" />
+                                        <Dropdown value={diaryForm.subject} onChange={(v) => setDiaryForm({ ...diaryForm, subject: v })} options={diarySubjects} placeholder="Subject" buttonClassName="h-10" />
                                     </div>
                                     <input value={diaryForm.note} onChange={(e) => setDiaryForm({ ...diaryForm, note: e.target.value })} placeholder="What was taught? (one-liner)" className="w-full h-11 px-4 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500" />
                                     <button onClick={addDiary} disabled={savingDiary} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-2 transition-colors disabled:opacity-60">
