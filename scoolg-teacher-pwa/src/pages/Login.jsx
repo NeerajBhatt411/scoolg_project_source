@@ -26,9 +26,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-5 sm:p-8">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl">
-        <Card className="overflow-hidden border-0 shadow-none bg-transparent sm:bg-card sm:border sm:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.18)] sm:rounded-3xl">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-blue-100/70 via-indigo-50/40 to-blue-50/60 p-5 sm:p-8 relative overflow-hidden">
+      {/* decorative backdrop */}
+      <div className="absolute -top-28 -left-28 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-32 -right-24 w-[26rem] h-[26rem] bg-indigo-200/40 rounded-full blur-3xl pointer-events-none"></div>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl relative z-10">
+        <Card className="overflow-hidden rounded-3xl border shadow-[0_30px_80px_-28px_rgba(37,99,235,0.35)] bg-card">
           <div className="grid lg:grid-cols-2">
             {/* Graphic side (same artwork as the admin panel login) */}
             <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50/60 to-background p-10">
@@ -36,9 +40,9 @@ const Login = () => {
             </div>
 
             {/* Form side */}
-            <CardContent className="p-0 sm:p-12 flex flex-col justify-center sm:!pt-12">
+            <CardContent className="p-6 sm:p-12 flex flex-col justify-center !pt-8 sm:!pt-12">
               {/* Mobile artwork */}
-              <img src={loginBg} alt="" className="lg:hidden h-44 sm:h-52 object-contain mx-auto mb-6" />
+              <img src={loginBg} alt="" className="lg:hidden h-40 sm:h-52 object-contain mx-auto mb-5" />
 
               <div className="mb-8 text-center lg:text-left">
                 <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-primary mb-2">Teacher Portal</p>
