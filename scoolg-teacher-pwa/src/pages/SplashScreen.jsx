@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 // Brief brand splash, then straight to the right place: a saved session goes
@@ -36,13 +37,10 @@ const SplashScreen = () => {
           transition={{ duration: 0.7, ease: 'easeOut' }}
           className="relative z-10 flex flex-col items-center"
         >
-          <div className="w-32 h-32 bg-card shadow-2xl shadow-primary/10 rounded-[32px] flex items-center justify-center mb-8 border p-5">
-            <img src="/scoolg-logo.png" alt="Scoolg" className="w-full h-full object-contain" />
+          <div className="w-28 h-28 bg-card shadow-2xl shadow-primary/10 rounded-[28px] grid place-items-center mb-8 border">
+            <GraduationCap className="h-14 w-14 text-primary" />
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <h1 className="text-[30px] font-manrope font-extrabold tracking-tighter">Scoolg</h1>
-            <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest">Teacher Portal</p>
-          </div>
+          <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest">Teacher Portal</p>
         </motion.div>
       </main>
 
