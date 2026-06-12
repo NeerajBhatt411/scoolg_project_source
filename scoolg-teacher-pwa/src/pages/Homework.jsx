@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { PageHead, Card, Chip, SubjectTag, Button, Icon, Empty } from '@/components/designkit';
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import Select from '../components/Select';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Plus, X, Paperclip, Upload, Loader2, NotebookPen } from 'lucide-react';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -13,35 +17,19 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
-const shortDate = (d) => {
-  const dt = new Date(d);
-  return `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
+const fmtDate = (d) => {
+  if (!d) return 'No due date';
+  try { return 'Due ' + new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return ''; }
 };
 
-const dueChip = (d) => {
-  if (!d) return { text: 'No due date', tone: 'soft' };
+const dueBadge = (d) => {
+  if (!d) return { label: 'No due date', variant: 'outline' };
   const due = new Date(d); due.setHours(0, 0, 0, 0);
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-  const base = shortDate(due);
-  if (diff < 0) return { text: `Overdue · ${base}`, tone: 'red' };
-  if (diff === 0) return { text: 'Due today', tone: 'blue' };
-  if (diff === 1) return { text: 'Due tomorrow', tone: 'blue' };
-  return { text: `Due ${base}`, tone: 'soft' };
+  if (due.getTime() < today.getTime()) return { label: fmtDate(d), variant: 'destructive' };
+  if (due.getTime() === today.getTime()) return { label: 'Due today', variant: 'warning' };
+  return { label: fmtDate(d), variant: 'success' };
 };
-
-const fieldCls = 'w-full h-11 px-3.5 rounded-[10px] bg-white border border-line text-ink font-500 text-[13.5px] outline-none focus:ring-2 focus:ring-blue-600/25 focus:border-blue-400 transition-all';
-const labelCls = 'text-[12px] font-600 text-ink-soft mb-1.5 block';
-
-const SelectField = ({ value, onChange, disabled, children }) => (
-  <div className="relative">
-    <select value={value} onChange={onChange} disabled={disabled}
-      className={`${fieldCls} pr-9 appearance-none disabled:opacity-50 disabled:cursor-not-allowed`}>
-      {children}
-    </select>
-    <Icon name="chevron-down" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
-  </div>
-);
 
 const Homework = () => {
   const location = useLocation();
@@ -115,64 +103,72 @@ const Homework = () => {
   const classSubjects = distinctClasses.find(c => c.className === form.className)?.subjects || [];
 
   return (
-    <div className="p-4 pb-28 lg:p-6 max-w-[980px] mx-auto space-y-5 fade-up relative">
-      <PageHead
-        eyebrow="Assignments"
-        title="Homework"
-        sub={`${list.length} active assignment${list.length === 1 ? '' : 's'}`}
-        action={(
-          <div className="hidden lg:inline-flex">
-            <Button icon="plus" onClick={openCreate}>Assign homework</Button>
-          </div>
-        )}
-      />
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-4xl mx-auto">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h1 className="font-manrope text-2xl font-bold tracking-tight">Homework</h1>
+          <p className="text-sm text-muted-foreground">Assign and track homework for your classes.</p>
+        </div>
+        <Button onClick={openCreate} className="hidden lg:inline-flex">
+          <Plus /> Assign
+        </Button>
+      </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-44 rounded-2xl bg-line-soft animate-pulse" />
+            <Skeleton key={i} className="h-40 rounded-xl" />
           ))}
         </div>
       ) : list.length === 0 ? (
-        <Card className="shadow-card">
-          <Empty
-            icon="book-open"
-            title="No homework assigned yet"
-            sub="Create your first assignment to get started."
-            action={<Button icon="plus" size="sm" className="mt-4" onClick={openCreate}>Assign homework</Button>}
-          />
+        <Card className="border-dashed bg-muted/30 shadow-none">
+          <CardContent className="flex flex-col items-center pt-12 pb-12 sm:pt-12 sm:pb-12 text-center">
+            <NotebookPen className="h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm font-semibold">No homework assigned yet.</p>
+            <p className="text-xs text-muted-foreground">Create your first assignment to get started.</p>
+            <Button onClick={openCreate} size="sm" className="mt-4">
+              <Plus /> Assign Homework
+            </Button>
+          </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {list.map(hw => {
-            const due = dueChip(hw.dueDate);
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {list.map((hw) => {
+            const due = dueBadge(hw.dueDate);
             return (
-              <Card key={hw._id} className="p-5 shadow-card hover:shadow-card-lg transition-shadow flex flex-col">
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {hw.subject && <SubjectTag subject={hw.subject} />}
-                    <span className="text-[11px] font-600 text-ink-faint bg-line-soft px-2 py-1 rounded-md tnum whitespace-nowrap">{hw.className}-{hw.sectionName}</span>
+              <Card key={hw._id} className="flex flex-col">
+                <CardHeader className="pb-3 sm:pb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {hw.subject && <Badge>{hw.subject}</Badge>}
+                    <Badge variant="secondary">
+                      Class {hw.className}-{hw.sectionName === 'All' ? 'All' : hw.sectionName}
+                    </Badge>
                   </div>
-                  <Chip tone={due.tone}>{due.text}</Chip>
-                </div>
-                <h3 className="font-700 text-ink text-[16px] leading-tight">{hw.title}</h3>
-                {hw.description && <p className="text-ink-soft text-[13px] mt-1.5 leading-snug line-clamp-2">{hw.description}</p>}
+                  <CardTitle className="text-base">{hw.title}</CardTitle>
+                  {hw.description && <CardDescription className="line-clamp-2">{hw.description}</CardDescription>}
+                </CardHeader>
                 {hw.attachments?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {hw.attachments.map((a, i) => (
-                      <a key={i} href={a.url} target="_blank" rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-line-soft text-[11.5px] font-600 text-ink-soft max-w-[150px] hover:bg-line transition-colors">
-                        <Icon name={a.type === 'image' ? 'image' : 'file-text'} size={14} className="text-blue-600 shrink-0" />
-                        <span className="truncate">{a.fileName || 'File'}</span>
-                      </a>
-                    ))}
-                  </div>
+                  <CardContent className="pb-3 sm:pb-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {hw.attachments.map((a, i) => (
+                        <a key={i} href={a.url} target="_blank" rel="noreferrer" className="max-w-[150px]">
+                          <Badge variant="outline" className="max-w-full font-normal text-muted-foreground hover:bg-muted">
+                            <Paperclip className="h-3 w-3 shrink-0 text-primary" />
+                            <span className="truncate">{a.fileName || 'File'}</span>
+                          </Badge>
+                        </a>
+                      ))}
+                    </div>
+                  </CardContent>
                 )}
-                <div className="mt-auto pt-3.5 flex items-center justify-between border-t border-line">
-                  <span className="text-[12px] font-600 text-ink-faint whitespace-nowrap">
-                    {hw.createdAt ? `Assigned ${shortDate(hw.createdAt)}` : ''}
-                  </span>
-                </div>
+                <CardFooter className="mt-auto justify-between border-t pt-3 sm:pt-3 pb-4 sm:pb-4">
+                  <Badge variant={due.variant}>{due.label}</Badge>
+                  {hw.createdAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Given {new Date(hw.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                    </p>
+                  )}
+                </CardFooter>
               </Card>
             );
           })}
@@ -180,107 +176,106 @@ const Homework = () => {
       )}
 
       {/* Mobile FAB */}
-      <button
+      <Button
         onClick={openCreate}
-        aria-label="Assign homework"
-        className="lg:hidden fixed bottom-[84px] right-4 w-14 h-14 rounded-2xl bg-blue-600 text-white shadow-pop grid place-items-center z-30 active:scale-90 transition-transform"
+        size="icon"
+        className="lg:hidden fixed bottom-28 right-5 z-40 h-14 w-14 rounded-full shadow-lg [&_svg]:size-6"
       >
-        <Icon name="plus" size={24} strokeWidth={2.25} />
-      </button>
+        <Plus />
+      </Button>
 
-      {/* Assign sheet / modal */}
+      {/* Assign Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[80] flex justify-center bg-ink/35 backdrop-blur-[2px] items-end lg:items-center lg:p-4" onClick={() => setShowModal(false)}>
-          <div onClick={e => e.stopPropagation()} className="bg-white w-full shadow-pop max-h-[90vh] flex flex-col pop-in rounded-t-2xl lg:max-w-lg lg:rounded-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-line shrink-0">
-              <h3 className="font-700 text-ink text-[16px] flex items-center gap-2">
-                <Icon name="file-plus" size={19} className="text-blue-600" />Assign homework
-              </h3>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-line-soft grid place-items-center text-ink-soft hover:bg-line transition-colors">
-                <Icon name="x" size={17} />
-              </button>
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="flex max-h-[88vh] w-full flex-col rounded-t-xl border bg-card p-5 pb-6 shadow-lg sm:max-w-lg sm:rounded-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-manrope text-lg font-bold tracking-tight">Assign Homework</h3>
+                <p className="text-sm text-muted-foreground">Fill in the details below.</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}>
+                <X />
+              </Button>
             </div>
 
-            <div className="px-5 py-5 space-y-4 overflow-y-auto">
+            <div className="flex-1 space-y-4 overflow-y-auto pr-1">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Class</label>
-                  <SelectField value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: 'All', subject: '' })}>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Class</label>
+                  <Select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: 'All', subject: '' })}>
                     <option value="">Select</option>
                     {distinctClasses.map(c => <option key={c.className} value={c.className}>Class {c.className}</option>)}
-                  </SelectField>
+                  </Select>
                 </div>
-                <div>
-                  <label className={labelCls}>Section</label>
-                  <SelectField value={form.sectionName} onChange={(e) => setForm({ ...form, sectionName: e.target.value })}>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Section</label>
+                  <Select value={form.sectionName} onChange={(e) => setForm({ ...form, sectionName: e.target.value })}>
                     <option value="All">All Sections</option>
                     {sectionsForClass.map(c => <option key={c.sectionId} value={c.sectionName}>{c.sectionName}</option>)}
-                  </SelectField>
+                  </Select>
                 </div>
               </div>
 
-              <div>
-                <label className={labelCls}>Subject</label>
-                <SelectField value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className}>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Subject</label>
+                <Select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className}>
                   <option value="">{form.className ? 'Select subject' : 'Select a class first'}</option>
                   {classSubjects.map(s => <option key={s} value={s}>{s}</option>)}
-                </SelectField>
+                </Select>
                 {form.className && classSubjects.length === 0 && (
-                  <p className="text-[12px] text-ink-faint mt-1.5">No subjects set for this class. Ask admin to add them.</p>
+                  <p className="text-xs text-muted-foreground">No subjects set for this class. Ask admin to add them.</p>
                 )}
               </div>
 
-              <div>
-                <label className={labelCls}>Title *</label>
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Algebra Worksheet — Chapter 4" className={fieldCls} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Algebra Worksheet Ch-4" />
               </div>
 
-              <div>
-                <label className={labelCls}>Instructions</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="What should students do?"
-                  className={`${fieldCls} h-24 py-2.5 resize-none`}
+                  placeholder="Instructions..."
+                  className="flex min-h-24 w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm font-medium shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
-              <div>
-                <label className={labelCls}>Due date *</label>
-                <input type="date" required value={form.dueDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className={fieldCls} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Due Date *</label>
+                <Input type="date" required value={form.dueDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
               </div>
 
-              <div>
-                <label className={labelCls}>Attachments</label>
-                <label className={`w-full h-11 rounded-[10px] border border-dashed font-600 text-[13px] inline-flex items-center justify-center gap-2 cursor-pointer transition-colors ${uploading ? 'border-blue-300 bg-blue-50/60 text-blue-600' : 'border-line bg-line-soft/60 text-ink-soft hover:border-blue-300 hover:text-blue-600'}`}>
-                  {uploading
-                    ? <Icon name="loader" size={17} className="animate-spin" />
-                    : <Icon name="upload" size={17} />}
-                  {uploading ? 'Uploading…' : 'Add files (PDF, images)'}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Attachments</label>
+                <label className={`flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed transition-colors ${uploading ? 'border-primary/40 bg-primary/5 text-primary' : 'border-input text-muted-foreground hover:bg-muted/50'}`}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  <span className="text-xs font-medium">{uploading ? 'Uploading...' : 'Add files (PDF, images)'}</span>
                   <input type="file" multiple accept="image/*,application/pdf" onChange={handleUpload} disabled={uploading} className="hidden" />
                 </label>
                 {form.attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {form.attachments.map((a, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-line-soft rounded-md text-[11.5px] font-600 text-ink-soft max-w-[160px]">
-                        <Icon name={a.type === 'image' ? 'image' : 'file-text'} size={14} className="text-blue-600 shrink-0" />
+                      <Badge key={i} variant="outline" className="max-w-[160px] font-normal text-muted-foreground">
+                        <Paperclip className="h-3 w-3 shrink-0 text-primary" />
                         <span className="truncate">{a.fileName}</span>
-                        <button onClick={() => setForm(f => ({ ...f, attachments: f.attachments.filter((_, idx) => idx !== i) }))} className="shrink-0 text-ink-faint hover:text-rose-500 transition-colors">
-                          <Icon name="x" size={13} />
+                        <button onClick={() => setForm(f => ({ ...f, attachments: f.attachments.filter((_, idx) => idx !== i) }))} className="shrink-0 transition-colors hover:text-red-600">
+                          <X className="h-3 w-3" />
                         </button>
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}
               </div>
 
-              {error && <p className="rounded-[10px] bg-rose-50 px-3 py-2.5 text-[12.5px] font-600 text-rose-600">{error}</p>}
+              {error && <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">{error}</p>}
             </div>
 
-            <div className="flex gap-3 px-5 py-4 border-t border-line shrink-0">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button className="flex-1" icon="send" onClick={handleSave} disabled={saving || uploading}>
-                {saving ? 'Assigning…' : 'Assign'}
+            <div className="mt-4 flex shrink-0 gap-3 border-t pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={handleSave} disabled={saving || uploading}>
+                <Plus /> {saving ? 'Assigning...' : 'Assign Homework'}
               </Button>
             </div>
           </div>

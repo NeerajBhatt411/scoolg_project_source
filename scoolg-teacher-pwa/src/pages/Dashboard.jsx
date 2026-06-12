@@ -1,10 +1,29 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Card, Chip, Button, Icon, Empty, toneFor, fmt12, toMin, nowMinutes, periodState } from '@/components/designkit';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar } from '@/components/ui/avatar';
+import {
+  CalendarDays, Clock, Users, ChevronRight, ClipboardCheck,
+  NotebookPen, CalendarCheck, Star, GraduationCap,
+} from 'lucide-react';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const EVENT_CATEGORIES = {
+  'Holiday': { color: '#e11d48', bg: '#fff1f2' },
+  'Annual Function': { color: '#7c3aed', bg: '#f5f3ff' },
+  'Sports Day': { color: '#059669', bg: '#ecfdf5' },
+  'Exam': { color: '#d97706', bg: '#fffbeb' },
+  'Meeting': { color: '#2563eb', bg: '#eff6ff' },
+  'Event': { color: '#0891b2', bg: '#ecfeff' },
+  'Other': { color: '#64748b', bg: '#f1f5f9' },
+};
 
 const eventDayLabel = (dateStr) => {
   const today = new Date();
@@ -18,181 +37,6 @@ const eventDayLabel = (dateStr) => {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
 
-// ---- Stats ----
-function StatTile({ value, label }) {
-  return (
-    <Card className="px-2 py-5 flex flex-col items-center text-center shadow-card">
-      <p className="font-800 text-ink text-[28px] leading-none tnum tracking-[-0.02em]">{value}</p>
-      <p className="text-[11px] font-600 text-ink-soft mt-2 leading-tight">{label}</p>
-    </Card>
-  );
-}
-
-function StatCard({ icon, label, value }) {
-  return (
-    <Card className="p-4 shadow-card hover:shadow-card-lg transition-shadow flex items-center gap-3">
-      <div className="w-11 h-11 rounded-xl grid place-items-center shrink-0" style={{ background: '#EFF4FF', color: '#2563EB' }}>
-        <Icon name={icon} size={21} strokeWidth={2} />
-      </div>
-      <div className="min-w-0">
-        <p className="font-800 text-ink text-[24px] leading-none tnum tracking-[-0.01em]">{value}</p>
-        <p className="text-[12px] font-600 text-ink-soft mt-1.5 leading-tight">{label}</p>
-      </div>
-    </Card>
-  );
-}
-
-// ---- Up next / live now ----
-function UpNext({ periods, nowMin, onAttendance, onTimetable }) {
-  const live = periods.find(p => periodState(p, nowMin) === 'live');
-  const next = periods.find(p => periodState(p, nowMin) === 'upcoming');
-  const p = live || next;
-  if (!p) {
-    return (
-      <Card className="p-5 flex items-center gap-3.5 shadow-card">
-        <div className="w-11 h-11 rounded-xl bg-blue-50 grid place-items-center text-blue-600"><Icon name="coffee" size={22} /></div>
-        <div>
-          <p className="font-700 text-ink text-[15px]">No more classes today</p>
-          <p className="text-ink-soft text-[13px]">You're all done — enjoy the rest of your day.</p>
-        </div>
-      </Card>
-    );
-  }
-  const isLive = !!live;
-  const t = toneFor(p.subject);
-  const mins = isLive ? toMin(p.endTime) - nowMin : toMin(p.startTime) - nowMin;
-  return (
-    <Card className="shadow-card overflow-hidden flex">
-      <div className="w-1.5 shrink-0" style={{ background: t.dot }}></div>
-      <div className="flex-1 p-5 min-w-0">
-        <div className="flex items-center justify-between mb-3">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-700 tracking-[0.08em] uppercase" style={{ color: isLive ? '#2563EB' : '#5C6573' }}>
-            {isLive ? <span className="w-2 h-2 rounded-full bg-blue-600 now-dot"></span> : <Icon name="clock" size={14} strokeWidth={2.25} />}
-            {isLive ? 'Live now' : 'Up next'}
-          </span>
-          <Chip tone="blue">{isLive ? `${mins} min left` : `in ${mins} min`}</Chip>
-        </div>
-        <div className="flex items-end justify-between gap-4">
-          <div className="min-w-0">
-            <h3 className="font-700 text-ink text-[21px] leading-tight tracking-[-0.01em] truncate">{p.subject || 'Free Period'}</h3>
-            <p className="text-ink-soft text-[13px] mt-1 tnum flex items-center gap-2 flex-wrap">
-              <span>Class {p.className}-{p.sectionName}</span><span className="text-line">•</span>
-              <span>{fmt12(p.startTime)}–{fmt12(p.endTime)}</span>
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 flex flex-col lg:flex-row gap-2.5">
-          <Button onClick={() => onAttendance(p)} icon="clipboard-check" className="w-full lg:flex-1">Take attendance</Button>
-          <Button variant="outline" onClick={onTimetable} icon="calendar-days" className="w-full lg:w-auto">Schedule</Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ---- Today's schedule ----
-function ScheduleList({ periods, nowMin, onAttendance, onTimetable }) {
-  return (
-    <Card className="shadow-card overflow-hidden">
-      <div className="flex items-center justify-between px-5 h-[52px] border-b border-line">
-        <p className="font-700 text-ink text-[14.5px]">Today's Schedule</p>
-        <button onClick={onTimetable} className="text-[12.5px] font-600 text-blue-600 hover:text-blue-700">View week</button>
-      </div>
-      {periods.length === 0
-        ? <Empty icon="coffee" title="No periods today" sub="Enjoy the day off from teaching." />
-        : periods.map((p, i) => {
-          const st = periodState(p, nowMin);
-          const t = toneFor(p.subject);
-          return (
-            <button key={i} onClick={() => onAttendance(p)} className={`w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-line-soft/70 transition-colors ${i ? 'border-t border-line' : ''}`}>
-              <div className="w-[60px] shrink-0">
-                <p className="text-[13px] font-700 text-ink tnum leading-none">{fmt12(p.startTime).replace(' ', '')}</p>
-                <p className="text-[11px] text-ink-faint mt-1 tnum">{fmt12(p.endTime).replace(' ', '')}</p>
-              </div>
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: t.dot }}></span>
-              <div className="flex-1 min-w-0">
-                <p className="font-600 text-ink text-[14.5px] truncate">{p.subject || 'Free Period'}</p>
-                <p className="text-ink-soft text-[12.5px] tnum">Class {p.className}-{p.sectionName}</p>
-              </div>
-              {st === 'live' && <Chip tone="blue">Now</Chip>}
-              {st === 'done' && <Icon name="check-circle" size={17} className="text-blue-600" />}
-              <Icon name="chevron-right" size={18} className="text-ink-faint shrink-0" />
-            </button>
-          );
-        })}
-    </Card>
-  );
-}
-
-// ---- Quick actions ----
-function QuickActions({ classCount, navigate }) {
-  const actions = [
-    { name: 'Take attendance', sub: 'Mark today’s register', icon: 'clipboard-check', path: '/attendance' },
-    { name: 'Assign homework', sub: 'Create a new task', icon: 'book-open', path: '/homework' },
-    { name: 'View timetable', sub: 'Your full week', icon: 'calendar-days', path: '/timetable' },
-    { name: 'My classes', sub: `${classCount} sections`, icon: 'users', path: '/classes' },
-  ];
-  return (
-    <Card className="shadow-card overflow-hidden">
-      <div className="px-5 h-[52px] flex items-center border-b border-line"><p className="font-700 text-ink text-[14.5px]">Quick actions</p></div>
-      {actions.map((a, i) => (
-        <button key={a.path} onClick={() => navigate(a.path)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-line-soft/70 transition-colors ${i ? 'border-t border-line' : ''}`}>
-          <div className="w-9 h-9 rounded-lg grid place-items-center shrink-0 bg-blue-50 text-blue-600"><Icon name={a.icon} size={18} strokeWidth={2} /></div>
-          <div className="flex-1 min-w-0">
-            <p className="font-600 text-ink text-[14px] leading-tight">{a.name}</p>
-            <p className="text-ink-faint text-[12px]">{a.sub}</p>
-          </div>
-          <Icon name="chevron-right" size={18} className="text-ink-faint" />
-        </button>
-      ))}
-    </Card>
-  );
-}
-
-// ---- Week at a glance ----
-function WeekGlance({ days, todayName, total }) {
-  const max = Math.max(...days.map(d => d.count), 1);
-  return (
-    <Card className="shadow-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <p className="font-700 text-ink text-[14.5px]">This week</p>
-        <Chip tone="soft">{total} periods</Chip>
-      </div>
-      <div className="flex items-end justify-between gap-2 h-24">
-        {days.map(d => {
-          const isToday = d.day === todayName;
-          return (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-              <span className={`text-[11px] font-700 tnum ${isToday ? 'text-blue-700' : 'text-ink-faint'}`}>{d.count}</span>
-              <div className="w-full max-w-[30px] rounded-md transition-all duration-700" style={{ height: `${Math.max((d.count / max) * 100, 8)}%`, background: isToday ? '#2563EB' : '#DBE6FE' }}></div>
-              <span className={`text-[10.5px] font-600 ${isToday ? 'text-blue-700' : 'text-ink-faint'}`}>{d.day.slice(0, 1)}</span>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-// ---- Upcoming events ----
-function UpcomingEvents({ events }) {
-  return (
-    <Card className="shadow-card overflow-hidden">
-      <div className="px-5 h-[52px] flex items-center border-b border-line"><p className="font-700 text-ink text-[14.5px]">Upcoming events</p></div>
-      {events.map((ev, i) => (
-        <div key={ev._id || i} className={`flex items-center gap-3 px-5 py-3.5 ${i ? 'border-t border-line' : ''}`}>
-          <div className="w-9 h-9 rounded-lg grid place-items-center shrink-0 bg-blue-50 text-blue-600"><Icon name="calendar-days" size={18} strokeWidth={2} /></div>
-          <div className="flex-1 min-w-0">
-            <p className="font-600 text-ink text-[14px] leading-tight truncate">{ev.title}</p>
-            <p className="text-ink-faint text-[12px]">{ev.category}</p>
-          </div>
-          <span className="text-[11px] font-700 text-ink-faint uppercase tracking-[0.04em] shrink-0">{eventDayLabel(ev.date)}</span>
-        </div>
-      ))}
-    </Card>
-  );
-}
-
 const Dashboard = () => {
   const { teacher, school } = useAuth();
   const navigate = useNavigate();
@@ -203,18 +47,13 @@ const Dashboard = () => {
   const [myClasses, setMyClasses] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [nowMin, setNowMin] = useState(nowMinutes());
 
-  const todayName = DAYS[new Date().getDay()];
-  const firstName = teacher?.fullName?.split(' ')[0] || 'Teacher';
-  const hour = Math.floor(nowMin / 60);
+  const now = new Date();
+  const todayName = DAYS[now.getDay()];
+  const dateStr = `${todayName}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
+  const hour = now.getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  // Keep "Live now" / "in X min" fresh.
-  useEffect(() => {
-    const id = setInterval(() => setNowMin(nowMinutes()), 30000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -241,66 +80,222 @@ const Dashboard = () => {
     load();
   }, [todayName]);
 
-  // Navigate to attendance with the period's class prefilled (full class object when known).
-  const goAttendance = (p) => {
-    const match = myClasses.find(c => String(c.className) === String(p.className) && String(c.sectionName) === String(p.sectionName));
-    navigate('/attendance', { state: match || { className: p.className, sectionName: p.sectionName } });
-  };
-  const goTimetable = () => navigate('/timetable');
+  const stats = [
+    { label: 'Periods Today', value: todayPeriods.length, icon: CalendarDays },
+    { label: 'Classes / Week', value: weekCount, icon: Clock },
+    { label: 'My Classes', value: classCount, icon: Users },
+  ];
+
+  const actions = [
+    { name: 'Take Attendance', sub: 'Mark today', icon: ClipboardCheck, path: '/attendance' },
+    { name: 'Assign Homework', sub: 'New task', icon: NotebookPen, path: '/homework' },
+    { name: 'My Timetable', sub: 'Full week', icon: CalendarDays, path: '/timetable' },
+    { name: 'My Classes', sub: `${classCount} sections`, icon: Users, path: '/classes' },
+  ];
 
   return (
-    <div className="p-4 pb-32 lg:p-6 lg:pb-10 max-w-[1200px] mx-auto space-y-5 fade-up">
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
       {/* Greeting */}
-      <div>
-        <h1 className="font-700 text-ink tracking-[-0.02em] leading-tight text-[22px] lg:text-[26px]">{greeting}, {firstName}</h1>
-        <p className="text-ink-soft text-[13.5px] mt-1">Here's what's happening at {school?.name || 'your school'} today.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar src={avatar} alt={teacher?.fullName || 'Teacher'} className="h-11 w-11">
+            {(teacher?.fullName || 'T').charAt(0)}
+          </Avatar>
+          <div className="min-w-0">
+            <h1 className="font-manrope text-2xl font-bold tracking-tight truncate">
+              {greeting}, {teacher?.fullName || 'Teacher'}
+            </h1>
+            <p className="text-sm text-muted-foreground">{dateStr}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="hidden sm:inline-flex shrink-0 gap-1.5 py-1.5 px-3">
+          <GraduationCap className="h-3.5 w-3.5 text-primary" />
+          <span className="max-w-[180px] truncate">{school?.name || 'My School'}</span>
+        </Badge>
       </div>
 
-      {loading ? (
-        <>
-          <div className="grid grid-cols-3 gap-2.5 lg:gap-4">
-            {[0, 1, 2].map(i => <div key={i} className="h-[88px] animate-pulse bg-line-soft rounded-2xl" />)}
-          </div>
-          <div className="lg:grid lg:grid-cols-3 lg:gap-5 lg:items-start space-y-5 lg:space-y-0">
-            <div className="lg:col-span-2 space-y-5">
-              <div className="h-44 animate-pulse bg-line-soft rounded-2xl" />
-              <div className="h-64 animate-pulse bg-line-soft rounded-2xl" />
-            </div>
-            <div className="space-y-5">
-              <div className="h-56 animate-pulse bg-line-soft rounded-2xl" />
-              <div className="h-44 animate-pulse bg-line-soft rounded-2xl" />
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Stats — mobile tiles */}
-          <div className="grid grid-cols-3 gap-2.5 lg:hidden">
-            <StatTile value={todayPeriods.length} label="Periods today" />
-            <StatTile value={weekCount} label="Classes this week" />
-            <StatTile value={classCount} label="My classes" />
-          </div>
-          {/* Stats — desktop cards */}
-          <div className="hidden lg:grid grid-cols-3 gap-4">
-            <StatCard icon="calendar-days" label="Periods today" value={todayPeriods.length} />
-            <StatCard icon="calendar-range" label="Classes this week" value={weekCount} />
-            <StatCard icon="users" label="My classes" value={classCount} />
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Card key={s.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground truncate">{s.label}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{s.value}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          <div className="lg:grid lg:grid-cols-3 lg:gap-5 lg:items-start space-y-5 lg:space-y-0">
-            <div className="lg:col-span-2 space-y-5">
-              {todayPeriods.length > 0 && (
-                <UpNext periods={todayPeriods} nowMin={nowMin} onAttendance={goAttendance} onTimetable={goTimetable} />
-              )}
-              <ScheduleList periods={todayPeriods} nowMin={nowMin} onAttendance={goAttendance} onTimetable={goTimetable} />
-              {events.length > 0 && <UpcomingEvents events={events} />}
+      {/* Schedule + side column */}
+      <div className="lg:grid lg:grid-cols-3 lg:gap-5 space-y-5 lg:space-y-0">
+        {/* Today's Schedule */}
+        <Card className="lg:col-span-2 h-fit">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1">
+              <CardTitle>Today's Schedule</CardTitle>
+              <CardDescription>{dateStr}</CardDescription>
             </div>
-            <div className="space-y-5">
-              <QuickActions classCount={classCount} navigate={navigate} />
-              {weekDays.length > 0 && <WeekGlance days={weekDays} todayName={todayName} total={weekCount} />}
+            <Button variant="ghost" size="sm" onClick={() => navigate('/timetable')}>
+              View week
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-14 rounded-md" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-2/5" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : todayPeriods.length === 0 ? (
+              <div className="py-10 text-center">
+                <CalendarCheck className="h-8 w-8 mx-auto text-muted-foreground" />
+                <p className="mt-3 text-sm font-semibold">No periods today</p>
+                <p className="mt-1 text-xs text-muted-foreground">Enjoy your day off from teaching.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {todayPeriods.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="w-14 text-center shrink-0">
+                      <p className="text-sm font-bold text-primary leading-tight">{p.startTime || '--'}</p>
+                      <p className="text-[10px] text-muted-foreground">P{p.periodNumber}</p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{p.subject || 'Free Period'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Class {p.className}-{p.sectionName}{p.endTime ? ` · ends ${p.endTime}` : ''}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Side column */}
+        <div className="space-y-5">
+          {/* Quick actions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+              {actions.map((a) => {
+                const Icon = a.icon;
+                return (
+                  <Button
+                    key={a.path}
+                    variant="outline"
+                    onClick={() => navigate(a.path)}
+                    className="h-auto justify-start gap-3 p-4"
+                  >
+                    <span className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 text-left">
+                      <span className="block text-sm font-semibold truncate">{a.name}</span>
+                      <span className="block text-xs font-normal text-muted-foreground truncate">{a.sub}</span>
+                    </span>
+                  </Button>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* My classes */}
+          {myClasses.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>My Classes</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {myClasses.map((c) => (
+                  <Badge
+                    key={c.sectionId}
+                    variant="secondary"
+                    className="cursor-pointer py-1.5 px-3"
+                    onClick={() => navigate('/classes')}
+                  >
+                    {c.className}-{c.sectionName}
+                    {c.isClassTeacher && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upcoming events */}
+          {events.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Upcoming Events</CardTitle>
+              </CardHeader>
+              <CardContent className="divide-y divide-border">
+                {events.map((ev, i) => {
+                  const cat = EVENT_CATEGORIES[ev.category] || EVENT_CATEGORIES['Other'];
+                  return (
+                    <div key={ev._id || i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                      <span className="h-9 w-9 rounded-md grid place-items-center shrink-0" style={{ background: cat.bg }}>
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: cat.color }} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{ev.title}</p>
+                        <p className="text-xs text-muted-foreground">{ev.category}</p>
+                      </div>
+                      <Badge variant="outline" className="shrink-0">{eventDayLabel(ev.date)}</Badge>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Week at a glance */}
+      {!loading && weekDays.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>This Week at a Glance</CardTitle>
+            <CardDescription>Periods per day across your timetable.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end justify-between gap-2 sm:gap-4 h-36">
+              {weekDays.map((d) => {
+                const max = Math.max(...weekDays.map(x => x.count), 1);
+                const pct = Math.round((d.count / max) * 100);
+                const isToday = d.day === todayName;
+                return (
+                  <div key={d.day} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
+                    <span className="text-xs font-semibold">{d.count}</span>
+                    <div
+                      className={`w-full max-w-[40px] rounded-md ${isToday ? 'bg-primary' : 'bg-muted'}`}
+                      style={{ height: `${Math.max(pct, 6)}%` }}
+                    ></div>
+                    <span className={`text-xs ${isToday ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+                      {d.day.substring(0, 3)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        </>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

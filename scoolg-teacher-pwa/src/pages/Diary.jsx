@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { PageHead, Card, Empty, Icon, Button } from '@/components/designkit';
+import Select from '../components/Select';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Plus, Lock, Trash2, BookOpen } from 'lucide-react';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
-
-const fieldCls = 'w-full h-11 pl-3.5 pr-9 rounded-[10px] bg-line-soft border border-line text-ink font-600 text-[14px] outline-none focus:ring-2 focus:ring-blue-600/25 focus:border-blue-400 appearance-none transition-all disabled:opacity-50';
-const inputCls = 'w-full h-11 px-3.5 rounded-[10px] bg-line-soft border border-line text-ink font-600 text-[14px] outline-none focus:ring-2 focus:ring-blue-600/25 focus:border-blue-400 transition-all placeholder:text-ink-faint placeholder:font-500';
 
 const Diary = () => {
   const [classes, setClasses] = useState([]);
@@ -69,88 +72,83 @@ const Diary = () => {
   };
 
   return (
-    <div className="p-4 pb-8 lg:p-6 max-w-[780px] mx-auto space-y-5 fade-up">
-      <PageHead eyebrow="Teaching record" title="My Diary" sub="What you taught, day by day." />
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-2xl mx-auto">
+      <div>
+        <h1 className="font-manrope text-2xl font-bold tracking-tight">My Diary</h1>
+        <p className="text-sm text-muted-foreground">Log what you taught — one line per class.</p>
+      </div>
 
-      {/* Add entry */}
-      <Card className="shadow-card p-4 space-y-3">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label className="text-[12px] font-600 text-ink-soft mb-1.5 block">Class</label>
-            <div className="relative">
-              <select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: '', subject: '' })} className={fieldCls}>
-                <option value="">Class</option>
-                {classOptions.map(c => <option key={c} value={c}>Class {c}</option>)}
-              </select>
-              <Icon name="chevron-down" size={17} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
-            </div>
+      {/* Add form */}
+      <Card>
+        <CardHeader className="pb-4 sm:pb-4">
+          <CardTitle className="text-base">Add entry</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Select value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value, sectionName: '', subject: '' })}>
+              <option value="">Class</option>
+              {classOptions.map(c => <option key={c} value={c}>Class {c}</option>)}
+            </Select>
+            <Select value={form.sectionName} onChange={(e) => setForm({ ...form, sectionName: e.target.value })} disabled={!form.className}>
+              <option value="">Section</option>
+              {sectionOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            </Select>
+            <Select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className}>
+              <option value="">Subject</option>
+              {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+            </Select>
+            <Input type="date" value={form.date} max={todayISO()} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-12" />
           </div>
-          <div>
-            <label className="text-[12px] font-600 text-ink-soft mb-1.5 block">Section</label>
-            <div className="relative">
-              <select value={form.sectionName} onChange={(e) => setForm({ ...form, sectionName: e.target.value })} disabled={!form.className} className={fieldCls}>
-                <option value="">Section</option>
-                {sectionOptions.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <Icon name="chevron-down" size={17} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
-            </div>
-          </div>
-          <div>
-            <label className="text-[12px] font-600 text-ink-soft mb-1.5 block">Subject</label>
-            <div className="relative">
-              <select value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} disabled={!form.className} className={fieldCls}>
-                <option value="">Subject</option>
-                {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <Icon name="chevron-down" size={17} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
-            </div>
-          </div>
-          <div>
-            <label className="text-[12px] font-600 text-ink-soft mb-1.5 block">Date</label>
-            <input type="date" value={form.date} max={todayISO()} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
-          </div>
-        </div>
-        <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="What did you teach? (one line)" className={inputCls} />
-        {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-[12.5px] font-600 text-rose-600">{error}</p>}
-        <Button onClick={save} disabled={saving} icon="plus" className="w-full">
-          {saving ? 'Saving…' : 'Add entry'}
-        </Button>
+          <Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="What did you teach? (one line)" />
+          {error && <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">{error}</p>}
+          <Button onClick={save} disabled={saving} className="w-full">
+            <Plus /> {saving ? 'Saving...' : 'Add to diary'}
+          </Button>
+        </CardContent>
       </Card>
 
       {/* Entries */}
       {loading ? (
         <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-line-soft rounded-xl h-14" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <Card className="shadow-card">
-          <Empty icon="book-open" title="No entries yet" sub="Add what you taught today using the form above." />
+        <Card className="border-dashed bg-muted/30 shadow-none">
+          <CardContent className="flex flex-col items-center pt-12 pb-12 sm:pt-12 sm:pb-12 text-center">
+            <BookOpen className="h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm font-semibold">No diary entries yet.</p>
+            <p className="text-xs text-muted-foreground">Add what you taught today above.</p>
+          </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-card overflow-hidden">
-          {entries.map(e => (
-            <div key={e._id} className="border-t border-line first:border-0 px-5 py-3.5 flex items-center gap-3">
-              <span className="w-[58px] shrink-0 text-[12px] font-700 text-blue-700 tnum">{fmt(e.date)}</span>
-              <div className="min-w-0 flex-1">
-                <p className="font-600 text-ink text-[14px]">{e.note}</p>
-                <p className="text-[12.5px] text-ink-soft tnum mt-0.5">Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}</p>
-              </div>
-              {e.locked ? (
-                <span title="Locked" className="shrink-0 text-amber-500"><Icon name="lock" size={14} strokeWidth={2.25} /></span>
-              ) : (
-                <div className="flex shrink-0 items-center gap-1">
-                  <button title="Lock" onClick={() => lockEntry(e._id)} className="w-8 h-8 rounded-lg grid place-items-center text-ink-faint hover:bg-line-soft hover:text-ink transition-colors">
-                    <Icon name="lock" size={16} />
-                  </button>
-                  <button title="Delete" onClick={() => deleteEntry(e._id)} className="w-8 h-8 rounded-lg grid place-items-center text-ink-faint hover:bg-rose-50 hover:text-rose-600 transition-colors">
-                    <Icon name="trash-2" size={16} />
-                  </button>
+        <Card>
+          <CardContent className="divide-y divide-border py-2 sm:py-2">
+            {entries.map(e => (
+              <div key={e._id} className="flex items-center gap-3 py-3">
+                <Badge variant="secondary" className="w-16 shrink-0 justify-center">{fmt(e.date)}</Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{e.note}</p>
+                  <p className="text-xs text-muted-foreground">Class {e.className}-{e.sectionName}{e.subject ? ` · ${e.subject}` : ''}</p>
                 </div>
-              )}
-            </div>
-          ))}
+                {e.locked ? (
+                  <span title="Locked" className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-500">
+                    <Lock className="h-3.5 w-3.5" /> Locked
+                  </span>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Lock" onClick={() => lockEntry(e._id)}>
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete" onClick={() => deleteEntry(e._id)}>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
         </Card>
       )}
     </div>
