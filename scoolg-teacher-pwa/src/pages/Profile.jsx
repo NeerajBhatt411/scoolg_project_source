@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Card, Button, Icon, Avatar } from '@/components/designkit';
-
-const fieldCls = 'w-full h-11 px-3.5 rounded-[10px] bg-white border border-line text-ink font-500 text-[13.5px] outline-none focus:ring-2 focus:ring-blue-600/25 focus:border-blue-400 transition-all';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Avatar } from '@/components/ui/avatar';
+import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School } from 'lucide-react';
 
 const Profile = () => {
   const { teacher, school, logout } = useAuth();
@@ -15,6 +18,8 @@ const Profile = () => {
   const [msg, setMsg] = useState(null);
   const [saving, setSaving] = useState(false);
   const [classCount, setClassCount] = useState(null);
+
+  const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
 
   useEffect(() => {
     api.get('/teacher/my-classes').then(r => setClassCount(Array.isArray(r.data) ? r.data.length : 0)).catch(() => setClassCount(0));
@@ -41,82 +46,105 @@ const Profile = () => {
     { label: 'Experience', value: teacher?.experienceYears ? `${teacher.experienceYears}y` : '—' },
   ];
 
-  const details = [
-    { icon: 'mail', label: 'Email', value: teacher?.email },
-    { icon: 'phone', label: 'Phone', value: teacher?.phone },
-    { icon: 'award', label: 'Qualification', value: teacher?.highestQualification },
-    { icon: 'book-open', label: 'Specialization', value: teacher?.specialization },
-  ].filter(d => d.value);
-
-  const idLine = [teacher?.teacherAppId, school?.name].filter(Boolean).join(' · ');
+  const InfoRow = ({ icon: Icon, label, value }) => (
+    <div className="flex items-center gap-3 py-3">
+      <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold truncate">{value || '—'}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-4 pb-28 lg:p-6 max-w-[640px] mx-auto space-y-4 fade-up">
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
+      <div>
+        <h1 className="font-manrope text-2xl font-bold tracking-tight">Profile</h1>
+        <p className="text-sm text-muted-foreground">Your account and personal details.</p>
+      </div>
+
       {/* Identity */}
-      <Card className="shadow-card overflow-hidden">
-        <div className="h-20 bg-blue-600"></div>
-        <div className="px-5 pb-5">
-          <div className="flex items-end gap-4 -mt-9">
-            <div className="relative">
-              <Avatar src={teacher?.profileImageUrl} name={teacher?.fullName || 'Teacher'} size={76} className="rounded-2xl ring-4 ring-white" />
-              <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 ring-2 ring-white grid place-items-center">
-                <Icon name="check" size={13} strokeWidth={2.5} className="text-white" />
-              </span>
-            </div>
-            <div className="pb-1 min-w-0">
-              <h2 className="font-700 text-ink text-[19px] tracking-[-0.01em] truncate">{teacher?.fullName || 'Teacher'}</h2>
-              {idLine && <p className="text-ink-soft text-[12.5px] tnum truncate">{idLine}</p>}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <Avatar src={avatar} alt={teacher?.fullName || 'Teacher'} className="h-16 w-16">
+              {(teacher?.fullName || 'T').charAt(0).toUpperCase()}
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-manrope text-xl font-bold truncate">{teacher?.fullName || 'Teacher'}</h2>
+              {teacher?.teacherAppId && (
+                <Badge variant="secondary" className="font-mono mt-1">{teacher.teacherAppId}</Badge>
+              )}
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            {stats.map(s => (
-              <div key={s.label} className="rounded-xl bg-line-soft py-3 text-center">
-                <p className="font-800 text-ink text-[20px] tnum leading-none">{s.value}</p>
-                <p className="text-[11px] font-600 text-ink-faint mt-1">{s.label}</p>
+
+          {/* School row */}
+          <div className="flex items-center gap-2.5 mt-4 text-sm text-muted-foreground">
+            {school?.logo
+              ? <img src={school.logo} alt="" className="h-6 w-6 rounded object-cover shrink-0" />
+              : <School className="h-4 w-4 shrink-0" />}
+            <span className="truncate">{school?.name || 'School'}</span>
+          </div>
+
+          {/* Stat tiles */}
+          <div className="grid grid-cols-3 gap-3 mt-4 text-center">
+            {stats.map((s, i) => (
+              <div key={i} className="rounded-md border bg-muted/40 py-3">
+                <p className="text-xl font-bold">{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* Details */}
-      {details.length > 0 && (
-        <Card className="shadow-card overflow-hidden">
-          <p className="px-5 pt-4 pb-1 text-[11px] font-700 tracking-[0.06em] uppercase text-ink-faint">Details</p>
-          {details.map((d, i) => (
-            <div key={d.label} className={`flex items-center gap-3.5 px-5 py-3.5 ${i ? 'border-t border-line-soft' : ''}`}>
-              <div className="w-9 h-9 rounded-lg bg-line-soft grid place-items-center text-ink-soft shrink-0"><Icon name={d.icon} size={18} /></div>
-              <span className="text-[13px] text-ink-soft flex-1">{d.label}</span>
-              <span className="text-[13px] font-600 text-ink text-right truncate max-w-[58%]">{d.value}</span>
-            </div>
-          ))}
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="divide-y divide-border">
+            <InfoRow icon={Mail} label="Email" value={teacher?.email} />
+            <InfoRow icon={Phone} label="Phone" value={teacher?.phone} />
+            <InfoRow icon={GraduationCap} label="Qualification" value={teacher?.highestQualification} />
+            <InfoRow icon={BookOpen} label="Specialization" value={teacher?.specialization} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Change password */}
-      <Card className="shadow-card overflow-hidden">
-        <button onClick={() => setShowPwd(o => !o)} className="w-full flex items-center gap-3.5 px-5 py-4 text-left">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 grid place-items-center text-blue-600 shrink-0"><Icon name="lock" size={18} /></div>
-          <span className="text-[14px] font-600 text-ink flex-1">Change password</span>
-          <Icon name={showPwd ? 'chevron-up' : 'chevron-right'} size={18} className="text-ink-faint" />
-        </button>
-        {showPwd && (
-          <div className="px-5 pb-5 space-y-3">
-            <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="New password" className={fieldCls} />
-            <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Confirm password" className={fieldCls} />
-            {msg && (
-              <p className={`text-[12.5px] font-600 ${msg.type === 'ok' ? 'text-emerald-600' : 'text-rose-600'}`}>{msg.text}</p>
-            )}
-            <Button className="w-full" onClick={handleChangePassword} disabled={saving}>
-              {saving ? 'Updating…' : 'Update password'}
-            </Button>
-          </div>
-        )}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <button onClick={() => setShowPwd(s => !s)} className="w-full flex items-center gap-3 text-left">
+            <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
+              <Lock className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-semibold flex-1">Change Password</span>
+            {showPwd
+              ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+          </button>
+          {showPwd && (
+            <div className="mt-4 space-y-3">
+              <Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="New password" />
+              <Input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Confirm password" />
+              {msg && (
+                <p className={`text-xs font-medium ${msg.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msg.text}</p>
+              )}
+              <Button onClick={handleChangePassword} disabled={saving} className="w-full">
+                {saving ? 'Updating...' : 'Update Password'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Logout */}
-      <Button variant="danger" className="w-full h-12" icon="log-out" onClick={() => { logout(); navigate('/login'); }}>
-        Log out
+      <Button variant="destructive" className="w-full" onClick={() => { logout(); navigate('/login'); }}>
+        <LogOut className="h-4 w-4 mr-1.5" /> Logout
       </Button>
     </div>
   );
