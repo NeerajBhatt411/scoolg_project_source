@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Users, ClipboardCheck, BookOpen, ChevronRight } from 'lucide-react';
 
 const MyClasses = () => {
   const navigate = useNavigate();
@@ -22,64 +27,75 @@ const MyClasses = () => {
   }, []);
 
   return (
-    <div className="min-h-full px-container-margin lg:px-8 pt-6 pb-32 lg:pb-10 space-y-6 max-w-4xl mx-auto">
-      <div className="space-y-1">
-        <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Your Classes</p>
-        <h2 className="text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight">My Classes</h2>
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
+      <div>
+        <h1 className="font-manrope text-2xl font-bold tracking-tight">My Classes</h1>
+        <p className="text-sm text-muted-foreground">Classes and sections assigned to you.</p>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-slate-100 rounded-[28px] h-44"></div>
+            <Skeleton key={i} className="h-44 rounded-xl" />
           ))}
         </div>
       ) : classes.length === 0 ? (
-        <div className="border-2 border-dashed border-slate-200 rounded-[28px] p-10 text-center bg-slate-50/50">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100 shadow-sm">
-            <span className="material-symbols-outlined text-3xl text-slate-300">groups</span>
-          </div>
-          <p className="text-sm font-bold text-slate-700">No classes assigned yet.</p>
-          <p className="text-xs font-bold text-slate-500 mt-1">Your admin assigns classes via the timetable.</p>
-        </div>
+        <Card>
+          <CardContent className="py-10 text-center">
+            <Users className="h-8 w-8 mx-auto text-muted-foreground" />
+            <p className="mt-3 text-sm font-semibold">No classes assigned yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Your admin assigns classes via the timetable.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {classes.map((c) => (
-            <div key={c.sectionId} onClick={() => navigate('/classes/detail', { state: c })} className="bg-white p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 border border-slate-50 group cursor-pointer">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-[18px] bg-blue-50 text-blue-700 flex items-center justify-center font-black text-xl border border-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
-                    {c.className}
-                  </div>
-                  <div>
-                    <p className="font-black text-slate-900 tracking-tight leading-tight">Class {c.className}-{c.sectionName}</p>
-                    {c.isClassTeacher && (
-                      <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 inline-block mt-1">Class Teacher</span>
-                    )}
-                  </div>
+            <Card
+              key={c.sectionId}
+              onClick={() => navigate('/classes/detail', { state: c })}
+              className="transition-shadow hover:shadow-md cursor-pointer"
+            >
+              <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3">
+                <div className="h-11 w-11 rounded-md bg-primary/10 text-primary grid place-items-center font-bold shrink-0">
+                  {c.className}
                 </div>
-                <span className="material-symbols-outlined text-slate-400 text-[20px]">chevron_right</span>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-base">Class {c.className}-{c.sectionName}</CardTitle>
+                  {c.isClassTeacher && (
+                    <Badge variant="success" className="mt-1">Class Teacher</Badge>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </CardHeader>
 
               {c.subjects?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {c.subjects.slice(0, 6).map((s) => (
-                    <span key={s} className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">{s}</span>
-                  ))}
-                </div>
+                <CardContent className="pb-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {c.subjects.slice(0, 6).map((s) => (
+                      <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
               )}
 
-              <div className="flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } }); }}
-                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-[0_10px_30px_rgba(37,99,235,0.25)] active:scale-95 transition-transform">
-                  <span className="material-symbols-outlined text-[18px]">fact_check</span> Attendance
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } }); }}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform">
-                  <span className="material-symbols-outlined text-[18px]">assignment</span> Homework
-                </button>
-              </div>
-            </div>
+              <CardFooter className="gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => { e.stopPropagation(); navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } }); }}
+                >
+                  <ClipboardCheck className="h-4 w-4 mr-1.5" /> Attendance
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={(e) => { e.stopPropagation(); navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } }); }}
+                >
+                  <BookOpen className="h-4 w-4 mr-1.5" /> Homework
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
