@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarDays } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const JS_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-const subjectTone = (subject) => {
-  const s = (subject || '').toLowerCase();
-  if (s.includes('math')) return 'bg-blue-50 text-blue-700 border-blue-100';
-  if (s.includes('sci') || s.includes('phys') || s.includes('chem')) return 'bg-teal-50 text-teal-700 border-teal-100';
-  if (s.includes('eng')) return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-  if (s.includes('hin')) return 'bg-amber-50 text-amber-700 border-amber-100';
-  if (s.includes('com') || s.includes('it')) return 'bg-indigo-50 text-indigo-700 border-indigo-100';
-  return 'bg-slate-50 text-slate-700 border-slate-100';
-};
 
 const Timetable = () => {
   const today = JS_DAYS[new Date().getDay()];
@@ -49,85 +44,72 @@ const Timetable = () => {
     p.startTime <= nowHM && nowHM < p.endTime;
 
   return (
-    <div className="min-h-full px-container-margin lg:px-8 pt-6 pb-32 lg:pb-10 space-y-6 max-w-4xl mx-auto">
+    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
       <div className="flex items-end justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">My Schedule</p>
-          <h2 className="text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight">Weekly Timetable</h2>
+        <div>
+          <h1 className="font-manrope text-2xl font-bold tracking-tight">Weekly Timetable</h1>
+          <p className="text-sm text-muted-foreground">Your teaching schedule for the week.</p>
         </div>
         {!loading && (
-          <span className="shrink-0 px-3 py-1.5 mb-0.5 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
+          <Badge variant="outline" className="shrink-0 mb-1 whitespace-nowrap">
             {periods.length} {periods.length === 1 ? 'period' : 'periods'}
-          </span>
+          </Badge>
         )}
       </div>
 
       {/* Day tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-        {DAYS.map(day => (
-          <button
-            key={day}
-            onClick={() => setActiveDay(day)}
-            className={`px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all active:scale-95 ${activeDay === day
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black'
-              : 'bg-white text-slate-500 border border-slate-100 font-bold'}`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {day.substring(0, 3)}
-              {day === today && activeDay !== day && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" aria-label="Today"></span>
-              )}
-            </span>
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeDay} onValueChange={setActiveDay}>
+        <TabsList className="w-full overflow-x-auto justify-start">
+          {DAYS.map(day => (
+            <TabsTrigger key={day} value={day}>
+              <span className="inline-flex items-center gap-1.5">
+                {day.substring(0, 3)}
+                {day === today && activeDay !== day && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" aria-label="Today"></span>
+                )}
+              </span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-slate-100 rounded-[20px] h-[88px]"></div>
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
       ) : periods.length === 0 ? (
-        <div className="border-2 border-dashed border-slate-200 rounded-[28px] p-10 text-center bg-slate-50/50">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100 shadow-sm">
-            <span className="material-symbols-outlined text-3xl text-slate-300">event_busy</span>
-          </div>
-          <p className="text-sm font-bold text-slate-700">No classes on {activeDay}.</p>
-        </div>
+        <Card>
+          <CardContent className="p-10 text-center">
+            <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No classes on {activeDay}.</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-3">
-          {periods.map((p, i) => {
-            const live = isLive(p);
-            return (
-              <div
-                key={i}
-                className={`bg-white rounded-[20px] p-4 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.04)] border transition-all ${live
-                  ? 'ring-2 ring-blue-600/40 border-blue-600/30'
-                  : 'border-slate-100'}`}
-              >
-                <div className="w-16 h-14 rounded-[16px] bg-blue-50 text-blue-700 border border-blue-100 flex flex-col items-center justify-center shadow-sm shrink-0">
-                  <p className="text-[13px] font-black leading-none">{p.startTime || '--'}</p>
-                  <p className="text-[10px] font-bold text-blue-600/60 mt-1">{p.endTime || ''}</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className={`inline-block px-2.5 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest mb-1 ${subjectTone(p.subject)}`}>
-                    Period {p.periodNumber}
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            {periods.map((p, i) => {
+              const live = isLive(p);
+              return (
+                <div key={i} className={`flex items-center gap-4 px-4 py-3 ${live ? 'bg-primary/5' : ''}`}>
+                  <div className="w-14 shrink-0">
+                    <p className="text-sm font-bold text-primary leading-none">{p.startTime || '--'}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{p.endTime || ''}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-black text-slate-900 text-[15px] tracking-tight leading-tight truncate">{p.subject || 'Free'}</p>
-                    {live && (
-                      <span className="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-full animate-pulse shrink-0">
-                        Now
-                      </span>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold truncate">{p.subject || 'Free'}</p>
+                      <Badge variant="secondary" className="shrink-0">P{p.periodNumber}</Badge>
+                      {live && <Badge className="animate-pulse shrink-0">NOW</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Class {p.className}-{p.sectionName}</p>
                   </div>
-                  <p className="text-[11px] font-bold text-slate-400">Class {p.className}-{p.sectionName}</p>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

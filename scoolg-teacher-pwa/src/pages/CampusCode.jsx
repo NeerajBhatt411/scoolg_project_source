@@ -80,7 +80,7 @@ const CampusCode = () => {
       
       <div className="mt-12 opacity-30 flex flex-col items-center">
         <span className="text-[24px] font-manrope font-extrabold text-primary">SchoolG</span>
-        <p className="text-[10px] font-bold uppercase tracking-[4px] text-secondary">Premium Academy</p>
+        <p className="text-[10px] font-bold uppercase tracking-[4px] text-muted-foreground">Premium Academy</p>
       </div>
     </div>
   );
