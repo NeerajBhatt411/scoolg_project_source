@@ -5,12 +5,7 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
-import AttendanceTrendChart from '../components/AttendanceTrendChart';
-
-// Illustrative weekly attendance %. TODO: wire to a real attendance-trend endpoint.
-const WEEK_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEK_ATTENDANCE = [94, 91, 96, 89, 93, 88];
-const WEEK_AVG = Math.round(WEEK_ATTENDANCE.reduce((a, b) => a + b, 0) / WEEK_ATTENDANCE.length);
+import AttendanceOverviewCard from '../components/AttendanceOverviewCard';
 
 const CAT_META = {
     'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
@@ -226,34 +221,11 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Middle Row: Charts & Notices */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                    {/* Attendance Chart Card */}
-                    <div className="bg-white p-6 sm:p-8 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-50 group transition-all duration-500">
-                        <div className="flex justify-between items-center mb-8 px-2">
-                            <h5 className="text-xl text-slate-900 font-black flex items-center gap-3 tracking-tight">
-                                <span className="w-1.5 h-7 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></span>
-                                Attendance Snapshot
-                            </h5>
-                            <button onClick={() => navigate('/attendance/analytics')} className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-blue-600 transition-all flex items-center gap-2">
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                View Analytics
-                            </button>
-                        </div>
-                        <div className="px-2">
-                            <div className="flex items-end justify-between mb-5">
-                                <div>
-                                    <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{WEEK_AVG}%</p>
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Avg this week</p>
-                                </div>
-                                <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                    <span className="material-symbols-outlined text-[14px]">trending_up</span> Healthy
-                                </span>
-                            </div>
-                            <AttendanceTrendChart labels={WEEK_LABELS} values={WEEK_ATTENDANCE} />
-                        </div>
-                    </div>
+                {/* Attendance: interactive full-width chart (shadcn dashboard style) */}
+                <AttendanceOverviewCard />
 
+                {/* Scheduled Events */}
+                <div className="grid grid-cols-1 gap-6 sm:gap-8">
                     {/* Scheduled Events Card (from School Calendar) */}
                     <div className="bg-white p-6 sm:p-8 rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-50 group transition-all duration-500">
                         <div className="flex justify-between items-center mb-8 px-2">
