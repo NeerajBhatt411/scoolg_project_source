@@ -26,13 +26,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-blue-100/70 via-indigo-50/40 to-blue-50/60 p-5 sm:p-8 relative overflow-hidden">
-      {/* decorative backdrop */}
-      <div className="absolute -top-28 -left-28 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-32 -right-24 w-[26rem] h-[26rem] bg-indigo-200/40 rounded-full blur-3xl pointer-events-none"></div>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl relative z-10">
-        <Card className="overflow-hidden rounded-3xl border shadow-[0_30px_80px_-28px_rgba(37,99,235,0.35)] bg-card">
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-5 sm:p-8">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl">
+        <Card className="overflow-hidden rounded-3xl border shadow-[0_24px_60px_-24px_rgba(15,23,42,0.18)] bg-card">
           <div className="grid lg:grid-cols-2">
             {/* Graphic side (same artwork as the admin panel login) */}
             <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50/60 to-background p-10">
@@ -63,7 +59,7 @@ const Login = () => {
                   <BadgeCheck className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <input
                     className="flex h-[54px] w-full rounded-xl border border-input bg-muted/40 pl-12 pr-4 text-sm font-semibold transition-colors placeholder:text-muted-foreground/70 placeholder:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:bg-card"
-                    placeholder="Teacher ID or Email" type="text" autoComplete="username"
+                    placeholder="Teacher ID (e.g. TCH101)" type="text" autoComplete="username"
                     value={teacherAppId} onChange={(e) => setTeacherAppId(e.target.value)} required />
                 </div>
 
@@ -91,6 +87,7 @@ const Login = () => {
             </CardContent>
           </div>
         </Card>
+        <p className="text-center text-xs font-semibold text-muted-foreground/60 mt-6 tracking-wide">© 2026 Scoolg · All rights reserved</p>
       </motion.div>
     </div>
   );
