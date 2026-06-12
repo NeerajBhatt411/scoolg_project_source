@@ -11,7 +11,7 @@ const subjectTone = (subject) => {
   if (s.includes('eng')) return 'bg-emerald-50 text-emerald-700 border-emerald-100';
   if (s.includes('hin')) return 'bg-amber-50 text-amber-700 border-amber-100';
   if (s.includes('com') || s.includes('it')) return 'bg-indigo-50 text-indigo-700 border-indigo-100';
-  return 'bg-surface-container-low text-on-surface border-surface-container';
+  return 'bg-slate-50 text-slate-700 border-slate-100';
 };
 
 const Timetable = () => {
@@ -52,11 +52,11 @@ const Timetable = () => {
     <div className="min-h-full px-container-margin lg:px-8 pt-6 pb-32 lg:pb-10 space-y-6 max-w-4xl mx-auto">
       <div className="flex items-end justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-label-md font-label-md text-secondary uppercase tracking-widest">My Schedule</p>
-          <h2 className="text-display-lg font-display-lg text-on-surface">Weekly Timetable</h2>
+          <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">My Schedule</p>
+          <h2 className="text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight">Weekly Timetable</h2>
         </div>
         {!loading && (
-          <span className="shrink-0 px-3 py-1.5 mb-0.5 rounded-full bg-surface-container-low border border-surface-container text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">
+          <span className="shrink-0 px-3 py-1.5 mb-0.5 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
             {periods.length} {periods.length === 1 ? 'period' : 'periods'}
           </span>
         )}
@@ -68,14 +68,14 @@ const Timetable = () => {
           <button
             key={day}
             onClick={() => setActiveDay(day)}
-            className={`px-5 py-2.5 rounded-full text-label-md font-bold whitespace-nowrap transition-all active:scale-95 ${activeDay === day
-              ? 'bg-primary text-on-primary shadow-md shadow-primary/20'
-              : 'bg-white text-on-surface-variant border border-surface-container'}`}
+            className={`px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all active:scale-95 ${activeDay === day
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black'
+              : 'bg-white text-slate-500 border border-slate-100 font-bold'}`}
           >
             <span className="inline-flex items-center gap-1.5">
               {day.substring(0, 3)}
               {day === today && activeDay !== day && (
-                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-label="Today"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" aria-label="Today"></span>
               )}
             </span>
           </button>
@@ -83,13 +83,17 @@ const Timetable = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-primary">
-          <div className="animate-spin w-9 h-9 border-4 border-current border-t-transparent rounded-full"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-slate-100 rounded-[20px] h-[88px]"></div>
+          ))}
         </div>
       ) : periods.length === 0 ? (
-        <div className="bg-white border border-dashed border-surface-container-high rounded-3xl p-10 text-center text-on-surface-variant">
-          <span className="material-symbols-outlined text-5xl opacity-30 mb-2">event_busy</span>
-          <p className="text-body-md font-bold">No classes on {activeDay}.</p>
+        <div className="border-2 border-dashed border-slate-200 rounded-[28px] p-10 text-center bg-slate-50/50">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100 shadow-sm">
+            <span className="material-symbols-outlined text-3xl text-slate-300">event_busy</span>
+          </div>
+          <p className="text-sm font-bold text-slate-700">No classes on {activeDay}.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -98,28 +102,27 @@ const Timetable = () => {
             return (
               <div
                 key={i}
-                className={`bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border transition-all ${live
-                  ? 'ring-2 ring-primary/40 border-primary/30'
-                  : 'border-surface-container'}`}
+                className={`bg-white rounded-[20px] p-4 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.04)] border transition-all ${live
+                  ? 'ring-2 ring-blue-600/40 border-blue-600/30'
+                  : 'border-slate-100'}`}
               >
-                <div className="w-16 text-center shrink-0">
-                  <p className="text-label-md font-bold text-primary leading-none">{p.startTime || '--'}</p>
-                  <p className="text-[10px] text-on-surface-variant mt-1">{p.endTime || ''}</p>
+                <div className="w-16 h-14 rounded-[16px] bg-blue-50 text-blue-700 border border-blue-100 flex flex-col items-center justify-center shadow-sm shrink-0">
+                  <p className="text-[13px] font-black leading-none">{p.startTime || '--'}</p>
+                  <p className="text-[10px] font-bold text-blue-600/60 mt-1">{p.endTime || ''}</p>
                 </div>
-                <div className="w-px h-12 bg-surface-container-high"></div>
-                <div className="flex-1">
-                  <div className={`inline-block px-2.5 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider mb-1 ${subjectTone(p.subject)}`}>
+                <div className="flex-1 min-w-0">
+                  <div className={`inline-block px-2.5 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest mb-1 ${subjectTone(p.subject)}`}>
                     Period {p.periodNumber}
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-title-lg font-bold text-on-surface leading-tight">{p.subject || 'Free'}</p>
+                    <p className="font-black text-slate-900 text-[15px] tracking-tight leading-tight truncate">{p.subject || 'Free'}</p>
                     {live && (
-                      <span className="text-[9px] font-black uppercase bg-primary text-white px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                      <span className="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-full animate-pulse shrink-0">
                         Now
                       </span>
                     )}
                   </div>
-                  <p className="text-label-md text-on-surface-variant">Class {p.className}-{p.sectionName}</p>
+                  <p className="text-[11px] font-bold text-slate-400">Class {p.className}-{p.sectionName}</p>
                 </div>
               </div>
             );
