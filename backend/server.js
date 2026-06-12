@@ -2742,7 +2742,7 @@ app.post('/api/teacher/login', async (req, res) => {
         const accessToken = jwt.sign(
             { id: teacher._id, type: 'teacher' },
             process.env.JWT_SECRET || 'scoolg_secret_99',
-            { expiresIn: '7d' }
+            { expiresIn: '30d' }
         );
 
         res.json({

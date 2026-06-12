@@ -2,8 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import SplashScreen from './pages/SplashScreen';
-import Onboarding from './pages/Onboarding';
-import CampusCode from './pages/CampusCode';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Timetable from './pages/Timetable';
@@ -14,6 +12,30 @@ import Homework from './pages/Homework';
 import Diary from './pages/Diary';
 import Profile from './pages/Profile';
 import InstallPrompt from './components/InstallPrompt';
+import { useAuth } from './context/AuthContext';
+
+// Full-screen loader while the saved session is being restored.
+const BootLoader = () => (
+  <div className="min-h-screen w-full flex items-center justify-center bg-background">
+    <div className="animate-spin w-9 h-9 border-4 border-primary border-t-transparent rounded-full"></div>
+  </div>
+);
+
+// Logged-out users go to /login; the saved token keeps teachers signed in.
+const Protected = ({ children }) => {
+  const { token, loading } = useAuth();
+  if (loading) return <BootLoader />;
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+};
+
+// Already signed in? Skip the login screen entirely.
+const GuestOnly = ({ children }) => {
+  const { token, loading } = useAuth();
+  if (loading) return <BootLoader />;
+  if (token) return <Navigate to="/dashboard" replace />;
+  return children;
+};
 
 const App = () => {
   return (
@@ -21,11 +43,9 @@ const App = () => {
     <InstallPrompt />
     <Routes>
       <Route path="/" element={<SplashScreen />} />
-      <Route path="/onboarding/:step" element={<Onboarding />} />
-      <Route path="/campus-code" element={<CampusCode />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
 
-      <Route element={<MainLayout />}>
+      <Route element={<Protected><MainLayout /></Protected>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/classes" element={<MyClasses />} />
