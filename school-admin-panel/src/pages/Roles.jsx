@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -280,10 +281,13 @@ const Roles = () => {
 
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Role</label>
-                                <select value={form.role} onChange={(e) => handleRoleChange(e.target.value)}
-                                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none">
-                                    {Object.keys(ROLE_TEMPLATES).map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
+                                <Dropdown
+                                    value={form.role}
+                                    onChange={(v) => handleRoleChange(v)}
+                                    options={Object.keys(ROLE_TEMPLATES)}
+                                    className="w-full"
+                                    buttonClassName="h-11 bg-slate-50"
+                                />
                             </div>
 
                             <div>

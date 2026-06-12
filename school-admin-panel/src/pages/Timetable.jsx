@@ -1008,26 +1008,26 @@ const Timetable = () => {
                         <div className="space-y-5 mb-8">
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Target Class</label>
-                                <select
+                                <Dropdown
                                     value={copyToClass}
-                                    onChange={(e) => setCopyToClass(e.target.value)}
-                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
-                                >
-                                    <option value="">Select Class</option>
-                                    {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
-                                </select>
+                                    onChange={(v) => setCopyToClass(v)}
+                                    options={classes.map(c => ({ value: c._id, label: c.className }))}
+                                    placeholder="Select Class"
+                                    className="w-full"
+                                    buttonClassName="h-12"
+                                />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Target Section</label>
-                                <select
+                                <Dropdown
                                     value={copyToSection}
-                                    onChange={(e) => setCopyToSection(e.target.value)}
-                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-black text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
+                                    onChange={(v) => setCopyToSection(v)}
+                                    options={copyToSections.map(s => ({ value: s._id, label: s.sectionName }))}
+                                    placeholder={copyToSections.length === 0 ? 'No Sections' : 'Select Section'}
                                     disabled={!copyToClass || copyToSections.length === 0}
-                                >
-                                    {copyToSections.length === 0 && <option value="">No Sections</option>}
-                                    {copyToSections.map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
-                                </select>
+                                    className="w-full"
+                                    buttonClassName="h-12"
+                                />
                             </div>
                         </div>
 
@@ -1214,13 +1214,13 @@ const Timetable = () => {
                         <div className="space-y-4 mb-6">
                             <div>
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1 block">Copy From (Source)</label>
-                                <select
+                                <Dropdown
                                     value={copyDaySource}
-                                    onChange={(e) => setCopyDaySource(e.target.value)}
-                                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-fuchsia-500 focus:bg-white transition-all cursor-pointer"
-                                >
-                                    {days.map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
+                                    onChange={(v) => setCopyDaySource(v)}
+                                    options={days}
+                                    className="w-full"
+                                    buttonClassName="h-11 bg-slate-50"
+                                />
                             </div>
 
                             <div>

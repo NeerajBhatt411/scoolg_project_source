@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 
 const Support = () => {
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
@@ -186,30 +187,23 @@ const Support = () => {
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-3">
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-2">Category</label>
-                                    <select 
-                                        required
+                                    <Dropdown
                                         value={newTicket.category}
-                                        onChange={(e) => setNewTicket({...newTicket, category: e.target.value})}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-[24px] px-6 py-5 font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition-all appearance-none"
-                                    >
-                                        <option>Technical Issue</option>
-                                        <option>Feature Request</option>
-                                        <option>Billing & Plans</option>
-                                        <option>Training Request</option>
-                                    </select>
+                                        onChange={(v) => setNewTicket({...newTicket, category: v})}
+                                        options={['Technical Issue', 'Feature Request', 'Billing & Plans', 'Training Request']}
+                                        className="w-full"
+                                        buttonClassName="py-5 bg-slate-50"
+                                    />
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-2">Priority</label>
-                                    <select 
+                                    <Dropdown
                                         value={newTicket.priority}
-                                        onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-[24px] px-6 py-5 font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-600/10 transition-all appearance-none"
-                                    >
-                                        <option>Low</option>
-                                        <option>Medium</option>
-                                        <option>High</option>
-                                        <option>Urgent</option>
-                                    </select>
+                                        onChange={(v) => setNewTicket({...newTicket, priority: v})}
+                                        options={['Low', 'Medium', 'High', 'Urgent']}
+                                        className="w-full"
+                                        buttonClassName="py-5 bg-slate-50"
+                                    />
                                 </div>
                             </div>
                             <div className="space-y-3">

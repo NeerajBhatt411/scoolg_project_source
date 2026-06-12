@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -398,10 +399,13 @@ const Classes = () => {
                                                 <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 grid place-items-center font-black shrink-0">{sec.sectionName?.charAt(0) || '?'}</div>
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-slate-800 text-sm">Section {sec.sectionName}</p>
-                                                    <select value={sec.classTeacherId?._id || ''} onChange={(e) => assignClassTeacher(sec._id, e.target.value)} className="mt-1 h-7 max-w-[150px] text-[11px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 outline-none focus:border-blue-500">
-                                                        <option value="">No class teacher</option>
-                                                        {teachersList.map(t => <option key={t._id} value={t._id}>{t.fullName}</option>)}
-                                                    </select>
+                                                    <Dropdown
+                                                        value={sec.classTeacherId?._id || ''}
+                                                        onChange={(v) => assignClassTeacher(sec._id, v)}
+                                                        options={[{ value: '', label: 'No class teacher' }, ...teachersList.map(t => ({ value: t._id, label: t.fullName }))]}
+                                                        className="mt-1 w-[170px] max-w-full"
+                                                        buttonClassName="h-8"
+                                                    />
                                                 </div>
                                             </div>
                                             <button onClick={() => deleteSection(sec._id)} className="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 grid place-items-center transition-colors shrink-0"><span className="material-symbols-outlined text-[18px]">delete</span></button>

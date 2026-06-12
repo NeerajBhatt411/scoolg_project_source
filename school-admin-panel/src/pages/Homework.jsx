@@ -380,25 +380,24 @@ const Homework = () => {
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Section</label>
-                                    <select
+                                    <Dropdown
                                         value={form.sectionName}
-                                        onChange={(e) => setForm({ ...form, sectionName: e.target.value })}
-                                        className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
-                                    >
-                                        <option value="All">All Sections</option>
-                                        {sections.map(s => <option key={s._id} value={s.sectionName}>{s.sectionName}</option>)}
-                                    </select>
+                                        onChange={(v) => setForm({ ...form, sectionName: v })}
+                                        options={[{ value: 'All', label: 'All Sections' }, ...sections.map(s => ({ value: s.sectionName, label: s.sectionName }))]}
+                                        className="w-full"
+                                        buttonClassName="h-11 bg-slate-50"
+                                    />
                                 </div>
                                 <div className="flex flex-col">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Subject</label>
-                                    <select
+                                    <Dropdown
                                         value={form.subject}
-                                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                                        className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
-                                    >
-                                        <option value="">Select subject</option>
-                                        {classSubjects.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
+                                        onChange={(v) => setForm({ ...form, subject: v })}
+                                        options={classSubjects}
+                                        placeholder="Select subject"
+                                        className="w-full"
+                                        buttonClassName="h-11 bg-slate-50"
+                                    />
                                     {selectedClassObj && classSubjects.length === 0 && (
                                         <p className="text-[10px] font-bold text-slate-400 mt-1 ml-1">No subjects for this class yet — add them in Classes → Manage Class (or set them in the timetable).</p>
                                     )}

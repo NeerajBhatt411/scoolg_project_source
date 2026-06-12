@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
+import Dropdown from '../components/Dropdown';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 
@@ -14,7 +15,6 @@ const Notices = () => {
     const [activeTab, setActiveTab] = useState('All Notices');
     const tabs = ['All Notices', 'Scheduled', 'Drafts'];
     const [typeFilter, setTypeFilter] = useState('All');
-    const [filterOpen, setFilterOpen] = useState(false);
 
     const [notices, setNotices] = useState(initialNotices);
     const [showModal, setShowModal] = useState(false);
@@ -197,34 +197,14 @@ const Notices = () => {
                         ))}
                     </div>
                     
-                    <div className="relative shrink-0 w-full sm:w-48">
-                        <button
-                            type="button"
-                            onClick={() => setFilterOpen(o => !o)}
-                            className="w-full h-10 pl-10 pr-9 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 text-xs text-left flex items-center outline-none focus:border-blue-500 transition-all"
-                        >
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">filter_alt</span>
-                            <span className="truncate">{typeFilter === 'All' ? 'All Types' : typeFilter}</span>
-                            <span className={`material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] transition-transform ${filterOpen ? 'rotate-180' : ''}`}>expand_more</span>
-                        </button>
-                        {filterOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)}></div>
-                                <div className="absolute z-20 top-full mt-1.5 left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl py-1 overflow-hidden animate-fade-in">
-                                    {NOTICE_TYPES.map(opt => (
-                                        <button
-                                            key={opt}
-                                            type="button"
-                                            onClick={() => { setTypeFilter(opt); setFilterOpen(false); }}
-                                            className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors ${typeFilter === opt ? 'bg-blue-50 text-[#2563eb]' : 'text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            {opt === 'All' ? 'All Types' : opt}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    <Dropdown
+                        value={typeFilter}
+                        onChange={(v) => setTypeFilter(v)}
+                        options={NOTICE_TYPES.map(t => ({ value: t, label: t === 'All' ? 'All Types' : t }))}
+                        icon="filter_alt"
+                        className="w-full sm:w-48"
+                        buttonClassName="h-10"
+                    />
                 </div>
 
                 {/* Notice Cards */}
@@ -370,20 +350,18 @@ const Notices = () => {
                                 </div>
                                 <div className="sm:col-span-1">
                                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 block">Target Audience</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">groups</span>
-                                        <select 
-                                            value={newNotice.classGroup}
-                                            onChange={(e) => setNewNotice({...newNotice, classGroup: e.target.value})}
-                                            className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none shadow-sm"
-                                        >
-                                            <option value="All Classes">All Classes</option>
-                                            <option value="Staff Only">Staff Only</option>
-                                            {classes?.map(c => (
-                                                <option key={c._id} value={`Class ${c.className}`}>Class {c.className}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <Dropdown
+                                        value={newNotice.classGroup}
+                                        onChange={(v) => setNewNotice({...newNotice, classGroup: v})}
+                                        options={[
+                                            { value: 'All Classes', label: 'All Classes' },
+                                            { value: 'Staff Only', label: 'Staff Only' },
+                                            ...(classes?.map(c => ({ value: `Class ${c.className}`, label: `Class ${c.className}` })) || [])
+                                        ]}
+                                        icon="groups"
+                                        className="w-full"
+                                        buttonClassName="h-12 bg-slate-50"
+                                    />
                                 </div>
 
                                 {/* Middle Row: Description & Types/Priority */}
@@ -399,35 +377,25 @@ const Notices = () => {
                                 <div className="sm:col-span-1 space-y-5">
                                     <div>
                                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 block">Notice Type</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">category</span>
-                                            <select 
-                                                value={newNotice.type}
-                                                onChange={(e) => setNewNotice({...newNotice, type: e.target.value})}
-                                                className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none shadow-sm"
-                                            >
-                                                <option value="Common Notice">Common Notice</option>
-                                                <option value="Schedule / Calendar">Schedule / Calendar</option>
-                                                <option value="Exam Update">Exam Update</option>
-                                                <option value="Event / Activity">Event / Activity</option>
-                                                <option value="Holiday">Holiday</option>
-                                            </select>
-                                        </div>
+                                        <Dropdown
+                                            value={newNotice.type}
+                                            onChange={(v) => setNewNotice({...newNotice, type: v})}
+                                            options={['Common Notice', 'Schedule / Calendar', 'Exam Update', 'Event / Activity', 'Holiday']}
+                                            icon="category"
+                                            className="w-full"
+                                            buttonClassName="h-12 bg-slate-50"
+                                        />
                                     </div>
                                     <div>
                                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1 block">Priority</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">flag</span>
-                                            <select 
-                                                value={newNotice.priority}
-                                                onChange={(e) => setNewNotice({...newNotice, priority: e.target.value})}
-                                                className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer appearance-none shadow-sm"
-                                            >
-                                                <option value="Normal">Normal</option>
-                                                <option value="Important">Important</option>
-                                                <option value="Urgent">Urgent</option>
-                                            </select>
-                                        </div>
+                                        <Dropdown
+                                            value={newNotice.priority}
+                                            onChange={(v) => setNewNotice({...newNotice, priority: v})}
+                                            options={['Normal', 'Important', 'Urgent']}
+                                            icon="flag"
+                                            className="w-full"
+                                            buttonClassName="h-12 bg-slate-50"
+                                        />
                                     </div>
                                 </div>
 
