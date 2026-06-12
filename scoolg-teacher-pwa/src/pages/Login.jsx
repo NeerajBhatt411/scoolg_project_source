@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, BadgeCheck, Lock, AlertCircle, Loader2, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,26 +26,24 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 sm:p-8">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-5 sm:p-8">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl">
-        <Card className="overflow-hidden shadow-xl shadow-slate-900/5">
+        <Card className="overflow-hidden border-0 shadow-none bg-transparent sm:bg-card sm:border sm:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.18)] sm:rounded-3xl">
           <div className="grid lg:grid-cols-2">
             {/* Graphic side (same artwork as the admin panel login) */}
-            <div className="hidden lg:flex items-center justify-center bg-muted/40 p-10">
-              <img src={loginBg} alt="School management" className="w-full max-w-md object-contain" />
+            <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50/60 to-background p-10">
+              <img src={loginBg} alt="School management" className="w-full max-w-md object-contain drop-shadow-xl" />
             </div>
 
             {/* Form side */}
-            <CardContent className="p-7 sm:p-12 flex flex-col justify-center !pt-10 sm:!pt-12">
-              <div className="mb-9">
-                <div className="flex items-center gap-2.5 mb-6">
-                  <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary grid place-items-center">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                  <span className="text-[11px] font-bold uppercase tracking-[3px] text-muted-foreground">Teacher Portal</span>
-                </div>
-                <h1 className="text-[26px] sm:text-[28px] font-extrabold tracking-tight text-foreground">Welcome Back</h1>
-                <p className="text-[15px] font-medium text-muted-foreground mt-1">Sign in to manage your classes</p>
+            <CardContent className="p-0 sm:p-12 flex flex-col justify-center sm:!pt-12">
+              {/* Mobile artwork */}
+              <img src={loginBg} alt="" className="lg:hidden h-44 sm:h-52 object-contain mx-auto mb-6" />
+
+              <div className="mb-8 text-center lg:text-left">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-primary mb-2">Teacher Portal</p>
+                <h1 className="text-[27px] sm:text-[30px] font-manrope font-extrabold tracking-tight text-foreground leading-tight">Welcome Back</h1>
+                <p className="text-[15px] font-medium text-muted-foreground mt-1.5">Sign in to manage your classes</p>
               </div>
 
               {error && (
@@ -86,8 +84,6 @@ const Login = () => {
                 Don't have your Teacher ID? <span className="text-primary font-semibold">Ask your school admin.</span>
               </p>
               <p className="text-center text-xs text-muted-foreground/60 mt-2">You stay signed in on this device until you log out.</p>
-
-              <p className="text-xs font-semibold text-muted-foreground/50 mt-10">© 2026 · School Teacher Portal</p>
             </CardContent>
           </div>
         </Card>
