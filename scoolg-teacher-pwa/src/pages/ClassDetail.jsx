@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import api from '../utils/api';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar } from '@/components/ui/avatar';
-import { ArrowLeft, ClipboardCheck, BookOpen, Users } from 'lucide-react';
+import { PageHead, Card, Chip, Empty, Icon, Button, Avatar, SubjectTag, toneFor } from '@/components/designkit';
 
 const ClassDetail = () => {
   const navigate = useNavigate();
@@ -37,115 +31,95 @@ const ClassDetail = () => {
 
   const { sectionId, classId, isClassTeacher, subjects } = state;
   const sorted = [...students].sort((a, b) => Number(a.rollNumber) - Number(b.rollNumber));
+  const tone = toneFor(subjects?.[0]);
 
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
+    <div className="p-4 pb-8 lg:p-6 max-w-[920px] mx-auto space-y-5 fade-up">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/classes')} aria-label="Back to classes">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-manrope text-2xl font-bold tracking-tight">Class {className}-{sectionName}</h1>
-            {isClassTeacher && <Badge variant="success">Class Teacher</Badge>}
+      <div className="flex items-start gap-3">
+        <button
+          onClick={() => navigate('/classes')}
+          aria-label="Back to classes"
+          className="w-9 h-9 rounded-[10px] border border-line bg-white grid place-items-center shrink-0 text-ink-soft hover:text-ink hover:border-ink-faint/60 transition-colors"
+        >
+          <Icon name="arrow-left" size={17} strokeWidth={2} />
+        </button>
+        <PageHead
+          title={`Class ${className}-${sectionName}`}
+          sub={subjects?.length ? subjects.join(' · ') : `Section ${sectionName} — roster and quick actions.`}
+        />
+      </div>
+
+      {/* Hero */}
+      <Card className="p-5 shadow-card">
+        <div className="flex items-start gap-3.5">
+          <div
+            className="w-12 h-12 rounded-xl grid place-items-center font-700 text-[17px] shrink-0"
+            style={{ background: tone.soft, color: tone.dot }}
+          >
+            {className}{sectionName}
           </div>
-          <p className="text-sm text-muted-foreground">Class overview and student roster.</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-800 text-ink text-[24px] tnum leading-tight">
+              {loading ? '—' : students.length}{' '}
+              <span className="text-[14px] font-600 text-ink-soft">Students</span>
+            </p>
+          </div>
+          {isClassTeacher && <Chip tone="blue">Class teacher</Chip>}
         </div>
-      </div>
 
-      {/* Hero card */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      >
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-md bg-primary/10 text-primary grid place-items-center font-bold text-xl shrink-0">
-                {className}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Enrolled</p>
-                <p className="text-2xl font-bold">
-                  {loading ? '—' : students.length} <span className="text-sm font-medium text-muted-foreground">Students</span>
-                </p>
-              </div>
-            </div>
+        {subjects?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {subjects.map((s) => <SubjectTag key={s} subject={s} />)}
+          </div>
+        )}
 
-            {subjects?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                {subjects.map((s) => (
-                  <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Quick actions */}
-      <div className="flex gap-3">
-        <Button
-          className="flex-1"
-          onClick={() => navigate('/attendance', { state: { className, sectionName, sectionId, classId } })}
-        >
-          <ClipboardCheck className="h-4 w-4 mr-1.5" /> Take Attendance
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => navigate('/homework', { state: { className, sectionName } })}
-        >
-          <BookOpen className="h-4 w-4 mr-1.5" /> Assign Homework
-        </Button>
-      </div>
+        <div className="flex gap-2.5 mt-4 pt-4 border-t border-line">
+          <Button
+            className="flex-1"
+            icon="clipboard-check"
+            onClick={() => navigate('/attendance', { state: { className, sectionName, sectionId, classId } })}
+          >
+            Take attendance
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            icon="book-open"
+            onClick={() => navigate('/homework', { state: { className, sectionName } })}
+          >
+            Assign homework
+          </Button>
+        </div>
+      </Card>
 
       {/* Students */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Students ({loading ? '…' : students.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-1">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-3.5 w-40" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
+      <Card className="shadow-card overflow-hidden">
+        {loading ? (
+          <div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-5 py-3 border-t border-line first:border-0">
+                <div className="animate-pulse bg-line-soft rounded-full w-9 h-9 shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="animate-pulse bg-line-soft rounded h-3.5 w-40" />
+                  <div className="animate-pulse bg-line-soft rounded h-3 w-24" />
                 </div>
-              ))}
-            </div>
-          ) : sorted.length === 0 ? (
-            <div className="py-8 text-center">
-              <Users className="h-8 w-8 mx-auto text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">No students in this class yet.</p>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="divide-y divide-border"
-            >
-              {sorted.map((s) => (
-                <div key={s._id} className="flex items-center gap-3 py-3">
-                  <Avatar src={s.profileImageUrl} alt={s.firstName}>
-                    {(s.firstName || '?').charAt(0).toUpperCase()}
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{s.firstName} {s.lastName}</p>
-                  </div>
-                  <Badge variant="outline" className="whitespace-nowrap">Roll {s.rollNumber || '—'}</Badge>
-                </div>
-              ))}
-            </motion.div>
-          )}
-        </CardContent>
+              </div>
+            ))}
+          </div>
+        ) : sorted.length === 0 ? (
+          <Empty icon="users" title="No students in this class yet." sub="Students appear here once they are enrolled in this section." />
+        ) : (
+          <div>
+            {sorted.map((s) => (
+              <div key={s._id} className="flex items-center gap-3 px-5 py-3 border-t border-line first:border-0">
+                <span className="w-6 text-[12px] font-700 text-ink-faint tnum shrink-0">{s.rollNumber || '—'}</span>
+                <Avatar src={s.profileImageUrl} name={`${s.firstName || ''} ${s.lastName || ''}`.trim()} size={36} className="rounded-full" />
+                <p className="font-600 text-ink text-[14px] truncate min-w-0 flex-1">{s.firstName} {s.lastName}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );

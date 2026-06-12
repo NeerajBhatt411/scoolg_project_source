@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarDays } from 'lucide-react';
+import { PageHead, Segmented, Card, Chip, Empty, Icon, toneFor, fmt12, toMin, periodState } from '@/components/designkit';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const JS_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const Timetable = () => {
+  const navigate = useNavigate();
   const today = JS_DAYS[new Date().getDay()];
   const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday');
   const [schedule, setSchedule] = useState([]);
@@ -37,79 +35,59 @@ const Timetable = () => {
   }, []);
 
   const periods = schedule.find(d => d.dayOfWeek === activeDay)?.periods || [];
-
-  const isLive = (p) =>
-    activeDay === today &&
-    !!p.startTime && !!p.endTime &&
-    p.startTime <= nowHM && nowHM < p.endTime;
+  const dayItems = DAYS.map(d => ({ value: d, label: d.slice(0, 3) }));
+  const nowMin = toMin(nowHM);
 
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="font-manrope text-2xl font-bold tracking-tight">Weekly Timetable</h1>
-          <p className="text-sm text-muted-foreground">Your teaching schedule for the week.</p>
-        </div>
-        {!loading && (
-          <Badge variant="outline" className="shrink-0 mb-1 whitespace-nowrap">
-            {periods.length} {periods.length === 1 ? 'period' : 'periods'}
-          </Badge>
-        )}
+    <div className="p-4 pb-8 lg:p-6 max-w-[920px] mx-auto space-y-5 fade-up">
+      <PageHead eyebrow="My schedule" title="Weekly Timetable" sub="Tap any period to take attendance." />
+
+      <div className="overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+        <Segmented items={dayItems} value={activeDay} onChange={setActiveDay} />
       </div>
 
-      {/* Day tabs */}
-      <Tabs value={activeDay} onValueChange={setActiveDay}>
-        <TabsList className="w-full overflow-x-auto justify-start">
-          {DAYS.map(day => (
-            <TabsTrigger key={day} value={day}>
-              <span className="inline-flex items-center gap-1.5">
-                {day.substring(0, 3)}
-                {day === today && activeDay !== day && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" aria-label="Today"></span>
-                )}
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
       {loading ? (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-line-soft rounded-2xl h-20" />
           ))}
         </div>
       ) : periods.length === 0 ? (
-        <Card>
-          <CardContent className="p-10 text-center">
-            <CalendarDays className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No classes on {activeDay}.</p>
-          </CardContent>
+        <Card className="shadow-card">
+          <Empty icon="calendar-x" title={`No classes on ${activeDay}`} sub="A lighter day — time to plan ahead." />
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0 divide-y divide-border">
-            {periods.map((p, i) => {
-              const live = isLive(p);
-              return (
-                <div key={i} className={`flex items-center gap-4 px-4 py-3 ${live ? 'bg-primary/5' : ''}`}>
-                  <div className="w-14 shrink-0">
-                    <p className="text-sm font-bold text-primary leading-none">{p.startTime || '--'}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">{p.endTime || ''}</p>
+        <div className="space-y-3">
+          {periods.map((p, i) => {
+            const t = toneFor(p.subject);
+            const live = activeDay === today && periodState(p, nowMin) === 'live';
+            return (
+              <button
+                key={i}
+                onClick={() => navigate('/attendance', { state: { className: p.className, sectionName: p.sectionName } })}
+                className="group w-full text-left bg-white rounded-2xl border border-line shadow-card overflow-hidden flex items-stretch hover:shadow-card-lg transition-shadow"
+              >
+                <div className="w-1.5 shrink-0" style={{ background: t.dot }}></div>
+                <div className="flex items-center gap-4 p-4 flex-1 min-w-0">
+                  <div className="text-center w-[58px] shrink-0">
+                    <p className="font-700 text-ink text-[14px] tnum leading-none">{p.startTime ? fmt12(p.startTime).replace(' ', '') : '--'}</p>
+                    <p className="text-[11px] text-ink-faint mt-1 tnum">{p.endTime ? fmt12(p.endTime).replace(' ', '') : ''}</p>
                   </div>
+                  <div className="w-px self-stretch bg-line"></div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold truncate">{p.subject || 'Free'}</p>
-                      <Badge variant="secondary" className="shrink-0">P{p.periodNumber}</Badge>
-                      {live && <Badge className="animate-pulse shrink-0">NOW</Badge>}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] font-600 text-ink-faint">Period {p.periodNumber}</span>
+                      {live && <Chip tone="green">Now</Chip>}
                     </div>
-                    <p className="text-xs text-muted-foreground">Class {p.className}-{p.sectionName}</p>
+                    <p className="font-700 text-ink text-[16px] leading-tight truncate">{p.subject || 'Free'}</p>
+                    <p className="text-ink-soft text-[13px] tnum mt-0.5">Class {p.className}-{p.sectionName}</p>
                   </div>
+                  <Icon name="chevron-right" size={19} className="text-ink-faint group-hover:text-blue-600 transition-colors shrink-0" />
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+              </button>
+            );
+          })}
+        </div>
       )}
     </div>
   );
