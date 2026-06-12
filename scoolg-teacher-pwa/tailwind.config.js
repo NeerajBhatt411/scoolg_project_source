@@ -7,6 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ---- Design-handoff tokens (Claude Design "Scoolg Teacher" redesign) ----
+        ink: '#161A20',
+        'ink-soft': '#5C6573',
+        'ink-faint': '#9AA1AD',
+        line: '#ECEEF2',
+        'line-soft': '#F4F5F8',
+        paper: '#F7F8FA',
+        blue: {
+          50: '#EFF4FF', 100: '#DBE6FE', 200: '#BFD3FE', 300: '#93B4FD',
+          400: '#5C8BFA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
+          800: '#1E40AF', 900: '#1E3A8A',
+        },
         // shadcn/ui tokens (CSS variables defined in index.css)
         border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
@@ -86,9 +98,19 @@ export default {
         "on-background": "#191b23",
         "surface-variant": "#e1e2ed",
       },
+      boxShadow: {
+        card: '0 1px 2px rgba(16,24,40,0.04)',
+        'card-md': '0 1px 3px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04)',
+        'card-lg': '0 4px 16px -6px rgba(16,24,40,0.12)',
+        pop: '0 20px 48px -16px rgba(16,24,40,0.24)',
+      },
+      fontWeight: {
+        500: '500', 600: '600', 700: '700', 800: '800',
+      },
       fontFamily: {
-        manrope: ["Manrope", "sans-serif"],
-        inter: ["Inter", "sans-serif"],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        manrope: ['"Plus Jakarta Sans"', 'sans-serif'],
+        inter: ['"Plus Jakarta Sans"', 'sans-serif'],
         "headline-md": ["Manrope"],
         "label-md": ["Inter"],
         "display-lg": ["Manrope"],

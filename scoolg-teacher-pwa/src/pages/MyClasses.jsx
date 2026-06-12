@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Users, ClipboardCheck, BookOpen, ChevronRight } from 'lucide-react';
+import { PageHead, Card, Chip, Empty, Icon, Button, SubjectTag, toneFor } from '@/components/designkit';
 
 const MyClasses = () => {
   const navigate = useNavigate();
@@ -26,77 +22,79 @@ const MyClasses = () => {
     load();
   }, []);
 
+  const gradeCount = new Set(classes.map(c => c.className)).size;
+
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div>
-        <h1 className="font-manrope text-2xl font-bold tracking-tight">My Classes</h1>
-        <p className="text-sm text-muted-foreground">Classes and sections assigned to you.</p>
-      </div>
+    <div className="p-4 pb-8 lg:p-6 max-w-[1000px] mx-auto space-y-5 fade-up">
+      <PageHead
+        eyebrow="Your classes"
+        title="My Classes"
+        sub={loading ? 'Loading your sections…' : `${classes.length} ${classes.length === 1 ? 'section' : 'sections'} across ${gradeCount} ${gradeCount === 1 ? 'grade' : 'grades'}.`}
+      />
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-44 rounded-xl" />
+            <div key={i} className="animate-pulse bg-line-soft rounded-2xl h-44" />
           ))}
         </div>
       ) : classes.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <Users className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="mt-3 text-sm font-semibold">No classes assigned yet.</p>
-            <p className="text-xs text-muted-foreground mt-1">Your admin assigns classes via the timetable.</p>
-          </CardContent>
+        <Card className="shadow-card">
+          <Empty icon="users" title="No classes assigned yet." sub="Your admin assigns classes via the timetable." />
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {classes.map((c) => (
-            <Card
-              key={c.sectionId}
-              onClick={() => navigate('/classes/detail', { state: c })}
-              className="transition-shadow hover:shadow-md cursor-pointer"
-            >
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3">
-                <div className="h-11 w-11 rounded-md bg-primary/10 text-primary grid place-items-center font-bold shrink-0">
-                  {c.className}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-base">Class {c.className}-{c.sectionName}</CardTitle>
-                  {c.isClassTeacher && (
-                    <Badge variant="success" className="mt-1">Class Teacher</Badge>
-                  )}
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </CardHeader>
-
-              {c.subjects?.length > 0 && (
-                <CardContent className="pb-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {c.subjects.slice(0, 6).map((s) => (
-                      <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
-                    ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {classes.map((c) => {
+            const t = toneFor(c.subjects?.[0]);
+            return (
+              <Card
+                key={c.sectionId}
+                onClick={() => navigate('/classes/detail', { state: c })}
+                className="p-5 shadow-card hover:shadow-card-lg transition-shadow cursor-pointer"
+              >
+                <div className="flex items-start gap-3.5">
+                  <div
+                    className="w-12 h-12 rounded-xl grid place-items-center font-700 text-[17px] shrink-0"
+                    style={{ background: t.soft, color: t.dot }}
+                  >
+                    {c.className}{c.sectionName}
                   </div>
-                </CardContent>
-              )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-700 text-ink text-[16px] leading-tight">Class {c.className}-{c.sectionName}</p>
+                      {c.isClassTeacher && <Icon name="star" size={15} fill="#2563EB" className="text-blue-600" />}
+                    </div>
+                  </div>
+                  {c.isClassTeacher && <Chip tone="blue">Class teacher</Chip>}
+                </div>
 
-              <CardFooter className="gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={(e) => { e.stopPropagation(); navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } }); }}
-                >
-                  <ClipboardCheck className="h-4 w-4 mr-1.5" /> Attendance
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={(e) => { e.stopPropagation(); navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } }); }}
-                >
-                  <BookOpen className="h-4 w-4 mr-1.5" /> Homework
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                {c.subjects?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    {c.subjects.map((s) => <SubjectTag key={s} subject={s} />)}
+                  </div>
+                )}
+
+                <div className="flex gap-2.5 mt-4 pt-4 border-t border-line">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    icon="clipboard-check"
+                    onClick={(e) => { e.stopPropagation(); navigate('/attendance', { state: { className: c.className, sectionName: c.sectionName, sectionId: c.sectionId, classId: c.classId } }); }}
+                  >
+                    Attendance
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    icon="book-open"
+                    onClick={(e) => { e.stopPropagation(); navigate('/homework', { state: { className: c.className, sectionName: c.sectionName } }); }}
+                  >
+                    Homework
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
