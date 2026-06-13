@@ -85,7 +85,7 @@ const Attendance = () => {
   return (
     <div className="bg-[#f8fafc] min-h-screen pb-32">
       <TopHeader title="Attendance" />
-      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-4">
 
         {/* Compact Controls */}
         <div className="bg-white rounded-2xl p-4 shadow-[0_8px_20px_rgba(120,113,108,0.04)] border border-stone-200">

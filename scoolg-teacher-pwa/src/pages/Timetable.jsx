@@ -54,7 +54,7 @@ const Timetable = () => {
         <div className="bg-[#f8fafc] min-h-screen pb-24">
             <TopHeader title="Timetable" />
             
-            <div className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                 
                 {/* Header & Tabs */}
                 <div className="mb-2">

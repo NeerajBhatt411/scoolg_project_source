@@ -37,11 +37,11 @@ const getGreeting = () => {
 const Dashboard = () => {
     const { teacher } = useAuth();
     const navigate = useNavigate();
-    
+
     const [todayPeriods, setTodayPeriods] = useState([]);
     const [weekCount, setWeekCount] = useState(0);
     const [classCount, setClassCount] = useState(0);
-    const [weekDays, setWeekDays] = useState([0,0,0,0,0,0,0]);
+    const [weekDays, setWeekDays] = useState([0, 0, 0, 0, 0, 0, 0]);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -60,23 +60,23 @@ const Dashboard = () => {
                     api.get('/teacher/my-classes').catch(() => ({ data: [] })),
                     api.get('/teacher/events?limit=5').catch(() => ({ data: [] })),
                 ]);
-                
+
                 const sched = ttRes.data?.schedule || [];
                 setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
                 setWeekCount(sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0));
-                
-                const dayCounts = [0,0,0,0,0,0,0];
-                const mapDay = {'Monday':0, 'Tuesday':1, 'Wednesday':2, 'Thursday':3, 'Friday':4, 'Saturday':5, 'Sunday':6};
+
+                const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+                const mapDay = { 'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3, 'Friday': 4, 'Saturday': 5, 'Sunday': 6 };
                 sched.forEach(d => {
                     if (mapDay[d.dayOfWeek] !== undefined) {
                         dayCounts[mapDay[d.dayOfWeek]] = d.periods?.length || 0;
                     }
                 });
                 setWeekDays(dayCounts);
-                
+
                 const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
                 setClassCount(cls.length);
-                
+
                 setEvents(Array.isArray(evRes.data) ? evRes.data : []);
             } catch (e) {
                 console.error('Dashboard load failed', e);
@@ -108,7 +108,7 @@ const Dashboard = () => {
                         <div className="w-48 sm:w-64 h-8 sm:h-10 rounded-xl bg-slate-200/70 animate-pulse"></div>
                         <div className="w-32 h-4 rounded-md bg-slate-200/50 animate-pulse"></div>
                     </div>
-                    
+
                     {/* 4 Cards Grid */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {[1, 2, 3, 4].map(i => (
@@ -156,8 +156,8 @@ const Dashboard = () => {
     return (
         <div className="bg-[#f8fafc] min-h-screen pb-10">
             <TopHeader title="Dashboard" />
-            
-            <div className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                 {/* Header Greeting */}
                 <div className="mb-6 sm:mb-8">
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight truncate">
@@ -229,7 +229,7 @@ const Dashboard = () => {
 
                         {loading ? (
                             <div className="space-y-6">
-                                {[1,2,3].map(i => <div key={i} className="h-16 animate-pulse bg-slate-50 rounded-2xl"></div>)}
+                                {[1, 2, 3].map(i => <div key={i} className="h-16 animate-pulse bg-slate-50 rounded-2xl"></div>)}
                             </div>
                         ) : todayPeriods.length === 0 ? (
                             <div className="py-12 text-center">
@@ -249,13 +249,13 @@ const Dashboard = () => {
                                                 <p className="text-[11px] sm:text-sm font-black text-slate-900 leading-none">{p.startTime}</p>
                                                 <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{p.endTime}</p>
                                             </div>
-                                            
+
                                             {/* Timeline divider */}
                                             <div className="relative flex flex-col items-center px-1">
                                                 <div className="w-[2px] h-full bg-slate-200 absolute top-0 bottom-0"></div>
                                                 <div className="w-3.5 h-3.5 rounded-full border-[2px] border-slate-50 relative mt-6 shadow-sm z-10 transition-transform group-hover:scale-125" style={{ backgroundColor: color }}></div>
                                             </div>
-                                            
+
                                             {/* Card Content */}
                                             <div className="flex-1 py-3 pl-3 sm:pl-5">
                                                 <div className="bg-[#faf9f6] p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all flex justify-between items-center group-hover:-translate-y-1">
@@ -282,7 +282,7 @@ const Dashboard = () => {
                                 This Week <ChevronRight className="h-3 w-3" />
                             </button>
                         </div>
-                        
+
                         <div className="flex-1 min-h-[200px]">
                             {loading ? (
                                 <div className="h-full w-full animate-pulse bg-slate-50 rounded-2xl"></div>
@@ -317,8 +317,8 @@ const Dashboard = () => {
                             {quickActions.map((action, idx) => {
                                 const Icon = action.icon;
                                 return (
-                                    <button 
-                                        key={idx} 
+                                    <button
+                                        key={idx}
                                         onClick={() => navigate(action.path)}
                                         className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-100 hover:shadow-md hover:border-blue-100 transition-all active:scale-95 group"
                                     >
@@ -342,7 +342,7 @@ const Dashboard = () => {
                                 View Calendar <ChevronRight className="h-3 w-3" />
                             </button>
                         </div>
-                        
+
                         <div className="space-y-4">
                             {loading ? (
                                 [1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse bg-slate-50 rounded-2xl"></div>)
@@ -356,7 +356,7 @@ const Dashboard = () => {
                                     const dateObj = new Date(ev.date);
                                     const month = dateObj.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
                                     const day = dateObj.getDate();
-                                    
+
                                     return (
                                         <div key={idx} onClick={() => navigate('/calendar')} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer border border-transparent hover:border-slate-100">
                                             <div className="w-12 h-12 rounded-[14px] bg-slate-50 border border-slate-100 flex flex-col items-center justify-center shrink-0">
