@@ -15,7 +15,6 @@ import Notices from './pages/Notices';
 import Students from './pages/Students';
 import Calendar from './pages/Calendar';
 import Notifications from './pages/Notifications';
-import InstallPrompt from './components/InstallPrompt';
 import { useAuth } from './context/AuthContext';
 
 // Cool, premium loading animation using the School's Logo
@@ -69,7 +68,6 @@ const GuestOnly = ({ children }) => {
 const App = () => {
   return (
     <>
-    <InstallPrompt />
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />

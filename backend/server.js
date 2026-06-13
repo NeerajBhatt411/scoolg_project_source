@@ -1499,6 +1499,49 @@ app.get('/api/admin/students', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/students/{id}:
+ *   put:
+ *     summary: Update a student's profile or status
+ *     tags: [School Admin - Students]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Updated student
+ */
+app.put('/api/admin/students/:id', async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const updates = req.body;
+        
+        // Exclude sensitive fields from being updated directly here if needed
+        delete updates.password;
+        delete updates.studentAppId;
+
+        const updatedStudent = await Student.findByIdAndUpdate(
+            studentId, 
+            { $set: updates },
+            { new: true }
+        );
+
+        if (!updatedStudent) return res.status(404).json({ error: "Student not found" });
+
+        res.json({ message: "Student updated successfully", student: updatedStudent });
+    } catch (err) {
+        console.error("❌ Update student error:", err);
+        res.status(500).json({ error: "Failed to update student details" });
+    }
+});
 
 // --- Super Admin APIs ---
 
@@ -2630,6 +2673,34 @@ app.get('/api/student/attendance', async (req, res) => {
         }));
 
         res.json(result);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+});
+
+/**
+ * @swagger
+ * /api/student/calendar:
+ *   get:
+ *     summary: Get Calendar Events
+ *     tags: [Academic]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+app.get('/api/student/calendar', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const events = await CalendarEvent.find({ schoolId: student.schoolId }).sort({ date: 1 });
+        res.json(events);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
