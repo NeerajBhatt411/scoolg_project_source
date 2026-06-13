@@ -8,6 +8,7 @@ import { CalendarDays } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const JS_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import TopHeader from '@/components/TopHeader';
 
 const Timetable = () => {
   const today = JS_DAYS[new Date().getDay()];
@@ -44,12 +45,10 @@ const Timetable = () => {
     p.startTime <= nowHM && nowHM < p.endTime;
 
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="font-manrope text-2xl font-bold tracking-tight">Weekly Timetable</h1>
-          <p className="text-sm text-muted-foreground">Your teaching schedule for the week.</p>
-        </div>
+    <>
+      <TopHeader title="Weekly Timetable" />
+      <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
+        <div className="flex items-end justify-between gap-3">
         {!loading && (
           <Badge variant="outline" className="shrink-0 mb-1 whitespace-nowrap">
             {periods.length} {periods.length === 1 ? 'period' : 'periods'}
@@ -112,6 +111,7 @@ const Timetable = () => {
         </Card>
       )}
     </div>
+    </>
   );
 };
 

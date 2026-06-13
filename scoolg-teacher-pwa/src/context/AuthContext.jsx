@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [school, setSchool] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('teacher_token'));
   const [loading, setLoading] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ teacher, school, token, loading, login, logout, fetchProfile }}>
+    <AuthContext.Provider value={{ teacher, school, token, loading, login, logout, fetchProfile, mobileNavOpen, setMobileNavOpen }}>
       {children}
     </AuthContext.Provider>
   );

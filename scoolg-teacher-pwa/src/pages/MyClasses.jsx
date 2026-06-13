@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, ClipboardCheck, BookOpen, ChevronRight } from 'lucide-react';
 
+import TopHeader from '@/components/TopHeader';
+
 const MyClasses = () => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
@@ -27,11 +29,9 @@ const MyClasses = () => {
   }, []);
 
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div>
-        <h1 className="font-manrope text-2xl font-bold tracking-tight">My Classes</h1>
-        <p className="text-sm text-muted-foreground">Classes and sections assigned to you.</p>
-      </div>
+    <>
+      <TopHeader title="My Classes" />
+      <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -99,7 +99,8 @@ const MyClasses = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,304 +1,332 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar } from '@/components/ui/avatar';
-import {
-  CalendarDays, Clock, Users, ChevronRight, ClipboardCheck,
-  NotebookPen, CalendarCheck, Star, GraduationCap,
-} from 'lucide-react';
+import api from '../utils/api';
+import TopHeader from '@/components/TopHeader';
+import { Calendar, Users, BookOpen, ChevronRight, Clock, Calculator, Code, BookType, Beaker, FileText, LayoutDashboard, ClipboardCheck, FileEdit, Megaphone, CloudUpload, PenTool, BarChart } from 'lucide-react';
+import AttendanceTrendChart from '../components/AttendanceTrendChart';
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const EVENT_CATEGORIES = {
-  'Holiday': { color: '#e11d48', bg: '#fff1f2' },
-  'Annual Function': { color: '#7c3aed', bg: '#f5f3ff' },
-  'Sports Day': { color: '#059669', bg: '#ecfdf5' },
-  'Exam': { color: '#d97706', bg: '#fffbeb' },
-  'Meeting': { color: '#2563eb', bg: '#eff6ff' },
-  'Event': { color: '#0891b2', bg: '#ecfeff' },
-  'Other': { color: '#64748b', bg: '#f1f5f9' },
+// Map subjects to colors for the timeline dot
+const getSubjectColor = (subject) => {
+    const sub = (subject || '').toLowerCase();
+    if (sub.includes('math')) return '#22c55e'; // Green
+    if (sub.includes('computer') || sub.includes('cs')) return '#3b82f6'; // Blue
+    if (sub.includes('english') || sub.includes('lang')) return '#a855f7'; // Purple
+    if (sub.includes('science') || sub.includes('phy') || sub.includes('chem') || sub.includes('bio')) return '#f97316'; // Orange
+    if (sub.includes('history') || sub.includes('social')) return '#eab308'; // Yellow
+    return '#64748b'; // Slate
 };
 
-const eventDayLabel = (dateStr) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(dateStr);
-  d.setHours(0, 0, 0, 0);
-  const diff = Math.round((d - today) / 86400000);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
-  if (diff > 1 && diff < 7) return `In ${diff} days`;
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const EVENT_CATEGORIES = {
+    'Holiday': { color: '#ef4444', label: 'Holiday' },
+    'Annual Function': { color: '#8b5cf6', label: 'School Event' },
+    'Sports Day': { color: '#f59e0b', label: 'School Event' },
+    'Exam': { color: '#3b82f6', label: 'Exam' },
+    'Meeting': { color: '#22c55e', label: 'Meeting' },
+    'Event': { color: '#06b6d4', label: 'School Event' },
+    'Other': { color: '#64748b', label: 'Other' },
+};
+
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
 };
 
 const Dashboard = () => {
-  const { teacher, school } = useAuth();
-  const navigate = useNavigate();
-  const [todayPeriods, setTodayPeriods] = useState([]);
-  const [weekCount, setWeekCount] = useState(0);
-  const [classCount, setClassCount] = useState(0);
-  const [weekDays, setWeekDays] = useState([]);
-  const [myClasses, setMyClasses] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const { teacher } = useAuth();
+    const navigate = useNavigate();
+    
+    const [todayPeriods, setTodayPeriods] = useState([]);
+    const [weekCount, setWeekCount] = useState(0);
+    const [classCount, setClassCount] = useState(0);
+    const [weekDays, setWeekDays] = useState([0,0,0,0,0,0,0]);
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  const now = new Date();
-  const todayName = DAYS[now.getDay()];
-  const dateStr = `${todayName}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-  const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
-  const hour = now.getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const now = new Date();
+    const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayName = DAYS[now.getDay()];
+    const teacherName = teacher?.fullName || 'Teacher';
+    const dateString = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const greeting = getGreeting();
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [ttRes, clsRes, evRes] = await Promise.all([
-          api.get('/teacher/timetable'),
-          api.get('/teacher/my-classes'),
-          api.get('/teacher/events?limit=5').catch(() => ({ data: [] })),
-        ]);
-        const sched = ttRes.data?.schedule || [];
-        setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
-        setWeekCount(sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0));
-        setWeekDays(sched.map(d => ({ day: d.dayOfWeek, count: d.periods?.length || 0 })));
-        const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
-        setClassCount(cls.length);
-        setMyClasses(cls);
-        setEvents(Array.isArray(evRes.data) ? evRes.data : []);
-      } catch (e) {
-        console.error('Dashboard load failed', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [todayName]);
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const [ttRes, clsRes, evRes] = await Promise.all([
+                    api.get('/teacher/timetable').catch(() => ({ data: { schedule: [] } })),
+                    api.get('/teacher/my-classes').catch(() => ({ data: [] })),
+                    api.get('/teacher/events?limit=5').catch(() => ({ data: [] })),
+                ]);
+                
+                const sched = ttRes.data?.schedule || [];
+                setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
+                setWeekCount(sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0));
+                
+                const dayCounts = [0,0,0,0,0,0,0];
+                const mapDay = {'Monday':0, 'Tuesday':1, 'Wednesday':2, 'Thursday':3, 'Friday':4, 'Saturday':5, 'Sunday':6};
+                sched.forEach(d => {
+                    if (mapDay[d.dayOfWeek] !== undefined) {
+                        dayCounts[mapDay[d.dayOfWeek]] = d.periods?.length || 0;
+                    }
+                });
+                setWeekDays(dayCounts);
+                
+                const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
+                setClassCount(cls.length);
+                
+                setEvents(Array.isArray(evRes.data) ? evRes.data : []);
+            } catch (e) {
+                console.error('Dashboard load failed', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [todayName]);
 
-  const stats = [
-    { label: 'Periods Today', value: todayPeriods.length, icon: CalendarDays },
-    { label: 'Classes / Week', value: weekCount, icon: Clock },
-    { label: 'My Classes', value: classCount, icon: Users },
-  ];
+    const totalStudents = classCount * 38; // Estimated
 
-  const actions = [
-    { name: 'Take Attendance', sub: 'Mark today', icon: ClipboardCheck, path: '/attendance' },
-    { name: 'Assign Homework', sub: 'New task', icon: NotebookPen, path: '/homework' },
-    { name: 'My Timetable', sub: 'Full week', icon: CalendarDays, path: '/timetable' },
-    { name: 'My Classes', sub: `${classCount} sections`, icon: Users, path: '/classes' },
-  ];
+    const quickActions = [
+        { label: 'Take Attendance', icon: ClipboardCheck, path: '/attendance', color: 'text-blue-600', bg: 'bg-blue-50/80' },
+        { label: 'Assign Homework', icon: FileEdit, path: '/homework', color: 'text-blue-600', bg: 'bg-blue-50/80' },
+        { label: 'My Timetable', icon: Calendar, path: '/timetable', color: 'text-blue-600', bg: 'bg-blue-50/80' },
+        { label: 'My Classes', icon: Users, path: '/classes', color: 'text-blue-600', bg: 'bg-blue-50/80' },
+    ];
 
-  return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      {/* Greeting */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar src={avatar} alt={teacher?.fullName || 'Teacher'} className="h-11 w-11">
-            {(teacher?.fullName || 'T').charAt(0)}
-          </Avatar>
-          <div className="min-w-0">
-            <h1 className="font-manrope text-2xl font-bold tracking-tight truncate">
-              {greeting}, {teacher?.fullName || 'Teacher'}
-            </h1>
-            <p className="text-sm text-muted-foreground">{dateStr}</p>
-          </div>
-        </div>
-        <Badge variant="outline" className="hidden sm:inline-flex shrink-0 gap-1.5 py-1.5 px-3">
-          <GraduationCap className="h-3.5 w-3.5 text-primary" />
-          <span className="max-w-[180px] truncate">{school?.name || 'My School'}</span>
-        </Badge>
-      </div>
+    const upcoming = events.slice(0, 3);
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground truncate">{s.label}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{s.value}</div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+    return (
+        <div className="bg-[#f8fafc] min-h-screen pb-10">
+            <TopHeader title="Dashboard" />
+            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+                {/* Header Greeting */}
+                <div className="mb-6 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight truncate">
+                        {greeting}, <span className="capitalize">{teacherName.split(' ')[0]}</span>
+                    </h1>
+                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">{dateString}</p>
+                </div>
 
-      {/* Schedule + side column */}
-      <div className="lg:grid lg:grid-cols-3 lg:gap-5 space-y-5 lg:space-y-0">
-        {/* Today's Schedule */}
-        <Card className="lg:col-span-2 h-fit">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <div className="space-y-1">
-              <CardTitle>Today's Schedule</CardTitle>
-              <CardDescription>{dateStr}</CardDescription>
+                {/* Top Stat Cards (Horizontal Layout with Unified Blue) */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    {/* Card 1 */}
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
+                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                            <Calendar className="h-4 w-4 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] sm:text-xs font-bold text-stone-500 leading-tight mb-0.5">Periods Today</p>
+                            <h4 className="text-lg sm:text-2xl font-black text-slate-900 leading-none drop-shadow-sm">{todayPeriods.length}</h4>
+                        </div>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
+                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                            <LayoutDashboard className="h-4 w-4 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] sm:text-xs font-bold text-stone-500 leading-tight mb-0.5">Classes Week</p>
+                            <h4 className="text-lg sm:text-2xl font-black text-slate-900 leading-none drop-shadow-sm">{weekCount}</h4>
+                        </div>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/classes')}>
+                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                            <BookOpen className="h-4 w-4 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] sm:text-xs font-bold text-stone-500 leading-tight mb-0.5">My Classes</p>
+                            <h4 className="text-lg sm:text-2xl font-black text-slate-900 leading-none drop-shadow-sm">{classCount}</h4>
+                        </div>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/classes')}>
+                        <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                            <Users className="h-4 w-4 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] sm:text-xs font-bold text-stone-500 leading-tight mb-0.5">Students</p>
+                            <h4 className="text-lg sm:text-2xl font-black text-slate-900 leading-none drop-shadow-sm">{totalStudents}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Middle Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Today's Schedule Timeline */}
+                    <div className="lg:col-span-2 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-center mb-6 sm:mb-8">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2">
+                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                                Today's Schedule
+                            </h2>
+                            <button onClick={() => navigate('/timetable')} className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
+                                Full Timetable <ChevronRight className="h-3 w-3" />
+                            </button>
+                        </div>
+
+                        {loading ? (
+                            <div className="space-y-6">
+                                {[1,2,3].map(i => <div key={i} className="h-16 animate-pulse bg-slate-50 rounded-2xl"></div>)}
+                            </div>
+                        ) : todayPeriods.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Clock className="h-8 w-8 text-slate-300" />
+                                </div>
+                                <p className="text-slate-500 font-medium">No classes scheduled for today.</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col relative">
+                                {todayPeriods.map((p, i) => {
+                                    const color = getSubjectColor(p.subject);
+                                    return (
+                                        <div key={i} className="relative flex items-stretch group cursor-pointer">
+                                            {/* Time Column */}
+                                            <div className="w-14 sm:w-20 shrink-0 text-right pr-3 sm:pr-4 py-6">
+                                                <p className="text-[11px] sm:text-sm font-black text-slate-900 leading-none">{p.startTime}</p>
+                                                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{p.endTime}</p>
+                                            </div>
+                                            
+                                            {/* Timeline divider */}
+                                            <div className="relative flex flex-col items-center px-1">
+                                                <div className="w-[2px] h-full bg-slate-200 absolute top-0 bottom-0"></div>
+                                                <div className="w-3.5 h-3.5 rounded-full border-[2px] border-slate-50 relative mt-6 shadow-sm z-10 transition-transform group-hover:scale-125" style={{ backgroundColor: color }}></div>
+                                            </div>
+                                            
+                                            {/* Card Content */}
+                                            <div className="flex-1 py-3 pl-3 sm:pl-5">
+                                                <div className="bg-[#faf9f6] p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all flex justify-between items-center group-hover:-translate-y-1">
+                                                    <div className="min-w-0 pr-2">
+                                                        <h4 className="text-[13px] sm:text-base font-black text-slate-900 mb-1.5 truncate drop-shadow-sm">{p.subject || 'Subject Not Set'}</h4>
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none shadow-inner bg-white/80" style={{ color: color, border: `1px solid ${color}20`, backgroundColor: `${color}0A` }}>
+                                                            {p.className} {p.sectionName}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Classes This Week Chart */}
+                    <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col">
+                        <div className="flex justify-between items-center mb-6 sm:mb-8">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900">Classes This Week</h2>
+                            <button onClick={() => navigate('/timetable')} className="text-[11px] sm:text-xs font-semibold text-blue-600 flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
+                                This Week <ChevronRight className="h-3 w-3" />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 min-h-[200px]">
+                            {loading ? (
+                                <div className="h-full w-full animate-pulse bg-slate-50 rounded-2xl"></div>
+                            ) : (
+                                <AttendanceTrendChart labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} values={weekDays} height="h-[220px]" color="#8b5cf6" />
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 mt-6">
+                            <div className="bg-slate-50 rounded-2xl p-3 text-center">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                                <p className="text-lg font-bold text-slate-900">{weekCount}</p>
+                            </div>
+                            <div className="bg-green-50/50 rounded-2xl p-3 text-center border border-green-100">
+                                <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-1">Highest</p>
+                                <p className="text-[13px] font-bold text-slate-900">{Math.max(...weekDays)}</p>
+                            </div>
+                            <div className="bg-rose-50/50 rounded-2xl p-3 text-center border border-rose-100">
+                                <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Lowest</p>
+                                <p className="text-[13px] font-bold text-slate-900">{Math.min(...weekDays.filter(v => v > 0)) || 0}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Quick Actions */}
+                    <div className="lg:col-span-2 bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100">
+                        <h2 className="text-lg font-bold text-slate-900 mb-6">Quick Actions</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {quickActions.map((action, idx) => {
+                                const Icon = action.icon;
+                                return (
+                                    <button 
+                                        key={idx} 
+                                        onClick={() => navigate(action.path)}
+                                        className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-100 hover:shadow-md hover:border-blue-100 transition-all active:scale-95 group"
+                                    >
+                                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-3 ${action.bg} ${action.color} group-hover:scale-110 transition-transform duration-300`}>
+                                            <Icon className="h-6 w-6" />
+                                        </div>
+                                        <span className="text-[11px] sm:text-xs font-bold text-slate-700 text-center leading-tight">
+                                            {action.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Upcoming Events */}
+                    <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-bold text-slate-900">Upcoming Events</h2>
+                            <button onClick={() => navigate('/calendar')} className="text-xs font-semibold text-blue-600 flex items-center gap-1">
+                                View Calendar <ChevronRight className="h-3 w-3" />
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {loading ? (
+                                [1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse bg-slate-50 rounded-2xl"></div>)
+                            ) : upcoming.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-slate-500 text-sm font-medium">No upcoming events.</p>
+                                </div>
+                            ) : (
+                                upcoming.map((ev, idx) => {
+                                    const meta = EVENT_CATEGORIES[ev.category] || EVENT_CATEGORIES['Other'];
+                                    const dateObj = new Date(ev.date);
+                                    const month = dateObj.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
+                                    const day = dateObj.getDate();
+                                    
+                                    return (
+                                        <div key={idx} onClick={() => navigate('/calendar')} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer border border-transparent hover:border-slate-100">
+                                            <div className="w-12 h-12 rounded-[14px] bg-slate-50 border border-slate-100 flex flex-col items-center justify-center shrink-0">
+                                                <span className="text-[10px] font-bold text-blue-600 leading-tight">{month}</span>
+                                                <span className="text-lg font-black text-slate-900 leading-tight">{day}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-bold text-slate-900 truncate">{ev.title}</h4>
+                                                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{meta.label}</p>
+                                            </div>
+                                            <div className="shrink-0 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: meta.color }}></span>
+                                                <span className="text-[10px] font-semibold text-slate-400">All Day</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/timetable')}>
-              View week
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-14 rounded-md" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-2/5" />
-                      <Skeleton className="h-3 w-1/4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : todayPeriods.length === 0 ? (
-              <div className="py-10 text-center">
-                <CalendarCheck className="h-8 w-8 mx-auto text-muted-foreground" />
-                <p className="mt-3 text-sm font-semibold">No periods today</p>
-                <p className="mt-1 text-xs text-muted-foreground">Enjoy your day off from teaching.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {todayPeriods.map((p, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="w-14 text-center shrink-0">
-                      <p className="text-sm font-bold text-primary leading-tight">{p.startTime || '--'}</p>
-                      <p className="text-[10px] text-muted-foreground">P{p.periodNumber}</p>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{p.subject || 'Free Period'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Class {p.className}-{p.sectionName}{p.endTime ? ` · ends ${p.endTime}` : ''}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Side column */}
-        <div className="space-y-5">
-          {/* Quick actions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-              {actions.map((a) => {
-                const Icon = a.icon;
-                return (
-                  <Button
-                    key={a.path}
-                    variant="outline"
-                    onClick={() => navigate(a.path)}
-                    className="h-auto justify-start gap-3 p-4"
-                  >
-                    <span className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 text-left">
-                      <span className="block text-sm font-semibold truncate">{a.name}</span>
-                      <span className="block text-xs font-normal text-muted-foreground truncate">{a.sub}</span>
-                    </span>
-                  </Button>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          {/* My classes */}
-          {myClasses.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>My Classes</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {myClasses.map((c) => (
-                  <Badge
-                    key={c.sectionId}
-                    variant="secondary"
-                    className="cursor-pointer py-1.5 px-3"
-                    onClick={() => navigate('/classes')}
-                  >
-                    {c.className}-{c.sectionName}
-                    {c.isClassTeacher && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Upcoming events */}
-          {events.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Upcoming Events</CardTitle>
-              </CardHeader>
-              <CardContent className="divide-y divide-border">
-                {events.map((ev, i) => {
-                  const cat = EVENT_CATEGORIES[ev.category] || EVENT_CATEGORIES['Other'];
-                  return (
-                    <div key={ev._id || i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                      <span className="h-9 w-9 rounded-md grid place-items-center shrink-0" style={{ background: cat.bg }}>
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: cat.color }} />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{ev.title}</p>
-                        <p className="text-xs text-muted-foreground">{ev.category}</p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0">{eventDayLabel(ev.date)}</Badge>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          )}
         </div>
-      </div>
-
-      {/* Week at a glance */}
-      {!loading && weekDays.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>This Week at a Glance</CardTitle>
-            <CardDescription>Periods per day across your timetable.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between gap-2 sm:gap-4 h-36">
-              {weekDays.map((d) => {
-                const max = Math.max(...weekDays.map(x => x.count), 1);
-                const pct = Math.round((d.count / max) * 100);
-                const isToday = d.day === todayName;
-                return (
-                  <div key={d.day} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
-                    <span className="text-xs font-semibold">{d.count}</span>
-                    <div
-                      className={`w-full max-w-[40px] rounded-md ${isToday ? 'bg-primary' : 'bg-muted'}`}
-                      style={{ height: `${Math.max(pct, 6)}%` }}
-                    ></div>
-                    <span className={`text-xs ${isToday ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
-                      {d.day.substring(0, 3)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+    );
 };
 
 export default Dashboard;

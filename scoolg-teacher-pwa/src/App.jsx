@@ -11,6 +11,11 @@ import Attendance from './pages/Attendance';
 import Homework from './pages/Homework';
 import Diary from './pages/Diary';
 import Profile from './pages/Profile';
+import Exams from './pages/Exams';
+import Notices from './pages/Notices';
+import Students from './pages/Students';
+import Calendar from './pages/Calendar';
+import Notifications from './pages/Notifications';
 import InstallPrompt from './components/InstallPrompt';
 import { useAuth } from './context/AuthContext';
 
@@ -54,6 +59,11 @@ const App = () => {
         <Route path="/homework" element={<Homework />} />
         <Route path="/diary" element={<Diary />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/exams" element={<Exams />} />
+        <Route path="/notices" element={<Notices />} />
+        <Route path="/students" element={<Students />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
