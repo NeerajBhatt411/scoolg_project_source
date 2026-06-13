@@ -34,16 +34,18 @@ const getGreeting = () => {
     return 'Good Evening';
 };
 
+let cachedDashboardData = null;
+
 const Dashboard = () => {
     const { teacher } = useAuth();
     const navigate = useNavigate();
 
-    const [todayPeriods, setTodayPeriods] = useState([]);
-    const [weekCount, setWeekCount] = useState(0);
-    const [classCount, setClassCount] = useState(0);
-    const [weekDays, setWeekDays] = useState([0, 0, 0, 0, 0, 0, 0]);
-    const [events, setEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [todayPeriods, setTodayPeriods] = useState(cachedDashboardData?.todayPeriods || []);
+    const [weekCount, setWeekCount] = useState(cachedDashboardData?.weekCount || 0);
+    const [classCount, setClassCount] = useState(cachedDashboardData?.classCount || 0);
+    const [weekDays, setWeekDays] = useState(cachedDashboardData?.weekDays || [0, 0, 0, 0, 0, 0, 0]);
+    const [events, setEvents] = useState(cachedDashboardData?.events || []);
+    const [loading, setLoading] = useState(!cachedDashboardData);
 
     const now = new Date();
     const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -77,7 +79,16 @@ const Dashboard = () => {
                 const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
                 setClassCount(cls.length);
 
-                setEvents(Array.isArray(evRes.data) ? evRes.data : []);
+                const newEvents = Array.isArray(evRes.data) ? evRes.data : [];
+                setEvents(newEvents);
+
+                cachedDashboardData = {
+                    todayPeriods: sched.find(d => d.dayOfWeek === todayName)?.periods || [],
+                    weekCount: sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0),
+                    classCount: cls.length,
+                    weekDays: dayCounts,
+                    events: newEvents,
+                };
             } catch (e) {
                 console.error('Dashboard load failed', e);
             } finally {

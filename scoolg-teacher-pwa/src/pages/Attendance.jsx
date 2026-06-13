@@ -4,11 +4,13 @@ import api from '../utils/api';
 import TopHeader from '@/components/TopHeader';
 import { CheckCircle2, Send, Users, ChevronDown } from 'lucide-react';
 
+let cachedClasses = null;
+
 const Attendance = () => {
   const location = useLocation();
   const prefill = location.state || null;
 
-  const [classes, setClasses] = useState([]);
+  const [classes, setClasses] = useState(cachedClasses || []);
   const [selected, setSelected] = useState(prefill || null); // {className, sectionName, sectionId, classId}
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [students, setStudents] = useState([]);
@@ -19,13 +21,18 @@ const Attendance = () => {
 
   // Load class list
   useEffect(() => {
-    api.get('/teacher/my-classes')
-      .then(res => {
-        const list = Array.isArray(res.data) ? res.data : [];
-        setClasses(list);
-        if (!selected && list.length > 0) setSelected(list[0]);
-      })
-      .catch(e => console.error(e));
+    if (cachedClasses) {
+      if (!selected && cachedClasses.length > 0) setSelected(cachedClasses[0]);
+    } else {
+      api.get('/teacher/my-classes')
+        .then(res => {
+          const list = Array.isArray(res.data) ? res.data : [];
+          cachedClasses = list;
+          setClasses(list);
+          if (!selected && list.length > 0) setSelected(list[0]);
+        })
+        .catch(e => console.error(e));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

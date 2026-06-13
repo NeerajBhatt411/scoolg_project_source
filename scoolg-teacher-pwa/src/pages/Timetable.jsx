@@ -17,11 +17,13 @@ const getSubjectColor = (subject) => {
     return '#64748b'; // Slate
 };
 
+let cachedSchedule = null;
+
 const Timetable = () => {
     const today = JS_DAYS[new Date().getDay()];
     const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday');
-    const [schedule, setSchedule] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [schedule, setSchedule] = useState(cachedSchedule || []);
+    const [loading, setLoading] = useState(!cachedSchedule);
     const [nowHM, setNowHM] = useState(() => new Date().toTimeString().slice(0, 5));
 
     useEffect(() => {
@@ -32,8 +34,12 @@ const Timetable = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const res = await api.get('/teacher/timetable');
-                setSchedule(res.data?.schedule || []);
+                if (!cachedSchedule) {
+                    const res = await api.get('/teacher/timetable');
+                    const sched = res.data?.schedule || [];
+                    cachedSchedule = sched;
+                    setSchedule(sched);
+                }
             } catch (e) {
                 console.error('Timetable load failed', e);
             } finally {
