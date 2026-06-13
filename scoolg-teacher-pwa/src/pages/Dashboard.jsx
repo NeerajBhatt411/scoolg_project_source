@@ -98,11 +98,66 @@ const Dashboard = () => {
 
     const upcoming = events.slice(0, 3);
 
+    if (loading) {
+        return (
+            <div className="bg-[#f8fafc] min-h-screen pb-10">
+                <TopHeader title="Dashboard" />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+                    {/* Title */}
+                    <div className="space-y-2.5 mb-6 sm:mb-8">
+                        <div className="w-48 sm:w-64 h-8 sm:h-10 rounded-xl bg-slate-200/70 animate-pulse"></div>
+                        <div className="w-32 h-4 rounded-md bg-slate-200/50 animate-pulse"></div>
+                    </div>
+                    
+                    {/* 4 Cards Grid */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="bg-white rounded-[16px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 flex items-center gap-3 sm:gap-4 shadow-sm">
+                                <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-slate-100 animate-pulse shrink-0"></div>
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-2.5 w-16 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-6 sm:h-8 w-12 bg-slate-200/60 rounded animate-pulse"></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Middle Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+                        <div className="lg:col-span-2 bg-white rounded-[32px] p-6 sm:p-8 border border-slate-100 shadow-sm min-h-[350px]">
+                            <div className="flex justify-between items-center mb-8">
+                                <div className="w-40 h-6 bg-slate-200/70 rounded-lg animate-pulse"></div>
+                                <div className="w-24 h-4 bg-slate-100 rounded animate-pulse"></div>
+                            </div>
+                            <div className="space-y-6">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="flex gap-4 items-center">
+                                        <div className="w-16 h-10 bg-slate-100 rounded-lg animate-pulse shrink-0"></div>
+                                        <div className="w-[2px] h-12 bg-slate-100 shrink-0"></div>
+                                        <div className="flex-1 h-16 bg-slate-50 border border-slate-100 rounded-[20px] animate-pulse"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-slate-100 shadow-sm min-h-[350px]">
+                            <div className="w-32 h-6 bg-slate-200/70 rounded-lg animate-pulse mb-6"></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="h-24 bg-slate-50 border border-slate-100 rounded-2xl animate-pulse"></div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-[#f8fafc] min-h-screen pb-10">
             <TopHeader title="Dashboard" />
             
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                 {/* Header Greeting */}
                 <div className="mb-6 sm:mb-8">
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight truncate">
@@ -114,7 +169,7 @@ const Dashboard = () => {
                 {/* Top Stat Cards (Horizontal Layout with Unified Blue) */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                     {/* Card 1 */}
-                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_10px_30px_rgba(120,113,108,0.08)] border border-stone-200 border-b-[6px] border-b-stone-300 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(120,113,108,0.12)] hover:border-b-stone-400 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
                         <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
                             <Calendar className="h-4 w-4 sm:h-6 sm:w-6" />
                         </div>
@@ -125,7 +180,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 2 */}
-                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_10px_30px_rgba(120,113,108,0.08)] border border-stone-200 border-b-[6px] border-b-stone-300 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(120,113,108,0.12)] hover:border-b-stone-400 transition-all cursor-pointer" onClick={() => navigate('/timetable')}>
                         <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
                             <LayoutDashboard className="h-4 w-4 sm:h-6 sm:w-6" />
                         </div>
@@ -136,7 +191,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 3 */}
-                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/classes')}>
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_10px_30px_rgba(120,113,108,0.08)] border border-stone-200 border-b-[6px] border-b-stone-300 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(120,113,108,0.12)] hover:border-b-stone-400 transition-all cursor-pointer" onClick={() => navigate('/classes')}>
                         <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
                             <BookOpen className="h-4 w-4 sm:h-6 sm:w-6" />
                         </div>
@@ -147,7 +202,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 4 */}
-                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-pointer" onClick={() => navigate('/classes')}>
+                    <div className="bg-[#faf9f6] rounded-[16px] sm:rounded-[24px] p-3 sm:p-5 shadow-[0_10px_30px_rgba(120,113,108,0.08)] border border-stone-200 border-b-[6px] border-b-stone-300 flex items-center gap-2 sm:gap-4 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(120,113,108,0.12)] hover:border-b-stone-400 transition-all cursor-pointer" onClick={() => navigate('/students')}>
                         <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
                             <Users className="h-4 w-4 sm:h-6 sm:w-6" />
                         </div>
@@ -232,7 +287,7 @@ const Dashboard = () => {
                             {loading ? (
                                 <div className="h-full w-full animate-pulse bg-slate-50 rounded-2xl"></div>
                             ) : (
-                                <AttendanceTrendChart labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} values={weekDays} height="h-[220px]" color="#8b5cf6" />
+                                <AttendanceTrendChart labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} values={weekDays} height="h-[220px]" color="#2563eb" />
                             )}
                         </div>
 

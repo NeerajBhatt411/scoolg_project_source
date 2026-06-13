@@ -34,17 +34,17 @@ const AttendanceTrendChart = ({ labels, values, height = 'h-56', color = '#2563e
             {
                 data: values,
                 borderColor: color,
-                borderWidth: 2.5,
-                tension: 0.4,
+                borderWidth: 3.5,
+                tension: 0.45,
                 fill: true,
-                pointRadius: 4,
+                pointRadius: 5,
                 pointBackgroundColor: color,
                 pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointHoverRadius: 6,
+                pointBorderWidth: 2.5,
+                pointHoverRadius: 7,
                 pointHoverBackgroundColor: color,
                 pointHoverBorderColor: '#ffffff',
-                pointHoverBorderWidth: 2,
+                pointHoverBorderWidth: 3,
                 // Vertical gradient fill under the curve.
                 backgroundColor: (ctx) => {
                     const { chart } = ctx;

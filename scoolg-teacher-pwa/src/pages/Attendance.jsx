@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
-import Select from '../components/Select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { CheckCircle2, Send, Users } from 'lucide-react';
+import TopHeader from '@/components/TopHeader';
+import { CheckCircle2, Send, Users, ChevronDown } from 'lucide-react';
 
 const Attendance = () => {
   const location = useLocation();
@@ -88,105 +83,120 @@ const Attendance = () => {
   };
 
   return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-40 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div>
-        <h1 className="font-manrope text-2xl font-bold tracking-tight">Take Attendance</h1>
-        <p className="text-sm text-muted-foreground">Mark today's register for your class.</p>
-      </div>
+    <div className="bg-[#f8fafc] min-h-screen pb-32">
+      <TopHeader title="Attendance" />
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-4">
 
-      {/* Controls */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Class</label>
-              <Select value={selected ? selected.sectionId : ''} onChange={(e) => setSelected(classes.find(c => c.sectionId === e.target.value))}>
+        {/* Compact Controls */}
+        <div className="bg-white rounded-2xl p-4 shadow-[0_8px_20px_rgba(120,113,108,0.04)] border border-stone-200">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <select 
+                value={selected ? selected.sectionId : ''} 
+                onChange={(e) => setSelected(classes.find(c => c.sectionId === e.target.value))}
+                className="w-full appearance-none h-10 pl-3 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none cursor-pointer"
+              >
                 {classes.length === 0 && <option value="">No classes</option>}
                 {classes.map(c => <option key={c.sectionId} value={c.sectionId}>Class {c.className}-{c.sectionName}</option>)}
-              </Select>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Date</label>
-              <Input type="date" value={date} max={new Date().toISOString().split('T')[0]} onChange={(e) => setDate(e.target.value)} />
+            <div className="relative flex-1">
+               <input 
+                 type="date" 
+                 value={date} 
+                 max={new Date().toISOString().split('T')[0]} 
+                 onChange={(e) => setDate(e.target.value)} 
+                 className="w-full appearance-none h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none cursor-pointer"
+               />
             </div>
           </div>
+          
           {students.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 pt-1">
-              <div className="rounded-lg border p-3 text-center">
-                <div className="text-2xl font-bold">{students.length}</div>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-              <div className="rounded-lg border p-3 text-center">
-                <div className="text-2xl font-bold text-emerald-600">{presentCount}</div>
-                <p className="text-xs text-muted-foreground">Present</p>
-              </div>
-              <div className="rounded-lg border p-3 text-center">
-                <div className="text-2xl font-bold text-red-600">{absentCount}</div>
-                <p className="text-xs text-muted-foreground">Absent</p>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+              <div className="flex gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                  <span className="text-xs font-bold text-slate-600">Total: {students.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <span className="text-xs font-bold text-emerald-600">P: {presentCount}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                  <span className="text-xs font-bold text-rose-600">A: {absentCount}</span>
+                </div>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Student list */}
-      {loading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
         </div>
-      ) : students.length === 0 ? (
-        <Card>
-          <CardContent className="p-10 text-center">
-            <Users className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No students in this class.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0 divide-y divide-border">
-            {students.map((s, i) => {
-              const mark = marks[s._id] || 'P';
-              return (
-                <div key={s._id} className="flex items-center gap-3 px-4 py-3">
-                  <Badge variant="secondary" className="w-10 justify-center shrink-0">
-                    {s.rollNumber || i + 1}
-                  </Badge>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{s.firstName} {s.lastName}</p>
-                  </div>
-                  <div className="flex gap-1.5 shrink-0">
-                    {mark === 'P' ? (
-                      <Button size="icon" onClick={() => setMark(s._id, 'P')} className="bg-emerald-600 hover:bg-emerald-600/90 text-white">P</Button>
-                    ) : (
-                      <Button size="icon" variant="outline" onClick={() => setMark(s._id, 'P')} className="text-muted-foreground">P</Button>
-                    )}
-                    {mark === 'A' ? (
-                      <Button size="icon" variant="destructive" onClick={() => setMark(s._id, 'A')}>A</Button>
-                    ) : (
-                      <Button size="icon" variant="outline" onClick={() => setMark(s._id, 'A')} className="text-muted-foreground">A</Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Save bar */}
-      {students.length > 0 && (
-        <div className="fixed bottom-24 lg:bottom-6 left-0 lg:left-64 right-0 px-4 lg:px-8 z-40">
-          <div className="max-w-5xl mx-auto">
-            <Button size="lg" onClick={handleSave} disabled={saving}
-              className={`w-full shadow-md ${saved ? 'bg-emerald-600 hover:bg-emerald-600/90' : ''}`}>
-              {saved ? <CheckCircle2 className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-              {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Attendance'}
-            </Button>
+        {/* Student list */}
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-[68px] w-full rounded-2xl bg-white border border-slate-100 shadow-sm animate-pulse" />
+            ))}
           </div>
-        </div>
-      )}
+        ) : students.length === 0 ? (
+            <div className="py-16 text-center bg-white rounded-[32px] border border-slate-100 border-dashed">
+              <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">No students in this class</h3>
+              <p className="text-slate-500 text-sm">Please select a different class or check back later.</p>
+            </div>
+        ) : (
+          <div className="bg-white rounded-[32px] overflow-hidden border border-stone-200/60 shadow-sm">
+            <div className="divide-y divide-slate-100">
+              {students.map((s, i) => {
+                const mark = marks[s._id] || 'P';
+                return (
+                  <div key={s._id} className={`flex items-center gap-3 px-3 sm:px-6 py-3.5 transition-colors ${mark === 'A' ? 'bg-red-50/30' : 'hover:bg-slate-50'}`}>
+                    <div className="w-9 sm:w-10 h-9 sm:h-10 shrink-0 rounded-[14px] bg-[#faf9f6] text-stone-600 font-black flex items-center justify-center text-xs sm:text-sm border border-stone-200/60 shadow-inner">
+                      {s.rollNumber || i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className={`text-[14px] sm:text-[15px] font-bold truncate ${mark === 'A' ? 'text-red-900' : 'text-slate-900'}`}>{s.firstName} {s.lastName}</p>
+                    </div>
+                    <div className="flex bg-slate-100/80 p-1 rounded-xl shadow-inner gap-1 shrink-0">
+                      <button 
+                        onClick={() => setMark(s._id, 'P')} 
+                        className={`h-8 w-12 sm:w-14 rounded-[10px] text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all ${mark === 'P' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+                      >
+                        Pres
+                      </button>
+                      <button 
+                        onClick={() => setMark(s._id, 'A')} 
+                        className={`h-8 w-12 sm:w-14 rounded-[10px] text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all ${mark === 'A' ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}
+                      >
+                        Abs
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Save bar */}
+        {students.length > 0 && (
+          <div className="fixed bottom-20 lg:bottom-6 left-0 lg:left-[280px] right-0 px-4 lg:px-8 z-40">
+            <div className="max-w-7xl mx-auto">
+              <button 
+                onClick={handleSave} 
+                disabled={saving}
+                className={`w-full h-[52px] rounded-2xl font-black text-[14px] flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(37,99,235,0.2)] transition-all ${saved ? 'bg-emerald-600 text-white shadow-emerald-600/20' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              >
+                {saved ? <CheckCircle2 className="h-5 w-5" /> : <Send className="h-5 w-5" />}
+                {saving ? 'SAVING...' : saved ? 'SAVED SUCCESSFULLY' : 'SUBMIT ATTENDANCE'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
