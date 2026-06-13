@@ -26,14 +26,16 @@ const dueStyle = (d) => {
   return { label: fmtDate(d), style: 'bg-emerald-100 text-emerald-700 border-emerald-200/60' };
 };
 
+let cachedHomework = null;
+
 const Homework = () => {
   const location = useLocation();
   const prefill = location.state || null;
   const { school } = useAuth();
 
   const [classes, setClasses] = useState([]);
-  const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [list, setList] = useState(cachedHomework || []);
+  const [loading, setLoading] = useState(!cachedHomework);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -43,10 +45,12 @@ const Homework = () => {
   const [form, setForm] = useState(emptyForm);
 
   const loadHomework = async () => {
-    setLoading(true);
+    if (!cachedHomework) setLoading(true);
     try {
       const res = await api.get('/teacher/homework');
-      setList(Array.isArray(res.data) ? res.data : []);
+      const data = Array.isArray(res.data) ? res.data : [];
+      cachedHomework = data;
+      setList(data);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
