@@ -86,6 +86,14 @@ export default {
         "md": "0.75rem",
         "lg": "1rem",
         "xl": "1.5rem",
+      },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' }
+        }
+      },
+      animation: {
+        shimmer: 'shimmer 1.5s infinite'
       }
     },
   },

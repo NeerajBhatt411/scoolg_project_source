@@ -70,8 +70,8 @@ const Timetable = () => {
                     </p>
                 </div>
 
-                {/* Day Tabs */}
-                <div className="flex overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar gap-2">
+                {/* Day Tabs - Responsive & No Scroll needed */}
+                <div className="w-full bg-white p-1.5 sm:p-2 rounded-2xl border border-slate-200 shadow-sm flex overflow-hidden mb-6 mt-4">
                     {DAYS.map(day => {
                         const isToday = day === today;
                         const isActive = activeDay === day;
@@ -79,13 +79,14 @@ const Timetable = () => {
                             <button 
                                 key={day}
                                 onClick={() => setActiveDay(day)}
-                                className={`relative whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                                className={`flex-1 py-2 sm:py-3 text-[11px] sm:text-sm font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-2 ${
                                     isActive 
-                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-blue-600 text-white shadow-md' 
+                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                             >
-                                {day.substring(0, 3)}
+                                <span className="sm:hidden">{day.substring(0, 3)}</span>
+                                <span className="hidden sm:inline">{day}</span>
                                 {isToday && !isActive && (
                                     <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 )}

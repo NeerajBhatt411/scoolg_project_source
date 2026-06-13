@@ -1,155 +1,78 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import Sidebar from '../components/Sidebar';
+import TopHeader from '../components/TopHeader';
 
 const MainLayout = () => {
-  const { user, school } = useAuth();
+  const { mobileNavOpen, setMobileNavOpen } = useAuth();
   const location = useLocation();
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
-  const navItems = [
-    { name: 'Home', path: '/dashboard', icon: 'dashboard' },
-    { name: 'Timetable', path: '/timetable', icon: 'calendar_today' },
-    { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
-    { name: 'Homework', path: '/homework', icon: 'menu_book' },
-    { name: 'Results', path: '/results', icon: 'assessment' },
-    { name: 'Fees', path: '/fees', icon: 'payments' },
-    { name: 'Profile', path: '/profile', icon: 'account_circle' },
-  ];
+  const getPageTitle = (path) => {
+    if (path.includes('dashboard')) return 'Dashboard';
+    if (path.includes('timetable')) return 'Schedule';
+    if (path.includes('attendance')) return 'Tracking';
+    if (path.includes('homework')) return 'Homework';
+    if (path.includes('results')) return 'Results';
+    if (path.includes('subjects')) return 'Subjects';
+    if (path.includes('exams')) return 'Exams';
+    if (path.includes('calendar')) return 'Calendar';
+    if (path.includes('fees')) return 'Fees & Dues';
+    if (path.includes('notices')) return 'Notices';
+    if (path.includes('profile')) return 'My Profile';
+    if (path.includes('notifications')) return 'Notifications';
+    return 'ScoolG';
+  };
 
   return (
-    <div className="min-h-screen bg-background font-body-md text-on-surface">
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex-col py-6 px-4 shadow-sm z-50">
-        <div className="mb-10 px-2 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-primary/10 flex items-center justify-center border border-surface-container shrink-0">
-            {school?.logo
-              ? <img src={school.logo} alt={school?.name} className="w-full h-full object-cover" />
-              : <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>}
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-title-lg font-bold text-on-surface leading-tight truncate">{school?.name || 'My School'}</h1>
-            <p className="text-[10px] font-bold text-secondary uppercase tracking-widest opacity-70">Student Portal</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex">
+      {/* MOBILE OVERLAY */}
+      {mobileNavOpen && (
+        <div 
+          onClick={() => setMobileNavOpen(false)} 
+          className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+        ></div>
+      )}
 
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-in-out active:scale-95 ${isActive
-                  ? 'bg-secondary-container text-on-secondary-container font-bold'
-                  : 'text-secondary hover:bg-surface-container-high'
-                }`
-              }
-            >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span className="text-label-md font-label-md">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <div className="mt-auto px-4 pt-4 border-t border-outline-variant/30">
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-on-primary rounded-xl font-label-md transition-all duration-200 ease-in-out hover:opacity-90 active:scale-95">
-            <span className="material-symbols-outlined text-[18px]">help_outline</span>
-            Support
-          </button>
-        </div>
-      </aside>
-
-      {/* DESKTOP TOP BAR */}
-      <header className="hidden lg:flex fixed top-0 left-0 w-full h-16 justify-between items-center pl-72 pr-8 bg-surface shadow-sm z-40">
-        <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-full w-96 transition-all duration-150 hover:opacity-80">
-          <span className="material-symbols-outlined text-outline mr-2">search</span>
-          <input
-            className="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder-outline outline-none"
-            placeholder="Search for results, attendance..."
-            type="text"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-opacity duration-150">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button className="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-opacity duration-150">
-            <span className="material-symbols-outlined">help_outline</span>
-          </button>
-          <div className="h-8 w-px bg-outline-variant mx-2"></div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-body-md font-bold text-on-surface leading-none">{user?.firstName} {user?.lastName}</p>
-              <p className="text-label-md text-secondary leading-none mt-1">Grade {user?.class}-{user?.section}</p>
-            </div>
-
-            <img
-              alt="User"
-              className="w-10 h-10 rounded-full object-cover border-2 border-primary-container"
-              src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.firstName}`}
-            />
-
-          </div>
-        </div>
-      </header>
-
-      {/* MOBILE HEADER */}
-      <header className="lg:hidden flex justify-between items-center px-container-margin w-full h-16 bg-surface shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
-            <img
-              alt="Profile"
-              className="w-full h-full object-cover"
-              src={user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.firstName}`}
-            />
-          </div>
-
-          <div className="min-w-0">
-            <h1 className="text-title-lg font-title-lg font-bold text-on-surface leading-none truncate">{school?.name || 'My School'}</h1>
-            <p className="text-label-md font-label-md text-on-surface-variant">Grade {user?.class}-{user?.section}</p>
-          </div>
-
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors">
-            <span className="material-symbols-outlined text-on-surface-variant">search</span>
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors relative">
-            <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
-          </button>
-        </div>
-      </header>
+      {/* SIDEBAR (Responsive, handles both Desktop and Mobile) */}
+      <Sidebar mobileOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* MAIN CONTENT AREA */}
-      <div className="lg:pl-64 lg:pt-16 min-h-screen">
-        <main className="w-full">
+      <div className="w-full lg:pl-[280px] min-h-screen flex flex-col pb-20 lg:pb-0">
+        
+        {/* TOP HEADER (Consistent across Desktop & Mobile) */}
+        <TopHeader title={getPageTitle(location.pathname)} showSearch={false} />
+
+        <main className="w-full flex-1">
           <Outlet />
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface-container-highest/90 backdrop-blur-md rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-        {[
-          { name: 'Home', path: '/dashboard', icon: 'home' },
-          { name: 'Schedule', path: '/timetable', icon: 'calendar_month' },
-          { name: 'Tracking', path: '/attendance', icon: 'fact_check' },
-          { name: 'Profile', path: '/profile', icon: 'person' },
-        ].map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center px-4 py-2 transition-all duration-300 rounded-xl ${isActive
-                ? 'bg-primary-container text-on-primary-container scale-90'
-                : 'text-on-surface-variant hover:bg-surface-variant'
-              }`
-            }
-          >
-            <span className="material-symbols-outlined" style={location.pathname === item.path ? { fontVariationSettings: "'FILL' 1" } : {}}>{item.icon}</span>
-            <span className="text-label-md font-label-md">{item.name}</span>
-          </NavLink>
-        ))}
+      {/* MOBILE BOTTOM NAV (Teacher PWA Style) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 pb-safe">
+        <div className="flex items-center justify-around px-2 pt-2 pb-2">
+          {[
+            { name: 'Home', path: '/dashboard', icon: 'dashboard' },
+            { name: 'Timetable', path: '/timetable', icon: 'calendar_today' },
+            { name: 'Homework', path: '/homework', icon: 'menu_book' },
+            { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
+          ].map((item) => (
+            <NavLink key={item.path} to={item.path} className="flex-1 flex justify-center">
+              {({ isActive }) => (
+                <div className="flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
+                  <div className={`flex items-center justify-center h-8 w-14 rounded-full transition-colors ${isActive ? 'bg-blue-100/80 text-blue-600' : 'text-slate-500'}`}>
+                    <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                  </div>
+                  <span className={`text-[10px] font-semibold ${isActive ? 'text-blue-600' : 'text-slate-500'}`}>{item.name}</span>
+                </div>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </nav>
     </div>
   );

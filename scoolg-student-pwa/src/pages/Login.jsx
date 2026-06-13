@@ -1,172 +1,98 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
+import loginBg from '../assets/login-bg.png';
 
 const Login = () => {
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const campusCode = sessionStorage.getItem('verified_campus_code');
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    const result = await login(campusCode, studentId, password);
+    
+    const result = await login(null, studentId.trim(), password);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
       setError(result.message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-
   return (
-    <div className="min-h-screen bg-background font-body-md text-on-surface">
-      <main className="flex min-h-screen">
-        {/* DESKTOP SIDE: VISUAL/BRANDING - FROM raw_design/desktop_login */}
-        <section className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-          <img
-            alt="Academic Campus"
-            className="absolute inset-0 w-full h-full object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAuH-PFr0Pye4khXWoq3HltCu7dHkaYV2_-6i_SSO67DBOpKybUC1WlAAYo8Fe3nQ8cY6bTDekolLUILB0qzIO9WKeRB3amvomVnrzqG9rVkwniQa-IuwFih4libpiDPe5MmxnUjldAh_11ZWf0Vs1YCK-m0K5oiZFB6SOIjHdqtIxYOSZAmy1Zht3K6Y2_4PIdtX-K_Clp2FhCi3ipKi6-whrh7cnQSAKpLNXI0ye_BDbIiSjfKJY7KNRJDZBFzho-bJpf1cxY2U"
-          />
-          <div className="absolute inset-0 bg-primary/20 backdrop-brightness-75"></div>
-          <div className="relative z-10 flex flex-col justify-between p-12 w-full text-white">
-            <div>
-              <h1 className="font-display-lg text-display-lg font-bold tracking-tight">SchoolG</h1>
-              <p className="font-title-lg text-title-lg opacity-90 mt-2">Premium Academy</p>
-            </div>
-            <div className="max-w-md">
-              <h2 className="font-headline-md text-headline-md mb-4 leading-tight">Elevating the standard of modern education management.</h2>
-              <div className="flex gap-4">
-                <div className="h-1 w-12 bg-white rounded-full"></div>
-                <div className="h-1 w-4 bg-white/40 rounded-full"></div>
-                <div className="h-1 w-4 bg-white/40 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* LOGIN FORM SECTION - Works for both Mobile & Desktop */}
-        <section className="w-full lg:w-1/2 flex items-center justify-center p-section-padding bg-surface">
-          <div className="w-full max-w-md space-y-8">
-            {/* Header */}
-            <div className="space-y-2">
-              <div className="lg:hidden mb-8">
-                <span className="font-display-lg text-display-lg font-bold text-primary">SchoolG</span>
-              </div>
-              <h3 className="font-display-lg text-display-lg text-on-surface">Login to your account</h3>
-              <p className="font-body-lg text-body-lg text-on-surface-variant">Welcome back. Please enter your details.</p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-5 sm:p-8">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[1000px]">
+        <div className="overflow-hidden rounded-[40px] border border-slate-100 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.04),0_10px_15px_-3px_rgba(0,0,0,0.02)] bg-white">
+          <div className="grid lg:grid-cols-[1.2fr,1fr] xl:grid-cols-[1.2fr,1fr]">
+            {/* Graphic side */}
+            <div className="hidden lg:flex items-center justify-center bg-gradient-to-b from-slate-50 to-white p-12 border-r border-slate-50">
+              <img src={loginBg} alt="School management" className="w-full max-w-[400px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]" />
             </div>
 
-            {/* Form */}
-            <form className="space-y-6" onSubmit={handleLogin}>
+            {/* Form side */}
+            <div className="p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
+              {/* Mobile artwork */}
+              <img src={loginBg} alt="" className="lg:hidden w-4/5 max-w-[280px] object-contain mx-auto mb-8 drop-shadow-xl" />
+
+              <div className="mb-8 text-center lg:text-left">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-blue-600 mb-2">Student Portal</p>
+                <h1 className="text-[27px] sm:text-[30px] font-extrabold tracking-tight text-slate-900 leading-tight">Welcome Back</h1>
+                <p className="text-[15px] font-medium text-slate-500 mt-1.5">Sign in to manage your coursework</p>
+              </div>
+
               {error && (
-                <div className="p-4 bg-error/10 text-error rounded-xl text-label-md font-bold flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px]">error</span>
+                <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+                  className="p-3.5 mb-5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
                   {error}
-                </div>
+                </motion.div>
               )}
 
-              {campusCode && (
-                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px]">school</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-outline uppercase">Campus Code</p>
-                      <p className="text-[14px] font-bold text-on-surface">{campusCode}</p>
-                    </div>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => navigate('/campus-code')}
-                    className="text-[12px] font-bold text-primary hover:underline"
-                  >
-                    Change
+              <form className="space-y-4" onSubmit={handleLogin}>
+                <div className="relative">
+                  <BadgeCheck className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    className="flex h-[54px] w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-semibold transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white text-slate-900"
+                    placeholder="Student ID (e.g. STU101)" type="text" autoComplete="username"
+                    value={studentId} onChange={(e) => setStudentId(e.target.value)} required />
+                </div>
+
+                <div className="relative">
+                  <Lock className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    className="flex h-[54px] w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-12 text-sm font-semibold transition-colors placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:bg-white text-slate-900"
+                    placeholder="Password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+                    value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  <button type="button" onClick={() => setShowPassword(s => !s)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-700 transition-colors">
+                    {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                   </button>
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <label className="font-label-md text-label-md text-on-surface-variant ml-1" htmlFor="studentId">Student ID / Email</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline">
-                    <span className="material-symbols-outlined">person</span>
-                  </div>
-                  <input
-                    className="w-full h-[52px] pl-12 pr-4 bg-surface-container-low border-none rounded-xl font-body-md text-on-surface transition-all duration-200 focus:ring-2 focus:ring-primary focus:bg-white placeholder:text-outline/60 outline-none"
-                    id="studentId"
-                    placeholder="Enter your ID or email"
-                    type="text"
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
+                <button disabled={loading} type="submit" className="w-full mt-7 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-[15px] font-bold h-[54px] shadow-lg shadow-blue-600/20 active:scale-[0.98]">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login to Portal'}
+                </button>
+              </form>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="password">Password</label>
-                  <a className="font-label-md text-label-md text-primary hover:underline transition-all" href="#">Forgot Password?</a>
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline">
-                    <span className="material-symbols-outlined">lock</span>
-                  </div>
-                  <input
-                    className="w-full h-[52px] pl-12 pr-12 bg-surface-container-low border-none rounded-xl font-body-md text-on-surface transition-all duration-200 focus:ring-2 focus:ring-primary focus:bg-white placeholder:text-outline/60 outline-none"
-                    id="password"
-                    placeholder="••••••••"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button className="absolute inset-y-0 right-0 pr-4 flex items-center text-outline hover:text-primary transition-colors" type="button">
-                    <span className="material-symbols-outlined">visibility</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 px-1">
-                <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary transition-all" id="remember" type="checkbox" />
-                <label className="font-body-md text-body-md text-on-surface-variant cursor-pointer" htmlFor="remember">Remember Me</label>
-              </div>
-
-              <button
-                disabled={loading}
-                className="w-full h-[52px] bg-primary-container text-white font-title-lg text-title-lg rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_24px_rgba(37,99,235,0.3)] transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
-                type="submit"
-              >
-                {loading ? 'Logging in...' : 'Login'}
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-
-            </form>
-
-            <div className="pt-8 flex flex-col items-center space-y-4">
-              <p className="font-body-md text-body-md text-on-surface-variant">Having trouble signing in?</p>
-              <button className="flex items-center gap-2 px-6 py-2 rounded-full border border-outline-variant hover:bg-surface-container transition-colors font-label-md text-label-md text-secondary">
-                <span className="material-symbols-outlined text-[18px]">support_agent</span>
-                Contact Support
-              </button>
+              <p className="text-center text-sm text-slate-500 mt-7">
+                Don't have your Student ID? <span className="text-blue-600 font-semibold cursor-pointer hover:underline">Ask your teacher.</span>
+              </p>
+              <p className="text-center text-xs text-slate-400 mt-2">You stay signed in on this device until you log out.</p>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+        <p className="text-center text-xs font-semibold text-slate-400 mt-6 tracking-wide">© 2026 Scoolg · All rights reserved</p>
+      </motion.div>
     </div>
   );
 };

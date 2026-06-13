@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { StudentListShimmer } from '../components/StudentShimmer';
 
 const fmtDate = (d, opts) => {
   if (!d) return '';
@@ -53,11 +54,7 @@ const Homework = () => {
     fetchHomework();
   }, []);
 
-  const Spinner = () => (
-    <div className="flex items-center justify-center py-20 text-primary">
-      <div className="animate-spin w-9 h-9 border-4 border-current border-t-transparent rounded-full"></div>
-    </div>
-  );
+
 
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant text-center">
@@ -84,7 +81,7 @@ const Homework = () => {
           <FilterChip label="Archived" />
         </div>
 
-        {loading ? <Spinner /> : list.length === 0 ? <EmptyState /> : (
+        {loading ? <StudentListShimmer count={4} /> : list.length === 0 ? <EmptyState /> : (
           <div className="space-y-4">
             {list.map((hw) => <div key={hw._id} onClick={() => setSelected(hw)} className="cursor-pointer"><MobileHomeworkCard hw={hw} /></div>)}
           </div>
@@ -100,7 +97,7 @@ const Homework = () => {
           </div>
         </div>
 
-        {loading ? <Spinner /> : list.length === 0 ? <EmptyState /> : (
+        {loading ? <StudentListShimmer count={4} /> : list.length === 0 ? <EmptyState /> : (
           <div className="grid grid-cols-12 gap-8">
             {/* Left: Task List */}
             <div className="col-span-8 space-y-4">
