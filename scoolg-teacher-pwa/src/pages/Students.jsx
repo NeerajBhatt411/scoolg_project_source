@@ -4,49 +4,56 @@ import TopHeader from '@/components/TopHeader';
 import { Search, ChevronRight, User, GraduationCap, Mail, Phone } from 'lucide-react';
 import MenuButton from '../components/MenuButton';
 
+let cachedStudents = null;
+let cachedClassesInfo = null;
+
 const Students = () => {
-    const [students, setStudents] = useState([]);
-    const [classesInfo, setClassesInfo] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [students, setStudents] = useState(cachedStudents || []);
+    const [classesInfo, setClassesInfo] = useState(cachedClassesInfo || []);
+    const [loading, setLoading] = useState(!cachedStudents);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('All');
 
     useEffect(() => {
         const fetchStudents = async () => {
             try {
-                // 1. Fetch all classes the teacher teaches
-                const clsRes = await api.get('/teacher/my-classes');
-                const myClasses = (clsRes.data || []).filter(c => c.teaches || c.isClassTeacher);
-                setClassesInfo(myClasses);
+                if (!cachedStudents) {
+                    // 1. Fetch all classes the teacher teaches
+                    const clsRes = await api.get('/teacher/my-classes');
+                    const myClasses = (clsRes.data || []).filter(c => c.teaches || c.isClassTeacher);
+                    setClassesInfo(myClasses);
+                    cachedClassesInfo = myClasses;
 
-                // 2. Fetch students for each class
-                let allStudents = [];
-                for (const cls of myClasses) {
-                    try {
-                        const stdRes = await api.get(`/teacher/students?className=${cls.className}&sectionName=${cls.sectionName}`);
-                        const classStudents = (stdRes.data || []).map(s => ({
-                            ...s,
-                            className: cls.className,
-                            sectionName: cls.sectionName
-                        }));
-                        allStudents = [...allStudents, ...classStudents];
-                    } catch (err) {
-                        console.error('Error fetching students for', cls.className, err);
+                    // 2. Fetch students for each class
+                    let allStudents = [];
+                    for (const cls of myClasses) {
+                        try {
+                            const stdRes = await api.get(`/teacher/students?className=${cls.className}&sectionName=${cls.sectionName}`);
+                            const classStudents = (stdRes.data || []).map(s => ({
+                                ...s,
+                                className: cls.className,
+                                sectionName: cls.sectionName
+                            }));
+                            allStudents = [...allStudents, ...classStudents];
+                        } catch (err) {
+                            console.error('Error fetching students for', cls.className, err);
+                        }
                     }
-                }
-                
-                // Deduplicate if needed (though they shouldn't overlap if they belong to 1 class)
-                const uniqueStudents = Array.from(new Map(allStudents.map(s => [s._id || s.rollNumber, s])).values());
-                
-                // Sort by class then by name
-                uniqueStudents.sort((a, b) => {
-                    if (a.className !== b.className) return (a.className || '').localeCompare(b.className || '');
-                    const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
-                    const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
-                    return nameA.localeCompare(nameB);
-                });
+                    
+                    // Deduplicate if needed (though they shouldn't overlap if they belong to 1 class)
+                    const uniqueStudents = Array.from(new Map(allStudents.map(s => [s._id || s.rollNumber, s])).values());
+                    
+                    // Sort by class then by name
+                    uniqueStudents.sort((a, b) => {
+                        if (a.className !== b.className) return (a.className || '').localeCompare(b.className || '');
+                        const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
+                        const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
+                        return nameA.localeCompare(nameB);
+                    });
 
-                setStudents(uniqueStudents);
+                    cachedStudents = uniqueStudents;
+                    setStudents(uniqueStudents);
+                }
             } catch (error) {
                 console.error('Failed to load students', error);
             } finally {
@@ -59,7 +66,7 @@ const Students = () => {
 
     const filteredStudents = students.filter(s => {
         const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
-        const roll = (s.rollNumber || '').toLowerCase();
+        const roll = String(s.rollNumber || '').toLowerCase();
         const matchesSearch = fullName.includes(searchQuery.toLowerCase()) || roll.includes(searchQuery.toLowerCase());
         const matchesTab = activeTab === 'All' || `${s.className} ${s.sectionName}` === activeTab;
         return matchesSearch && matchesTab;
@@ -77,7 +84,7 @@ const Students = () => {
                 placeholder="Find student by name or roll no..."
             />
             
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                 
                 {/* Header & Tabs */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
@@ -145,7 +152,7 @@ const Students = () => {
                         filteredStudents.map((student, idx) => (
                             <div 
                                 key={student._id || idx} 
-                                className="bg-[#faf9f6] rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all flex items-center gap-4 cursor-pointer group"
+                                className="bg-[#faf9f6] rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(120,113,108,0.08)] border border-stone-200 border-b-[6px] border-b-stone-300 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(120,113,108,0.12)] hover:border-b-stone-400 transition-all flex items-center gap-4 cursor-pointer group"
                             >
                                 <div className="relative shrink-0">
                                     {student.profileImageUrl ? (
@@ -162,12 +169,12 @@ const Students = () => {
                                         {student.firstName} {student.lastName}
                                     </h3>
                                     
-                                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-blue-100/50 text-blue-700 border border-blue-200/50">
+                                    <div className="flex flex-wrap items-center gap-2 mt-1.5 pr-2">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-blue-100/50 text-blue-700 border border-blue-200/50 shrink-0">
                                             {student.className} {student.sectionName}
                                         </span>
                                         {student.rollNumber && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-stone-100 text-stone-600 border border-stone-200/60">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-stone-100 text-stone-600 border border-stone-200/60 shrink-0">
                                                 Roll {student.rollNumber}
                                             </span>
                                         )}

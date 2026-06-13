@@ -15,7 +15,9 @@ const Profile = () => {
     const [saving, setSaving] = useState(false);
     const [classCount, setClassCount] = useState(null);
 
-    const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
+    const name = teacher?.fullName || 'Teacher';
+    const colors = ['from-blue-500 to-cyan-500', 'from-rose-500 to-pink-500', 'from-amber-500 to-orange-500', 'from-emerald-500 to-teal-500', 'from-indigo-500 to-purple-500'];
+    const bgGradient = colors[name.length % colors.length];
 
     useEffect(() => {
         api.get('/teacher/my-classes').then(r => setClassCount(Array.isArray(r.data) ? r.data.length : 0)).catch(() => setClassCount(0));
@@ -77,8 +79,12 @@ const Profile = () => {
 
             {/* identity header (read-only) */}
             <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-5 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shrink-0 shadow-lg shadow-blue-600/20 overflow-hidden">
-                    {teacher?.profileImageUrl ? <img src={teacher.profileImageUrl} alt="Profile" className="max-h-full max-w-full object-cover" /> : (teacher?.fullName?.charAt(0) || 'T').toUpperCase()}
+                <div className={`h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-gradient-to-br ${bgGradient} text-white flex items-center justify-center text-3xl sm:text-4xl font-black shrink-0 shadow-inner overflow-hidden border-2 border-white ring-1 ring-slate-100`}>
+                    {teacher?.profileImageUrl ? (
+                        <img src={teacher.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=transparent`} alt="avatar" className="w-[85%] h-[85%] object-contain drop-shadow-md translate-y-1" />
+                    )}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">

@@ -11,7 +11,7 @@ const TopHeader = ({ title, showSearch = false, searchQuery, onSearchChange, pla
             </div>
             <div className="flex items-center gap-4 md:w-auto justify-end">
                 {showSearch && (
-                    <div className="relative flex-1 md:w-64 group hidden md:block">
+                    <div className="relative flex-1 md:w-80 lg:w-96 group hidden md:block">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[18px]">search</span>
                         <input
                             className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-muted/30 focus:ring-2 focus:ring-primary/40 focus:bg-background transition-all text-sm font-medium"
