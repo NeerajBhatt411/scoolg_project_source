@@ -7,12 +7,31 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scoolg Admin Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=block"
     rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=block"
     rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
     rel="stylesheet" />
+  <style>
+    /* Bulletproof FOUC Prevention */
+    html { visibility: hidden; opacity: 0; }
+  </style>
+  <script>
+    // Reveal once all stylesheets and scripts are ready
+    window.addEventListener('DOMContentLoaded', () => {
+        // Wait an extra tick to ensure CSS OM is fully built
+        requestAnimationFrame(() => {
+            document.documentElement.style.visibility = 'visible';
+            document.documentElement.style.opacity = '1';
+        });
+    });
+    // Fallback if DOMContentLoaded already fired
+    setTimeout(() => {
+        document.documentElement.style.visibility = 'visible';
+        document.documentElement.style.opacity = '1';
+    }, 2000);
+  </script>
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;

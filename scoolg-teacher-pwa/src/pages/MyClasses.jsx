@@ -33,7 +33,7 @@ const MyClasses = () => {
     <div className="bg-[#f8fafc] min-h-screen pb-24">
       <TopHeader title="My Classes" />
       
-      <div className="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
           <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Classes Overview</h1>
               <p className="text-sm font-medium text-slate-500 mt-1">Manage attendance, homework, and details for your assigned classes.</p>
