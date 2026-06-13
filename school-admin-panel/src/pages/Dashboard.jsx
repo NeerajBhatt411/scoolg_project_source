@@ -120,7 +120,7 @@ const Dashboard = () => {
 
 
                 {/* Stat Cards Bento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <div onClick={() => navigate('/students')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
                             <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
@@ -153,37 +153,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div onClick={() => navigate('/profile')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
-                        {(() => {
-                            const sid = localStorage.getItem('scoolg_school_id') || "";
-                            const suffix = sid.slice(-4);
-                            const code = (schoolName.substring(0, 3) + suffix).toUpperCase();
-                            return (
-                                <div>
-                                    <p className="text-on-surface-variant text-[11px] uppercase font-bold tracking-widest mb-1">
-                                        School Code
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="text-2xl font-extrabold text-on-surface uppercase">{code}</h4>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(code); toast.success('Copied!') }}
-                                            title="Copy Code"
-                                            className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-700 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-2 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:text-blue-600 transition-colors">
-                                        <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
-                                        <span>Active Code</span>
-                                    </div>
-                                </div>
-                            );
-                        })()}
-                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
-                            <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
-                        </div>
-                    </div>
+
 
                     <div onClick={() => navigate('/classes')} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.1)] transition-all duration-500 flex items-start justify-between border border-slate-50 group cursor-pointer active:scale-95">
                         <div>
