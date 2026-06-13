@@ -10,10 +10,35 @@
     content="Access your academic profile, manage your schedule, and stay connected with ScoolG." />
   <meta name="theme-color" content="#004ac6" />
   <link rel="apple-touch-icon" href="/vite.svg" />
+  <style>
+    /* Prevent FOUC: Hide everything until React is ready */
+    #root:empty {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background-color: #f8fafc;
+    }
+    .scoolg-loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #e2e8f0;
+      border-bottom-color: #004ac6; /* Primary blue */
+      border-radius: 50%;
+      animation: rotation 1s linear infinite;
+    }
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body class="antialiased">
-  <div id="root"></div>
+  <div id="root">
+    <div class="scoolg-loader"></div>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

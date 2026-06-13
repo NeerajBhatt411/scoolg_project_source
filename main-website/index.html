@@ -21,10 +21,42 @@
       // else: keep 'dark' class that's already on <html>
     })();
   </script>
+  <style>
+    /* Prevent FOUC */
+    #root:empty {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background-color: #ffffff;
+    }
+    .scoolg-loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #e2e8f0;
+      border-bottom-color: #e31e24; /* Scoolg Red */
+      border-radius: 50%;
+      animation: rotation 1s linear infinite;
+    }
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .dark #root:empty {
+      background-color: #09090b;
+    }
+    .dark .scoolg-loader {
+      border-color: #27272a;
+      border-bottom-color: #e31e24;
+    }
+  </style>
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="scoolg-loader"></div>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

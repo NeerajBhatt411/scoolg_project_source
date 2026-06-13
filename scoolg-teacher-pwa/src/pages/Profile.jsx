@@ -2,152 +2,181 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Avatar } from '@/components/ui/avatar';
-import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School } from 'lucide-react';
+import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School, BadgeCheck, Save, Loader2, User, KeyRound } from 'lucide-react';
+import MenuButton from '../components/MenuButton';
 
 const Profile = () => {
-  const { teacher, school, logout } = useAuth();
-  const navigate = useNavigate();
-  const [showPwd, setShowPwd] = useState(false);
-  const [newPwd, setNewPwd] = useState('');
-  const [confirmPwd, setConfirmPwd] = useState('');
-  const [msg, setMsg] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [classCount, setClassCount] = useState(null);
+    const { teacher, school, logout } = useAuth();
+    const navigate = useNavigate();
+    const [showPwd, setShowPwd] = useState(false);
+    const [newPwd, setNewPwd] = useState('');
+    const [confirmPwd, setConfirmPwd] = useState('');
+    const [msg, setMsg] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [classCount, setClassCount] = useState(null);
 
-  const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
+    const avatar = teacher?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${teacher?.fullName || 'T'}`;
 
-  useEffect(() => {
-    api.get('/teacher/my-classes').then(r => setClassCount(Array.isArray(r.data) ? r.data.length : 0)).catch(() => setClassCount(0));
-  }, []);
+    useEffect(() => {
+        api.get('/teacher/my-classes').then(r => setClassCount(Array.isArray(r.data) ? r.data.length : 0)).catch(() => setClassCount(0));
+    }, []);
 
-  const handleChangePassword = async () => {
-    setMsg(null);
-    if (newPwd.length < 4) return setMsg({ type: 'err', text: 'Password must be at least 4 characters' });
-    if (newPwd !== confirmPwd) return setMsg({ type: 'err', text: 'Passwords do not match' });
-    setSaving(true);
-    try {
-      await api.post('/teacher/change-password', { newPassword: newPwd });
-      setMsg({ type: 'ok', text: 'Password updated successfully' });
-      setNewPwd(''); setConfirmPwd('');
-      setTimeout(() => setShowPwd(false), 1200);
-    } catch (e) {
-      setMsg({ type: 'err', text: e.response?.data?.error || 'Failed to update password' });
-    } finally { setSaving(false); }
-  };
+    const handleChangePassword = async () => {
+        setMsg(null);
+        if (newPwd.length < 4) return setMsg({ type: 'err', text: 'Password must be at least 4 characters' });
+        if (newPwd !== confirmPwd) return setMsg({ type: 'err', text: 'Passwords do not match' });
+        setSaving(true);
+        try {
+            await api.post('/teacher/change-password', { newPassword: newPwd });
+            setMsg({ type: 'ok', text: 'Password updated successfully' });
+            setNewPwd(''); setConfirmPwd('');
+            setTimeout(() => setShowPwd(false), 1200);
+        } catch (e) {
+            setMsg({ type: 'err', text: e.response?.data?.error || 'Failed to update password' });
+        } finally { setSaving(false); }
+    };
 
-  const stats = [
-    { label: 'Classes', value: classCount ?? '—' },
-    { label: 'Subjects', value: teacher?.subjects?.length || 0 },
-    { label: 'Experience', value: teacher?.experienceYears ? `${teacher.experienceYears}y` : '—' },
-  ];
-
-  const InfoRow = ({ icon: Icon, label, value }) => (
-    <div className="flex items-center gap-3 py-3">
-      <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold truncate">{value || '—'}</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-full px-4 lg:px-8 pt-5 pb-32 lg:pb-10 space-y-5 max-w-5xl mx-auto">
-      <div>
-        <h1 className="font-manrope text-2xl font-bold tracking-tight">Profile</h1>
-        <p className="text-sm text-muted-foreground">Your account and personal details.</p>
-      </div>
-
-      {/* Identity */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Avatar src={avatar} alt={teacher?.fullName || 'Teacher'} className="h-16 w-16">
-              {(teacher?.fullName || 'T').charAt(0).toUpperCase()}
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-manrope text-xl font-bold truncate">{teacher?.fullName || 'Teacher'}</h2>
-              {teacher?.teacherAppId && (
-                <Badge variant="secondary" className="font-mono mt-1">{teacher.teacherAppId}</Badge>
-              )}
+    const SectionCard = ({ icon, iconBg, iconColor, title, children, full }) => (
+        <div className={`bg-white rounded-3xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-6 ${full ? 'lg:col-span-2' : ''}`}>
+            <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-10 h-10 rounded-xl grid place-items-center" style={{ background: iconBg }}>{React.cloneElement(icon, { size: 20, color: iconColor })}</div>
+                <h3 className="text-lg font-bold text-slate-800">{title}</h3>
             </div>
-          </div>
+            {children}
+        </div>
+    );
 
-          {/* School row */}
-          <div className="flex items-center gap-2.5 mt-4 text-sm text-muted-foreground">
-            {school?.logo
-              ? <img src={school.logo} alt="" className="h-6 w-6 rounded object-cover shrink-0" />
-              : <School className="h-4 w-4 shrink-0" />}
-            <span className="truncate">{school?.name || 'School'}</span>
-          </div>
+    const Field = ({ label, val }) => (
+        <div>
+            <label className="flex items-center gap-1 text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                {label} <Lock size={11} className="text-slate-300" />
+            </label>
+            <p className={`text-[14.5px] font-semibold ${val ? 'text-slate-800' : 'text-slate-300'}`}>{val || '—'}</p>
+        </div>
+    );
 
-          {/* Stat tiles */}
-          <div className="grid grid-cols-3 gap-3 mt-4 text-center">
-            {stats.map((s, i) => (
-              <div key={i} className="rounded-md border bg-muted/40 py-3">
-                <p className="text-xl font-bold">{s.value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    const inputCls = 'w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-[14px] outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all';
 
-      {/* Details */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border">
-            <InfoRow icon={Mail} label="Email" value={teacher?.email} />
-            <InfoRow icon={Phone} label="Phone" value={teacher?.phone} />
-            <InfoRow icon={GraduationCap} label="Qualification" value={teacher?.highestQualification} />
-            <InfoRow icon={BookOpen} label="Specialization" value={teacher?.specialization} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Change password */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          <button onClick={() => setShowPwd(s => !s)} className="w-full flex items-center gap-3 text-left">
-            <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center shrink-0">
-              <Lock className="h-4 w-4" />
+    return (
+        <div className="p-4 sm:p-6 lg:p-10 max-w-[1000px] mx-auto pb-24">
+            {/* title + actions */}
+            <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="lg:hidden">
+                        <MenuButton />
+                    </div>
+                    <div className="min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate">My Profile</h1>
+                        <p className="text-slate-500 font-medium text-sm hidden sm:block">Your personal and academic details.</p>
+                    </div>
+                </div>
+                <button onClick={() => { logout(); navigate('/login'); }} className="px-4 h-10 sm:h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm inline-flex items-center gap-1.5 transition-colors">
+                    <LogOut size={17} /> <span className="hidden sm:inline">Logout</span>
+                </button>
             </div>
-            <span className="text-sm font-semibold flex-1">Change Password</span>
-            {showPwd
-              ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-          </button>
-          {showPwd && (
-            <div className="mt-4 space-y-3">
-              <Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="New password" />
-              <Input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Confirm password" />
-              {msg && (
-                <p className={`text-xs font-medium ${msg.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msg.text}</p>
-              )}
-              <Button onClick={handleChangePassword} disabled={saving} className="w-full">
-                {saving ? 'Updating...' : 'Update Password'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Logout */}
-      <Button variant="destructive" className="w-full" onClick={() => { logout(); navigate('/login'); }}>
-        <LogOut className="h-4 w-4 mr-1.5" /> Logout
-      </Button>
-    </div>
-  );
+            {/* identity header (read-only) */}
+            <div className="bg-white rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-5 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shrink-0 shadow-lg shadow-blue-600/20 overflow-hidden">
+                    {teacher?.profileImageUrl ? <img src={teacher.profileImageUrl} alt="Profile" className="max-h-full max-w-full object-cover" /> : (teacher?.fullName?.charAt(0) || 'T').toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{teacher?.fullName || 'Teacher'}</h2>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600"><BadgeCheck size={12} />ACTIVE</span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-5 sm:gap-x-6 gap-y-2 mt-2 sm:mt-3">
+                        <span className="flex items-center gap-2 text-slate-600 text-sm font-semibold min-w-0"><Mail size={16} className="text-slate-400 shrink-0" /><span className="truncate">{teacher?.email || '—'}</span></span>
+                        <span className="flex items-center gap-2 text-slate-600 text-sm font-semibold"><Phone size={16} className="text-slate-400 shrink-0" />{teacher?.phone || '—'}</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest">Teacher ID</span>
+                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs sm:text-sm font-black tabular-nums">{teacher?.teacherAppId || '—'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-0 sm:ml-4">
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest">School</span>
+                            <span className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-100 text-xs sm:text-sm font-black flex items-center gap-1.5"><School size={14} className="text-slate-400" /> {school?.name || '—'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SectionCard icon={<GraduationCap />} iconBg="#eff6ff" iconColor="#2563eb" title="Academic Information">
+                    <div className="space-y-5">
+                        <Field label="Highest Qualification" val={teacher?.highestQualification} />
+                        <Field label="Specialization" val={teacher?.specialization} />
+                        <Field label="Experience" val={teacher?.experienceYears ? `${teacher.experienceYears} Years` : null} />
+                    </div>
+                </SectionCard>
+
+                <SectionCard icon={<BookOpen />} iconBg="#fef2f2" iconColor="#ef4444" title="Workload Stats">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Classes</p>
+                            <p className="text-3xl font-black text-slate-900">{classCount ?? '—'}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Subjects</p>
+                            <p className="text-3xl font-black text-slate-900">{teacher?.subjects?.length || 0}</p>
+                        </div>
+                    </div>
+                    {teacher?.subjects?.length > 0 && (
+                        <div className="mt-5">
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Assigned Subjects</p>
+                            <div className="flex flex-wrap gap-2">
+                                {teacher.subjects.map((sub, i) => (
+                                    <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shadow-sm">
+                                        {sub}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </SectionCard>
+
+                <SectionCard icon={<KeyRound />} iconBg="#fffbeb" iconColor="#f59e0b" title="Account Security" full>
+                    <div className="max-w-md">
+                        <p className="text-sm font-medium text-slate-500 mb-5">Keep your account secure by regularly updating your password.</p>
+                        
+                        {!showPwd ? (
+                            <button onClick={() => setShowPwd(true)} className="px-5 h-11 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-sm inline-flex items-center gap-2 transition-colors">
+                                <Lock size={16} /> Change Password
+                            </button>
+                        ) : (
+                            <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <div>
+                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5">New Password</label>
+                                    <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} className={inputCls} placeholder="Enter new password" />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Confirm Password</label>
+                                    <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} className={inputCls} placeholder="Confirm new password" />
+                                </div>
+                                
+                                {msg && (
+                                    <div className={`p-3 rounded-lg text-xs font-bold ${msg.type === 'ok' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                        {msg.text}
+                                    </div>
+                                )}
+                                
+                                <div className="flex items-center gap-3 pt-2">
+                                    <button onClick={handleChangePassword} disabled={saving} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center justify-center min-w-[120px] transition-colors disabled:opacity-60 shadow-md">
+                                        {saving ? <Loader2 size={16} className="animate-spin" /> : 'Update'}
+                                    </button>
+                                    <button onClick={() => { setShowPwd(false); setMsg(null); setNewPwd(''); setConfirmPwd(''); }} className="px-5 h-11 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-sm inline-flex items-center justify-center transition-colors">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </SectionCard>
+            </div>
+        </div>
+    );
 };
 
 export default Profile;
