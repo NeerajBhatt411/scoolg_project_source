@@ -47,9 +47,8 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-col text-left">
-                        <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight line-clamp-1">{school?.name || 'ScoolG'}</p>
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Teacher Portal</p>
+                    <div className="flex flex-col text-left justify-center">
+                        <p className="text-[14px] font-extrabold text-[#191c1e] uppercase tracking-wider">Teacher Portal</p>
                     </div>
                 </button>
                 <button onClick={onClose} className="lg:hidden w-9 h-9 rounded-xl bg-white border border-slate-200 grid place-items-center text-slate-500 shrink-0 mb-3">

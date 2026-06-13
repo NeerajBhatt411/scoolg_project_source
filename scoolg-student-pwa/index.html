@@ -12,6 +12,30 @@
   <link rel="apple-touch-icon" href="/pwa-192x192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="ScoolG Student" />
+  
+  <!-- Preload fonts to prevent FOUC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Bulletproof FOUC Prevention */
+    html { visibility: hidden; opacity: 0; transition: opacity 0.1s ease-in; }
+  </style>
+  <script>
+    // Reveal once all stylesheets and scripts are ready
+    window.addEventListener('DOMContentLoaded', () => {
+        requestAnimationFrame(() => {
+            document.documentElement.style.visibility = 'visible';
+            document.documentElement.style.opacity = '1';
+        });
+    });
+    setTimeout(() => {
+        document.documentElement.style.visibility = 'visible';
+        document.documentElement.style.opacity = '1';
+    }, 2000);
+  </script>
   <style>
     /* Prevent FOUC: Hide everything until React is ready */
     #root:empty {
