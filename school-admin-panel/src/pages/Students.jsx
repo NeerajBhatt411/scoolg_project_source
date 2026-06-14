@@ -4,6 +4,8 @@ import MenuButton from '../components/MenuButton';
 import Dropdown from '../components/Dropdown';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Students = () => {
     const navigate = useNavigate();
@@ -25,6 +27,42 @@ const Students = () => {
 
     const uniqueClasses = ['All', ...new Set(students.map(s => s.class).filter(Boolean))];
     const uniqueSections = ['All', ...new Set(students.map(s => s.section).filter(Boolean))];
+
+    const handleExportPasswords = () => {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text(`Student Credentials - ${classFilter === 'All' ? 'All Classes' : classFilter} ${sectionFilter === 'All' ? '' : `Sec ${sectionFilter}`}`, 14, 22);
+        
+        const tableColumn = ["Roll No", "Name", "Class & Sec", "App ID", "Default Password"];
+        const tableRows = [];
+        
+        filteredStudents.forEach(student => {
+            const dob = new Date(student.dateOfBirth);
+            const dd = String(dob.getDate()).padStart(2, '0');
+            const mm = String(dob.getMonth() + 1).padStart(2, '0');
+            const yyyy = dob.getFullYear();
+            const password = `${dd}${mm}${yyyy}`;
+            
+            tableRows.push([
+                student.rollNumber || 'NA',
+                `${student.firstName} ${student.lastName}`,
+                `${student.class} - ${student.section}`,
+                student.studentAppId,
+                password
+            ]);
+        });
+        
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 30,
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [37, 99, 235] } // Tailwind Blue-600
+        });
+        
+        doc.save(`Student_Passwords_${classFilter}_${sectionFilter}.pdf`);
+    };
 
     const Shimmer = ({ className }) => (
         <div className={`animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg ${className}`}></div>
@@ -69,6 +107,13 @@ const Students = () => {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                        <button
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-700 border border-slate-200 font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-95 w-full sm:w-auto"
+                            onClick={handleExportPasswords}
+                        >
+                            <span className="material-symbols-outlined text-rose-500">picture_as_pdf</span>
+                            Export Passwords
+                        </button>
                         <button
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
                             onClick={() => navigate('/students/add')}

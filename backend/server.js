@@ -1431,12 +1431,24 @@ app.post('/api/admin/students', async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        // Generate App ID and Password
-        const count = await Student.countDocuments({ schoolId: school._id });
-        const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1001}`;
+        // Generate 6-digit App ID (e.g. 100001)
+        const lastStudent = await Student.findOne({ 
+            schoolId: school._id,
+            studentAppId: { $regex: /^\d{6}$/ }
+        }).sort({ studentAppId: -1 });
 
-        const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const plainPassword = `PASS-${randomSuffix}`;
+        let nextId = 100001;
+        if (lastStudent && !isNaN(parseInt(lastStudent.studentAppId))) {
+            nextId = parseInt(lastStudent.studentAppId) + 1;
+        }
+
+        const studentAppId = String(nextId);
+        const dobObj = new Date(req.body.dateOfBirth);
+        const dd = String(dobObj.getDate()).padStart(2, '0');
+        const mm = String(dobObj.getMonth() + 1).padStart(2, '0');
+        const yyyy = dobObj.getFullYear();
+        const plainPassword = `${dd}${mm}${yyyy}`; // Default password is DOB
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
@@ -1482,13 +1494,40 @@ app.post('/api/admin/students/bulk', async (req, res) => {
 
         const createdStudents = [];
         const salt = await bcrypt.genSalt(10);
-        let count = await Student.countDocuments({ schoolId: school._id });
+        
+        // Generate 6-digit App ID sequence starting point
+        const lastStudent = await Student.findOne({ 
+            schoolId: school._id,
+            studentAppId: { $regex: /^\d{6}$/ }
+        }).sort({ studentAppId: -1 });
+
+        let nextId = 100001;
+        if (lastStudent && !isNaN(parseInt(lastStudent.studentAppId))) {
+            nextId = parseInt(lastStudent.studentAppId) + 1;
+        }
 
         for (const studentData of students) {
-            count++;
-            const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1000}`;
-            const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const plainPassword = `PASS-${randomSuffix}`;
+            const studentAppId = String(nextId);
+            nextId++;
+            
+            // Generate password from DOB
+            const dobStr = studentData.dateOfBirth;
+            let plainPassword = "password123"; // Fallback
+            if (dobStr && dobStr.includes('-')) {
+                const parts = dobStr.split('-'); // [yyyy, mm, dd]
+                if (parts.length === 3) {
+                    // YYYY-MM-DD to DDMMYYYY
+                    plainPassword = `${parts[2].substring(0,2)}${parts[1]}${parts[0]}`;
+                }
+            } else if (dobStr) {
+                // If it's a Date object
+                const d = new Date(dobStr);
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                plainPassword = `${dd}${mm}${yyyy}`;
+            }
+
             const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
             // Create new student object combining UI provided class/section and CSV data
