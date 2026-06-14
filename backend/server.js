@@ -1465,6 +1465,81 @@ app.post('/api/admin/students', async (req, res) => {
 
 /**
  * @swagger
+ * /api/admin/students/bulk:
+ *   post:
+ *     summary: Bulk add students
+ *     tags: [Admin - Students]
+ */
+app.post('/api/admin/students/bulk', async (req, res) => {
+    try {
+        const { schoolId, className, sectionName, students } = req.body;
+        if (!schoolId || !className || !students || !Array.isArray(students)) {
+            return res.status(400).json({ error: "schoolId, className, and students array are required" });
+        }
+
+        const school = await School.findOne({ id: schoolId });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const createdStudents = [];
+        const salt = await bcrypt.genSalt(10);
+        let count = await Student.countDocuments({ schoolId: school._id });
+
+        for (const studentData of students) {
+            count++;
+            const studentAppId = `STU-${school.campusCode || 'SCH'}-${count + 1000}`;
+            const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const plainPassword = `PASS-${randomSuffix}`;
+            const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+            // Create new student object combining UI provided class/section and CSV data
+            const studentObj = {
+                firstName: studentData.firstName,
+                lastName: studentData.lastName || '',
+                gender: studentData.gender,
+                bloodGroup: studentData.bloodGroup || '',
+                aadhaarNumber: studentData.aadhaarNumber || '',
+                fatherName: studentData.fatherName || '',
+                motherName: studentData.motherName || '',
+                primaryContact: studentData.primaryContact || studentData.contactNumber || '',
+                parentEmail: studentData.parentEmail || '',
+                currentAddress: studentData.currentAddress || '',
+                admissionNumber: studentData.admissionNumber || '',
+                rollNumber: studentData.rollNumber || '',
+                class: className,
+                section: sectionName || 'N/A', // Mongoose schema requires section
+                schoolId: school._id,
+                studentAppId,
+                password: hashedPassword
+            };
+
+            if (studentData.dateOfBirth) studentObj.dateOfBirth = studentData.dateOfBirth;
+            if (studentData.dateOfAdmission) studentObj.dateOfAdmission = studentData.dateOfAdmission;
+
+            const newStudent = new Student(studentObj);
+
+
+            await newStudent.save();
+
+            createdStudents.push({
+                firstName: newStudent.firstName,
+                lastName: newStudent.lastName,
+                studentAppId: newStudent.studentAppId,
+                password: plainPassword // Send back plain-text once for the UI to display/download
+            });
+        }
+
+        res.status(201).json({
+            message: `${createdStudents.length} students added successfully`,
+            students: createdStudents
+        });
+    } catch (err) {
+        console.error("❌ Bulk add students error:", err);
+        res.status(500).json({ error: "Failed to bulk add students", details: err.message });
+    }
+});
+
+/**
+ * @swagger
  * /api/admin/students:
  *   get:
  *     summary: Search/List students with filters

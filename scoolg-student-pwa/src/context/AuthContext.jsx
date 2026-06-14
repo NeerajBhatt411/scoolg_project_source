@@ -5,6 +5,14 @@ import api from '../utils/api';
 const AuthContext = createContext();
 
 
+const loadSavedAccounts = () => {
+  try {
+    return JSON.parse(localStorage.getItem('saved_accounts')) || [];
+  } catch (e) {
+    return [];
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [school, setSchool] = useState(null);
@@ -21,16 +29,37 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (overrideToken) => {
     try {
+      const currentToken = overrideToken || token;
+      if (!currentToken) return;
+      api.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
       const response = await api.get('/student/me');
       setUser(response.data.student);
       setSchool(response.data.school);
       localStorage.setItem('school_info', JSON.stringify(response.data.school));
+
+      const accounts = loadSavedAccounts();
+      const existingIdx = accounts.findIndex(a => a.student?.studentAppId === response.data.student.studentAppId);
+      const newAccount = {
+        token: currentToken,
+        refreshToken: localStorage.getItem('refresh_token'),
+        student: response.data.student,
+        school: response.data.school
+      };
+      if (existingIdx >= 0) {
+        accounts[existingIdx] = newAccount;
+      } else {
+        accounts.push(newAccount);
+      }
+      localStorage.setItem('saved_accounts', JSON.stringify(accounts));
     } catch (error) {
 
       console.error('Failed to fetch profile:', error);
-      logout();
+      // Don't fully logout on fetch error, just clear current if needed
+      if (!overrideToken) {
+        logout();
+      }
     } finally {
       setLoading(false);
     }
@@ -53,7 +82,7 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       // Fetch profile to get user and school info
-      await fetchUserProfile();
+      await fetchUserProfile(accessToken);
 
       return { success: true };
     } catch (error) {
@@ -67,16 +96,44 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('student_token');
-    localStorage.removeItem('school_info');
-    setToken(null);
-    setUser(null);
-    setSchool(null);
-    delete api.defaults.headers.common['Authorization'];
+    const currentToken = localStorage.getItem('student_token');
+    let accounts = loadSavedAccounts();
+    accounts = accounts.filter(a => a.token !== currentToken);
+    localStorage.setItem('saved_accounts', JSON.stringify(accounts));
+
+    if (accounts.length > 0) {
+      switchAccount(accounts[0].token);
+    } else {
+      localStorage.removeItem('student_token');
+      localStorage.removeItem('school_info');
+      localStorage.removeItem('refresh_token');
+      setToken(null);
+      setUser(null);
+      setSchool(null);
+      delete api.defaults.headers.common['Authorization'];
+    }
   };
 
+  const switchAccount = (accountToken) => {
+    const accounts = loadSavedAccounts();
+    const account = accounts.find(a => a.token === accountToken);
+    if (account) {
+      localStorage.setItem('student_token', account.token);
+      if (account.refreshToken) localStorage.setItem('refresh_token', account.refreshToken);
+      if (account.school) localStorage.setItem('school_info', JSON.stringify(account.school));
+      setToken(account.token);
+      setUser(account.student);
+      setSchool(account.school);
+      api.defaults.headers.common['Authorization'] = `Bearer ${account.token}`;
+      // reload to reset any page specific state
+      window.location.href = '/dashboard';
+    }
+  };
+
+  const getSavedAccounts = () => loadSavedAccounts();
+
   return (
-    <AuthContext.Provider value={{ user, school, token, loading, login, logout, fetchUserProfile, mobileNavOpen, setMobileNavOpen }}>
+    <AuthContext.Provider value={{ user, school, token, loading, login, logout, fetchUserProfile, mobileNavOpen, setMobileNavOpen, switchAccount, getSavedAccounts }}>
       {children}
     </AuthContext.Provider>
   );
