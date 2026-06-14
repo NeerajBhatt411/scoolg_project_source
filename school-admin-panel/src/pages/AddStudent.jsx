@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
@@ -30,7 +33,6 @@ const AddStudent = () => {
         gender: '',
         bloodGroup: '',
         aadhaarNumber: '',
-        religionOrCategory: '',
         fatherName: '',
         motherName: '',
         primaryContact: '',
@@ -47,6 +49,14 @@ const AddStudent = () => {
     const [previewPhoto, setPreviewPhoto] = useState(null);
     const [errors, setErrors] = useState({});
     const [availableSections, setAvailableSections] = useState([]);
+    
+    // Bulk Upload States
+    const [activeTab, setActiveTab] = useState('single');
+    const [bulkClass, setBulkClass] = useState('');
+    const [bulkSection, setBulkSection] = useState('');
+    const [bulkData, setBulkData] = useState([]);
+    const [bulkSuccess, setBulkSuccess] = useState(null);
+    const [bulkAvailableSections, setBulkAvailableSections] = useState([]);
     // `classes` comes from the shared cache (loaded once at app start).
 
     // Fetch Sections when class changes (cached per class in context).
@@ -68,6 +78,25 @@ const AddStudent = () => {
         });
         return () => { active = false; };
     }, [formData.class, classes, getSections, formData.section]);
+
+    // Bulk tab section fetcher
+    useEffect(() => {
+        let active = true;
+        if (!bulkClass) {
+            setBulkAvailableSections([]);
+            return;
+        }
+        const selectedClass = classes.find(c => c.className === bulkClass);
+        if (!selectedClass) return;
+        getSections(selectedClass._id).then((data) => {
+            if (!active) return;
+            setBulkAvailableSections(data);
+            if (data.length > 0 && !data.find(s => s.sectionName === bulkSection)) {
+                setBulkSection(data[0].sectionName);
+            }
+        });
+        return () => { active = false; };
+    }, [bulkClass, classes, getSections, bulkSection]);
 
     const steps = [
         { id: 1, title: 'Personal' },
@@ -137,6 +166,7 @@ const AddStudent = () => {
         if (step === 1) {
             if (!formData.firstName || formData.firstName.length < 2) newErrors.firstName = true;
             if (!formData.lastName || formData.lastName.length < 2) newErrors.lastName = true;
+            if (!formData.rollNumber) newErrors.rollNumber = true;
             if (!formData.dateOfBirth || formData.dateOfBirth > today) newErrors.dateOfBirth = true;
             if (!formData.gender) newErrors.gender = true;
         } else if (step === 2) {
@@ -147,7 +177,6 @@ const AddStudent = () => {
         } else if (step === 3) {
             if (!formData.class) newErrors.class = true;
             if (!formData.section) newErrors.section = true;
-            if (!formData.rollNumber) newErrors.rollNumber = true;
             if (!formData.dateOfAdmission || formData.dateOfAdmission > today) newErrors.dateOfAdmission = true;
             if (!formData.currentAddress || formData.currentAddress.length < 5) newErrors.currentAddress = true;
         }
@@ -159,12 +188,12 @@ const AddStudent = () => {
     const isStepValid = (step) => {
         const today = new Date().toISOString().split('T')[0];
         if (step === 1) {
-            return formData.firstName.length >= 2 && formData.lastName.length >= 2 && formData.dateOfBirth && formData.dateOfBirth <= today && formData.gender;
+            return formData.firstName.length >= 2 && formData.lastName.length >= 2 && formData.rollNumber && formData.dateOfBirth && formData.dateOfBirth <= today && formData.gender;
         } else if (step === 2) {
             const emailValid = !formData.parentEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail);
             return formData.fatherName.length >= 2 && formData.motherName.length >= 2 && /^\d{10}$/.test(formData.primaryContact) && emailValid;
         } else if (step === 3) {
-            return formData.class && formData.section && formData.rollNumber && formData.dateOfAdmission && formData.dateOfAdmission <= today && formData.currentAddress.length >= 5;
+            return formData.class && formData.section && formData.dateOfAdmission && formData.dateOfAdmission <= today && formData.currentAddress.length >= 5;
         }
         return true;
     };
@@ -209,6 +238,186 @@ const AddStudent = () => {
         }
     };
 
+    // --- Bulk Logic ---
+    const handleDownloadTemplate = async () => {
+        if (!bulkClass) {
+            return toast.error("Please select a Class first before downloading the template");
+        }
+        if (bulkAvailableSections.length > 0 && !bulkSection) {
+            return toast.error("Please select a Section first before downloading the template");
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Student Upload');
+
+        const headers = [
+            { header: "First Name (Required)", key: "firstName", width: 25 },
+            { header: "Last Name (Required)", key: "lastName", width: 20 },
+            { header: "Roll Number (Required)", key: "roll", width: 22 },
+            { header: "Date of Birth YYYY-MM-DD (Required)", key: "dob", width: 35 },
+            { header: "Gender M/F (Required)", key: "gender", width: 22 },
+            { header: "Blood Group (Optional)", key: "bloodGroup", width: 22 },
+            { header: "Aadhaar Number (Optional)", key: "aadhaar", width: 28 },
+            { header: "Father Name (Required)", key: "father", width: 25 },
+            { header: "Mother Name (Required)", key: "mother", width: 25 },
+            { header: "Primary Contact 10-digits (Required)", key: "contact", width: 35 },
+            { header: "Parent Email (Optional)", key: "email", width: 30 },
+            { header: "Current Address (Required)", key: "address", width: 40 },
+            { header: "Admission Number (Optional)", key: "admission", width: 28 },
+            { header: "Date of Admission YYYY-MM-DD (Required)", key: "doa", width: 40 },
+            { header: "Class (Read Only)", key: "class", width: 20 },
+            { header: "Section (Read Only)", key: "section", width: 20 }
+        ];
+
+        sheet.columns = headers;
+
+        // Style the header row
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.height = 30;
+
+        headers.forEach((h, index) => {
+            const cell = headerRow.getCell(index + 1);
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            if (h.header.includes('(Required)')) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } }; // Blue
+            } else if (h.header.includes('(Optional)')) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } }; // Green
+            } else {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF64748B' } }; // Gray for Read Only
+            }
+        });
+
+        // Add 500 rows with dropdown data validation and prefilled class/section
+        for (let i = 2; i <= 501; i++) {
+            // Dropdown for Gender
+            sheet.getCell(`E${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"Male,Female,Other"']
+            };
+            // Dropdown for Blood Group
+            sheet.getCell(`F${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"A+,A-,B+,B-,O+,O-,AB+,AB-"']
+            };
+            // Prefill Class and Section
+            sheet.getCell(`O${i}`).value = bulkClass;
+            sheet.getCell(`P${i}`).value = bulkSection || 'N/A';
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), 'Student_Bulk_Upload_Premium_Template.xlsx');
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false, dateNF: 'yyyy-mm-dd' });
+
+                if (json.length === 0) {
+                    toast.error("File is empty or contains only headers");
+                    return;
+                }
+
+                const parsedStudents = json.map(row => {
+                    const obj = {
+                        firstName: String(row["First Name (Required)"] || '').trim(),
+                        lastName: String(row["Last Name (Required)"] || '').trim(),
+                        rollNumber: String(row["Roll Number (Required)"] || '').trim(),
+                        dateOfBirth: String(row["Date of Birth YYYY-MM-DD (Required)"] || '').trim(),
+                        gender: String(row["Gender M/F (Required)"] || '').trim(),
+                        bloodGroup: String(row["Blood Group (Optional)"] || '').trim(),
+                        aadhaarNumber: String(row["Aadhaar Number (Optional)"] || '').trim(),
+                        fatherName: String(row["Father Name (Required)"] || '').trim(),
+                        motherName: String(row["Mother Name (Required)"] || '').trim(),
+                        primaryContact: String(row["Primary Contact 10-digits (Required)"] || '').trim(),
+                        parentEmail: String(row["Parent Email (Optional)"] || '').trim(),
+                        currentAddress: String(row["Current Address (Required)"] || '').trim(),
+                        admissionNumber: String(row["Admission Number (Optional)"] || '').trim(),
+                        dateOfAdmission: String(row["Date of Admission YYYY-MM-DD (Required)"] || '').trim(),
+                        hasError: false,
+                        errors: []
+                    };
+
+                    // Validation
+                    if (!obj.firstName) { obj.hasError = true; obj.errors.push("First Name missing"); }
+                    if (!obj.lastName) { obj.hasError = true; obj.errors.push("Last Name missing"); }
+                    if (!obj.dateOfBirth) { obj.hasError = true; obj.errors.push("DOB missing"); }
+                    if (!obj.gender) { obj.hasError = true; obj.errors.push("Gender missing"); }
+                    if (!obj.fatherName) { obj.hasError = true; obj.errors.push("Father Name missing"); }
+                    if (!obj.motherName) { obj.hasError = true; obj.errors.push("Mother Name missing"); }
+                    if (!obj.primaryContact || obj.primaryContact.length !== 10) { obj.hasError = true; obj.errors.push("Invalid Contact (10 digits)"); }
+                    if (!obj.currentAddress) { obj.hasError = true; obj.errors.push("Address missing"); }
+                    if (!obj.rollNumber) { obj.hasError = true; obj.errors.push("Roll Number missing"); }
+                    if (!obj.dateOfAdmission) { obj.hasError = true; obj.errors.push("DOA missing"); }
+
+                    // Normalize gender
+                    const gLow = obj.gender.toLowerCase();
+                    if (gLow.startsWith('m')) obj.gender = 'Male';
+                    else if (gLow.startsWith('f')) obj.gender = 'Female';
+                    else if (gLow.startsWith('o')) obj.gender = 'Other';
+                    else if (obj.gender) { obj.hasError = true; obj.errors.push("Invalid Gender format"); }
+
+                    return obj;
+                });
+
+                setBulkData(parsedStudents);
+                e.target.value = null; // reset
+            } catch (err) {
+                toast.error("Error parsing Excel file. Please use the downloaded template.");
+                console.error(err);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleBulkSubmit = async () => {
+        if (!bulkClass) return toast.error("Please select a class");
+        if (bulkData.length === 0) return toast.error("Please upload valid CSV data");
+        if (bulkData.some(d => d.hasError)) return toast.error("Please fix red highlighted rows in CSV and re-upload");
+        
+        setIsLoading(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/students/bulk`, {
+                schoolId,
+                className: bulkClass,
+                sectionName: bulkSection,
+                students: bulkData
+            });
+            setBulkSuccess(res.data.students);
+            toast.success(res.data.message);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to bulk add students");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const downloadCredentials = () => {
+        if (!bulkSuccess) return;
+        const headers = ["First Name", "Last Name", "App ID (Login)", "Password"];
+        const rows = bulkSuccess.map(s => [s.firstName, s.lastName, s.studentAppId, s.password]);
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Credentials_Class_${bulkClass}_${bulkSection || 'All'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col relative pb-20">
             {/* TopNavBar */}
@@ -219,14 +428,9 @@ const AddStudent = () => {
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">
                     <div className="flex items-center gap-3">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-[11px] font-bold text-slate-800" title={schoolName}>
-                                {schoolName.length > 20 ? schoolName.substring(0, 18) + '...' : schoolName}
-                            </p>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">School Admin</p>
-                        </div>
-                        <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-slate-500">
-                            <span className="material-symbols-outlined text-xl">account_circle</span>
+                        <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+                            <button onClick={() => setActiveTab('single')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'single' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>Single Add</button>
+                            <button onClick={() => setActiveTab('bulk')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'bulk' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}>Bulk Upload</button>
                         </div>
                     </div>
                 </div>
@@ -234,6 +438,9 @@ const AddStudent = () => {
 
             {/* Content Canvas */}
             <div className="p-4 sm:p-8 max-w-[1000px] mx-auto space-y-8 w-full">
+
+                {activeTab === 'single' ? (
+                    <>
 
                 {/* Horizontal Stepper Component */}
                 <div className="w-full pt-4 md:pt-8 px-4 md:px-12">
@@ -345,6 +552,11 @@ const AddStudent = () => {
                                         </div>
 
                                         <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>
+                                            <input type="text" value={formData.rollNumber} onChange={e=>handleInputChange('rollNumber', e.target.value)} placeholder="e.g. 01" className={`w-full h-12 px-4 rounded-xl border ${errors.rollNumber ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Date Of Birth <span className="text-red-500 text-lg leading-none">*</span></label>
                                             <input type="date" value={formData.dateOfBirth} onChange={e=>handleInputChange('dateOfBirth', e.target.value)} className={`w-full h-12 px-4 rounded-xl border ${errors.dateOfBirth ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
                                         </div>
@@ -437,10 +649,6 @@ const AddStudent = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Roll Number <span className="text-red-500 text-lg leading-none">*</span></label>
-                                            <input type="text" value={formData.rollNumber} onChange={e=>handleInputChange('rollNumber', e.target.value)} placeholder="e.g. 01" className={`w-full h-12 px-4 rounded-xl border ${errors.rollNumber ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
-                                        </div>
-                                        <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Admission Number</label>
                                             <input type="text" value={formData.admissionNumber} onChange={e=>handleInputChange('admissionNumber', e.target.value)} placeholder="0000000 (Optional)" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
                                         </div>
@@ -497,6 +705,124 @@ const AddStudent = () => {
                                 {!isLoading && <span className="material-symbols-outlined text-[18px]">{currentStep === 4 ? 'check' : 'arrow_forward'}</span>}
                             </button>
                         </div>
+                    </div>
+                )}
+                </>
+                ) : (
+                    /* BULK UPLOAD TAB CONTENT */
+                    <div className="bg-white rounded-[24px] p-6 lg:p-10 premium-shadow min-h-[60vh]">
+                        {bulkSuccess ? (
+                            <div className="text-center py-8">
+                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span className="material-symbols-outlined text-4xl">check_circle</span>
+                                </div>
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2">{bulkSuccess.length} Students Added Successfully!</h2>
+                                <p className="text-slate-500 font-medium mb-8">Download their login credentials and share with them.</p>
+                                <button onClick={downloadCredentials} className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto">
+                                    <span className="material-symbols-outlined">download</span> Download Passwords (CSV)
+                                </button>
+                                <div className="mt-6">
+                                    <button onClick={() => { setBulkSuccess(null); setBulkData([]); }} className="text-blue-600 font-bold text-sm underline">Upload more students</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-8">
+                                <div className="flex flex-col md:flex-row gap-6 items-start md:items-end">
+                                    <div className="space-y-2 flex-1">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Select Class <span className="text-red-500">*</span></label>
+                                        <Dropdown
+                                            value={bulkClass}
+                                            onChange={setBulkClass}
+                                            options={classes.map(c => ({ value: c.className, label: c.className }))}
+                                            placeholder="Select Class"
+                                            className="w-full"
+                                            buttonClassName="h-12 bg-slate-50"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 flex-1">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Select Section (Optional)</label>
+                                        <Dropdown
+                                            value={bulkSection}
+                                            onChange={setBulkSection}
+                                            options={bulkAvailableSections.map(s => ({ value: s.sectionName, label: s.sectionName }))}
+                                            placeholder="Select Section"
+                                            className="w-full"
+                                            buttonClassName="h-12 bg-slate-50"
+                                        />
+                                    </div>
+                                    <button onClick={handleDownloadTemplate} className="h-12 px-6 border-2 border-[#2563eb] text-[#2563eb] font-bold rounded-xl hover:bg-blue-50 transition-all flex items-center gap-2 shrink-0">
+                                        <span className="material-symbols-outlined text-lg">download</span> Template
+                                    </button>
+                                </div>
+
+                                <label className="flex flex-col items-center justify-center w-full h-40 md:h-64 border-2 border-slate-300 border-dashed rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all group">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <span className="material-symbols-outlined text-2xl">cloud_upload</span>
+                                        </div>
+                                        <p className="mb-2 text-sm text-slate-700 font-bold"><span className="text-blue-600 font-black">Click to upload</span> or drag and drop</p>
+                                        <p className="text-xs text-slate-500 font-medium">Excel file only (.xlsx)</p>
+                                    </div>
+                                    <input type="file" className="hidden" accept=".xlsx" onChange={handleFileUpload} />
+                                </label>
+
+                                {bulkData.length > 0 && (
+                                    <div className="mt-8">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-slate-800">Preview Data ({bulkData.length} students)</h3>
+                                            {bulkData.some(d => d.hasError) && <span className="text-xs font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full">Contains Errors</span>}
+                                        </div>
+                                        <div className="overflow-x-auto border border-slate-200 rounded-xl max-h-80">
+                                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0">
+                                                    <tr>
+                                                        <th className="px-4 py-3 font-bold">First Name</th>
+                                                        <th className="px-4 py-3 font-bold">Last Name</th>
+                                                        <th className="px-4 py-3 font-bold">Roll No</th>
+                                                        <th className="px-4 py-3 font-bold">Gender</th>
+                                                        <th className="px-4 py-3 font-bold">DOB</th>
+                                                        <th className="px-4 py-3 font-bold">Parents</th>
+                                                        <th className="px-4 py-3 font-bold">Contact</th>
+                                                        <th className="px-4 py-3 font-bold">DOA</th>
+                                                        <th className="px-4 py-3 font-bold text-right">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {bulkData.map((row, i) => (
+                                                        <tr key={i} className={`border-b last:border-0 ${row.hasError ? 'bg-red-50/50' : 'bg-white hover:bg-slate-50'}`}>
+                                                            <td className={`px-4 py-3 font-medium ${!row.firstName ? 'text-red-500' : 'text-slate-800'}`}>{row.firstName || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.lastName || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.rollNumber || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.gender || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.dateOfBirth || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600 truncate max-w-[100px]" title={`${row.fatherName} & ${row.motherName}`}>{row.fatherName || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.primaryContact || '-'}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{row.dateOfAdmission || '-'}</td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                {row.hasError ? (
+                                                                    <span className="text-red-600 text-[11px] font-bold bg-red-100 px-2 py-1 rounded-md" title={row.errors.join(', ')}>Errors ({row.errors.length})</span>
+                                                                ) : (
+                                                                    <span className="text-green-600 text-[11px] font-bold bg-green-100 px-2 py-1 rounded-md">Valid</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="mt-8 text-right">
+                                            <button
+                                                onClick={handleBulkSubmit}
+                                                disabled={isLoading || bulkData.some(d => d.hasError)}
+                                                className={`px-8 py-3 font-bold rounded-xl transition-all ${isLoading || bulkData.some(d => d.hasError) ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-[#2563eb] text-white hover:shadow-lg hover:shadow-blue-500/30 active:scale-95'}`}
+                                            >
+                                                {isLoading ? 'Processing...' : 'Upload & Add Students'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

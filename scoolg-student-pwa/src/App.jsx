@@ -60,8 +60,11 @@ const Protected = ({ children }) => {
 
 const GuestOnly = ({ children }) => {
   const { token, loading } = useAuth();
+  const searchParams = new URLSearchParams(window.location.search);
+  const addAccount = searchParams.get('addAccount');
+
   if (loading) return <BootLoader />;
-  if (token) return <Navigate to="/dashboard" replace />;
+  if (token && !addAccount) return <Navigate to="/dashboard" replace />;
   return children;
 };
 

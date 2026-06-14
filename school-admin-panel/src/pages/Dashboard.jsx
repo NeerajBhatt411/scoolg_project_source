@@ -132,7 +132,7 @@ const Dashboard = () => {
                                 <span>Live Metrics</span>
                             </div>
                         </div>
-                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
+                        <div className="p-4 bg-blue-50 text-blue-600 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">group</span>
                         </div>
                     </div>
@@ -148,7 +148,7 @@ const Dashboard = () => {
                                 <span>Faculty</span>
                             </div>
                         </div>
-                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
+                        <div className="p-4 bg-blue-50 text-blue-600 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">school</span>
                         </div>
                     </div>
@@ -166,7 +166,7 @@ const Dashboard = () => {
                                 <span>Academic</span>
                             </div>
                         </div>
-                        <div className="p-4 bg-slate-50 text-slate-900 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
+                        <div className="p-4 bg-blue-50 text-blue-600 rounded-[20px] group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all duration-500 border border-slate-100">
                             <span className="material-symbols-outlined text-3xl">class</span>
                         </div>
                     </div>
@@ -184,7 +184,7 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-6">
                         {quickActions.map((a) => (
                             <button key={a.module} onClick={() => window.location.href = a.path} className="bg-white border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] text-slate-900 font-black py-8 px-6 rounded-[36px] flex items-center gap-5 transition-all duration-500 group cursor-pointer active:scale-95">
-                                <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
+                                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-[22px] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 border border-slate-100 shadow-sm">
                                     <span className="material-symbols-outlined text-[26px]">{a.icon}</span>
                                 </div>
                                 <span className="text-sm font-black tracking-tight">{a.label}</span>

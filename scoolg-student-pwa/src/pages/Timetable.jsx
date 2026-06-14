@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
-import { Clock, MapPin, User, BookOpen, Coffee } from 'lucide-react';
+import { Clock, MapPin, User, BookOpen, Coffee, Calendar } from 'lucide-react';
 
 const getSubjectColor = (subject) => {
     const sub = (subject || '').toLowerCase();
