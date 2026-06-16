@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE, setAuthToken } from '../lib/api';
+import { initPush } from '../firebase';
 
 const AdminContext = createContext();
 
@@ -45,6 +46,8 @@ export const AdminProvider = ({ children }) => {
     const lastStatusCheck = useRef(0);
     // In-memory cache of sections keyed by classId (sections change rarely).
     const sectionsCache = useRef({});
+    // Guard so web-push registration runs at most once per session.
+    const pushInitDone = useRef(false);
 
     const checkCurrentStatus = async (force = false) => {
         if (!schoolId) return;
@@ -165,6 +168,25 @@ export const AdminProvider = ({ children }) => {
             refreshStudents();
             refreshClasses();
             refreshTeachers();
+
+            // Web push: register the FCM token once per session, after auth is
+            // known. Fire-and-forget — never block or change render/login flow.
+            if (!pushInitDone.current) {
+                pushInitDone.current = true;
+                const pushRole = localStorage.getItem('scoolg_role') === 'Owner' ? 'owner' : 'staff';
+                const pushSchoolId = localStorage.getItem('scoolg_school_id');
+                initPush({
+                    role: pushRole,
+                    userId: pushSchoolId,
+                    schoolId: pushSchoolId,
+                    onToken: (t) => axios.post(ADMIN_API_BASE.replace('/admin', '') + '/notifications/token', {
+                        role: pushRole,
+                        userId: pushSchoolId,
+                        schoolId: pushSchoolId,
+                        token: t,
+                    }),
+                });
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [schoolId]);

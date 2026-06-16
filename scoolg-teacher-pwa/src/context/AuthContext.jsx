@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
+import { initPush } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('teacher_token'));
   const [loading, setLoading] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const pushInitedRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -19,6 +21,25 @@ export const AuthProvider = ({ children }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Register for web push once the teacher is authenticated. Fire-and-forget:
+  // never awaited here so it can't block login/render. Guarded to run once.
+  useEffect(() => {
+    if (!teacher || !token || pushInitedRef.current) return;
+    pushInitedRef.current = true;
+    initPush({
+      role: 'teacher',
+      userId: teacher._id,
+      schoolId: school?.id,
+      onToken: (t) => api.post('/notifications/token', {
+        role: 'teacher',
+        userId: teacher._id,
+        schoolId: school?.id,
+        token: t,
+      }),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teacher, token]);
 
   const fetchProfile = async () => {
     try {

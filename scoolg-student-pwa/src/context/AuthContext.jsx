@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import api from '../utils/api';
+import { initPush } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('student_token'));
   const [loading, setLoading] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const pushInitedRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -28,6 +30,25 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, [token]);
+
+  // Register for web push once the student is authenticated. Fire-and-forget:
+  // never awaited / never blocks render, and runs at most once per session.
+  useEffect(() => {
+    if (pushInitedRef.current) return;
+    if (!token || !user?._id) return;
+    pushInitedRef.current = true;
+    initPush({
+      role: 'student',
+      userId: user._id,
+      schoolId: user.schoolId,
+      onToken: (t) => api.post('/notifications/token', {
+        role: 'student',
+        userId: user._id,
+        schoolId: user.schoolId,
+        token: t,
+      }),
+    });
+  }, [token, user]);
 
   const fetchUserProfile = async (overrideToken) => {
     try {
