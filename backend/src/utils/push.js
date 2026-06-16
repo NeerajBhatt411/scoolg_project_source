@@ -2,6 +2,7 @@ import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import { DeviceToken } from '../../models/DeviceToken.js';
 import { Notification } from '../../models/Notification.js';
+import { Student } from '../../models/Student.js';
 
 /*
  * FCM web push via the HTTP v1 REST API — no firebase-admin dependency
@@ -110,10 +111,23 @@ export const notify = async ({ schoolId, toRole, recipients = [], title, body = 
     try {
         await Notification.insertMany(recipients.map(r => ({ schoolId, toRole, toId: String(r.userId), title, body, type, data })));
     } catch (e) { console.error('[notify] log failed:', e.message); }
-    // collect tokens
+    // collect tokens — match on role + userId (globally-unique _id), so a
+    // schoolId-format mismatch can never cause a missed delivery.
     const ids = recipients.map(r => String(r.userId));
-    const docs = await DeviceToken.find({ schoolId, role: toRole, userId: { $in: ids } }).select('token').lean();
+    const docs = await DeviceToken.find({ role: toRole, userId: { $in: ids } }).select('token').lean();
     return sendToTokens(docs.map(d => d.token), { title, body, data, link });
 };
 
-export default { sendToTokens, notify, pushEnabled };
+/**
+ * Convenience: notify every student of a class (and section, or 'All' sections).
+ * @param {object} o { schoolObjId, className, sectionName, title, body, type, data }
+ */
+export const notifyClassStudents = async ({ schoolObjId, className, sectionName, title, body = '', type = 'homework', data = {} }) => {
+    const q = { schoolId: schoolObjId, class: className };
+    if (sectionName && sectionName !== 'All') q.section = sectionName;
+    const students = await Student.find(q).select('_id').lean();
+    if (!students.length) return { sent: 0, failed: 0 };
+    return notify({ schoolId: String(schoolObjId), toRole: 'student', recipients: students.map(s => ({ userId: s._id })), title, body, type, data });
+};
+
+export default { sendToTokens, notify, notifyClassStudents, pushEnabled };

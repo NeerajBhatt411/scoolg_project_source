@@ -10,6 +10,7 @@ import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
+import { notifyClassStudents } from '../../utils/push.js';
 import { teacherFromToken } from '../../utils/teacherAuth.js';
 
 export const getTeacherDiary = async (req, res) => {
@@ -299,6 +300,19 @@ export const postTeacherHomework = async (req, res) => {
             createdById: teacher._id,
             createdByName: teacher.fullName
         });
+
+        // 🔔 notify the class's students
+        try {
+            await notifyClassStudents({
+                schoolObjId: teacher.schoolId,
+                className,
+                sectionName: homework.sectionName,
+                title: `📚 New homework${subject ? ' · ' + subject : ''}`,
+                body: `${homework.title} — Class ${className}${homework.sectionName && homework.sectionName !== 'All' ? '-' + homework.sectionName : ''}`,
+                data: { link: '/homework' },
+            });
+        } catch (e) { console.error('[teacher homework] push failed:', e.message); }
+
         res.status(201).json(homework);
     } catch (err) {
         console.error("Teacher homework error:", err);

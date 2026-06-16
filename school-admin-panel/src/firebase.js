@@ -13,7 +13,7 @@ const firebaseConfig = {
 
 // Web Push (VAPID) public key — paste from Firebase → Cloud Messaging →
 // "Web Push certificates". Until set, push registration safely no-ops.
-const VAPID_KEY = '';
+const VAPID_KEY = 'BHIFUjnRPRiE_uFjz-Q7AaExJBZckgYhu2Tqv0ssDzcr5oVY8P4fhVd7rEO0ej6j6PSQmxFAd9SAEoKmy4lcxTs';
 
 let app = null;
 let messaging = null;

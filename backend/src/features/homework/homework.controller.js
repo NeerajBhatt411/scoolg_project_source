@@ -2,6 +2,7 @@ import { School } from '../../../models/School.js';
 import { Section } from '../../../models/Section.js';
 import { Timetable } from '../../../models/Timetable.js';
 import { Homework } from '../../../models/Homework.js';
+import { notifyClassStudents } from '../../utils/push.js';
 
 export const postAdminHomework = async (req, res) => {
     try {
@@ -52,6 +53,18 @@ export const postAdminHomework = async (req, res) => {
             createdById: resolvedId || undefined,
             createdByName: resolvedName || 'School Admin'
         });
+
+        // 🔔 notify the class's students
+        try {
+            await notifyClassStudents({
+                schoolObjId: school._id,
+                className,
+                sectionName: homework.sectionName,
+                title: `📚 New homework${subject ? ' · ' + subject : ''}`,
+                body: `${homework.title} — Class ${className}${homework.sectionName && homework.sectionName !== 'All' ? '-' + homework.sectionName : ''}`,
+                data: { link: '/homework' },
+            });
+        } catch (e) { console.error('[homework] push failed:', e.message); }
 
         res.status(201).json(homework);
     } catch (err) {
