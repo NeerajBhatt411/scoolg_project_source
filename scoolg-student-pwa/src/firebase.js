@@ -42,6 +42,8 @@ export async function initPush({ role, userId, schoolId, onToken }) {
     onMessage(messaging, (payload) => {
       window.dispatchEvent(new CustomEvent('push-message', { detail: payload }));
     });
+
+    return token;
   } catch (e) {
     console.warn('[push] init failed', e);
   }

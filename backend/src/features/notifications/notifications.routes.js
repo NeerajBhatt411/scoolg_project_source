@@ -5,6 +5,8 @@ const router = Router();
 
 // Diagnostic — confirms whether the backend can send push (env configured).
 router.get('/api/notifications/status', c.status);
+// One-off test push to a token (verifies the pipeline from the app).
+router.post('/api/notifications/test', c.sendTest);
 
 /**
  * @swagger

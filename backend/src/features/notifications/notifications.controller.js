@@ -1,10 +1,27 @@
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { Notification } from '../../../models/Notification.js';
-import { pushEnabled } from '../../utils/push.js';
+import { pushEnabled, sendToTokens } from '../../utils/push.js';
 
 // Diagnostic: is the Firebase service account configured (can we send)?
 export const status = async (req, res) => {
     res.json({ pushEnabled: pushEnabled() });
+};
+
+// Send a one-off test push to a given device token (used by the in-app
+// "Send test notification" button to verify the whole pipeline).
+export const sendTest = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: "token required" });
+        const result = await sendToTokens([token], {
+            title: '🔔 Scoolg test',
+            body: 'Your notifications are working!',
+            data: { link: '/' },
+        });
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to send test", details: err.message });
+    }
 };
 
 // Save (or refresh) an FCM token for a signed-in user/device.

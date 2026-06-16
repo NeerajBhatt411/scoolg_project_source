@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School, BadgeCheck, Save, Loader2, User, KeyRound } from 'lucide-react';
+import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School, BadgeCheck, Save, Loader2, User, KeyRound, Bell } from 'lucide-react';
 import MenuButton from '../components/MenuButton';
+import { initPush } from '../firebase';
 
 const Profile = () => {
     const { teacher, school, logout } = useAuth();
@@ -14,6 +15,23 @@ const Profile = () => {
     const [msg, setMsg] = useState(null);
     const [saving, setSaving] = useState(false);
     const [classCount, setClassCount] = useState(null);
+    const [pushMsg, setPushMsg] = useState(null);
+    const [pushBusy, setPushBusy] = useState(false);
+
+    const enablePush = async () => {
+        setPushBusy(true); setPushMsg(null);
+        try {
+            const token = await initPush({
+                role: 'teacher', userId: teacher?._id, schoolId: school?.id,
+                onToken: (t) => api.post('/notifications/token', { role: 'teacher', userId: teacher?._id, schoolId: school?.id, token: t }),
+            });
+            if (!token) { setPushMsg({ type: 'err', text: 'Permission denied / not supported. Allow notifications in your browser settings, then retry.' }); return; }
+            await api.post('/notifications/test', { token });
+            setPushMsg({ type: 'ok', text: 'Enabled! A test notification was just sent — check your device 🔔' });
+        } catch (e) {
+            setPushMsg({ type: 'err', text: 'Could not enable notifications.' });
+        } finally { setPushBusy(false); }
+    };
 
     const name = teacher?.fullName || 'Teacher';
     const colors = ['from-blue-500 to-cyan-500', 'from-rose-500 to-pink-500', 'from-amber-500 to-orange-500', 'from-emerald-500 to-teal-500', 'from-indigo-500 to-purple-500'];
@@ -141,6 +159,16 @@ const Profile = () => {
                             </div>
                         </div>
                     )}
+                </SectionCard>
+
+                <SectionCard icon={<Bell />} iconBg="#eff6ff" iconColor="#2563eb" title="Notifications" full>
+                    <div className="max-w-md">
+                        <p className="text-sm font-medium text-slate-500 mb-4">Get instant alerts for homework, attendance and school events on this device.</p>
+                        <button onClick={enablePush} disabled={pushBusy} className="px-5 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm inline-flex items-center gap-2 transition-colors disabled:opacity-60">
+                            {pushBusy ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} {pushBusy ? 'Enabling…' : 'Enable & test notifications'}
+                        </button>
+                        {pushMsg && <p className={`mt-3 text-sm font-semibold ${pushMsg.type === 'ok' ? 'text-emerald-600' : 'text-rose-600'}`}>{pushMsg.text}</p>}
+                    </div>
                 </SectionCard>
 
                 <SectionCard icon={<KeyRound />} iconBg="#fffbeb" iconColor="#f59e0b" title="Account Security" full>
