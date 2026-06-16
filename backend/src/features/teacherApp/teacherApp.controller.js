@@ -10,7 +10,7 @@ import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
-import { notifyClassStudents } from '../../utils/push.js';
+import { notifyClassStudents, notify } from '../../utils/push.js';
 import { teacherFromToken } from '../../utils/teacherAuth.js';
 
 export const getTeacherDiary = async (req, res) => {
@@ -259,6 +259,13 @@ export const postTeacherAttendance = async (req, res) => {
             { schoolId: teacher.schoolId, classId, sectionId, date, records, markedBy: teacher._id },
             { new: true, upsert: true }
         );
+
+        // 🔔 notify students marked absent
+        try {
+            const absent = (records || []).filter(r => r.status === 'A').map(r => ({ userId: r.studentId }));
+            if (absent.length) await notify({ schoolId: String(teacher.schoolId), toRole: 'student', recipients: absent, title: '🟠 Marked absent today', body: `You were marked absent on ${date}.`, type: 'attendance', data: { link: '/attendance' } });
+        } catch (e) { console.error('[teacher attendance] push failed:', e.message); }
+
         res.json(attendance);
     } catch (err) {
         console.error("Teacher attendance error:", err);

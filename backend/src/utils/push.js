@@ -130,4 +130,11 @@ export const notifyClassStudents = async ({ schoolObjId, className, sectionName,
     return notify({ schoolId: String(schoolObjId), toRole: 'student', recipients: students.map(s => ({ userId: s._id })), title, body, type, data });
 };
 
-export default { sendToTokens, notify, notifyClassStudents, pushEnabled };
+/** Notify EVERY student of a school (e.g. a calendar event / school-wide notice). */
+export const notifySchoolStudents = async ({ schoolObjId, title, body = '', type = 'general', data = {} }) => {
+    const students = await Student.find({ schoolId: schoolObjId }).select('_id').lean();
+    if (!students.length) return { sent: 0, failed: 0 };
+    return notify({ schoolId: String(schoolObjId), toRole: 'student', recipients: students.map(s => ({ userId: s._id })), title, body, type, data });
+};
+
+export default { sendToTokens, notify, notifyClassStudents, notifySchoolStudents, pushEnabled };

@@ -2,6 +2,7 @@ import { School } from '../../../models/School.js';
 import { ClassModel } from '../../../models/Class.js';
 import { Student } from '../../../models/Student.js';
 import { Attendance } from '../../../models/Attendance.js';
+import { notify } from '../../utils/push.js';
 
 export const postAdminAttendance = async (req, res) => {
     try {
@@ -22,6 +23,12 @@ export const postAdminAttendance = async (req, res) => {
             },
             { upsert: true, new: true }
         );
+
+        // 🔔 notify students marked absent
+        try {
+            const absent = (records || []).filter(r => r.status === 'A').map(r => ({ userId: r.studentId }));
+            if (absent.length) await notify({ schoolId: String(school._id), toRole: 'student', recipients: absent, title: '🟠 Marked absent today', body: `You were marked absent on ${date}.`, type: 'attendance', data: { link: '/attendance' } });
+        } catch (e) { console.error('[attendance] push failed:', e.message); }
 
         res.json(attendance);
     } catch (err) {

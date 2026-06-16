@@ -1,5 +1,6 @@
 import { School } from '../../../models/School.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
+import { notifySchoolStudents } from '../../utils/push.js';
 
 export const getAdminCalendar = async (req, res) => {
     try {
@@ -53,6 +54,18 @@ export const postAdminCalendar = async (req, res) => {
             noticeType: 'school-calendar',
         });
         await event.save();
+
+        // 🔔 notify all students of the school about the new event
+        try {
+            await notifySchoolStudents({
+                schoolObjId: school._id,
+                title: `📅 ${event.category}: ${event.title}`,
+                body: event.description || `On ${event.date}`,
+                type: 'event',
+                data: { link: '/calendar' },
+            });
+        } catch (e) { console.error('[calendar] push failed:', e.message); }
+
         res.status(201).json(event);
     } catch (err) {
         res.status(500).json({ error: "Failed to create event", details: err.message });
