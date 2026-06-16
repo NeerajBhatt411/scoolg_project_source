@@ -1,22 +1,9 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { School } from '../../models/School.js';
-import { Student } from '../../models/Student.js';
-import { transporter, esc, renderEmail } from '../utils/email.js';
+import { School } from '../../../models/School.js';
+import { Student } from '../../../models/Student.js';
+import { transporter, esc, renderEmail } from '../../utils/email.js';
 
-const router = Router();
-
-/**
- * @swagger
- * /api/superadmin/dashboard:
- *   get:
- *     summary: Get Super Admin dashboard stats
- *     tags: [Super Admin]
- *     responses:
- *       200:
- *         description: Dashboard statistics
- */
-router.get('/api/superadmin/dashboard', async (req, res) => {
+export const getSuperadminDashboard = async (req, res) => {
     try {
         const totalSchools = await School.countDocuments({ status: { $ne: "PENDING" } });
         const pendingSchools = await School.countDocuments({ status: "PENDING" });
@@ -34,44 +21,18 @@ router.get('/api/superadmin/dashboard', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch stats" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/superadmin/schools:
- *   get:
- *     summary: List all schools for Super Admin
- *     tags: [Super Admin]
- *     responses:
- *       200:
- *         description: List of schools
- */
-router.get('/api/superadmin/schools', async (req, res) => {
+export const getSuperadminSchools = async (req, res) => {
     try {
         const schools = await School.find().sort({ createdAt: -1 });
         res.json(schools);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch schools" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/superadmin/schools/{id}/approve:
- *   post:
- *     summary: Approve a pending school registration
- *     tags: [Super Admin]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: School approved successfully
- */
-router.post('/api/superadmin/schools/:id/approve', async (req, res) => {
+export const postSuperadminSchoolsByIdApprove = async (req, res) => {
     try {
         const school = await School.findOne({ id: req.params.id });
         if (!school) return res.status(404).json({ error: "School not found" });
@@ -122,34 +83,9 @@ router.post('/api/superadmin/schools/:id/approve', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to approve school" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/superadmin/schools/{id}/status:
- *   patch:
- *     summary: Update school status (ACTIVE, SUSPENDED, etc.)
- *     tags: [Super Admin]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *     responses:
- *       200:
- *         description: Status updated
- */
-router.patch('/api/superadmin/schools/:id/status', async (req, res) => {
+export const patchSuperadminSchoolsByIdStatus = async (req, res) => {
     try {
         const { status } = req.body;
         const school = await School.findOne({ id: req.params.id });
@@ -162,25 +98,9 @@ router.patch('/api/superadmin/schools/:id/status', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to update status" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/superadmin/schools/{id}:
- *   delete:
- *     summary: Permanently delete a school and its data
- *     tags: [Super Admin]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: School deleted
- */
-router.delete('/api/superadmin/schools/:id', async (req, res) => {
+export const deleteSuperadminSchoolsById = async (req, res) => {
     try {
         const schoolId = req.params.id;
         const school = await School.findOne({ id: schoolId });
@@ -200,6 +120,4 @@ router.delete('/api/superadmin/schools/:id', async (req, res) => {
         console.error("❌ Delete error:", err);
         res.status(500).json({ error: "Failed to delete school" });
     }
-});
-
-export default router;
+};

@@ -1,36 +1,11 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { School } from '../../models/School.js';
-import { StaffUser } from '../../models/StaffUser.js';
-import { transporter, renderEmail } from '../utils/email.js';
-import { findAdminAccountByEmail } from '../utils/adminAuth.js';
+import { School } from '../../../models/School.js';
+import { StaffUser } from '../../../models/StaffUser.js';
+import { transporter, renderEmail } from '../../utils/email.js';
+import { findAdminAccountByEmail } from '../../utils/adminAuth.js';
 
-const router = Router();
-
-// Login
-/**
- * @swagger
- * /api/admin/login:
- *   post:
- *     summary: School Admin Login (Email/Password)
- *     tags: [Public - Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- */
-router.post('/api/admin/login', async (req, res) => {
+export const postAdminLogin = async (req, res) => {
     console.log("🔥 Login Request Received:", req.body);
 
     let { email, password } = req.body;
@@ -133,12 +108,9 @@ router.post('/api/admin/login', async (req, res) => {
         console.error("❌ Authentication Server Error:", err);
         res.status(500).json({ error: "Internal Authentication Error" });
     }
-});
+};
 
-// Change Password — identity comes from the TOKEN, not the body.
-// This prevents a logged-in staff member from accidentally overwriting the
-// school owner's password (the old code always changed School.password).
-router.post('/api/admin/change-password', async (req, res) => {
+export const postAdminChangepassword = async (req, res) => {
     const { schoolId, newPassword } = req.body;
     try {
         if (!newPassword) return res.status(400).json({ error: "New password required" });
@@ -169,9 +141,9 @@ router.post('/api/admin/change-password', async (req, res) => {
         console.error("Change password error:", err);
         res.status(500).json({ error: "Password change failed" });
     }
-});
+};
 
-router.post('/api/admin/forgot-password', async (req, res) => {
+export const postAdminForgotpassword = async (req, res) => {
     let { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
     email = email.toLowerCase().trim();
@@ -218,12 +190,9 @@ router.post('/api/admin/forgot-password', async (req, res) => {
         console.error("Forgot password error:", err);
         return res.status(500).json({ error: "Could not process request" });
     }
-});
+};
 
-/**
- * Reset Password — verify the emailed code and set a new password.
- */
-router.post('/api/admin/reset-password', async (req, res) => {
+export const postAdminResetpassword = async (req, res) => {
     let { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) {
         return res.status(400).json({ error: "Email, OTP and new password are required" });
@@ -258,6 +227,4 @@ router.post('/api/admin/reset-password', async (req, res) => {
         console.error("Reset password error:", err);
         return res.status(500).json({ error: "Could not reset password" });
     }
-});
-
-export default router;
+};

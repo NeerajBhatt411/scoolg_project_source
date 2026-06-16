@@ -1,30 +1,6 @@
-import { Router } from 'express';
-import { cloudinary } from '../config/cloudinary.js';
+import { cloudinary } from '../../config/cloudinary.js';
 
-const router = Router();
-
-// --- File Upload API (base64 -> Cloudinary) ---
-/**
- * @swagger
- * /api/upload:
- *   post:
- *     summary: Upload a base64 file to Cloudinary and get back a URL
- *     tags: [Utility]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               file: { type: string, description: "data:<mime>;base64,... string" }
- *               folder: { type: string }
- *               schoolName: { type: string }
- *     responses:
- *       200:
- *         description: Upload success, returns { url }
- */
-router.post('/api/upload', async (req, res) => {
+export const postUpload = async (req, res) => {
     try {
         const { file, folder, schoolName } = req.body;
         if (!file) return res.status(400).json({ error: "No file provided" });
@@ -47,6 +23,4 @@ router.post('/api/upload', async (req, res) => {
         console.error("Upload error:", err);
         res.status(500).json({ error: err.message || "Upload failed" });
     }
-});
-
-export default router;
+};

@@ -1,40 +1,11 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { School } from '../../models/School.js';
-import { Section } from '../../models/Section.js';
-import { Timetable } from '../../models/Timetable.js';
-import { Teacher } from '../../models/Teacher.js';
-import { TeacherDiary } from '../../models/TeacherDiary.js';
+import { School } from '../../../models/School.js';
+import { Section } from '../../../models/Section.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { Teacher } from '../../../models/Teacher.js';
+import { TeacherDiary } from '../../../models/TeacherDiary.js';
 
-const router = Router();
-
-// --- Teachers API (Basic) ---
-/**
- * @swagger
- * /api/admin/teachers:
- *   post:
- *     summary: Add a new teacher
- *     tags: [School Admin - Teachers]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               schoolId:
- *                 type: string
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               email:
- *                 type: string
- *     responses:
- *       201:
- *         description: Teacher added successfully
- */
-router.post('/api/admin/teachers', async (req, res) => {
+export const postAdminTeachers = async (req, res) => {
     try {
         const { schoolId, fullName, gender, dateOfBirth, phone, email, highestQualification, specialization, experienceYears, dateOfJoining, residentialAddress, profileImageUrl } = req.body;
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
@@ -160,25 +131,9 @@ router.post('/api/admin/teachers', async (req, res) => {
         console.error("Failed to add teacher:", err);
         res.status(500).json({ error: "Failed to create teacher" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/teachers:
- *   get:
- *     summary: List all teachers for a school
- *     tags: [School Admin - Teachers]
- *     parameters:
- *       - in: query
- *         name: schoolId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Array of teachers
- */
-router.get('/api/admin/teachers', async (req, res) => {
+export const getAdminTeachers = async (req, res) => {
     try {
         const { schoolId } = req.query;
         const school = await School.findOne({ id: schoolId });
@@ -189,10 +144,9 @@ router.get('/api/admin/teachers', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch teachers" });
     }
-});
+};
 
-// Update a teacher document (admin edit).
-router.patch('/api/admin/teachers/:id', async (req, res) => {
+export const patchAdminTeachersById = async (req, res) => {
     try {
         const allowed = ['fullName', 'gender', 'email', 'phone', 'highestQualification',
             'specialization', 'experienceYears', 'residentialAddress', 'description',
@@ -205,10 +159,9 @@ router.patch('/api/admin/teachers/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to update teacher", details: err.message });
     }
-});
+};
 
-// A teacher's weekly schedule (derived from timetables) + the sections they're class-teacher of.
-router.get('/api/admin/teachers/:id/schedule', async (req, res) => {
+export const getAdminTeachersByIdSchedule = async (req, res) => {
     try {
         const teacher = await Teacher.findById(req.params.id);
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -239,10 +192,9 @@ router.get('/api/admin/teachers/:id/schedule', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch teacher schedule", details: err.message });
     }
-});
+};
 
-// List diary entries (filter by teacherId and/or date/className). Newest first.
-router.get('/api/admin/teacher-diary', async (req, res) => {
+export const getAdminTeacherdiary = async (req, res) => {
     try {
         const { schoolId, teacherId, date, className } = req.query;
         const query = {};
@@ -261,10 +213,9 @@ router.get('/api/admin/teacher-diary', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch diary", details: err.message });
     }
-});
+};
 
-// Create a diary entry (admin filling on behalf, or via teacher app later).
-router.post('/api/admin/teacher-diary', async (req, res) => {
+export const postAdminTeacherdiary = async (req, res) => {
     try {
         const { schoolId, teacherId, date, className, sectionName, subject, note, createdByRole } = req.body;
         if (!teacherId || !date || !className || !note?.trim()) {
@@ -282,10 +233,9 @@ router.post('/api/admin/teacher-diary', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to add diary entry", details: err.message });
     }
-});
+};
 
-// Delete a diary entry.
-router.delete('/api/admin/teacher-diary/:id', async (req, res) => {
+export const deleteAdminTeacherdiaryById = async (req, res) => {
     try {
         const deleted = await TeacherDiary.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: "Entry not found" });
@@ -293,6 +243,4 @@ router.delete('/api/admin/teacher-diary/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to delete entry" });
     }
-});
-
-export default router;
+};

@@ -1,32 +1,13 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { School } from '../../models/School.js';
-import { Timetable } from '../../models/Timetable.js';
-import { Student } from '../../models/Student.js';
-import { Attendance } from '../../models/Attendance.js';
-import { Homework } from '../../models/Homework.js';
-import { CalendarEvent } from '../../models/CalendarEvent.js';
+import { School } from '../../../models/School.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { Student } from '../../../models/Student.js';
+import { Attendance } from '../../../models/Attendance.js';
+import { Homework } from '../../../models/Homework.js';
+import { CalendarEvent } from '../../../models/CalendarEvent.js';
 
-const router = Router();
-
-/**
- * @swagger
- * /api/student/verify-campus/{code}:
- *   get:
- *     summary: Verify school campus code
- *     tags: [Student App]
- *     parameters:
- *       - in: path
- *         name: code
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: School branding info
- */
-router.get('/api/student/verify-campus/:code', async (req, res) => {
+export const getStudentVerifycampusByCode = async (req, res) => {
     try {
         const { code } = req.params;
         const school = await School.findOne({ campusCode: code.toUpperCase() });
@@ -40,47 +21,9 @@ router.get('/api/student/verify-campus/:code', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/login:
- *   post:
- *     summary: Student Login
- *     description: Authenticates a student and returns session tokens.
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [studentAppId, password]
- *             properties:
- *               studentAppId:
- *                 type: string
- *                 example: "sch1001"
- *               password:
- *                 type: string
- *                 example: "15122005"
- *     responses:
- *       200:
- *         description: Authentication successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 accessToken:
- *                   type: string
- *                 refreshToken:
- *                   type: string
- *                 studentId:
- *                   type: string
- *       401:
- *         description: Invalid credentials
- */
-router.post('/api/student/login', async (req, res) => {
+export const postStudentLogin = async (req, res) => {
     try {
         let { studentAppId, password } = req.body;
         if (!studentAppId || !password) return res.status(400).json({ error: "ID & Password required" });
@@ -108,29 +51,9 @@ router.post('/api/student/login', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/auth/refresh:
- *   post:
- *     summary: Refresh Access Token
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken:
- *                 type: string
- *     responses:
- *       200:
- *         description: New access token generated
- */
-router.post('/api/auth/refresh', async (req, res) => {
+export const postAuthRefresh = async (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(401).json({ error: "Refresh token required" });
 
@@ -150,21 +73,9 @@ router.post('/api/auth/refresh', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Session expired. Please login again." });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/me:
- *   get:
- *     summary: Get Student Profile
- *     tags: [Student App]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Success
- */
-router.get('/api/student/me', async (req, res) => {
+export const getStudentMe = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) return res.status(401).json({ error: "No token provided" });
@@ -187,21 +98,9 @@ router.get('/api/student/me', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Invalid token" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/timetable:
- *   get:
- *     summary: Get Student Timetable
- *     tags: [Academic]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Success
- */
-router.get('/api/student/timetable', async (req, res) => {
+export const getStudentTimetable = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
@@ -220,21 +119,9 @@ router.get('/api/student/timetable', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/homework:
- *   get:
- *     summary: Get homework for the logged-in student's class/section
- *     tags: [Academic]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of homework
- */
-router.get('/api/student/homework', async (req, res) => {
+export const getStudentHomework = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
@@ -255,21 +142,9 @@ router.get('/api/student/homework', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/attendance:
- *   get:
- *     summary: Get Attendance History
- *     tags: [Academic]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Success
- */
-router.get('/api/student/attendance', async (req, res) => {
+export const getStudentAttendance = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
@@ -294,21 +169,9 @@ router.get('/api/student/attendance', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/student/calendar:
- *   get:
- *     summary: Get Calendar Events
- *     tags: [Academic]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Success
- */
-router.get('/api/student/calendar', async (req, res) => {
+export const getStudentCalendar = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader.split(' ')[1];
@@ -322,6 +185,4 @@ router.get('/api/student/calendar', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
-
-export default router;
+};

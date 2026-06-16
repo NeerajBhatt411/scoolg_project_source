@@ -36,8 +36,8 @@ const swaggerOptions = {
             { name: 'Admin', description: 'School Administration & Controls' },
         ],
     },
-    // Scan the modular route files (and app) for @swagger JSDoc blocks.
-    apis: ['./src/routes/*.js', './src/app.js'],
+    // Scan the feature route files (and app) for @swagger JSDoc blocks.
+    apis: ['./src/features/*/*.routes.js', './src/app.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);

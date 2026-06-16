@@ -1,11 +1,7 @@
-import { Router } from 'express';
-import { School } from '../../models/School.js';
-import { CalendarEvent } from '../../models/CalendarEvent.js';
+import { School } from '../../../models/School.js';
+import { CalendarEvent } from '../../../models/CalendarEvent.js';
 
-const router = Router();
-
-// List events for a school (optionally filtered by year).
-router.get('/api/admin/calendar', async (req, res) => {
+export const getAdminCalendar = async (req, res) => {
     try {
         const { schoolId, year } = req.query;
         const school = await School.findOne({ id: schoolId });
@@ -18,10 +14,9 @@ router.get('/api/admin/calendar', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch calendar events" });
     }
-});
+};
 
-// Upcoming events from today onward (for the dashboard's Scheduled Events).
-router.get('/api/admin/calendar/upcoming', async (req, res) => {
+export const getAdminCalendarUpcoming = async (req, res) => {
     try {
         const { schoolId, limit } = req.query;
         const school = await School.findOne({ id: schoolId });
@@ -35,10 +30,9 @@ router.get('/api/admin/calendar/upcoming', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch upcoming events" });
     }
-});
+};
 
-// Create an event. Scheduling an event also schedules its school-calendar notice.
-router.post('/api/admin/calendar', async (req, res) => {
+export const postAdminCalendar = async (req, res) => {
     try {
         const { schoolId, title, category, date, description } = req.body;
         if (!title || !title.trim()) return res.status(400).json({ error: "Title is required" });
@@ -63,10 +57,9 @@ router.post('/api/admin/calendar', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to create event", details: err.message });
     }
-});
+};
 
-// Update an event.
-router.put('/api/admin/calendar/:id', async (req, res) => {
+export const putAdminCalendarById = async (req, res) => {
     try {
         const { title, category, date, description } = req.body;
         const update = {};
@@ -85,10 +78,9 @@ router.put('/api/admin/calendar/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to update event" });
     }
-});
+};
 
-// Delete an event.
-router.delete('/api/admin/calendar/:id', async (req, res) => {
+export const deleteAdminCalendarById = async (req, res) => {
     try {
         const deleted = await CalendarEvent.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: "Event not found" });
@@ -96,6 +88,4 @@ router.delete('/api/admin/calendar/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to delete event" });
     }
-});
-
-export default router;
+};

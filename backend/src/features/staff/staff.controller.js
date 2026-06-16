@@ -1,22 +1,9 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { School } from '../../models/School.js';
-import { StaffUser } from '../../models/StaffUser.js';
-import { schoolFromReq, genPassword } from '../utils/adminAuth.js';
+import { School } from '../../../models/School.js';
+import { StaffUser } from '../../../models/StaffUser.js';
+import { schoolFromReq, genPassword } from '../../utils/adminAuth.js';
 
-const router = Router();
-
-/**
- * @swagger
- * /api/admin/staff:
- *   post:
- *     summary: Create a staff/sub-user with module-level access
- *     tags: [School Admin - Roles]
- *   get:
- *     summary: List staff users for the school
- *     tags: [School Admin - Roles]
- */
-router.post('/api/admin/staff', async (req, res) => {
+export const postAdminStaff = async (req, res) => {
     try {
         const { fullName, email, role, allowedModules } = req.body;
         if (!fullName?.trim()) return res.status(400).json({ error: "Full name is required" });
@@ -56,9 +43,9 @@ router.post('/api/admin/staff', async (req, res) => {
         console.error("Create staff error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-router.get('/api/admin/staff', async (req, res) => {
+export const getAdminStaff = async (req, res) => {
     try {
         const school = await schoolFromReq(req);
         if (!school) return res.status(404).json({ error: "School not found" });
@@ -68,19 +55,9 @@ router.get('/api/admin/staff', async (req, res) => {
         console.error("List staff error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/staff/{id}:
- *   patch:
- *     summary: Update a staff user's role/modules/status
- *     tags: [School Admin - Roles]
- *   delete:
- *     summary: Delete a staff user
- *     tags: [School Admin - Roles]
- */
-router.patch('/api/admin/staff/:id', async (req, res) => {
+export const patchAdminStaffById = async (req, res) => {
     try {
         const allowed = ['fullName', 'role', 'allowedModules', 'status'];
         const update = {};
@@ -92,9 +69,9 @@ router.patch('/api/admin/staff/:id', async (req, res) => {
         console.error("Update staff error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-router.delete('/api/admin/staff/:id', async (req, res) => {
+export const deleteAdminStaffById = async (req, res) => {
     try {
         const staff = await StaffUser.findByIdAndDelete(req.params.id);
         if (!staff) return res.status(404).json({ error: "Staff not found" });
@@ -103,6 +80,4 @@ router.delete('/api/admin/staff/:id', async (req, res) => {
         console.error("Delete staff error:", err);
         res.status(500).json({ error: err.message });
     }
-});
-
-export default router;
+};

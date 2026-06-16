@@ -8,22 +8,22 @@ import { mountSwagger } from './config/swagger.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { adminGuard } from './middleware/adminGuard.js';
 
-// Domain routers (each registers full /api/... paths)
-import onboardingRoutes from './routes/onboarding.routes.js';
-import authRoutes from './routes/auth.routes.js';
-import adminCoreRoutes from './routes/adminCore.routes.js';
-import academicsRoutes from './routes/academics.routes.js';
-import calendarRoutes from './routes/calendar.routes.js';
-import teachersRoutes from './routes/teachers.routes.js';
-import studentsRoutes from './routes/students.routes.js';
-import superadminRoutes from './routes/superadmin.routes.js';
-import timetableRoutes from './routes/timetable.routes.js';
-import uploadRoutes from './routes/upload.routes.js';
-import homeworkRoutes from './routes/homework.routes.js';
-import staffRoutes from './routes/staff.routes.js';
-import attendanceRoutes from './routes/attendance.routes.js';
-import studentAppRoutes from './routes/studentApp.routes.js';
-import teacherAppRoutes from './routes/teacherApp.routes.js';
+// Feature routers (each feature = its own folder with routes + controller)
+import onboardingRoutes from './features/onboarding/onboarding.routes.js';
+import authRoutes from './features/auth/auth.routes.js';
+import adminCoreRoutes from './features/adminCore/adminCore.routes.js';
+import academicsRoutes from './features/academics/academics.routes.js';
+import calendarRoutes from './features/calendar/calendar.routes.js';
+import teachersRoutes from './features/teachers/teachers.routes.js';
+import studentsRoutes from './features/students/students.routes.js';
+import superadminRoutes from './features/superadmin/superadmin.routes.js';
+import timetableRoutes from './features/timetable/timetable.routes.js';
+import uploadRoutes from './features/upload/upload.routes.js';
+import homeworkRoutes from './features/homework/homework.routes.js';
+import staffRoutes from './features/staff/staff.routes.js';
+import attendanceRoutes from './features/attendance/attendance.routes.js';
+import studentAppRoutes from './features/studentApp/studentApp.routes.js';
+import teacherAppRoutes from './features/teacherApp/teacherApp.routes.js';
 
 const app = express();
 

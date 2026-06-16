@@ -1,40 +1,8 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { School } from '../../models/School.js';
-import { Student } from '../../models/Student.js';
+import { School } from '../../../models/School.js';
+import { Student } from '../../../models/Student.js';
 
-const router = Router();
-
-/**
- * @swagger
- * /api/admin/students:
- *   post:
- *     summary: Add a new student
- *     tags: [Admin - Students]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               schoolId:
- *                 type: string
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               class:
- *                 type: string
- *               section:
- *                 type: string
- *               rollNumber:
- *                 type: string
- *     responses:
- *       201:
- *         description: Student added successfully
- */
-router.post('/api/admin/students', async (req, res) => {
+export const postAdminStudents = async (req, res) => {
     try {
         const { schoolId } = req.body; // In real app, get from JWT token middleware
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
@@ -84,16 +52,9 @@ router.post('/api/admin/students', async (req, res) => {
         console.error("❌ Add student error:", err);
         res.status(500).json({ error: "Failed to add student", details: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/students/bulk:
- *   post:
- *     summary: Bulk add students
- *     tags: [Admin - Students]
- */
-router.post('/api/admin/students/bulk', async (req, res) => {
+export const postAdminStudentsBulk = async (req, res) => {
     try {
         const { schoolId, className, sectionName, students } = req.body;
         if (!schoolId || !className || !students || !Array.isArray(students)) {
@@ -186,26 +147,9 @@ router.post('/api/admin/students/bulk', async (req, res) => {
         console.error("❌ Bulk add students error:", err);
         res.status(500).json({ error: "Failed to bulk add students", details: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/students:
- *   get:
- *     summary: Search/List students with filters
- *     tags: [School Admin - Students]
- *     parameters:
- *       - in: query
- *         name: schoolId
- *       - in: query
- *         name: className
- *       - in: query
- *         name: sectionName
- *     responses:
- *       200:
- *         description: Array of students
- */
-router.get('/api/admin/students', async (req, res) => {
+export const getAdminStudents = async (req, res) => {
     try {
         const { schoolId, className, sectionName } = req.query;
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
@@ -222,29 +166,9 @@ router.get('/api/admin/students', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch students" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/students/{id}:
- *   put:
- *     summary: Update a student's profile or status
- *     tags: [School Admin - Students]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Updated student
- */
-router.put('/api/admin/students/:id', async (req, res) => {
+export const putAdminStudentsById = async (req, res) => {
     try {
         const studentId = req.params.id;
         const updates = req.body;
@@ -266,6 +190,4 @@ router.put('/api/admin/students/:id', async (req, res) => {
         console.error("❌ Update student error:", err);
         res.status(500).json({ error: "Failed to update student details" });
     }
-});
-
-export default router;
+};

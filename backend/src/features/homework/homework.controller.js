@@ -1,29 +1,9 @@
-import { Router } from 'express';
-import { School } from '../../models/School.js';
-import { Section } from '../../models/Section.js';
-import { Timetable } from '../../models/Timetable.js';
-import { Homework } from '../../models/Homework.js';
+import { School } from '../../../models/School.js';
+import { Section } from '../../../models/Section.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { Homework } from '../../../models/Homework.js';
 
-const router = Router();
-
-// --- Homework API ---
-/**
- * @swagger
- * /api/admin/homework:
- *   post:
- *     summary: Create a homework/assignment for a class/section
- *     tags: [School Admin - Academic]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       201:
- *         description: Homework created
- */
-router.post('/api/admin/homework', async (req, res) => {
+export const postAdminHomework = async (req, res) => {
     try {
         const {
             schoolId, className, sectionName, subject, title, description,
@@ -78,29 +58,9 @@ router.post('/api/admin/homework', async (req, res) => {
         console.error("Create homework error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/homework:
- *   get:
- *     summary: List homework for a school (filter by class/section)
- *     tags: [School Admin - Academic]
- *     parameters:
- *       - in: query
- *         name: schoolId
- *         schema: { type: string }
- *       - in: query
- *         name: className
- *         schema: { type: string }
- *       - in: query
- *         name: sectionName
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: List of homework
- */
-router.get('/api/admin/homework', async (req, res) => {
+export const getAdminHomework = async (req, res) => {
     try {
         const { schoolId, className, sectionName } = req.query;
         const school = await School.findOne({ id: schoolId });
@@ -119,24 +79,9 @@ router.get('/api/admin/homework', async (req, res) => {
         console.error("List homework error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/homework/{id}:
- *   patch:
- *     summary: Update a homework entry
- *     tags: [School Admin - Academic]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Updated homework
- */
-router.patch('/api/admin/homework/:id', async (req, res) => {
+export const patchAdminHomeworkById = async (req, res) => {
     try {
         const { id } = req.params;
         const allowed = ['className', 'sectionName', 'subject', 'title', 'description', 'dueDate', 'attachments', 'status'];
@@ -156,24 +101,9 @@ router.patch('/api/admin/homework/:id', async (req, res) => {
         console.error("Update homework error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/admin/homework/{id}:
- *   delete:
- *     summary: Delete a homework entry
- *     tags: [School Admin - Academic]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Homework deleted
- */
-router.delete('/api/admin/homework/:id', async (req, res) => {
+export const deleteAdminHomeworkById = async (req, res) => {
     try {
         const homework = await Homework.findByIdAndDelete(req.params.id);
         if (!homework) return res.status(404).json({ error: "Homework not found" });
@@ -182,6 +112,4 @@ router.delete('/api/admin/homework/:id', async (req, res) => {
         console.error("Delete homework error:", err);
         res.status(500).json({ error: err.message });
     }
-});
-
-export default router;
+};

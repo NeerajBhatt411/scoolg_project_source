@@ -1,33 +1,11 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { School } from '../../models/School.js';
-import { transporter, renderEmail } from '../utils/email.js';
-
-const router = Router();
+import { School } from '../../../models/School.js';
+import { transporter, renderEmail } from '../../utils/email.js';
 
 // In-memory OTP store (matches original module-level scope).
 const TMP_OTPS = {};
 
-/**
- * @swagger
- * /api/onboarding/start:
- *   post:
- *     summary: Start school onboarding with OTP
- *     tags: [Public - Onboarding]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *     responses:
- *       200:
- *         description: OTP sent to email
- */
-router.post('/api/onboarding/start', async (req, res) => {
+export const postOnboardingStart = async (req, res) => {
     let { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
     email = email.toLowerCase().trim();
@@ -98,38 +76,17 @@ router.post('/api/onboarding/start', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Server Error", details: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/onboarding/verify:
- *   post:
- *     summary: Verify OTP for registration
- *     tags: [Public - Onboarding]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               otp:
- *                 type: string
- *     responses:
- *       200:
- *         description: Verified successfully
- */
-router.post('/api/onboarding/verify', (req, res) => {
+export const postOnboardingVerify = (req, res) => {
     const { email, otp } = req.body;
     if (TMP_OTPS[email] === otp) {
         delete TMP_OTPS[email];
         res.json({ message: "Verified!" });
     } else { res.status(401).json({ error: "Invalid OTP." }); }
-});
+};
 
-router.patch('/api/onboarding/update/:id', async (req, res) => {
+export const patchOnboardingUpdateById = async (req, res) => {
     const { id } = req.params;
     const { formData, currentStep } = req.body;
 
@@ -169,13 +126,11 @@ router.patch('/api/onboarding/update/:id', async (req, res) => {
         console.error("❌ Update error:", err);
         res.status(500).json({ error: "Update failed" });
     }
-});
+};
 
-router.get('/api/onboarding/:id', async (req, res) => {
+export const getOnboardingById = async (req, res) => {
     const { id } = req.params;
     const school = await School.findOne({ id });
     if (!school) return res.status(404).json({ error: "Not found" });
     res.json(school.formData);
-});
-
-export default router;
+};

@@ -1,22 +1,18 @@
-import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { School } from '../../models/School.js';
-import { ClassModel } from '../../models/Class.js';
-import { Section } from '../../models/Section.js';
-import { Timetable } from '../../models/Timetable.js';
-import { Teacher } from '../../models/Teacher.js';
-import { Student } from '../../models/Student.js';
-import { Attendance } from '../../models/Attendance.js';
-import { Homework } from '../../models/Homework.js';
-import { CalendarEvent } from '../../models/CalendarEvent.js';
-import { TeacherDiary } from '../../models/TeacherDiary.js';
-import { teacherFromToken } from '../utils/teacherAuth.js';
+import { School } from '../../../models/School.js';
+import { ClassModel } from '../../../models/Class.js';
+import { Section } from '../../../models/Section.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { Teacher } from '../../../models/Teacher.js';
+import { Student } from '../../../models/Student.js';
+import { Attendance } from '../../../models/Attendance.js';
+import { Homework } from '../../../models/Homework.js';
+import { CalendarEvent } from '../../../models/CalendarEvent.js';
+import { TeacherDiary } from '../../../models/TeacherDiary.js';
+import { teacherFromToken } from '../../utils/teacherAuth.js';
 
-const router = Router();
-
-// --- Teacher Diary (teacher app) ---
-router.get('/api/teacher/diary', async (req, res) => {
+export const getTeacherDiary = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const entries = await TeacherDiary.find({ teacherId: teacher._id }).sort({ date: -1, createdAt: -1 }).limit(200);
@@ -24,9 +20,9 @@ router.get('/api/teacher/diary', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-router.post('/api/teacher/diary', async (req, res) => {
+export const postTeacherDiary = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const { date, className, sectionName, subject, note } = req.body;
@@ -43,10 +39,9 @@ router.post('/api/teacher/diary', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-// Teacher locks own entry — after this it can't be edited/deleted.
-router.post('/api/teacher/diary/:id/lock', async (req, res) => {
+export const postTeacherDiaryByIdLock = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const entry = await TeacherDiary.findById(req.params.id);
@@ -59,10 +54,9 @@ router.post('/api/teacher/diary/:id/lock', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-// Teacher deletes own entry — only if not locked.
-router.delete('/api/teacher/diary/:id', async (req, res) => {
+export const deleteTeacherDiaryById = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const entry = await TeacherDiary.findById(req.params.id);
@@ -75,16 +69,9 @@ router.delete('/api/teacher/diary/:id', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/login:
- *   post:
- *     summary: Teacher login (Teacher ID + Password)
- *     tags: [Teacher App]
- */
-router.post('/api/teacher/login', async (req, res) => {
+export const postTeacherLogin = async (req, res) => {
     try {
         let { teacherAppId, password } = req.body;
         if (!teacherAppId || !password) return res.status(400).json({ error: "Teacher ID & Password required" });
@@ -119,16 +106,9 @@ router.post('/api/teacher/login', async (req, res) => {
         console.error("Teacher login error:", err);
         res.status(500).json({ error: "Login failed" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/me:
- *   get:
- *     summary: Logged-in teacher profile + school branding
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/me', async (req, res) => {
+export const getTeacherMe = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const school = await School.findById(teacher.schoolId);
@@ -142,16 +122,9 @@ router.get('/api/teacher/me', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/timetable:
- *   get:
- *     summary: Weekly schedule of periods this teacher teaches
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/timetable', async (req, res) => {
+export const getTeacherTimetable = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const tid = teacher._id.toString();
@@ -184,16 +157,9 @@ router.get('/api/teacher/timetable', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/my-classes:
- *   get:
- *     summary: Classes/sections this teacher handles (class-teacher of, or teaches)
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/my-classes', async (req, res) => {
+export const getTeacherMyclasses = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const tid = teacher._id.toString();
@@ -240,16 +206,9 @@ router.get('/api/teacher/my-classes', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/students:
- *   get:
- *     summary: Students of a class/section (for attendance)
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/students', async (req, res) => {
+export const getTeacherStudents = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const { className, sectionName } = req.query;
@@ -262,16 +221,9 @@ router.get('/api/teacher/students', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/events:
- *   get:
- *     summary: Upcoming school-calendar events for the teacher's school
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/events', async (req, res) => {
+export const getTeacherEvents = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const today = new Date().toISOString().split('T')[0];
@@ -282,19 +234,9 @@ router.get('/api/teacher/events', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/attendance:
- *   get:
- *     summary: Fetch saved attendance for a section/date
- *     tags: [Teacher App]
- *   post:
- *     summary: Save attendance for a section/date
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/attendance', async (req, res) => {
+export const getTeacherAttendance = async (req, res) => {
     try {
         await teacherFromToken(req);
         const { sectionId, date } = req.query;
@@ -303,9 +245,9 @@ router.get('/api/teacher/attendance', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-router.post('/api/teacher/attendance', async (req, res) => {
+export const postTeacherAttendance = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const { classId, sectionId, date, records } = req.body;
@@ -321,19 +263,9 @@ router.post('/api/teacher/attendance', async (req, res) => {
         console.error("Teacher attendance error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/homework:
- *   get:
- *     summary: Homework created by this teacher
- *     tags: [Teacher App]
- *   post:
- *     summary: Assign homework to a class/section
- *     tags: [Teacher App]
- */
-router.get('/api/teacher/homework', async (req, res) => {
+export const getTeacherHomework = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const homework = await Homework.find({
@@ -344,9 +276,9 @@ router.get('/api/teacher/homework', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
+};
 
-router.post('/api/teacher/homework', async (req, res) => {
+export const postTeacherHomework = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const { className, sectionName, subject, title, description, dueDate, attachments } = req.body;
@@ -372,16 +304,9 @@ router.post('/api/teacher/homework', async (req, res) => {
         console.error("Teacher homework error:", err);
         res.status(500).json({ error: err.message });
     }
-});
+};
 
-/**
- * @swagger
- * /api/teacher/change-password:
- *   post:
- *     summary: Change the logged-in teacher's password
- *     tags: [Teacher App]
- */
-router.post('/api/teacher/change-password', async (req, res) => {
+export const postTeacherChangepassword = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const { newPassword } = req.body;
@@ -394,6 +319,4 @@ router.post('/api/teacher/change-password', async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
-});
-
-export default router;
+};

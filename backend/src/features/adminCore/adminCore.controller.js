@@ -1,13 +1,9 @@
-import { Router } from 'express';
-import { School } from '../../models/School.js';
-import { ClassModel } from '../../models/Class.js';
-import { Teacher } from '../../models/Teacher.js';
-import { Student } from '../../models/Student.js';
+import { School } from '../../../models/School.js';
+import { ClassModel } from '../../../models/Class.js';
+import { Teacher } from '../../../models/Teacher.js';
+import { Student } from '../../../models/Student.js';
 
-const router = Router();
-
-// Get/Update Profile (Protected logic can be added later)
-router.get('/api/admin/profile/:id', async (req, res) => {
+export const getAdminProfileById = async (req, res) => {
     const school = await School.findOne({ id: req.params.id });
     if (!school) return res.status(404).json({ error: "School not found" });
     res.json({
@@ -16,9 +12,9 @@ router.get('/api/admin/profile/:id', async (req, res) => {
         status: school.status,
         isPasswordChanged: school.isPasswordChanged
     });
-});
+};
 
-router.patch('/api/admin/profile/:id', async (req, res) => {
+export const patchAdminProfileById = async (req, res) => {
     try {
         const school = await School.findOne({ id: req.params.id });
         if (!school) return res.status(404).json({ error: "School not found" });
@@ -33,10 +29,9 @@ router.patch('/api/admin/profile/:id', async (req, res) => {
         console.error('Profile update error:', err);
         res.status(500).json({ error: "Update failed", details: err.message });
     }
-});
+};
 
-// --- Dashboard Stats ---
-router.get('/api/admin/dashboard/stats', async (req, res) => {
+export const getAdminDashboardStats = async (req, res) => {
     try {
         const { schoolId } = req.query;
         if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
@@ -54,6 +49,4 @@ router.get('/api/admin/dashboard/stats', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch stats" });
     }
-});
-
-export default router;
+};
