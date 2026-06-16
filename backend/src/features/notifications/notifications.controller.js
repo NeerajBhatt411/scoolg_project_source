@@ -1,5 +1,11 @@
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { Notification } from '../../../models/Notification.js';
+import { pushEnabled } from '../../utils/push.js';
+
+// Diagnostic: is the Firebase service account configured (can we send)?
+export const status = async (req, res) => {
+    res.json({ pushEnabled: pushEnabled() });
+};
 
 // Save (or refresh) an FCM token for a signed-in user/device.
 export const registerToken = async (req, res) => {

@@ -3,6 +3,9 @@ import * as c from './notifications.controller.js';
 
 const router = Router();
 
+// Diagnostic — confirms whether the backend can send push (env configured).
+router.get('/api/notifications/status', c.status);
+
 /**
  * @swagger
  * /api/notifications/token:
