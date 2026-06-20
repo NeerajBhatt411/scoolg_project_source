@@ -2,31 +2,22 @@ import React, { useState, useEffect } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 
 const Teachers = () => {
     const navigate = useNavigate();
-    const [teachers, setTeachers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // teachers come from the shared cache; only revalidate when it's empty.
+    const { teachers, refreshTeachers } = useAdmin();
+    const [loading, setLoading] = useState(teachers.length === 0);
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
     const PER_PAGE = 8;
 
-    const schoolId = localStorage.getItem('scoolg_school_id');
     useEffect(() => {
-        const fetchTeachers = async () => {
-            try {
-                const res = await axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`);
-                setTeachers(res.data);
-            } catch (error) {
-                console.error("Failed to fetch teachers", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTeachers();
-    }, [schoolId]);
+        if (teachers.length === 0) refreshTeachers().finally(() => setLoading(false));
+        else setLoading(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const filteredTeachers = teachers.filter(t =>
         t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||

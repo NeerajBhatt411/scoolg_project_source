@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { Clock, MapPin, User, BookOpen, Coffee, Calendar } from 'lucide-react';
 
 const getSubjectColor = (subject) => {
@@ -14,25 +15,20 @@ const getSubjectColor = (subject) => {
 };
 
 const Timetable = () => {
-    const [timetable, setTimetable] = useState(null);
-    const [loading, setLoading] = useState(true);
-    
+    const [timetable, setTimetable] = useState(() => peekCache('student:timetable') || null);
+    const [loading, setLoading] = useState(() => !peekCache('student:timetable'));
+
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const todayName = days[new Date().getDay() - 1] || 'Monday';
     const [activeDay, setActiveDay] = useState(todayName);
 
     useEffect(() => {
-        const fetchTimetable = async () => {
-            try {
-                const res = await api.get('/student/timetable');
-                setTimetable(res.data);
-            } catch (err) {
-                console.error('Failed to fetch timetable:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTimetable();
+        let alive = true;
+        getCached('student:timetable', () => api.get('/student/timetable').then(r => r.data))
+            .then(data => { if (alive) setTimetable(data); })
+            .catch(err => console.error('Failed to fetch timetable:', err))
+            .finally(() => { if (alive) setLoading(false); });
+        return () => { alive = false; };
     }, []);
 
     const currentDaySchedule = timetable?.schedule?.find(s => s.dayOfWeek === activeDay)?.periods || [];

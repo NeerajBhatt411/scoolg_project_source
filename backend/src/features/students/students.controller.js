@@ -161,7 +161,7 @@ export const getAdminStudents = async (req, res) => {
         if (className) query.class = className;
         if (sectionName) query.section = sectionName;
 
-        const students = await Student.find(query).sort({ rollNumber: 1, firstName: 1 });
+        const students = await Student.find(query).sort({ rollNumber: 1, firstName: 1 }).select('-password').lean();
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch students" });

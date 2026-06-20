@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { getCached, peekCache, setCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { Plus, Lock, Trash2, BookOpen, ChevronDown } from 'lucide-react';
 
@@ -7,9 +8,9 @@ const todayISO = () => new Date().toISOString().split('T')[0];
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
 const Diary = () => {
-  const [classes, setClasses] = useState([]);
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState(() => peekCache('teacher:my-classes') || []);
+  const [entries, setEntries] = useState(() => peekCache('teacher:diary') || []);
+  const [loading, setLoading] = useState(() => !peekCache('teacher:diary'));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ className: '', sectionName: '', subject: '', date: todayISO(), note: '' });
@@ -17,11 +18,11 @@ const Diary = () => {
   const load = async () => {
     try {
       const [cls, di] = await Promise.all([
-        api.get('/teacher/my-classes'),
-        api.get('/teacher/diary'),
+        getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : [])),
+        getCached('teacher:diary', () => api.get('/teacher/diary').then(r => Array.isArray(r.data) ? r.data : [])),
       ]);
-      setClasses(Array.isArray(cls.data) ? cls.data : []);
-      setEntries(Array.isArray(di.data) ? di.data : []);
+      setClasses(cls);
+      setEntries(di);
     } catch (e) { console.error('Diary load failed', e); } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
@@ -44,7 +45,7 @@ const Diary = () => {
         subject: form.subject,
         note: form.note.trim(),
       });
-      setEntries(prev => [res.data, ...prev]);
+      setEntries(prev => { const next = [res.data, ...prev]; setCache('teacher:diary', next); return next; });
       setForm({ className: '', sectionName: '', subject: '', date: todayISO(), note: '' });
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to save.');
@@ -55,14 +56,14 @@ const Diary = () => {
     if (!window.confirm('Lock this entry? After locking you cannot edit or delete it.')) return;
     try {
       const res = await api.post(`/teacher/diary/${id}/lock`);
-      setEntries(prev => prev.map(e => e._id === id ? res.data : e));
+      setEntries(prev => { const next = prev.map(e => e._id === id ? res.data : e); setCache('teacher:diary', next); return next; });
     } catch (e) { alert('Failed to lock.'); }
   };
   const deleteEntry = async (id) => {
     if (!window.confirm('Delete this entry?')) return;
     try {
       await api.delete(`/teacher/diary/${id}`);
-      setEntries(prev => prev.filter(e => e._id !== id));
+      setEntries(prev => { const next = prev.filter(e => e._id !== id); setCache('teacher:diary', next); return next; });
     } catch (e) { alert(e.response?.data?.error || 'Failed to delete.'); }
   };
 

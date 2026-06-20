@@ -21,5 +21,8 @@ const TimetableSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
+// "Which timetables does this teacher appear in" — used by every teacher-app home load.
+TimetableSchema.index({ schoolId: 1, "schedule.periods.teacherId": 1 });
+
 export const Timetable = mongoose.models.Timetable || mongoose.model('Timetable', TimetableSchema);
 export default Timetable;

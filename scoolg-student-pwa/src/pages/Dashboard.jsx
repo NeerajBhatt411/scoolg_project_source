@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { getCached } from '../utils/cache';
 import { Calendar, BookOpen, Clock, LayoutDashboard, FileEdit, ClipboardCheck, ChevronRight, BookType, BarChart, FileText, Palmtree } from 'lucide-react';
 import { DashboardShimmer } from '../components/StudentShimmer';
 
@@ -50,19 +51,20 @@ const Dashboard = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const [ttRes, attRes, hwRes] = await Promise.all([
-                    api.get('/student/timetable').catch(() => ({ data: { schedule: [] } })),
-                    api.get('/student/attendance').catch(() => ({ data: [] })),
-                    api.get('/student/homework').catch(() => ({ data: [] })),
+                // Shared cache: the same endpoints the dedicated pages use, so jumping
+                // between Dashboard and those pages doesn't refetch.
+                const [tt, attData, hwData] = await Promise.all([
+                    getCached('student:timetable', () => api.get('/student/timetable').then(r => r.data)).catch(() => ({ schedule: [] })),
+                    getCached('student:attendance', () => api.get('/student/attendance').then(r => Array.isArray(r.data) ? r.data : [])).catch(() => []),
+                    getCached('student:homework', () => api.get('/student/homework').then(r => Array.isArray(r.data) ? r.data : [])).catch(() => []),
                 ]);
 
                 // Timetable
-                const sched = ttRes.data?.schedule || [];
+                const sched = tt?.schedule || [];
                 setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
                 setWeekCount(sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0));
 
                 // Attendance
-                const attData = Array.isArray(attRes.data) ? attRes.data : [];
                 const presentCount = attData.filter(r => r.status === 'Present' || r.status === 'P').length;
                 const absentCount = attData.filter(r => r.status === 'Absent' || r.status === 'A').length;
                 const leaveCount = attData.filter(r => r.status === 'Leave' || r.status === 'Late' || r.status === 'L').length;
@@ -71,13 +73,11 @@ const Dashboard = () => {
                 setAttendanceStats({ percentage, present: presentCount, absent: absentCount, leave: leaveCount, total });
 
                 // Homework
-                const hwData = Array.isArray(hwRes.data) ? hwRes.data : [];
                 setPendingHomework(hwData.filter(h => h.status === 'Pending').length);
 
                 // Upcoming Events
                 try {
-                    const calRes = await api.get('/student/calendar');
-                    const events = Array.isArray(calRes.data) ? calRes.data : [];
+                    const events = await getCached('student:calendar', () => api.get('/student/calendar').then(r => Array.isArray(r.data) ? r.data : []));
                     const futureEvents = events.filter(e => new Date(e.date) >= now);
                     futureEvents.sort((a,b) => new Date(a.date) - new Date(b.date));
                     setUpcomingEvents(futureEvents.slice(0, 3));

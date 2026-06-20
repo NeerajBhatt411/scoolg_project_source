@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { CheckCircle2, Send, Users, ChevronDown } from 'lucide-react';
-
-let cachedClasses = null;
 
 const Attendance = () => {
   const location = useLocation();
   const prefill = location.state || null;
 
-  const [classes, setClasses] = useState(cachedClasses || []);
+  const [classes, setClasses] = useState(() => peekCache('teacher:my-classes') || []);
   const [selected, setSelected] = useState(prefill || null); // {className, sectionName, sectionId, classId}
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [students, setStudents] = useState([]);
@@ -19,20 +18,17 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Load class list
+  // Load class list (shared cache — same data the other pages use)
   useEffect(() => {
-    if (cachedClasses) {
-      if (!selected && cachedClasses.length > 0) setSelected(cachedClasses[0]);
-    } else {
-      api.get('/teacher/my-classes')
-        .then(res => {
-          const list = Array.isArray(res.data) ? res.data : [];
-          cachedClasses = list;
-          setClasses(list);
-          if (!selected && list.length > 0) setSelected(list[0]);
-        })
-        .catch(e => console.error(e));
-    }
+    let alive = true;
+    getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : []))
+      .then(list => {
+        if (!alive) return;
+        setClasses(list);
+        if (!selected && list.length > 0) setSelected(list[0]);
+      })
+      .catch(e => console.error(e));
+    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -44,8 +40,10 @@ const Attendance = () => {
     setSaved(false);
     (async () => {
       try {
-        const stuRes = await api.get(`/teacher/students?className=${encodeURIComponent(selected.className)}&sectionName=${encodeURIComponent(selected.sectionName)}`);
-        const list = Array.isArray(stuRes.data) ? stuRes.data : [];
+        const list = await getCached(
+          `teacher:students:${selected.className}|${selected.sectionName}`,
+          () => api.get(`/teacher/students?className=${encodeURIComponent(selected.className)}&sectionName=${encodeURIComponent(selected.sectionName)}`).then(r => Array.isArray(r.data) ? r.data : [])
+        );
         if (!active) return;
         setStudents(list);
 

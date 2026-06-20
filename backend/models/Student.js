@@ -42,5 +42,8 @@ const StudentSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+// Class/section student lists (admin + teacher apps) and roll-number sort.
+StudentSchema.index({ schoolId: 1, class: 1, section: 1 });
+
 export const Student = mongoose.models.Student || mongoose.model('Student', StudentSchema);
 export default Student;

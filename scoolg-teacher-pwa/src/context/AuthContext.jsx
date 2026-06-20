@@ -1,14 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import { initPush } from '../firebase';
+import { clearCache } from '../utils/cache';
 
 const AuthContext = createContext();
 
+const readJSON = (key) => { try { return JSON.parse(localStorage.getItem(key)) || null; } catch { return null; } };
+
 export const AuthProvider = ({ children }) => {
-  const [teacher, setTeacher] = useState(null);
-  const [school, setSchool] = useState(null);
+  // Hydrate from localStorage for an instant paint; /teacher/me only revalidates
+  // in the background, so a hard refresh doesn't block on the network every time.
+  const [teacher, setTeacher] = useState(() => readJSON('teacher_profile'));
+  const [school, setSchool] = useState(() => readJSON('teacher_school_info'));
   const [token, setToken] = useState(localStorage.getItem('teacher_token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('teacher_token') && !readJSON('teacher_profile'));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pushInitedRef = useRef(false);
 
@@ -46,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       const res = await api.get('/teacher/me');
       setTeacher(res.data.teacher);
       setSchool(res.data.school);
+      if (res.data.teacher) localStorage.setItem('teacher_profile', JSON.stringify(res.data.teacher));
       if (res.data.school) localStorage.setItem('teacher_school_info', JSON.stringify(res.data.school));
     } catch (error) {
       console.error('Failed to fetch teacher profile:', error);
@@ -75,6 +81,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('teacher_token');
     localStorage.removeItem('teacher_school_info');
+    localStorage.removeItem('teacher_profile');
+    clearCache(); // drop all cached data so the next user starts clean
     setToken(null);
     setTeacher(null);
     setSchool(null);

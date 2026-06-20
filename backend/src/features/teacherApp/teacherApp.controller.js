@@ -129,7 +129,8 @@ export const getTeacherTimetable = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
         const tid = teacher._id.toString();
-        const timetables = await Timetable.find({ schoolId: teacher.schoolId });
+        // Only the timetables this teacher actually appears in (not the whole school's).
+        const timetables = await Timetable.find({ schoolId: teacher.schoolId, 'schedule.periods.teacherId': teacher._id }).lean();
 
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const byDay = {};
@@ -176,7 +177,7 @@ export const getTeacherMyclasses = async (req, res) => {
         classes.forEach(c => { classById[c._id.toString()] = c; });
 
         // Classes/sections derived from the timetable (where the teacher has periods).
-        const timetables = await Timetable.find({ schoolId: teacher.schoolId });
+        const timetables = await Timetable.find({ schoolId: teacher.schoolId, 'schedule.periods.teacherId': teacher._id }).lean();
         const teaches = new Set();
         for (const tt of timetables) {
             for (const day of tt.schedule || []) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,26 +13,23 @@ import { ArrowLeft, ClipboardCheck, BookOpen, Users } from 'lucide-react';
 const ClassDetail = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const className = state?.className;
   const sectionName = state?.sectionName;
+  const studentsKey = className && sectionName ? `teacher:students:${className}|${sectionName}` : null;
+
+  const [students, setStudents] = useState(() => (studentsKey && peekCache(studentsKey)) || []);
+  const [loading, setLoading] = useState(() => !(studentsKey && peekCache(studentsKey)));
 
   useEffect(() => {
-    if (!className || !sectionName) return;
-    const load = async () => {
-      try {
-        const res = await api.get(`/teacher/students?className=${encodeURIComponent(className)}&sectionName=${encodeURIComponent(sectionName)}`);
-        setStudents(Array.isArray(res.data) ? res.data : []);
-      } catch (e) {
-        console.error('Class students load failed', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [className, sectionName]);
+    if (!studentsKey) return;
+    let alive = true;
+    getCached(studentsKey, () => api.get(`/teacher/students?className=${encodeURIComponent(className)}&sectionName=${encodeURIComponent(sectionName)}`).then(r => Array.isArray(r.data) ? r.data : []))
+      .then(data => { if (alive) setStudents(data); })
+      .catch(e => console.error('Class students load failed', e))
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [studentsKey, className, sectionName]);
 
   if (!state) return <Navigate to="/classes" replace />;
 

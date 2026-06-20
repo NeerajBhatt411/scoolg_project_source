@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import axios from 'axios';
 import api from '../utils/api';
 import { initPush } from '../firebase';
+import { clearCache } from '../utils/cache';
 
 const AuthContext = createContext();
 
@@ -14,11 +15,20 @@ const loadSavedAccounts = () => {
   }
 };
 
+// The saved account that matches the active token — used to paint instantly on boot.
+const activeAccount = () => {
+  const tok = localStorage.getItem('student_token');
+  return loadSavedAccounts().find(a => a.token === tok) || null;
+};
+const readJSON = (key) => { try { return JSON.parse(localStorage.getItem(key)) || null; } catch { return null; } };
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [school, setSchool] = useState(null);
+  // Hydrate from localStorage so a hard refresh paints instantly; /student/me only
+  // revalidates in the background instead of blocking the boot screen every time.
+  const [user, setUser] = useState(() => activeAccount()?.student || null);
+  const [school, setSchool] = useState(() => activeAccount()?.school || readJSON('school_info'));
   const [token, setToken] = useState(localStorage.getItem('student_token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('student_token') && !activeAccount()?.student);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pushInitedRef = useRef(false);
 
@@ -128,6 +138,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('student_token');
       localStorage.removeItem('school_info');
       localStorage.removeItem('refresh_token');
+      clearCache(); // drop cached data so the next user starts clean
       setToken(null);
       setUser(null);
       setSchool(null);

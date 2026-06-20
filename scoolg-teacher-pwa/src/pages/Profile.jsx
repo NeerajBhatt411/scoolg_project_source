@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { getCached } from '../utils/cache';
 import { Mail, Phone, GraduationCap, BookOpen, Lock, LogOut, ChevronRight, ChevronDown, School, BadgeCheck, Save, Loader2, User, KeyRound, Bell } from 'lucide-react';
 import MenuButton from '../components/MenuButton';
 import { initPush } from '../firebase';
@@ -38,7 +39,8 @@ const Profile = () => {
     const bgGradient = colors[name.length % colors.length];
 
     useEffect(() => {
-        api.get('/teacher/my-classes').then(r => setClassCount(Array.isArray(r.data) ? r.data.length : 0)).catch(() => setClassCount(0));
+        getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : []))
+            .then(d => setClassCount(d.length)).catch(() => setClassCount(0));
     }, []);
 
     const handleChangePassword = async () => {

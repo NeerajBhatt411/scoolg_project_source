@@ -21,5 +21,9 @@ const TeacherSchema = new mongoose.Schema({
     status: { type: String, enum: ['Active', 'Inactive', 'Left'], default: 'Active' }
 }, { timestamps: true });
 
+// Login by email + duplicate checks on create (email/phone).
+TeacherSchema.index({ schoolId: 1, email: 1 });
+TeacherSchema.index({ schoolId: 1, phone: 1 });
+
 export const Teacher = mongoose.models.Teacher || mongoose.model('Teacher', TeacherSchema);
 export default Teacher;

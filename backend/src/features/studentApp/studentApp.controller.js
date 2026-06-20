@@ -83,10 +83,10 @@ export const getStudentMe = async (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
 
-        const student = await Student.findById(decoded.id);
+        const student = await Student.findById(decoded.id).select('-password').lean();
         if (!student) return res.status(404).json({ error: "Student not found" });
 
-        const school = await School.findOne({ _id: student.schoolId });
+        const school = await School.findOne({ _id: student.schoolId }).lean();
 
         res.json({
             student,
@@ -106,14 +106,14 @@ export const getStudentTimetable = async (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
 
-        const student = await Student.findById(decoded.id);
+        const student = await Student.findById(decoded.id).select('schoolId class section').lean();
         if (!student) return res.status(404).json({ error: "Student not found" });
 
         const timetable = await Timetable.findOne({
             schoolId: student.schoolId,
             className: student.class,
             sectionName: student.section
-        });
+        }).lean();
 
         res.json(timetable || { message: "No timetable found" });
     } catch (err) {
@@ -127,7 +127,7 @@ export const getStudentHomework = async (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
 
-        const student = await Student.findById(decoded.id);
+        const student = await Student.findById(decoded.id).select('schoolId class section').lean();
         if (!student) return res.status(404).json({ error: "Student not found" });
 
         // Homework for the student's exact section OR assigned to "All" sections of the class
@@ -136,7 +136,7 @@ export const getStudentHomework = async (req, res) => {
             className: student.class,
             status: 'Active',
             $or: [{ sectionName: student.section }, { sectionName: 'All' }]
-        }).sort({ dueDate: 1, createdAt: -1 });
+        }).sort({ dueDate: 1, createdAt: -1 }).lean();
 
         res.json(homework);
     } catch (err) {
@@ -150,14 +150,14 @@ export const getStudentAttendance = async (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
 
-        const student = await Student.findById(decoded.id);
+        const student = await Student.findById(decoded.id).select('schoolId').lean();
         if (!student) return res.status(404).json({ error: "Student not found" });
 
         // Find all attendance records for this school where this student is present in the records array
         const attendanceRecords = await Attendance.find({
             schoolId: student.schoolId,
             "records.studentId": student._id
-        }).sort({ date: -1 });
+        }).sort({ date: -1 }).select('date records').lean();
 
         // Map to return only this student's status for each day
         const result = attendanceRecords.map(record => ({
@@ -177,10 +177,12 @@ export const getStudentCalendar = async (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
 
-        const student = await Student.findById(decoded.id);
+        const student = await Student.findById(decoded.id).select('schoolId').lean();
         if (!student) return res.status(404).json({ error: "Student not found" });
 
-        const events = await CalendarEvent.find({ schoolId: student.schoolId }).sort({ date: 1 });
+        // Current year onward only — avoids dragging the full multi-year history each call.
+        const yearStart = `${new Date().getFullYear()}-01-01`;
+        const events = await CalendarEvent.find({ schoolId: student.schoolId, date: { $gte: yearStart } }).sort({ date: 1 }).lean();
         res.json(events);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });

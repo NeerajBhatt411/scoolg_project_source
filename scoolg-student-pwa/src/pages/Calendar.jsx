@@ -1,42 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star, BookOpen, Palmtree } from 'lucide-react';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { PageShimmer } from '../components/StudentShimmer';
 
-let cachedEvents = null;
-
 const Calendar = () => {
-  const [events, setEvents] = useState(cachedEvents || []);
-  const [loading, setLoading] = useState(!cachedEvents);
+  const [events, setEvents] = useState(() => peekCache('student:calendar') || []);
+  const [loading, setLoading] = useState(() => !peekCache('student:calendar'));
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  // Fetch the full event list once; month/year navigation is client-side only.
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-          const res = await api.get('/student/calendar');
-          const fetchedEvents = Array.isArray(res.data) ? res.data : [];
-          cachedEvents = fetchedEvents;
-          setEvents(fetchedEvents);
-      } catch (err) {
-          const mockEvents = [
-            { id: 1, title: 'Winter Vacation', type: 'Holiday', date: new Date(currentYear, currentMonth, 25).toISOString(), description: 'School will remain closed for winter holidays.' },
-            { id: 2, title: 'Annual Sports Meet', type: 'Event', date: new Date(currentYear, currentMonth, 15).toISOString(), description: 'All students are invited to participate in the annual sports day.' },
-            { id: 3, title: 'Science Exhibition', type: 'Academic', date: new Date(currentYear, currentMonth, 10).toISOString(), description: 'Science exhibition projects presentation in the main hall.' },
-            { id: 4, title: 'Republic Day', type: 'Holiday', date: new Date(currentYear, 0, 26).toISOString(), description: 'National holiday.' },
-          ];
-          cachedEvents = mockEvents;
-          setEvents(mockEvents);
-      } finally {
-          setLoading(false);
-      }
-    };
-
-    if (!cachedEvents) {
-        fetchEvents();
-    }
-  }, [currentMonth, currentYear]);
+    let alive = true;
+    getCached('student:calendar', () => api.get('/student/calendar').then(r => Array.isArray(r.data) ? r.data : []))
+      .then(data => { if (alive) setEvents(data); })
+      .catch(() => {
+        if (!alive) return;
+        const y = new Date().getFullYear();
+        const m = new Date().getMonth();
+        setEvents([
+          { id: 1, title: 'Winter Vacation', type: 'Holiday', date: new Date(y, m, 25).toISOString(), description: 'School will remain closed for winter holidays.' },
+          { id: 2, title: 'Annual Sports Meet', type: 'Event', date: new Date(y, m, 15).toISOString(), description: 'All students are invited to participate in the annual sports day.' },
+          { id: 3, title: 'Science Exhibition', type: 'Academic', date: new Date(y, m, 10).toISOString(), description: 'Science exhibition projects presentation in the main hall.' },
+          { id: 4, title: 'Republic Day', type: 'Holiday', date: new Date(y, 0, 26).toISOString(), description: 'National holiday.' },
+        ]);
+      })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();

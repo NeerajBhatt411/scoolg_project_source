@@ -1,67 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { Search, ChevronRight, User, GraduationCap, Mail, Phone } from 'lucide-react';
 import MenuButton from '../components/MenuButton';
 
-let cachedStudents = null;
-let cachedClassesInfo = null;
-
 const Students = () => {
-    const [students, setStudents] = useState(cachedStudents || []);
-    const [classesInfo, setClassesInfo] = useState(cachedClassesInfo || []);
-    const [loading, setLoading] = useState(!cachedStudents);
+    const [students, setStudents] = useState(() => peekCache('teacher:all-students') || []);
+    const [loading, setLoading] = useState(() => !peekCache('teacher:all-students'));
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('All');
 
     useEffect(() => {
-        const fetchStudents = async () => {
-            try {
-                if (!cachedStudents) {
-                    // 1. Fetch all classes the teacher teaches
-                    const clsRes = await api.get('/teacher/my-classes');
-                    const myClasses = (clsRes.data || []).filter(c => c.teaches || c.isClassTeacher);
-                    setClassesInfo(myClasses);
-                    cachedClassesInfo = myClasses;
+        let alive = true;
+        // Build the directory once; my-classes and each class's students go through the
+        // shared cache, so this reuses anything Attendance/ClassDetail already fetched.
+        getCached('teacher:all-students', async () => {
+            const classList = await getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : []));
+            const myClasses = classList.filter(c => c.teaches || c.isClassTeacher);
 
-                    // 2. Fetch students for each class
-                    let allStudents = [];
-                    for (const cls of myClasses) {
-                        try {
-                            const stdRes = await api.get(`/teacher/students?className=${cls.className}&sectionName=${cls.sectionName}`);
-                            const classStudents = (stdRes.data || []).map(s => ({
-                                ...s,
-                                className: cls.className,
-                                sectionName: cls.sectionName
-                            }));
-                            allStudents = [...allStudents, ...classStudents];
-                        } catch (err) {
-                            console.error('Error fetching students for', cls.className, err);
-                        }
-                    }
-                    
-                    // Deduplicate if needed (though they shouldn't overlap if they belong to 1 class)
-                    const uniqueStudents = Array.from(new Map(allStudents.map(s => [s._id || s.rollNumber, s])).values());
-                    
-                    // Sort by class then by name
-                    uniqueStudents.sort((a, b) => {
-                        if (a.className !== b.className) return (a.className || '').localeCompare(b.className || '');
-                        const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
-                        const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
-                        return nameA.localeCompare(nameB);
-                    });
-
-                    cachedStudents = uniqueStudents;
-                    setStudents(uniqueStudents);
+            let allStudents = [];
+            for (const cls of myClasses) {
+                try {
+                    const cs = await getCached(`teacher:students:${cls.className}|${cls.sectionName}`, () => api.get(`/teacher/students?className=${cls.className}&sectionName=${cls.sectionName}`).then(r => Array.isArray(r.data) ? r.data : []));
+                    allStudents = allStudents.concat(cs.map(s => ({ ...s, className: cls.className, sectionName: cls.sectionName })));
+                } catch (err) {
+                    console.error('Error fetching students for', cls.className, err);
                 }
-            } catch (error) {
-                console.error('Failed to load students', error);
-            } finally {
-                setLoading(false);
             }
-        };
 
-        fetchStudents();
+            // Deduplicate, then sort by class then name.
+            const uniqueStudents = Array.from(new Map(allStudents.map(s => [s._id || s.rollNumber, s])).values());
+            uniqueStudents.sort((a, b) => {
+                if (a.className !== b.className) return (a.className || '').localeCompare(b.className || '');
+                const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
+                const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+            return uniqueStudents;
+        })
+            .then(list => { if (alive) setStudents(list); })
+            .catch(error => console.error('Failed to load students', error))
+            .finally(() => { if (alive) setLoading(false); });
+        return () => { alive = false; };
     }, []);
 
     const filteredStudents = students.filter(s => {

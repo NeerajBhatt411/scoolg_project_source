@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { CalendarDays, Clock, ChevronRight } from 'lucide-react';
 
@@ -17,13 +18,11 @@ const getSubjectColor = (subject) => {
     return '#64748b'; // Slate
 };
 
-let cachedSchedule = null;
-
 const Timetable = () => {
     const today = JS_DAYS[new Date().getDay()];
     const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday');
-    const [schedule, setSchedule] = useState(cachedSchedule || []);
-    const [loading, setLoading] = useState(!cachedSchedule);
+    const [schedule, setSchedule] = useState(() => peekCache('teacher:timetable') || []);
+    const [loading, setLoading] = useState(() => !peekCache('teacher:timetable'));
     const [nowHM, setNowHM] = useState(() => new Date().toTimeString().slice(0, 5));
 
     useEffect(() => {
@@ -32,21 +31,12 @@ const Timetable = () => {
     }, []);
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                if (!cachedSchedule) {
-                    const res = await api.get('/teacher/timetable');
-                    const sched = res.data?.schedule || [];
-                    cachedSchedule = sched;
-                    setSchedule(sched);
-                }
-            } catch (e) {
-                console.error('Timetable load failed', e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
+        let alive = true;
+        getCached('teacher:timetable', () => api.get('/teacher/timetable').then(r => r.data?.schedule || []))
+            .then(sched => { if (alive) setSchedule(sched); })
+            .catch(e => console.error('Timetable load failed', e))
+            .finally(() => { if (alive) setLoading(false); });
+        return () => { alive = false; };
     }, []);
 
     const periods = schedule.find(d => d.dayOfWeek === activeDay)?.periods || [];

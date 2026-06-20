@@ -2,27 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeCheck, UserMinus, CalendarClock, ChevronLeft, ChevronRight, Palmtree, Calendar } from 'lucide-react';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { PageShimmer } from '../components/StudentShimmer';
 
 
 const Attendance = () => {
-  const [allAttendance, setAllAttendance] = useState([]);
+  const [allAttendance, setAllAttendance] = useState(() => peekCache('student:attendance') || []);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !peekCache('student:attendance'));
   const [upcomingEvent, setUpcomingEvent] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get('/student/attendance');
-        setAllAttendance(res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch attendance:', err);
-      }
-
-      setLoading(false);
-    };
-    fetchData();
+    let alive = true;
+    getCached('student:attendance', () => api.get('/student/attendance').then(r => Array.isArray(r.data) ? r.data : []))
+      .then(data => { if (alive) setAllAttendance(data); })
+      .catch(err => console.error('Failed to fetch attendance:', err))
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
   }, []);
 
   const monthlyData = allAttendance.filter(r => {

@@ -1,32 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { Users, ClipboardCheck, BookOpen, ChevronRight } from 'lucide-react';
 import TopHeader from '@/components/TopHeader';
 
-let cachedClasses = null;
-
 const MyClasses = () => {
   const navigate = useNavigate();
-  const [classes, setClasses] = useState(cachedClasses || []);
-  const [loading, setLoading] = useState(!cachedClasses);
+  const [classes, setClasses] = useState(() => peekCache('teacher:my-classes') || []);
+  const [loading, setLoading] = useState(() => !peekCache('teacher:my-classes'));
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        if (!cachedClasses) {
-          const res = await api.get('/teacher/my-classes');
-          const data = Array.isArray(res.data) ? res.data : [];
-          cachedClasses = data;
-          setClasses(data);
-        }
-      } catch (e) {
-        console.error('My classes load failed', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    let alive = true;
+    getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : []))
+      .then(data => { if (alive) setClasses(data); })
+      .catch(e => console.error('My classes load failed', e))
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
   }, []);
 
   return (

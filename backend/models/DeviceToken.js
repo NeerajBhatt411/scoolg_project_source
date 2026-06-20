@@ -8,5 +8,8 @@ const DeviceTokenSchema = new mongoose.Schema({
     token: { type: String, required: true, unique: true },
 }, { timestamps: true });
 
+// Notification fan-out matches recipients by role + userId.
+DeviceTokenSchema.index({ role: 1, userId: 1 });
+
 export const DeviceToken = mongoose.models.DeviceToken || mongoose.model('DeviceToken', DeviceTokenSchema);
 export default DeviceToken;

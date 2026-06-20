@@ -8,12 +8,13 @@ import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 
 const Classes = () => {
-    const { invalidateAcademic } = useAdmin();
+    // classes & teachers come from the shared AdminContext cache (loaded once at
+    // app start) so visiting this page doesn't refetch them every time.
+    const { classes, teachers, invalidateAcademic, refreshClasses } = useAdmin();
+    const teachersList = teachers;
     const { toast } = useToast();
-    const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
-    const [teachersList, setTeachersList] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(classes.length === 0);
 
     // Add Class Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -32,11 +33,10 @@ const Classes = () => {
 
     const schoolId = localStorage.getItem('scoolg_school_id');
     useEffect(() => {
-        fetchClasses();
         fetchSections();
-        axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`)
-            .then(r => setTeachersList(Array.isArray(r.data) ? r.data : []))
-            .catch(() => { });
+        // classes already come from context; only fetch if the cache is empty.
+        if (classes.length === 0) refreshClasses(true).finally(() => setLoading(false));
+        else setLoading(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -56,18 +56,6 @@ const Classes = () => {
             setSections(res.data);
         } catch (err) {
             console.error("Failed to fetch sections", err);
-        }
-    };
-
-    const fetchClasses = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`);
-            setClasses(res.data);
-        } catch (err) {
-            console.error("Failed to fetch classes", err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -101,8 +89,7 @@ const Classes = () => {
                 maxCapacity: 40
             });
 
-            await fetchClasses();
-            invalidateAcademic(); // keep shared classes/section caches in sync
+            invalidateAcademic(); // refreshes the shared classes/section caches
             setIsAddModalOpen(false);
             setNewClassName('');
             setNewSectionName('');
@@ -128,7 +115,6 @@ const Classes = () => {
         setSavingManage(true);
         try {
             await axios.patch(`${ADMIN_API_BASE}/classes/${manageClass._id}`, { subjects: editSubjects });
-            await fetchClasses();
             invalidateAcademic();
             setManageClass(c => c ? { ...c, subjects: editSubjects } : c);
             setSubjectsSaved(true);

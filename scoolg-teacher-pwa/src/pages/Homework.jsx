@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { useAuth } from '../context/AuthContext';
 import TopHeader from '@/components/TopHeader';
 import { Plus, X, Paperclip, Upload, Loader2, NotebookPen, Clock, BookOpen, ChevronDown } from 'lucide-react';
@@ -26,16 +27,14 @@ const dueStyle = (d) => {
   return { label: fmtDate(d), style: 'bg-emerald-100 text-emerald-700 border-emerald-200/60' };
 };
 
-let cachedHomework = null;
-
 const Homework = () => {
   const location = useLocation();
   const prefill = location.state || null;
   const { school } = useAuth();
 
-  const [classes, setClasses] = useState([]);
-  const [list, setList] = useState(cachedHomework || []);
-  const [loading, setLoading] = useState(!cachedHomework);
+  const [classes, setClasses] = useState(() => peekCache('teacher:my-classes') || []);
+  const [list, setList] = useState(() => peekCache('teacher:homework') || []);
+  const [loading, setLoading] = useState(() => !peekCache('teacher:homework'));
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,18 +43,15 @@ const Homework = () => {
   const emptyForm = { className: prefill?.className || '', sectionName: prefill?.sectionName || 'All', subject: '', title: '', description: '', dueDate: '', attachments: [] };
   const [form, setForm] = useState(emptyForm);
 
-  const loadHomework = async () => {
-    if (!cachedHomework) setLoading(true);
+  const loadHomework = async (force = false) => {
     try {
-      const res = await api.get('/teacher/homework');
-      const data = Array.isArray(res.data) ? res.data : [];
-      cachedHomework = data;
+      const data = await getCached('teacher:homework', () => api.get('/teacher/homework').then(r => Array.isArray(r.data) ? r.data : []), { force });
       setList(data);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   useEffect(() => {
-    api.get('/teacher/my-classes').then(res => setClasses(Array.isArray(res.data) ? res.data : [])).catch(console.error);
+    getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : [])).then(setClasses).catch(console.error);
     loadHomework();
   }, []);
 
@@ -92,7 +88,7 @@ const Homework = () => {
     try {
       await api.post('/teacher/homework', form);
       setShowModal(false);
-      loadHomework();
+      loadHomework(true); // force refresh — bypass cache after creating
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to assign');
     } finally { setSaving(false); }

@@ -14,6 +14,8 @@ const AttendanceSchema = new mongoose.Schema({
 
 // Ensure one attendance record per section per day
 AttendanceSchema.index({ sectionId: 1, date: 1 }, { unique: true });
+// Per-student attendance lookups (student app) — avoids scanning every day's doc.
+AttendanceSchema.index({ schoolId: 1, "records.studentId": 1 });
 
 export const Attendance = mongoose.models.Attendance || mongoose.model('Attendance', AttendanceSchema);
 export default Attendance;

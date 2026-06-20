@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { getCached } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { Calendar, Users, BookOpen, ChevronRight, Clock, Calculator, Code, BookType, Beaker, FileText, LayoutDashboard, ClipboardCheck, FileEdit, Megaphone, CloudUpload, PenTool, BarChart } from 'lucide-react';
 import AttendanceTrendChart from '../components/AttendanceTrendChart';
@@ -57,13 +58,15 @@ const Dashboard = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const [ttRes, clsRes, evRes] = await Promise.all([
-                    api.get('/teacher/timetable').catch(() => ({ data: { schedule: [] } })),
-                    api.get('/teacher/my-classes').catch(() => ({ data: [] })),
-                    api.get('/teacher/events?limit=5').catch(() => ({ data: [] })),
+                // Shared cache: timetable & my-classes are reused by their own pages,
+                // so navigating around doesn't refetch them. Events get a shorter TTL.
+                const [tt, cls, ev] = await Promise.all([
+                    getCached('teacher:timetable', () => api.get('/teacher/timetable').then(r => r.data)).catch(() => ({ schedule: [] })),
+                    getCached('teacher:my-classes', () => api.get('/teacher/my-classes').then(r => Array.isArray(r.data) ? r.data : [])).catch(() => []),
+                    getCached('teacher:events', () => api.get('/teacher/events?limit=5').then(r => Array.isArray(r.data) ? r.data : []), { ttl: 5 * 60 * 1000 }).catch(() => []),
                 ]);
 
-                const sched = ttRes.data?.schedule || [];
+                const sched = tt?.schedule || [];
                 setTodayPeriods((sched.find(d => d.dayOfWeek === todayName)?.periods) || []);
                 setWeekCount(sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0));
 
@@ -76,10 +79,10 @@ const Dashboard = () => {
                 });
                 setWeekDays(dayCounts);
 
-                const cls = Array.isArray(clsRes.data) ? clsRes.data : [];
-                setClassCount(cls.length);
+                const classList = Array.isArray(cls) ? cls : [];
+                setClassCount(classList.length);
 
-                const newEvents = Array.isArray(evRes.data) ? evRes.data : [];
+                const newEvents = Array.isArray(ev) ? ev : [];
                 setEvents(newEvents);
 
                 cachedDashboardData = {

@@ -4,11 +4,14 @@ import axios from 'axios';
 import Dropdown from '../components/Dropdown';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
+import { useAdmin } from '../context/AdminContext';
 
 const TeacherProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { toast } = useToast();
+    // classes from the shared cache — no need to refetch on every teacher view.
+    const { classes: classesList } = useAdmin();
     
     // Store original teacher to fallback/init
     const [teacher, setTeacher] = useState(location.state?.teacher);
@@ -24,7 +27,6 @@ const TeacherProfile = () => {
 
     // Teacher diary state
     const [diary, setDiary] = useState([]);
-    const [classesList, setClassesList] = useState([]);
     const [sectionsList, setSectionsList] = useState([]);
     const todayISO = new Date().toISOString().split('T')[0];
     const [diaryForm, setDiaryForm] = useState({ date: todayISO, className: '', sectionName: '', subject: '', note: '' });
@@ -39,9 +41,6 @@ const TeacherProfile = () => {
             .catch(() => setSchedule([]));
         axios.get(`${ADMIN_API_BASE}/teacher-diary?teacherId=${teacher._id}`)
             .then((res) => setDiary(Array.isArray(res.data) ? res.data : []))
-            .catch(() => { });
-        axios.get(`${ADMIN_API_BASE}/classes?schoolId=${adminSchoolId}`)
-            .then((res) => setClassesList(Array.isArray(res.data) ? res.data : []))
             .catch(() => { });
         axios.get(`${ADMIN_API_BASE}/sections?schoolId=${adminSchoolId}`)
             .then((res) => setSectionsList(Array.isArray(res.data) ? res.data : []))

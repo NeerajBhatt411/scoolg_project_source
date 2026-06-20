@@ -16,7 +16,9 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const [apiDone, setApiDone] = useState(!!cachedLogo);
 
     useEffect(() => {
-        if (!schoolId) { setApiDone(true); return; }
+        // Logo is cached in localStorage and rarely changes — only hit the API
+        // when we don't already have it, instead of on every login/navigation.
+        if (!schoolId || cachedLogo) { setApiDone(true); return; }
         axios.get(`${ADMIN_API_BASE}/profile/${schoolId}`)
             .then((res) => {
                 const l = res.data?.logo || res.data?.schoolLogo || '';

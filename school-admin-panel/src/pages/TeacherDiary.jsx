@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
+import { useAdmin } from '../context/AdminContext';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
 import Dropdown from '../components/Dropdown';
@@ -9,9 +10,9 @@ const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('
 
 const TeacherDiary = () => {
     const schoolId = localStorage.getItem('scoolg_school_id');
+    // teachers & classes from the shared cache; only diary + sections are page-specific.
+    const { teachers, classes: classesList } = useAdmin();
     const [entries, setEntries] = useState([]);
-    const [teachers, setTeachers] = useState([]);
-    const [classesList, setClassesList] = useState([]);
     const [sectionsList, setSectionsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [fTeacher, setFTeacher] = useState('');
@@ -25,13 +26,9 @@ const TeacherDiary = () => {
         setLoading(true);
         Promise.all([
             axios.get(`${ADMIN_API_BASE}/teacher-diary?schoolId=${schoolId}&_=${Date.now()}`),
-            axios.get(`${ADMIN_API_BASE}/teachers?schoolId=${schoolId}`),
-            axios.get(`${ADMIN_API_BASE}/classes?schoolId=${schoolId}`),
             axios.get(`${ADMIN_API_BASE}/sections?schoolId=${schoolId}`),
-        ]).then(([d, t, c, s]) => {
+        ]).then(([d, s]) => {
             setEntries(Array.isArray(d.data) ? d.data : []);
-            setTeachers(Array.isArray(t.data) ? t.data : []);
-            setClassesList(Array.isArray(c.data) ? c.data : []);
             setSectionsList(Array.isArray(s.data) ? s.data : []);
         }).catch((e) => console.error('Diary load failed', e)).finally(() => setLoading(false));
     }, [schoolId]);

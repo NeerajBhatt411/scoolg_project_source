@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { getCached, peekCache } from '../utils/cache';
 import { StudentListShimmer } from '../components/StudentShimmer';
 
 const fmtDate = (d, opts) => {
@@ -35,23 +36,17 @@ const AttachmentView = ({ a }) => {
 };
 
 const Homework = () => {
-  const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [list, setList] = useState(() => peekCache('student:homework') || []);
+  const [loading, setLoading] = useState(() => !peekCache('student:homework'));
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    const fetchHomework = async () => {
-      try {
-        const res = await api.get('/student/homework');
-        setList(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error('Failed to fetch homework:', err);
-        setList([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHomework();
+    let alive = true;
+    getCached('student:homework', () => api.get('/student/homework').then(r => Array.isArray(r.data) ? r.data : []))
+      .then(data => { if (alive) setList(data); })
+      .catch(err => { console.error('Failed to fetch homework:', err); if (alive) setList([]); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
   }, []);
 
 
