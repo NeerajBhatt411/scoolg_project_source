@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { transporter, renderEmail } from '../../utils/email.js';
 import { slugify } from '../../utils/slug.js';
+import { registerSchoolDomain } from '../../utils/vercel.js';
 
 // In-memory OTP store (matches original module-level scope).
 const TMP_OTPS = {};
@@ -130,10 +131,20 @@ export const patchOnboardingUpdateById = async (req, res) => {
         }
 
         await school.save();
+
+        // On final completion, auto-register the public website subdomain on
+        // Vercel (e.g. gajera.scoolg.com). Never throws — onboarding is unaffected.
+        let website = null;
+        if (currentStep === 8 && school.slug) {
+            await registerSchoolDomain(school.slug);
+            website = `${school.slug}.${process.env.SITE_ROOT_DOMAIN || 'scoolg.com'}`;
+        }
+
         res.json({
             message: "Saved!",
             data: school,
-            password: generatedPassword
+            password: generatedPassword,
+            website
         });
     } catch (err) {
         console.error("❌ Update error:", err);

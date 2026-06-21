@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPublicSchool } from './publicSite.controller.js';
+import { getPublicSchool, syncVercelDomains } from './publicSite.controller.js';
 
 const router = Router();
 
@@ -11,5 +11,9 @@ const router = Router();
  *     tags: [Public - Website]
  */
 router.get('/api/public/school/:slug', getPublicSchool);
+
+// One-time backfill for existing schools (key-protected). e.g.
+// GET /api/public/sync-vercel-domains?key=YOUR_VERCEL_SYNC_KEY
+router.get('/api/public/sync-vercel-domains', syncVercelDomains);
 
 export default router;

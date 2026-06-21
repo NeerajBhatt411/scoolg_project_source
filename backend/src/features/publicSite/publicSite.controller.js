@@ -1,5 +1,6 @@
 import { School } from '../../../models/School.js';
 import { slugify } from '../../utils/slug.js';
+import { registerSchoolDomain } from '../../utils/vercel.js';
 
 // Public, no-auth: a school's website data by its subdomain slug.
 // e.g. GET /api/public/school/gajera  ->  { slug, name, logo, campusCode, formData }
@@ -33,5 +34,29 @@ export const getPublicSchool = async (req, res) => {
     } catch (err) {
         console.error('public school error:', err);
         res.status(500).json({ error: 'Failed to load school' });
+    }
+};
+
+// One-time backfill: register every existing completed school's subdomain on
+// Vercel (for schools that onboarded before auto-register existed, e.g. gajera).
+// Guarded by ?key= matching VERCEL_SYNC_KEY so it can't be triggered publicly.
+export const syncVercelDomains = async (req, res) => {
+    const key = req.query.key || req.headers['x-sync-key'];
+    if (!process.env.VERCEL_SYNC_KEY || key !== process.env.VERCEL_SYNC_KEY) {
+        return res.status(403).json({ error: 'forbidden' });
+    }
+    try {
+        const schools = await School.find({ status: 'COMPLETED' }).select('slug formData').lean();
+        const results = [];
+        for (const s of schools) {
+            const slug = s.slug || slugify(s.formData?.schoolName);
+            if (!slug) continue;
+            const r = await registerSchoolDomain(slug);
+            results.push({ slug, ...r });
+        }
+        res.json({ count: results.length, results });
+    } catch (err) {
+        console.error('sync vercel domains error:', err);
+        res.status(500).json({ error: 'sync failed' });
     }
 };
