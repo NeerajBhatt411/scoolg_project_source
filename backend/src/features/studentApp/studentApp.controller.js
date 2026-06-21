@@ -28,9 +28,14 @@ export const postStudentLogin = async (req, res) => {
         let { studentAppId, password } = req.body;
         if (!studentAppId || !password) return res.status(400).json({ error: "ID & Password required" });
         
-        // App IDs are stored uppercase (e.g. GAJ001); normalize input so login is case-insensitive.
-        studentAppId = studentAppId.toUpperCase().trim();
-        const student = await Student.findOne({ studentAppId });
+        // Case-insensitive lookup: fast exact match for new (GAJ001) + numeric ids,
+        // then a case-insensitive fallback so any legacy lowercase id still logs in.
+        const raw = String(studentAppId).trim();
+        let student = await Student.findOne({ studentAppId: raw.toUpperCase() });
+        if (!student) {
+            const esc = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            student = await Student.findOne({ studentAppId: { $regex: `^${esc}$`, $options: 'i' } });
+        }
         if (!student) return res.status(401).json({ error: "Invalid ID or Password" });
 
         const isMatch = await bcrypt.compare(password, student.password);
