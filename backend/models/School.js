@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const SchoolSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     campusCode: { type: String, unique: true, sparse: true, index: true }, // Added for App login
+    slug: { type: String, index: true, sparse: true }, // public website subdomain (e.g. "gajera" -> gajera.scoolg.com)
     email: { type: String, required: true, unique: true },
     password: { type: String }, // Hashed password for admin login
     isPasswordChanged: { type: Boolean, default: false }, // Force change on first login

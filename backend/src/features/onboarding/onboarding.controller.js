@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { transporter, renderEmail } from '../../utils/email.js';
+import { slugify } from '../../utils/slug.js';
 
 // In-memory OTP store (matches original module-level scope).
 const TMP_OTPS = {};
@@ -96,6 +97,18 @@ export const patchOnboardingUpdateById = async (req, res) => {
 
         school.formData = { ...school.formData, ...formData };
         if (currentStep) school.currentStep = currentStep;
+
+        // Auto-generate a unique public-website slug from the school name (once).
+        if (!school.slug && school.formData?.schoolName) {
+            const base = slugify(school.formData.schoolName);
+            if (base) {
+                let candidate = base, n = 1;
+                while (await School.findOne({ slug: candidate, id: { $ne: school.id } })) {
+                    candidate = `${base}-${++n}`;
+                }
+                school.slug = candidate;
+            }
+        }
 
         let generatedPassword = null;
         if (currentStep === 8 && school.status !== "COMPLETED") {

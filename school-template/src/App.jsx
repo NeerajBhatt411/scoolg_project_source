@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 import { schoolData } from './data/mockData';
 import './index.css';
 
+const API_BASE = 'https://scoolg-backend.netlify.app/api';
+
 const App = () => {
-  const [currentOnboardingData] = useState(() => {
+  // Onboarding preview (localStorage) is the initial source; on a real school
+  // subdomain (e.g. gajera.scoolg.com) we replace it with that school's live data.
+  const [currentOnboardingData, setCurrentOnboardingData] = useState(() => {
     const saved = localStorage.getItem('onboardingData');
     return saved ? JSON.parse(saved) : null;
   });
+
+  useEffect(() => {
+    const host = window.location.hostname;            // e.g. gajera.scoolg.com
+    const parts = host.split('.');
+    const ignore = ['www', 'scoolg', 'localhost', '127'];
+    const sub = parts.length >= 3 && !ignore.includes(parts[0]) ? parts[0] : null;
+    if (!sub) return; // apex/preview/dev → keep localStorage preview
+    fetch(`${API_BASE}/public/school/${sub}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && d.formData) setCurrentOnboardingData(d.formData); })
+      .catch(() => {});
+  }, []);
 
   const getMergedData = () => {
     if (!currentOnboardingData) return schoolData;
