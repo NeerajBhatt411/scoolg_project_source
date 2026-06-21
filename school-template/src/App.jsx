@@ -5,6 +5,12 @@ import './index.css';
 
 const API_BASE = 'https://scoolg-backend.netlify.app/api';
 
+// Small helper so we can render a lucide icon by name string.
+const LucideIcon = ({ name, ...props }) => {
+  const I = Icons[name];
+  return I ? <I {...props} /> : null;
+};
+
 const App = () => {
   // Onboarding preview (localStorage) is the initial source; on a real school
   // subdomain (e.g. gajera.scoolg.com) we replace it with that school's live data.
@@ -25,57 +31,88 @@ const App = () => {
       .catch(() => {});
   }, []);
 
-  const getMergedData = () => {
-    if (!currentOnboardingData) return schoolData;
+  const data = currentOnboardingData;
+  const isReal = !!data;   // a real school's data is loaded (vs. demo/preview)
 
-    const data = currentOnboardingData;
+  const hasFees = isReal && data.fees && (data.fees.primary || data.fees.secondary || data.fees.seniorSecondary);
+
+  // When NO school data (apex / demo preview) → show the full mock template so the
+  // showcase looks complete. For a REAL school → build only from their data and
+  // leave empty things empty (the sections get hidden below).
+  const getMergedData = () => {
+    if (!isReal) return schoolData;
+
     return {
       ...schoolData,
       hero: {
         ...schoolData.hero,
         title: data.schoolName || schoolData.hero.title,
-        description: data.schoolDescription || schoolData.hero.description,
+        description: data.schoolDescription || `Welcome to ${data.schoolName || 'our school'} — nurturing tomorrow's leaders.`,
         mainImage: data.coverImage || schoolData.hero.mainImage,
         floatingStats: {
           ...schoolData.hero.floatingStats,
-          value: data.schoolStrength || schoolData.hero.floatingStats.value
-        }
+          value: data.schoolStrength || schoolData.hero.floatingStats.value,
+        },
       },
       about: {
         ...schoolData.about,
-        description: `Established in ${data.establishedYear}. ${data.schoolDescription}`,
+        description: [data.establishedYear ? `Established in ${data.establishedYear}.` : '', data.schoolDescription || '']
+          .join(' ').trim(),
         cards: [
-          { ...schoolData.about.cards[0], description: data.mission || schoolData.about.cards[0].description },
-          { ...schoolData.about.cards[1], description: data.vision || schoolData.about.cards[1].description }
-        ]
+          ...(data.mission ? [{ ...schoolData.about.cards[0], description: data.mission }] : []),
+          ...(data.vision ? [{ ...schoolData.about.cards[1], description: data.vision }] : []),
+        ],
       },
-      leadership: data.leadership ? data.leadership.map((member, i) => ({
-        id: i + 1,
-        image: schoolData.leadership[i]?.image || `https://ui-avatars.com/api/?name=${member.name?.charAt(0) || 'M'}&background=random&color=fff&bold=true`,
-        name: member.name || 'Leadership Member',
-        role: member.role || 'Board Member',
-        description: member.message || (i === 0 ? 'Leading with vision and excellence.' : 'Dedicated to student success and academic growth.')
-      })) : schoolData.leadership,
-      gallery: data.gallery && data.gallery.length > 0 
+      leadership: (data.leadership && data.leadership.length)
+        ? data.leadership.map((member, i) => ({
+            id: i + 1,
+            image: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=4B2ED5&color=fff&bold=true`,
+            name: member.name || 'Leadership Member',
+            title: member.role || 'Board Member',
+            description: member.message || '',
+          }))
+        : [],
+      gallery: (data.gallery && data.gallery.length)
         ? data.gallery.map((url, i) => ({ id: i + 1, url, category: 'Campus', isLarge: i === 0 }))
-        : schoolData.gallery,
-      pricing: [
-        { ...schoolData.pricing[0], price: data.fees?.primary || schoolData.pricing[0].price },
-        { ...schoolData.pricing[1], price: data.fees?.secondary || schoolData.pricing[1].price },
-        { ...schoolData.pricing[2], price: data.fees?.seniorSecondary || schoolData.pricing[2].price }
-      ],
+        : [],
+      pricing: hasFees
+        ? [
+            { ...schoolData.pricing[0], price: data.fees?.primary || '—' },
+            { ...schoolData.pricing[1], price: data.fees?.secondary || '—' },
+            { ...schoolData.pricing[2], price: data.fees?.seniorSecondary || '—' },
+          ]
+        : [],
+      facilities: data.facilities || [],
+      otherFacilities: data.otherFacilities || '',
       contact: {
-        address: `${data.address}, ${data.city}, ${data.state} - ${data.pincode}`,
-        phone: data.phone || schoolData.contact.phone,
-        email: data.email || schoolData.contact.email,
-        social: data.socialMedia || {}
+        address: [data.address, data.city, data.state].filter(Boolean).join(', ') + (data.pincode ? ` - ${data.pincode}` : ''),
+        phone: data.phone || '',
+        email: data.email || '',
+        social: data.socialMedia || {},
       },
-      logo: data.logo
+      logo: data.logo,
     };
   };
 
   const finalData = getMergedData();
   const { hero, leadership, about, levels, academics, notices, gallery, pricing, contact, logo, facilities, otherFacilities } = finalData;
+
+  // Which sections to render. Demo/preview → everything. Real school → only what
+  // they actually provided (empty ones disappear). Levels/Academics/Notices have
+  // no onboarding source, so for a real school they stay hidden.
+  const show = {
+    leadership: isReal ? leadership.length > 0 : true,
+    about:      isReal ? (about.cards.length > 0 || !!about.description) : true,
+    levels:     !isReal,
+    academics:  !isReal,
+    notices:    !isReal,
+    facilities: isReal ? (((facilities && facilities.length) || !!otherFacilities) ? true : false) : true,
+    gallery:    isReal ? gallery.length > 0 : true,
+    fees:       isReal ? pricing.length > 0 : true,
+  };
+
+  const social = contact.social || {};
+  const hasSocial = !!(social.instagram || social.facebook || social.twitter || social.youtube);
 
   const [currentPage, setCurrentPage] = useState('home');
   const [activeTab, setActiveTab] = useState('home');
@@ -90,8 +127,8 @@ const App = () => {
   const navLinks = (
     <div className={`nav-links ${isMenuOpen ? 'open' : ''}`} style={{ flex: 1, justifyContent: 'center' }}>
       <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => handleNavClick('home', 'home')}>Home</button>
-      <a href="#about" className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('home', 'about')}>About Us</a>
-      <button className={`nav-item ${activeTab === 'fees' ? 'active' : ''}`} onClick={() => handleNavClick('fees', 'fees')}>Fees Structure</button>
+      {show.about && <a href="#about" className={`nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => handleNavClick('home', 'about')}>About Us</a>}
+      {show.fees && <button className={`nav-item ${activeTab === 'fees' ? 'active' : ''}`} onClick={() => handleNavClick('fees', 'fees')}>Fees Structure</button>}
       <a href="#contact" className={`nav-item ${activeTab === 'contact' ? 'active' : ''}`} onClick={() => handleNavClick(currentPage, 'contact')}>Contact</a>
     </div>
   );
@@ -146,6 +183,7 @@ const App = () => {
           </section>
 
           {/* Leadership Section */}
+          {show.leadership && (
           <section id="leadership" style={{ background: '#FAFAFA' }}>
             <div className="section-title">
               <span className="badge blue">Our Team</span>
@@ -158,13 +196,15 @@ const App = () => {
                   <img src={member.image} alt={member.name} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', marginBottom: 20 }} />
                   <h3 className="card-title">{member.name}</h3>
                   <p className="card-subtitle">{member.title}</p>
-                  <p className="card-desc" style={{ fontStyle: 'italic' }}>{member.description}</p>
+                  {member.description && <p className="card-desc" style={{ fontStyle: 'italic' }}>{member.description}</p>}
                 </div>
               ))}
             </div>
           </section>
+          )}
 
           {/* About Section */}
+          {show.about && (
           <section id="about">
             <div className="section-title">
               <span className="badge blue" style={{ background: '#F0F9FF', color: '#0369A1' }}>Learn More</span>
@@ -188,8 +228,10 @@ const App = () => {
               ))}
             </div>
           </section>
+          )}
 
           {/* Our Levels Section */}
+          {show.levels && (
           <section style={{ background: '#FAFAFA' }}>
             <div className="section-title">
               <span className="badge blue">Programs</span>
@@ -212,8 +254,10 @@ const App = () => {
               ))}
             </div>
           </section>
+          )}
 
           {/* Academics Section */}
+          {show.academics && (
           <section>
             <div className="section-title">
               <span className="badge blue">Curriculum</span>
@@ -235,40 +279,43 @@ const App = () => {
               ))}
             </div>
           </section>
+          )}
 
           {/* Facilities Section */}
-      <section className="section" id="facilities" style={{ background: 'var(--surface)' }}>
-        <div className="container">
-          <div className="section-header">
-            <span className="badge">Campus Life</span>
-            <h2 className="section-title">Premium Facilities</h2>
-            <p className="section-subtitle">Discover the state-of-the-art infrastructure we provide for our students' holistic growth.</p>
-          </div>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
-            {/* Display Standard Facilities */}
-            {facilities?.filter(f => f !== 'OTHER').map((f, i) => (
-              <div key={i} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                  <LucideIcon name="CheckCircle" size={24} />
-                </div>
-                <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f}</h4>
+          {show.facilities && (
+          <section className="section" id="facilities" style={{ background: 'var(--surface)' }}>
+            <div className="container">
+              <div className="section-header">
+                <span className="badge">Campus Life</span>
+                <h2 className="section-title">Premium Facilities</h2>
+                <p className="section-subtitle">Discover the state-of-the-art infrastructure we provide for our students' holistic growth.</p>
               </div>
-            ))}
-            {/* Display Other Facilities (Split by comma) */}
-            {otherFacilities?.split(',').filter(f => f.trim()).map((f, i) => (
-              <div key={`other-${i}`} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                  <LucideIcon name="PlusCircle" size={24} />
-                </div>
-                <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f.trim()}</h4>
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
+                {/* Display Standard Facilities */}
+                {facilities?.filter(f => f !== 'OTHER').map((f, i) => (
+                  <div key={i} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
+                      <LucideIcon name="CheckCircle" size={24} />
+                    </div>
+                    <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f}</h4>
+                  </div>
+                ))}
+                {/* Display Other Facilities (Split by comma) */}
+                {otherFacilities?.split(',').filter(f => f.trim()).map((f, i) => (
+                  <div key={`other-${i}`} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
+                      <LucideIcon name="PlusCircle" size={24} />
+                    </div>
+                    <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f.trim()}</h4>
+                  </div>
+                ))}
               </div>
-            ))}
-            {(!facilities?.length && !otherFacilities) && (
-              <p style={{ color: '#94a3b8', textAlign: 'center', width: '100%', fontStyle: 'italic' }}>Please complete the onboarding to showcase your premier facilities here.</p>
-            )}
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
+          )}
+
+          {/* Notices Section */}
+          {show.notices && (
           <section style={{ background: '#FAFAFA' }}>
             <div className="section-title" style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -307,8 +354,10 @@ const App = () => {
               </div>
             </div>
           </section>
+          )}
 
           {/* Gallery Section */}
+          {show.gallery && gallery.length > 0 && (
           <section id="gallery">
             <div className="section-title">
               <span className="badge blue">Our Campus</span>
@@ -328,6 +377,7 @@ const App = () => {
               </div>
             </div>
           </section>
+          )}
         </>
       ) : (
         <>
@@ -376,6 +426,7 @@ const App = () => {
         <div className="contact-container">
           <div>
             <div style={{ background: '#FAFAFA', padding: '40px', borderRadius: '24px', height: '100%', border: '1px solid #E5E7EB' }}>
+              {contact.address && contact.address.trim() && (
               <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
                 <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.MapPin size={20} /></div>
                 <div>
@@ -383,6 +434,8 @@ const App = () => {
                   <p style={{ color: 'var(--text-muted)' }}>{contact.address}</p>
                 </div>
               </div>
+              )}
+              {contact.phone && (
               <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
                 <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.Phone size={20} /></div>
                 <div>
@@ -390,13 +443,24 @@ const App = () => {
                   <p style={{ color: 'var(--text-muted)' }}>{contact.phone}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '20px' }}>
+              )}
+              {contact.email && (
+              <div style={{ display: 'flex', gap: '20px', marginBottom: hasSocial ? '40px' : 0 }}>
                 <div className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF' }}><Icons.Mail size={20} /></div>
                 <div>
                   <h4 style={{ marginBottom: 5 }}>Email</h4>
                   <p style={{ color: 'var(--text-muted)' }}>{contact.email}</p>
                 </div>
               </div>
+              )}
+              {hasSocial && (
+              <div style={{ display: 'flex', gap: '14px', marginTop: 10 }}>
+                {social.instagram && <a href={social.instagram} target="_blank" rel="noreferrer" className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF', color: 'var(--primary)' }}><Icons.Instagram size={20} /></a>}
+                {social.facebook && <a href={social.facebook} target="_blank" rel="noreferrer" className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF', color: 'var(--primary)' }}><Icons.Facebook size={20} /></a>}
+                {social.twitter && <a href={social.twitter} target="_blank" rel="noreferrer" className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF', color: 'var(--primary)' }}><Icons.Twitter size={20} /></a>}
+                {social.youtube && <a href={social.youtube} target="_blank" rel="noreferrer" className="icon-box" style={{ width: 40, height: 40, background: '#E0E7FF', color: 'var(--primary)' }}><Icons.Youtube size={20} /></a>}
+              </div>
+              )}
             </div>
           </div>
 
@@ -436,8 +500,8 @@ const App = () => {
             <h4 style={{ fontSize: '1.2rem', marginBottom: 20 }}>Navigation</h4>
             <ul style={{ listStyle: 'none', lineHeight: 2.2, opacity: 0.8 }}>
               <li><button onClick={() => handleNavClick('home', 'home')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>Home</button></li>
-              <li><button onClick={() => handleNavClick('home', 'about')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>About Us</button></li>
-              <li><button onClick={() => handleNavClick('fees', 'fees')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>Fees Structure</button></li>
+              {show.about && <li><button onClick={() => handleNavClick('home', 'about')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>About Us</button></li>}
+              {show.fees && <li><button onClick={() => handleNavClick('fees', 'fees')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, font: 'inherit' }}>Fees Structure</button></li>}
               <li><a href="#contact" onClick={() => handleNavClick(currentPage, 'contact')} style={{ color: 'white', textDecoration: 'none' }}>Contact</a></li>
             </ul>
           </div>
