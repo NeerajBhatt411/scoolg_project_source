@@ -110,7 +110,7 @@ function App() {
     return (
         <ToastProvider>
             <AdminProvider>
-                <Router basename="/admin">
+                <Router basename={import.meta.env.BASE_URL}>
                     <Suspense fallback={<PageLoading />}>
                         <Routes>
                             <Route path="/login" element={<Login />} />
