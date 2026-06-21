@@ -4,8 +4,10 @@ import { transporter, renderEmail } from '../../utils/email.js';
 import { slugify } from '../../utils/slug.js';
 import { registerSchoolDomain } from '../../utils/vercel.js';
 
-// In-memory OTP store (matches original module-level scope).
-const TMP_OTPS = {};
+// OTP is persisted on the School document (otp + otpExpires) — required because
+// the backend runs on stateless serverless functions where in-memory state does
+// not survive between requests.
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export const postOnboardingStart = async (req, res) => {
     let { email } = req.body;
@@ -52,6 +54,7 @@ export const postOnboardingStart = async (req, res) => {
                 id: Date.now().toString(),
                 email,
                 otp: otp,
+                otpExpires: Date.now() + OTP_TTL_MS,
                 currentStep: 1,
                 formData: { email: email }
             });
@@ -66,6 +69,7 @@ export const postOnboardingStart = async (req, res) => {
         } else {
             // CASE 3: Resuming pending account
             school.otp = otp;
+            school.otpExpires = Date.now() + OTP_TTL_MS;
             await school.save();
             return res.json({
                 message: "OTP sent to resume your session",
@@ -80,12 +84,26 @@ export const postOnboardingStart = async (req, res) => {
     }
 };
 
-export const postOnboardingVerify = (req, res) => {
-    const { email, otp } = req.body;
-    if (TMP_OTPS[email] === otp) {
-        delete TMP_OTPS[email];
-        res.json({ message: "Verified!" });
-    } else { res.status(401).json({ error: "Invalid OTP." }); }
+export const postOnboardingVerify = async (req, res) => {
+    let { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ error: "Email and OTP are required." });
+    email = email.toLowerCase().trim();
+    try {
+        const school = await School.findOne({ email });
+        if (!school || !school.otp || String(school.otp) !== String(otp).trim()) {
+            return res.status(401).json({ error: "Invalid OTP." });
+        }
+        if (school.otpExpires && Date.now() > school.otpExpires) {
+            return res.status(401).json({ error: "OTP expired. Please resend the code." });
+        }
+        // One-time use: consume the OTP on success.
+        school.otp = null;
+        school.otpExpires = null;
+        await school.save();
+        return res.json({ message: "Verified!" });
+    } catch (err) {
+        return res.status(500).json({ error: "Server Error", details: err.message });
+    }
 };
 
 export const patchOnboardingUpdateById = async (req, res) => {

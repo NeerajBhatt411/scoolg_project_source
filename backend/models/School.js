@@ -7,6 +7,8 @@ const SchoolSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String }, // Hashed password for admin login
     isPasswordChanged: { type: Boolean, default: false }, // Force change on first login
+    otp: { type: String }, // Onboarding email-verification code
+    otpExpires: { type: Number }, // Onboarding OTP expiry (epoch-ms)
     resetOtp: { type: String }, // Forgot-password: 6-digit reset code
     resetOtpExpires: { type: Number }, // Forgot-password: epoch-ms expiry
     status: { type: String, default: "PENDING" },
