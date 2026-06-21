@@ -12,7 +12,9 @@ import Footer from './components/Footer';
 import SchoolOnboarding from './components/SchoolOnboarding';
 
 function App() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  // Onboarding is tracked in the URL (/get-started) so the browser Back button
+  // closes it (returns to the landing page) instead of leaving the site.
+  const [showOnboarding, setShowOnboarding] = useState(() => window.location.pathname.includes('get-started'));
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'dark' || (!savedTheme);
@@ -37,6 +39,26 @@ function App() {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  const openOnboarding = () => {
+    if (!window.location.pathname.includes('get-started')) {
+      window.history.pushState({ onboarding: true }, '', '/get-started');
+    }
+    setShowOnboarding(true);
+    window.scrollTo(0, 0);
+  };
+  const closeOnboarding = () => {
+    setShowOnboarding(false);
+    if (window.location.pathname.includes('get-started')) {
+      window.history.pushState({}, '', '/');
+    }
+  };
+  // Browser Back closes the onboarding (returns to landing) instead of leaving the site.
+  useEffect(() => {
+    const onPop = () => setShowOnboarding(window.location.pathname.includes('get-started'));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   return (
     <div className="bg-gray-50 text-gray-800 font-body antialiased min-h-screen transition-colors duration-300 dark:bg-slate-950 dark:text-gray-100">
       <motion.div
@@ -45,16 +67,28 @@ function App() {
       />
       
       {showOnboarding ? (
-        <SchoolOnboarding />
+        <>
+          <button
+            onClick={closeOnboarding}
+            style={{
+              position: 'fixed', top: 16, left: 16, zIndex: 200,
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 10, border: '1px solid #e5e7eb',
+              background: '#fff', color: '#374151', fontWeight: 600, fontSize: 13,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.08)', cursor: 'pointer',
+            }}
+          >← Home</button>
+          <SchoolOnboarding onClose={closeOnboarding} />
+        </>
       ) : (
         <>
-          <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} onGetStartedClick={() => setShowOnboarding(true)} />
-          <Hero onGetStartedClick={() => setShowOnboarding(true)} />
+          <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} onGetStartedClick={openOnboarding} />
+          <Hero onGetStartedClick={openOnboarding} />
           <HowItWorks />
           <Features />
           <Team />
           <MobileApps />
-          <CTA onGetStartedClick={() => setShowOnboarding(true)} />
+          <CTA onGetStartedClick={openOnboarding} />
           <Contact />
           <Footer isDarkMode={isDarkMode} />
         </>
