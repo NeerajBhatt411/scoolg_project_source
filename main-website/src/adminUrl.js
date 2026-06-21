@@ -5,14 +5,14 @@
 // /dashboard when a session token exists, otherwise to /login. So the main
 // website only needs to point "Log In" at the panel root.
 //
-// - Production: same origin, served at /admin/
+// - Production: the admin panel lives at https://admin.scoolg.com/ (its own Vercel project)
 // - Local dev: the admin panel runs on its own dev server at :5174 under /admin/
-// - Override anytime with VITE_ADMIN_PANEL_URL (e.g. https://admin.scoolg.com/)
+// - Override anytime with VITE_ADMIN_PANEL_URL
 const raw = import.meta.env.VITE_ADMIN_PANEL_URL?.trim();
 
 export const ADMIN_PANEL_URL = raw
   ? (raw.endsWith('/') ? raw : `${raw}/`)
-  : (import.meta.env.DEV ? 'http://localhost:5174/admin/' : '/admin/');
+  : (import.meta.env.DEV ? 'http://localhost:5174/admin/' : 'https://admin.scoolg.com/');
 
 // Direct link to the login screen (used after onboarding).
 export const ADMIN_LOGIN_URL = `${ADMIN_PANEL_URL}login`;
