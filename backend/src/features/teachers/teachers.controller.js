@@ -4,6 +4,7 @@ import { Section } from '../../../models/Section.js';
 import { Timetable } from '../../../models/Timetable.js';
 import { Teacher } from '../../../models/Teacher.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
+import { nextTeacherIds } from '../../utils/appId.js';
 
 export const postAdminTeachers = async (req, res) => {
     try {
@@ -90,9 +91,8 @@ export const postAdminTeachers = async (req, res) => {
             }
         }
 
-        // Generate short Teacher App ID: TCH101
-        const count = await Teacher.countDocuments({ schoolId: school._id });
-        const teacherAppId = `TCH${count + 101}`;
+        // School-prefixed, globally-unique Teacher App ID (e.g. GAJT01)
+        const [teacherAppId] = await nextTeacherIds(school, 1);
 
         // Generate short Password: PASS-XYZ
         const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();

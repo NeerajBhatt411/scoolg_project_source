@@ -78,9 +78,9 @@ export const postTeacherLogin = async (req, res) => {
         if (!teacherAppId || !password) return res.status(400).json({ error: "Teacher ID & Password required" });
         teacherAppId = String(teacherAppId).trim();
 
-        // Allow login by Teacher ID or email.
+        // Allow login by Teacher ID (case-insensitive, e.g. GAJT01) or email.
         const teacher = await Teacher.findOne({
-            $or: [{ teacherAppId }, { email: teacherAppId.toLowerCase() }]
+            $or: [{ teacherAppId: teacherAppId.toUpperCase() }, { email: teacherAppId.toLowerCase() }]
         });
         if (!teacher) return res.status(401).json({ error: "No teacher account found with this ID" });
         if (teacher.status && teacher.status !== 'Active') {

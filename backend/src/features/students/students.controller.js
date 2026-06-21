@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { Student } from '../../../models/Student.js';
+import { nextStudentIds } from '../../utils/appId.js';
 
 export const postAdminStudents = async (req, res) => {
     try {
@@ -10,18 +11,8 @@ export const postAdminStudents = async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        // Generate 6-digit App ID (e.g. 100001)
-        const lastStudent = await Student.findOne({ 
-            schoolId: school._id,
-            studentAppId: { $regex: /^\d{6}$/ }
-        }).sort({ studentAppId: -1 });
-
-        let nextId = 100001;
-        if (lastStudent && !isNaN(parseInt(lastStudent.studentAppId))) {
-            nextId = parseInt(lastStudent.studentAppId) + 1;
-        }
-
-        const studentAppId = String(nextId);
+        // School-prefixed, globally-unique App ID (e.g. GAJ001)
+        const [studentAppId] = await nextStudentIds(school, 1);
         const dobObj = new Date(req.body.dateOfBirth);
         const dd = String(dobObj.getDate()).padStart(2, '0');
         const mm = String(dobObj.getMonth() + 1).padStart(2, '0');
@@ -67,21 +58,13 @@ export const postAdminStudentsBulk = async (req, res) => {
         const createdStudents = [];
         const salt = await bcrypt.genSalt(10);
         
-        // Generate 6-digit App ID sequence starting point
-        const lastStudent = await Student.findOne({ 
-            schoolId: school._id,
-            studentAppId: { $regex: /^\d{6}$/ }
-        }).sort({ studentAppId: -1 });
+        // School-prefixed, globally-unique App IDs (e.g. GAJ001, GAJ002 ...)
+        const appIds = await nextStudentIds(school, students.length);
 
-        let nextId = 100001;
-        if (lastStudent && !isNaN(parseInt(lastStudent.studentAppId))) {
-            nextId = parseInt(lastStudent.studentAppId) + 1;
-        }
-
+        let idx = 0;
         for (const studentData of students) {
-            const studentAppId = String(nextId);
-            nextId++;
-            
+            const studentAppId = appIds[idx++];
+
             // Generate password from DOB
             const dobStr = studentData.dateOfBirth;
             let plainPassword = "password123"; // Fallback
