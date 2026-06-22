@@ -5,7 +5,7 @@ import { Loader2, Mail, Lock, KeyRound, X, CheckCircle2, Eye, EyeOff } from 'luc
 import { useAdmin } from '../context/AdminContext';
 import { ADMIN_API_BASE, setAuthToken } from '../lib/api';
 import logo from '../assets/logo.png';
-import loginBg from '../assets/login-bg.png';
+import loginBg from '../assets/new_banner.jpeg';
 
 
 const Login = () => {
@@ -184,7 +184,7 @@ const Login = () => {
                             className="btn-premium-login"
                             disabled={loading}
                         >
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login to Dashboard'}
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
                         </button>
                     </form>
 

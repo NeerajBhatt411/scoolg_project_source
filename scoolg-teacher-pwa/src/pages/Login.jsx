@@ -5,7 +5,7 @@ import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-reac
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import loginBg from '../assets/login-bg.png';
+import loginBg from '../assets/new_banner.jpeg';
 
 const Login = () => {
   const [teacherAppId, setTeacherAppId] = useState('');
@@ -76,7 +76,7 @@ const Login = () => {
                 </div>
 
                 <Button disabled={loading} type="submit" size="lg" className="w-full !mt-7 text-[15px] font-bold h-[54px] shadow-lg shadow-primary/20">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login to Portal'}
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login'}
                 </Button>
               </form>
 

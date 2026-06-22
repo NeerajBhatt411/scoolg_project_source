@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import loginBg from '../assets/login-bg.png';
+import loginBg from '../assets/new_banner.jpeg';
 
 const Login = () => {
   const [studentId, setStudentId] = useState('');
@@ -80,7 +80,7 @@ const Login = () => {
                 </div>
 
                 <button disabled={loading} type="submit" className="w-full mt-7 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-[15px] font-bold h-[54px] shadow-lg shadow-blue-600/20 active:scale-[0.98]">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login to Portal'}
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login'}
                 </button>
               </form>
 
