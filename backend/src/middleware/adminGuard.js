@@ -41,17 +41,17 @@ export const adminGuard = (req, res, next) => {
 
     if (ADMIN_PUBLIC_PATHS.includes(p)) return next();
 
-    // Non-breaking by design: the school owner panel keeps working even if the
-    // token is missing/expired (this is how it behaved before roles existed).
-    // We ONLY hard-enforce module access for a valid STAFF token.
+    // Fail-CLOSED: every non-public /api/admin request requires a valid token.
+    // (The admin panel always sends its Bearer token; this blocks anonymous
+    // cross-tenant reads/writes that the old fail-open behaviour allowed.)
     const authHeader = req.headers.authorization;
-    if (!authHeader) return next();
+    if (!authHeader) return res.status(401).json({ error: "Authentication required" });
 
     let decoded;
     try {
         decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'scoolg_secret_99');
     } catch (e) {
-        return next(); // bad/expired token -> behave as before, don't block the panel
+        return res.status(401).json({ error: "Session expired. Please log in again." });
     }
     req.user = decoded;
 
