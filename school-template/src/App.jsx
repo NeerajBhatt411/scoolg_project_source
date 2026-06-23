@@ -398,7 +398,7 @@ const App = () => {
                   }
                   <h3 style={{ fontSize: '1.4rem', marginBottom: 20 }}>{plan.level}</h3>
                   <div style={{ margin: '30px 0' }}>
-                    <span style={{ fontSize: '3.5rem', fontWeight: '800' }}>${plan.price}</span>
+                    <span style={{ fontSize: '3.5rem', fontWeight: '800' }}>₹{plan.price}</span>
                     <span style={{ opacity: plan.isFeatured ? 0.8 : 0.5, fontSize: '1rem', fontWeight: 500 }}>{plan.period}</span>
                   </div>
                   <ul style={{ listStyle: 'none', marginBottom: '40px', textAlign: 'left' }}>

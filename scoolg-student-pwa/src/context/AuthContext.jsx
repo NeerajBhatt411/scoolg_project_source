@@ -87,8 +87,10 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
 
       console.error('Failed to fetch profile:', error);
-      // Don't fully logout on fetch error, just clear current if needed
-      if (!overrideToken) {
+      // Only log out on a real auth failure (401). Network/offline/5xx errors
+      // keep the hydrated session so the app stays usable (no daily kick-out).
+      const status = error.response?.status;
+      if (!overrideToken && status === 401) {
         logout();
       }
     } finally {
@@ -121,7 +123,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Login error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed. Please check your credentials.'
+        message: error.response?.data?.error || error.response?.data?.message || 'Login failed. Please check your credentials.'
       };
     }
   };

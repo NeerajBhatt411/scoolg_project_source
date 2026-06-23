@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, CalendarDays } from 'lucide-react';
 import TopHeader from '@/components/TopHeader';
+import api from '../utils/api';
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mockEvents = [
-      { id: 1, title: 'Summer Break Begins', date: '2026-06-20', type: 'Holiday' },
-      { id: 2, title: 'Teacher Training Session', date: '2026-06-25', type: 'Meeting', time: '10:00 AM - 02:00 PM', location: 'Main Auditorium' },
-      { id: 3, title: 'Mid-Term Examinations', date: '2026-07-15', type: 'Exam' },
-      { id: 4, title: 'Independence Day', date: '2026-08-15', type: 'Event', time: '08:00 AM', location: 'School Ground' },
-    ];
-
-    setTimeout(() => {
-      setEvents(mockEvents);
-      setLoading(false);
-    }, 600);
+    let mounted = true;
+    api.get('/teacher/events?limit=50')
+      .then((r) => { if (mounted) setEvents(Array.isArray(r.data) ? r.data.map((e) => ({ ...e, type: e.category })) : []); })
+      .catch(() => { if (mounted) setEvents([]); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, []);
 
   return (
@@ -50,7 +46,7 @@ const Calendar = () => {
               const day = dateObj.getDate();
 
               return (
-                <div key={event.id} className="bg-[#faf9f6] rounded-[24px] shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex overflow-hidden hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-default">
+                <div key={event._id || event.id} className="bg-[#faf9f6] rounded-[24px] shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex overflow-hidden hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-default">
                   
                   {/* Date Block */}
                   <div className="w-24 sm:w-28 bg-white border-r border-stone-200/60 flex flex-col items-center justify-center p-4 shrink-0">

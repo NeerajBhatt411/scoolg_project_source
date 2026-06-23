@@ -25,7 +25,11 @@ export const getSuperadminDashboard = async (req, res) => {
 
 export const getSuperadminSchools = async (req, res) => {
     try {
-        const schools = await School.find().sort({ createdAt: -1 });
+        // Never expose secrets (password hash, OTP codes) to the client.
+        const schools = await School.find()
+            .select('-password -otp -otpExpires -resetOtp -resetOtpExpires')
+            .sort({ createdAt: -1 })
+            .lean();
         res.json(schools);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch schools" });

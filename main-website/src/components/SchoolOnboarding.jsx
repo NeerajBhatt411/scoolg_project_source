@@ -327,15 +327,22 @@ const SchoolOnboarding = () => {
             body: JSON.stringify({ formData, currentStep: 8 })
           });
           const data = await res.json();
-          if (res.ok && data.password) setGeneratedPassword(data.password);
+          if (res.ok) {
+            if (data.password) setGeneratedPassword(data.password);
+            localStorage.setItem('onboardingData', JSON.stringify(formData));
+            alert('School Profile Created Successfully!');
+          } else {
+            setFormError(data.error || 'Could not complete onboarding. Please try again.');
+          }
         } catch (err) {
-          alert("Save failed!");
+          setFormError('Network error. Please try again.');
         } finally {
           setIsSaving(false);
         }
+      } else {
+        localStorage.setItem('onboardingData', JSON.stringify(formData));
+        alert('School Profile Created Successfully!');
       }
-      localStorage.setItem('onboardingData', JSON.stringify(formData));
-      alert('School Profile Created Successfully!');
       return;
     }
 
@@ -354,8 +361,10 @@ const SchoolOnboarding = () => {
           if (data.password) setGeneratedPassword(data.password);
           setCurrentStep(prev => prev + 1);
           window.scrollTo(0, 0);
+        } else {
+          setFormError(data.error || 'Could not save. Please try again.');
         }
-      } catch (err) { alert("Save failed!"); }
+      } catch (err) { setFormError('Network error. Please try again.'); }
       finally { setIsSaving(false); }
     } else {
       setCurrentStep(prev => Math.min(prev + 1, 8));

@@ -32,7 +32,7 @@ const app = express();
 // --- Global middleware (order preserved from the original monolith) ---
 app.use(corsMiddleware);   // manual CORS + preflight (Netlify-safe)
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));   // base64 image/file uploads exceed the 100kb default
 
 // Swagger UI at /docs and /api-docs
 mountSwagger(app);

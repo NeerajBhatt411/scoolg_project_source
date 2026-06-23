@@ -96,10 +96,10 @@ export const getStudentMe = async (req, res) => {
 
         res.json({
             student,
-            school: {
-                name: school.formData.schoolName,
-                logo: school.formData.logo || school.formData.schoolLogo
-            }
+            school: school ? {
+                name: school.formData?.schoolName,
+                logo: school.formData?.logo || school.formData?.schoolLogo
+            } : null
         });
     } catch (err) {
         res.status(401).json({ error: "Invalid token" });
