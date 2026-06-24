@@ -24,7 +24,7 @@ const getGreeting = () => {
 };
 
 const Dashboard = () => {
-    const { user } = useAuth();
+    const { user, school } = useAuth();
     const navigate = useNavigate();
 
     const [todayPeriods, setTodayPeriods] = useState([]);
@@ -110,6 +110,21 @@ const Dashboard = () => {
     return (
         <div className="w-full h-full pb-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6 space-y-4 sm:space-y-6">
+                {/* School identity */}
+                {(school?.name || school?.logo) && (
+                    <div className="flex items-center gap-3 mb-2">
+                        {school?.logo ? (
+                            <img src={school.logo} alt={school?.name || 'School'} className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-contain bg-white border border-slate-200 shadow-sm p-1 shrink-0" />
+                        ) : (
+                            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xl shrink-0">{(school?.name || 'S').charAt(0)}</div>
+                        )}
+                        <div className="min-w-0">
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 truncate leading-tight">{school?.name || 'School'}</h2>
+                            <p className="text-[11px] sm:text-xs font-semibold text-slate-400">Student Portal</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header Greeting */}
                 <div className="mb-4 sm:mb-8 mt-1 lg:mt-0">
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight truncate">
@@ -152,7 +167,7 @@ const Dashboard = () => {
                         <div className="flex justify-between items-center mb-6 sm:mb-8">
                             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2">
                                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                                Today's Schedule
+                                Today's Timetable
                             </h2>
                             <button onClick={() => navigate('/timetable')} className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
                                 Full Timetable <ChevronRight className="h-3 w-3" />
