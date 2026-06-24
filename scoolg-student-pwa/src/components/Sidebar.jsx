@@ -51,8 +51,8 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
                         )}
                     </div>
                     <div className="flex flex-col text-left">
-                        <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight line-clamp-1">Student Portal</p>
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Grade {user?.class}-{user?.section}</p>
+                        <p className="text-[15px] font-extrabold text-[#191c1e] leading-tight line-clamp-1 capitalize">{user?.firstName || 'Student'}</p>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Class {user?.class} - {user?.section}</p>
                     </div>
                 </div>
                 <button onClick={onClose} className="lg:hidden w-9 h-9 rounded-xl bg-white border border-slate-200 grid place-items-center text-slate-500 shrink-0 mb-3 hover:bg-slate-50 active:scale-95 transition-all">
