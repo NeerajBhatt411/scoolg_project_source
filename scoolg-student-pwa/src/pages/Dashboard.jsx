@@ -76,10 +76,10 @@ const Dashboard = () => {
                 // Homework
                 setPendingHomework(hwData.filter(h => h.status === 'Pending').length);
 
-                // Notices (delivered via the notification inbox)
+                // Notices = real announcements only (exclude per-student attendance/homework pings).
                 try {
                     const notif = await getCached('student:notifications', () => api.get('/notifications').then(r => Array.isArray(r.data?.items) ? r.data.items : []));
-                    setNotices(notif);
+                    setNotices(notif.filter(n => !['attendance', 'homework'].includes(n.type)));
                 } catch (e) { setNotices([]); }
 
                 // Upcoming Events
