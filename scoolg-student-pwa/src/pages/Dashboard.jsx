@@ -110,27 +110,15 @@ const Dashboard = () => {
     return (
         <div className="w-full h-full pb-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6 space-y-4 sm:space-y-6">
-                {/* School identity */}
-                {(school?.name || school?.logo) && (
-                    <div className="flex items-center gap-3 mb-2">
-                        {school?.logo ? (
-                            <img src={school.logo} alt={school?.name || 'School'} className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-contain bg-white border border-slate-200 shadow-sm p-1 shrink-0" />
-                        ) : (
-                            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xl shrink-0">{(school?.name || 'S').charAt(0)}</div>
-                        )}
-                        <div className="min-w-0">
-                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 truncate leading-tight">{school?.name || 'School'}</h2>
-                            <p className="text-[11px] sm:text-xs font-semibold text-slate-400">Student Portal</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Header Greeting */}
-                <div className="mb-4 sm:mb-8 mt-1 lg:mt-0">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight truncate">
-                        {greeting}, <span className="capitalize">{studentName}</span>
-                    </h1>
-                    <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">{dateString}</p>
+                {/* School branding (centered) */}
+                <div className="flex flex-col items-center text-center pt-1 pb-2 sm:pb-4">
+                    {school?.logo ? (
+                        <img src={school.logo} alt={school?.name || 'School'} className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl object-contain bg-white border border-slate-200 shadow-md p-2 mb-3" />
+                    ) : (
+                        <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-3xl mb-3">{(school?.name || 'S').charAt(0)}</div>
+                    )}
+                    <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">{school?.name || 'School'}</h1>
+                    <p className="text-xs sm:text-sm font-semibold text-slate-400 mt-1">Student Portal</p>
                 </div>
 
                 {/* Top Stat Cards */}
