@@ -26,7 +26,7 @@ export const getAdminConversations = async (req, res) => {
             if (!byStudent.has(key)) {
                 byStudent.set(key, { studentId: key, lastMessage: m.text, lastFrom: m.from, lastAt: m.createdAt, unread: 0 });
             }
-            if (m.from === 'parent' && !m.readByAdmin) byStudent.get(key).unread++;
+            if (m.from === 'parent' && !m.readBySchool) byStudent.get(key).unread++;
         }
         const convos = [...byStudent.values()];
 
@@ -53,8 +53,8 @@ export const getAdminThread = async (req, res) => {
         const school = await resolveSchool(req);
         if (!school) return res.status(404).json({ error: "School not found" });
         const { studentId } = req.params;
-        // Admin office thread only (party=admin; also matches legacy docs).
-        const filter = { schoolId: school._id, studentId, party: { $in: ['admin', null] }, teacherId: null };
+        // Whole group thread for this student (parent + admin + all teachers).
+        const filter = { schoolId: school._id, studentId };
         const messages = await Message.find(filter).sort({ createdAt: 1 }).lean();
         await Message.updateMany({ ...filter, from: 'parent', readBySchool: false }, { readBySchool: true });
         res.json({ messages });
@@ -75,9 +75,8 @@ export const postAdminMessage = async (req, res) => {
         const msg = await Message.create({
             schoolId: school._id,
             studentId,
-            party: 'admin',
-            teacherId: null,
             from: 'admin',
+            senderName: 'School Office',
             text,
             readBySchool: true,
         });

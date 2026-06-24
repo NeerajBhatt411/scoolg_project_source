@@ -3,10 +3,14 @@ import api from '../utils/api';
 import TopHeader from '@/components/TopHeader';
 import { Send, MessagesSquare, ChevronLeft } from 'lucide-react';
 
+const senderLabel = (m) => m.senderName || (m.from === 'admin' ? 'School Office' : m.from === 'parent' ? 'Parent' : 'Teacher');
+const nameTone = (m) => (m.from === 'admin' ? 'text-violet-600' : m.from === 'parent' ? 'text-emerald-600' : 'text-blue-600');
+
 const Chat = () => {
   const [convos, setConvos] = useState([]);
   const [active, setActive] = useState(null); // {studentId, studentName, classSection}
   const [messages, setMessages] = useState([]);
+  const [me, setMe] = useState(null); // this teacher's id, to right-align own msgs
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
@@ -26,6 +30,7 @@ const Chat = () => {
     try {
       const r = await api.get(`/teacher/chats/${sid}`);
       setMessages(Array.isArray(r.data?.messages) ? r.data.messages : []);
+      if (r.data?.me) setMe(String(r.data.me));
     } catch (e) { setMessages([]); }
     finally { setLoadingThread(false); }
   };
@@ -76,7 +81,7 @@ const Chat = () => {
                       <p className="font-bold text-slate-900 text-[15px] truncate">{c.studentName}</p>
                       {c.unread > 0 && <span className="bg-blue-600 text-white text-[10px] font-black rounded-full px-2 py-0.5 shrink-0">{c.unread}</span>}
                     </div>
-                    <p className="text-xs text-slate-400 truncate">{c.lastFrom === 'teacher' ? 'You: ' : ''}{c.lastMessage}</p>
+                    <p className="text-xs text-slate-400 truncate">{c.lastFrom !== 'parent' && c.lastSenderName ? c.lastSenderName + ': ' : ''}{c.lastMessage}</p>
                   </div>
                 </button>
               ))
@@ -89,7 +94,7 @@ const Chat = () => {
               <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black">{(active.studentName || '?').charAt(0)}</div>
               <div className="min-w-0">
                 <p className="font-black text-slate-900 text-sm truncate">{active.studentName}</p>
-                <p className="text-[11px] text-slate-400">{active.classSection ? active.classSection + ' • ' : ''}Parent</p>
+                <p className="text-[11px] text-slate-400">{active.classSection ? active.classSection + ' • ' : ''}Parent group</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-[#f8fafc]">
@@ -101,13 +106,16 @@ const Chat = () => {
                   <p className="text-sm font-semibold">No messages yet</p>
                 </div>
               ) : (
-                messages.map((m) => {
-                  const mine = m.from === 'teacher';
+                messages.map((m, i) => {
+                  const mine = m.from === 'teacher' && me && String(m.senderId) === me;
+                  const prev = messages[i - 1];
+                  const showName = !mine && (!prev || prev.from !== m.from || prev.senderName !== m.senderName);
                   return (
                     <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
+                        {showName && <p className={`text-[11px] font-extrabold mb-0.5 ${nameTone(m)}`}>{senderLabel(m)}</p>}
                         <p className="text-[14px] leading-snug whitespace-pre-wrap break-words">{m.text}</p>
-                        <span className={`block text-[10px] mt-1 ${mine ? 'text-blue-100' : 'text-slate-400'}`}>{fmtTime(m.createdAt)}</span>
+                        <span className={`block text-[10px] mt-1 text-right ${mine ? 'text-blue-100' : 'text-slate-400'}`}>{fmtTime(m.createdAt)}</span>
                       </div>
                     </div>
                   );

@@ -199,21 +199,16 @@ export const getStudentCalendar = async (req, res) => {
     }
 };
 
-// --- Parent <-> School chat (the parent uses the student app) ---
+// --- Parent <-> School GROUP chat (the parent uses the student app) ---
+// One group per student. The whole school side (admin + all teachers) and the
+// parent share ONE thread keyed by studentId. The member list is display-only.
 const studentFromAuth = async (req) => {
     const token = (req.headers.authorization || '').split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
     return Student.findById(decoded.id).select('schoolId firstName lastName class section').lean();
 };
 
-// A conversation = (studentId, party, teacherId). Admin convo also matches legacy
-// docs that predate the `party` field.
-const convoFilter = (studentId, party, teacherId) => {
-    if (party === 'teacher' && teacherId) return { studentId, party: 'teacher', teacherId };
-    return { studentId, party: { $in: ['admin', null] }, teacherId: null };
-};
-
-// Who the parent can chat with: the school office (admin) + every teacher.
+// Members shown in the group (display only): the School Office + every teacher.
 export const getStudentChatContacts = async (req, res) => {
     try {
         const student = await studentFromAuth(req);
@@ -222,31 +217,29 @@ export const getStudentChatContacts = async (req, res) => {
         const teachers = await Teacher.find({ schoolId: student.schoolId, status: { $ne: 'Left' } })
             .select('fullName profileImageUrl').lean();
 
-        const unread = await Message.find({ studentId: student._id, from: { $ne: 'parent' }, readByParent: false })
-            .select('party teacherId').lean();
-        let adminUnread = 0; const teacherUnread = {};
-        unread.forEach(m => {
-            if (m.party === 'teacher' && m.teacherId) teacherUnread[String(m.teacherId)] = (teacherUnread[String(m.teacherId)] || 0) + 1;
-            else adminUnread++;
-        });
+        const unread = await Message.countDocuments({ studentId: student._id, from: { $ne: 'parent' }, readByParent: false });
 
+        const schoolName = school?.formData?.schoolName || 'School';
         const contacts = [
-            { type: 'admin', id: 'admin', name: `${school?.formData?.schoolName || 'School'} Office`, role: 'School Admin', avatar: school?.formData?.logo || school?.formData?.schoolLogo || '', unread: adminUnread },
-            ...teachers.map(t => ({ type: 'teacher', id: String(t._id), name: t.fullName, role: 'Teacher', avatar: t.profileImageUrl || '', unread: teacherUnread[String(t._id)] || 0 })),
+            { type: 'admin', id: 'admin', name: `${schoolName} Office`, role: 'School Admin', avatar: school?.formData?.logo || school?.formData?.schoolLogo || '' },
+            ...teachers.map(t => ({ type: 'teacher', id: String(t._id), name: t.fullName, role: 'Teacher', avatar: t.profileImageUrl || '' })),
         ];
-        res.json({ contacts });
+        res.json({
+            group: { name: schoolName, logo: school?.formData?.logo || school?.formData?.schoolLogo || '', memberCount: contacts.length },
+            contacts,
+            unread,
+        });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
 };
 
+// The whole group thread for this student.
 export const getStudentMessages = async (req, res) => {
     try {
         const student = await studentFromAuth(req);
         if (!student) return res.status(404).json({ error: "Student not found" });
-        const party = req.query.party === 'teacher' ? 'teacher' : 'admin';
-        const teacherId = req.query.teacherId || null;
-        const filter = convoFilter(student._id, party, teacherId);
+        const filter = { studentId: student._id };
         const messages = await Message.find(filter).sort({ createdAt: 1 }).lean();
         await Message.updateMany({ ...filter, from: { $ne: 'parent' }, readByParent: false }, { readByParent: true });
         res.json({ messages });
@@ -261,27 +254,16 @@ export const postStudentMessage = async (req, res) => {
         if (!student) return res.status(404).json({ error: "Student not found" });
         const text = (req.body?.text || '').trim();
         if (!text) return res.status(400).json({ error: "Message text required" });
-        const party = req.body.party === 'teacher' ? 'teacher' : 'admin';
-        const teacherId = party === 'teacher' ? (req.body.teacherId || null) : null;
-        if (party === 'teacher' && !teacherId) return res.status(400).json({ error: "teacherId required" });
 
+        const name = [student.firstName, student.lastName].filter(Boolean).join(' ');
         const msg = await Message.create({
             schoolId: student.schoolId,
             studentId: student._id,
-            party, teacherId,
             from: 'parent',
+            senderName: name,
             text,
             readByParent: true,
         });
-
-        // Notify the chosen teacher's devices (admin sees unread in the panel).
-        try {
-            if (party === 'teacher') {
-                const toks = await DeviceToken.find({ role: 'teacher', userId: String(teacherId) }).select('token').lean();
-                const name = [student.firstName, student.lastName].filter(Boolean).join(' ');
-                if (toks.length) sendToTokens(toks.map(t => t.token), { title: `💬 ${name || 'A parent'} messaged you`, body: text.slice(0, 80), data: { link: '/chat' } });
-            }
-        } catch (e) { /* push best-effort */ }
 
         res.status(201).json(msg);
     } catch (err) {

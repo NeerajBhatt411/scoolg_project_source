@@ -399,13 +399,17 @@ const StudentProfile = () => {
                                             <p className="text-xs text-slate-300 mt-1">Send a message — the parent sees it in their app.</p>
                                         </div>
                                     ) : (
-                                        chatMsgs.map((m) => {
+                                        chatMsgs.map((m, i) => {
                                             const mine = m.from === 'admin';
+                                            const prev = chatMsgs[i - 1];
+                                            const showName = !mine && (!prev || prev.from !== m.from || prev.senderName !== m.senderName);
+                                            const label = m.senderName || (m.from === 'teacher' ? 'Teacher' : 'Parent');
                                             return (
                                                 <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                                                     <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
+                                                        {showName && <p className={`text-[11px] font-extrabold mb-0.5 ${m.from === 'teacher' ? 'text-blue-600' : 'text-emerald-600'}`}>{label}</p>}
                                                         <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>
-                                                        <span className={`block text-[10px] mt-1 ${mine ? 'text-blue-100' : 'text-slate-400'}`}>{fmtChatTime(m.createdAt)}</span>
+                                                        <span className={`block text-[10px] mt-1 text-right ${mine ? 'text-blue-100' : 'text-slate-400'}`}>{fmtChatTime(m.createdAt)}</span>
                                                     </div>
                                                 </div>
                                             );
