@@ -1,6 +1,27 @@
+import jwt from 'jsonwebtoken';
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { Notification } from '../../../models/Notification.js';
 import { pushEnabled, sendToTokens } from '../../utils/push.js';
+
+// Resolve the signed-in recipient from the JWT (never trust role/userId from the
+// request body/query — that allowed reading anyone's notifications). Returns null
+// when there is no valid token.
+const recipientFromToken = (req) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return null;
+    let decoded;
+    try {
+        decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'scoolg_secret_99');
+    } catch (e) {
+        return null;
+    }
+    let role;
+    if (decoded.role === 'student') role = 'student';
+    else if (decoded.type === 'teacher') role = 'teacher';
+    else if (decoded.type === 'staff') role = 'staff';
+    else role = 'owner';
+    return { role, userId: String(decoded.id), schoolId: decoded.schoolId ? String(decoded.schoolId) : undefined };
+};
 
 // Diagnostic: is the Firebase service account configured (can we send)?
 export const status = async (req, res) => {
@@ -27,11 +48,13 @@ export const sendTest = async (req, res) => {
 // Save (or refresh) an FCM token for a signed-in user/device.
 export const registerToken = async (req, res) => {
     try {
-        const { schoolId, role, userId, token } = req.body;
-        if (!role || !token) return res.status(400).json({ error: "role and token are required" });
+        const me = recipientFromToken(req);
+        if (!me) return res.status(401).json({ error: "Authentication required" });
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: "token is required" });
         const doc = await DeviceToken.findOneAndUpdate(
             { token },
-            { schoolId, role, userId: userId ? String(userId) : undefined, token },
+            { schoolId: me.schoolId, role: me.role, userId: me.userId, token },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
         res.json({ ok: true, id: doc._id });
@@ -44,9 +67,11 @@ export const registerToken = async (req, res) => {
 // Remove a token (on logout / permission revoked).
 export const unregisterToken = async (req, res) => {
     try {
+        const me = recipientFromToken(req);
+        if (!me) return res.status(401).json({ error: "Authentication required" });
         const token = req.body?.token || req.query?.token;
         if (!token) return res.status(400).json({ error: "token required" });
-        await DeviceToken.deleteOne({ token });
+        await DeviceToken.deleteOne({ token, role: me.role, userId: me.userId });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to unregister token" });
@@ -56,11 +81,9 @@ export const unregisterToken = async (req, res) => {
 // In-app notification history for a user.
 export const listMine = async (req, res) => {
     try {
-        const { schoolId, role, userId } = req.query;
-        if (!role) return res.status(400).json({ error: "role required" });
-        const q = { toRole: role };
-        if (schoolId) q.schoolId = schoolId;
-        if (userId) q.toId = String(userId);
+        const me = recipientFromToken(req);
+        if (!me) return res.status(401).json({ error: "Authentication required" });
+        const q = { toRole: me.role, toId: me.userId };
         const items = await Notification.find(q).sort({ createdAt: -1 }).limit(50).lean();
         const unread = items.filter(n => !n.read).length;
         res.json({ items, unread });
@@ -71,8 +94,10 @@ export const listMine = async (req, res) => {
 
 export const markRead = async (req, res) => {
     try {
-        await Notification.updateOne({ _id: req.params.id }, { read: true });
-        res.json({ ok: true });
+        const me = recipientFromToken(req);
+        if (!me) return res.status(401).json({ error: "Authentication required" });
+        const r = await Notification.updateOne({ _id: req.params.id, toRole: me.role, toId: me.userId }, { read: true });
+        res.json({ ok: r.matchedCount > 0 });
     } catch (err) {
         res.status(500).json({ error: "Failed to mark read" });
     }
@@ -80,11 +105,9 @@ export const markRead = async (req, res) => {
 
 export const markAllRead = async (req, res) => {
     try {
-        const { schoolId, role, userId } = req.body;
-        const q = { toRole: role, read: false };
-        if (schoolId) q.schoolId = schoolId;
-        if (userId) q.toId = String(userId);
-        await Notification.updateMany(q, { read: true });
+        const me = recipientFromToken(req);
+        if (!me) return res.status(401).json({ error: "Authentication required" });
+        await Notification.updateMany({ toRole: me.role, toId: me.userId, read: false }, { read: true });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to mark all read" });
