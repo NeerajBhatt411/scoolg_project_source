@@ -153,8 +153,10 @@ router.get('/api/student/attendance', c.getStudentAttendance);
  */
 router.get('/api/student/calendar', c.getStudentCalendar);
 
-// Parent <-> school chat
+// Parent <-> school GROUP chat (reads are realtime via Firestore; writes go here)
 router.get('/api/student/chat/contacts', c.getStudentChatContacts);
+router.get('/api/student/firebase-token', c.getStudentFirebaseToken);
+router.post('/api/student/chat/read', c.postStudentChatRead);
 router.get('/api/student/messages', c.getStudentMessages);
 router.post('/api/student/messages', c.postStudentMessage);
 

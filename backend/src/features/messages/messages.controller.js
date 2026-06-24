@@ -3,6 +3,7 @@ import { Message } from '../../../models/Message.js';
 import { Student } from '../../../models/Student.js';
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { sendToTokens } from '../../utils/push.js';
+import { mintCustomToken, sendChatMessage, markChatRead } from '../../utils/firebaseChat.js';
 
 const resolveSchool = (req) => {
     // Prefer the authenticated token (adminGuard sets req.user); fall back to the
@@ -63,7 +64,7 @@ export const getAdminThread = async (req, res) => {
     }
 };
 
-// POST /api/admin/messages/:studentId  { schoolId, text }  -> admin reply (pushes to parent)
+// POST /api/admin/messages/:studentId  { text }  -> admin reply (writes Firestore + pushes to parent)
 export const postAdminMessage = async (req, res) => {
     try {
         const school = await resolveSchool(req);
@@ -72,13 +73,18 @@ export const postAdminMessage = async (req, res) => {
         const text = (req.body?.text || '').trim();
         if (!text) return res.status(400).json({ error: "Message text required" });
 
-        const msg = await Message.create({
-            schoolId: school._id,
-            studentId,
+        const student = await Student.findById(studentId).select('firstName lastName class section').lean();
+        const studentName = student ? [student.firstName, student.lastName].filter(Boolean).join(' ') : '';
+        const classSection = student ? `${student.class || ''}${student.section ? ' - ' + student.section : ''}` : '';
+
+        await sendChatMessage({
+            schoolId: String(school._id),
+            studentId: String(studentId),
+            studentName, classSection,
             from: 'admin',
             senderName: 'School Office',
             text,
-            readBySchool: true,
+            bump: 'parent',
         });
 
         // Best-effort push to the parent's devices.
@@ -93,8 +99,33 @@ export const postAdminMessage = async (req, res) => {
             }
         } catch (e) { /* push is best-effort */ }
 
-        res.status(201).json(msg);
+        res.status(201).json({ ok: true });
     } catch (err) {
+        console.error('[admin chat] send failed:', err.message);
         res.status(500).json({ error: "Failed to send message" });
+    }
+};
+
+// Firebase custom token so the admin panel can read this school's chats in realtime.
+export const getAdminFirebaseToken = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const token = mintCustomToken(`a_${school._id}`, { role: 'admin', schoolId: String(school._id) });
+        res.json({ token, schoolId: String(school._id) });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to mint token" });
+    }
+};
+
+// Admin opened a thread -> clear the school-side unread.
+export const postAdminMessageRead = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: "School not found" });
+        await markChatRead({ studentId: String(req.params.studentId), side: 'school' });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: "Failed" });
     }
 };

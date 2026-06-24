@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsw3LNqIDfQNemOr0A-w0sUHu7dGkgQ8o",
@@ -15,7 +17,30 @@ const firebaseConfig = {
 // "Web Push certificates". Until set, push registration safely no-ops.
 const VAPID_KEY = 'BHIFUjnRPRiE_uFjz-Q7AaExJBZckgYhu2Tqv0ssDzcr5oVY8P4fhVd7rEO0ej6j6PSQmxFAd9SAEoKmy4lcxTs';
 
-let app = null;
+// One app instance for the whole tab (Firestore + Auth + Messaging share it).
+export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const chatAuth = getAuth(app);
+
+/**
+ * Sign in to Firebase with a custom token from our backend so Firestore security
+ * rules can scope chat reads to the right school / student.
+ * @param {() => Promise<{token:string}>} fetchToken
+ */
+let signingIn = null;
+export async function ensureChatAuth(fetchToken) {
+  if (chatAuth.currentUser) return chatAuth.currentUser;
+  if (signingIn) return signingIn;
+  signingIn = (async () => {
+    const data = await fetchToken();
+    if (!data?.token) throw new Error('No chat token');
+    await signInWithCustomToken(chatAuth, data.token);
+    return chatAuth.currentUser;
+  })();
+  try { return await signingIn; }
+  finally { signingIn = null; }
+}
+
 let messaging = null;
 
 // Request permission, get the FCM token, hand it to onToken() for backend
@@ -26,7 +51,6 @@ export async function initPush({ role, userId, schoolId, onToken }) {
     if (!(await isSupported())) { console.warn('[push] not supported on this browser'); return; }
     if (typeof Notification === 'undefined') return;
 
-    app = app || initializeApp(firebaseConfig);
     messaging = messaging || getMessaging(app);
 
     const perm = await Notification.requestPermission();

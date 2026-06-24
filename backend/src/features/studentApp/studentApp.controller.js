@@ -10,6 +10,7 @@ import { Message } from '../../../models/Message.js';
 import { Teacher } from '../../../models/Teacher.js';
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { sendToTokens } from '../../utils/push.js';
+import { mintCustomToken, sendChatMessage, markChatRead } from '../../utils/firebaseChat.js';
 
 export const getStudentVerifycampusByCode = async (req, res) => {
     try {
@@ -256,16 +257,49 @@ export const postStudentMessage = async (req, res) => {
         if (!text) return res.status(400).json({ error: "Message text required" });
 
         const name = [student.firstName, student.lastName].filter(Boolean).join(' ');
-        const msg = await Message.create({
-            schoolId: student.schoolId,
-            studentId: student._id,
+        const classSection = `${student.class || ''}${student.section ? ' - ' + student.section : ''}`;
+        await sendChatMessage({
+            schoolId: String(student.schoolId),
+            studentId: String(student._id),
+            studentName: name,
+            classSection,
             from: 'parent',
             senderName: name,
             text,
-            readByParent: true,
+            bump: 'school', // the school side gets a new-message badge
         });
 
-        res.status(201).json(msg);
+        res.status(201).json({ ok: true });
+    } catch (err) {
+        console.error('[student chat] send failed:', err.message);
+        res.status(500).json({ error: "Failed to send message" });
+    }
+};
+
+// Mint a Firebase custom token so the parent app can sign in and READ its own
+// group chat in realtime (security rules scope reads by these claims).
+export const getStudentFirebaseToken = async (req, res) => {
+    try {
+        const student = await studentFromAuth(req);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        const token = mintCustomToken(`p_${student._id}`, {
+            role: 'parent',
+            schoolId: String(student.schoolId),
+            studentId: String(student._id),
+        });
+        res.json({ token, studentId: String(student._id), schoolId: String(student.schoolId) });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// Parent opened the chat -> clear the parent's unread counter.
+export const postStudentChatRead = async (req, res) => {
+    try {
+        const student = await studentFromAuth(req);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        await markChatRead({ studentId: String(student._id), side: 'parent' });
+        res.json({ ok: true });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

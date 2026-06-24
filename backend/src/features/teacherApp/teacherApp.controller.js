@@ -14,6 +14,7 @@ import { Message } from '../../../models/Message.js';
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { notifyClassStudents, notify, sendToTokens } from '../../utils/push.js';
 import { teacherFromToken } from '../../utils/teacherAuth.js';
+import { mintCustomToken, sendChatMessage, markChatRead } from '../../utils/firebaseChat.js';
 
 export const getTeacherDiary = async (req, res) => {
     try {
@@ -392,20 +393,54 @@ export const postTeacherChatMessage = async (req, res) => {
         const { studentId } = req.params;
         const text = (req.body?.text || '').trim();
         if (!text) return res.status(400).json({ error: "Message text required" });
-        const msg = await Message.create({
-            schoolId: teacher.schoolId,
-            studentId,
+
+        const student = await Student.findById(studentId).select('firstName lastName class section schoolId').lean();
+        const studentName = student ? [student.firstName, student.lastName].filter(Boolean).join(' ') : '';
+        const classSection = student ? `${student.class || ''}${student.section ? ' - ' + student.section : ''}` : '';
+
+        await sendChatMessage({
+            schoolId: String(teacher.schoolId),
+            studentId: String(studentId),
+            studentName, classSection,
             from: 'teacher',
             senderName: teacher.fullName || 'Teacher',
             senderId: teacher._id,
             text,
-            readBySchool: true,
+            bump: 'parent',
         });
+
         try {
             const toks = await DeviceToken.find({ role: 'student', userId: String(studentId) }).select('token').lean();
             if (toks.length) sendToTokens(toks.map(t => t.token), { title: `💬 ${teacher.fullName || 'Your teacher'}`, body: text.slice(0, 80), data: { link: '/chat' } });
         } catch (e) { /* best-effort */ }
-        res.status(201).json(msg);
+        res.status(201).json({ ok: true });
+    } catch (err) {
+        console.error('[teacher chat] send failed:', err.message);
+        res.status(500).json({ error: "Failed to send message" });
+    }
+};
+
+// Firebase custom token so the teacher app can read the school's chats in realtime.
+export const getTeacherFirebaseToken = async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const token = mintCustomToken(`t_${teacher._id}`, {
+            role: 'teacher',
+            schoolId: String(teacher.schoolId),
+            teacherId: String(teacher._id),
+        });
+        res.json({ token, teacherId: String(teacher._id), schoolId: String(teacher.schoolId) });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// Teacher opened a thread -> clear the school-side unread.
+export const postTeacherChatRead = async (req, res) => {
+    try {
+        await teacherFromToken(req);
+        await markChatRead({ studentId: String(req.params.studentId), side: 'school' });
+        res.json({ ok: true });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

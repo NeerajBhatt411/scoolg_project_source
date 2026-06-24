@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
+import { db, ensureChatAuth } from '../firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { Send, MessagesSquare, ChevronRight, X, Users } from 'lucide-react';
 
 const Avatar = ({ src, name, size = 'h-10 w-10', tone = 'blue' }) => (
@@ -8,20 +10,22 @@ const Avatar = ({ src, name, size = 'h-10 w-10', tone = 'blue' }) => (
     : <div className={`${size} rounded-full flex items-center justify-center font-black shrink-0 ${tone === 'admin' ? 'bg-violet-100 text-violet-600' : 'bg-blue-100 text-blue-600'}`}>{(name || '?').charAt(0).toUpperCase()}</div>
 );
 
-// Consistent colour for a teacher's name label.
 const nameTone = (m) => (m.from === 'admin' ? 'text-violet-600' : 'text-blue-600');
 const senderLabel = (m) => m.senderName || (m.from === 'admin' ? 'School Office' : m.from === 'teacher' ? 'Teacher' : '');
+const toDate = (v) => { try { return v?.toDate ? v.toDate() : (v ? new Date(v) : null); } catch { return null; } };
 
 const Chat = () => {
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [serverMsgs, setServerMsgs] = useState([]);
+  const [pending, setPending] = useState([]); // optimistic parent messages
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const endRef = useRef(null);
 
+  // Members list (display only) — from the backend (MongoDB).
   const loadMembers = async () => {
     try {
       const r = await api.get('/student/chat/contacts');
@@ -30,34 +34,50 @@ const Chat = () => {
     } catch (e) { /* ignore */ }
   };
 
-  const loadThread = async () => {
-    try {
-      const r = await api.get('/student/messages');
-      setMessages(Array.isArray(r.data?.messages) ? r.data.messages : []);
-    } catch (e) { setMessages([]); }
-  };
-
+  // Realtime thread via Firestore.
   useEffect(() => {
-    (async () => { await Promise.all([loadMembers(), loadThread()]); setLoading(false); })();
-    const t1 = setInterval(loadThread, 8000);
-    const t2 = setInterval(loadMembers, 30000);
-    return () => { clearInterval(t1); clearInterval(t2); };
+    let unsub = () => {};
+    let cancelled = false;
+    (async () => {
+      await loadMembers();
+      try {
+        const r = await api.get('/student/firebase-token');
+        const studentId = r.data?.studentId;
+        await ensureChatAuth(async () => r.data);
+        if (cancelled || !studentId) { setLoading(false); return; }
+        const q = query(collection(db, 'chats', String(studentId), 'messages'), orderBy('createdAt', 'asc'));
+        unsub = onSnapshot(q, (snap) => {
+          const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setServerMsgs(arr);
+          setPending((p) => p.filter((pm) => !arr.some((s) => s.from === 'parent' && s.text === pm.text)));
+          setLoading(false);
+          // clear our unread when the latest message is from the school side
+          if (arr.length && arr[arr.length - 1].from !== 'parent') {
+            api.post('/student/chat/read').catch(() => {});
+          }
+        }, () => setLoading(false));
+        api.post('/student/chat/read').catch(() => {});
+      } catch (e) { setLoading(false); }
+    })();
+    const t = setInterval(loadMembers, 30000);
+    return () => { cancelled = true; unsub(); clearInterval(t); };
   }, []);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  const messages = [...serverMsgs, ...pending];
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [serverMsgs.length, pending.length]);
 
   const send = async (e) => {
     e?.preventDefault();
     const t = text.trim();
     if (!t || sending) return;
     setSending(true); setText('');
-    setMessages((m) => [...m, { _id: 'tmp-' + Date.now(), from: 'parent', text: t, createdAt: new Date().toISOString() }]);
-    try { await api.post('/student/messages', { text: t }); loadThread(); }
-    catch (e) { /* keep optimistic */ }
+    setPending((p) => [...p, { id: 'tmp-' + Date.now(), from: 'parent', text: t, createdAt: new Date().toISOString() }]);
+    try { await api.post('/student/messages', { text: t }); }
+    catch (e) { /* listener will reconcile; optimistic stays */ }
     finally { setSending(false); }
   };
 
-  const fmtTime = (d) => { try { return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  const fmtTime = (d) => { const dt = toDate(d); try { return dt ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
 
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-3">
@@ -91,7 +111,7 @@ const Chat = () => {
               const prev = messages[i - 1];
               const showName = !mine && (!prev || prev.from !== m.from || prev.senderName !== m.senderName);
               return (
-                <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
                     {showName && <p className={`text-[11px] font-extrabold mb-0.5 ${nameTone(m)}`}>{senderLabel(m)}</p>}
                     <p className="text-[14px] leading-snug whitespace-pre-wrap break-words">{m.text}</p>

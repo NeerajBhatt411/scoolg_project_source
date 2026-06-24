@@ -1,66 +1,82 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import TopHeader from '@/components/TopHeader';
+import { db, ensureChatAuth } from '../firebase';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { Send, MessagesSquare, ChevronLeft } from 'lucide-react';
 
 const senderLabel = (m) => m.senderName || (m.from === 'admin' ? 'School Office' : m.from === 'parent' ? 'Parent' : 'Teacher');
 const nameTone = (m) => (m.from === 'admin' ? 'text-violet-600' : m.from === 'parent' ? 'text-emerald-600' : 'text-blue-600');
+const toDate = (v) => { try { return v?.toDate ? v.toDate() : (v ? new Date(v) : null); } catch { return null; } };
 
 const Chat = () => {
   const [convos, setConvos] = useState([]);
   const [active, setActive] = useState(null); // {studentId, studentName, classSection}
-  const [messages, setMessages] = useState([]);
-  const [me, setMe] = useState(null); // this teacher's id, to right-align own msgs
+  const [serverMsgs, setServerMsgs] = useState([]);
+  const [pending, setPending] = useState([]);
+  const [me, setMe] = useState(null);
+  const [schoolId, setSchoolId] = useState(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const endRef = useRef(null);
 
-  const loadConvos = async () => {
-    try {
-      const r = await api.get('/teacher/chats');
-      setConvos(Array.isArray(r.data?.conversations) ? r.data.conversations : []);
-    } catch (e) { /* ignore */ }
-    finally { setLoadingList(false); }
-  };
+  // Sign in + listen to all of this school's parent chats (realtime).
+  useEffect(() => {
+    let unsub = () => {};
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await api.get('/teacher/firebase-token');
+        setMe(String(r.data?.teacherId || ''));
+        setSchoolId(String(r.data?.schoolId || ''));
+        await ensureChatAuth(async () => r.data);
+        if (cancelled || !r.data?.schoolId) { setLoadingList(false); return; }
+        const q = query(collection(db, 'chats'), where('schoolId', '==', String(r.data.schoolId)));
+        unsub = onSnapshot(q, (snap) => {
+          const arr = snap.docs.map((d) => ({ studentId: d.id, ...d.data() }))
+            .sort((a, b) => (toDate(b.lastAt)?.getTime() || 0) - (toDate(a.lastAt)?.getTime() || 0));
+          setConvos(arr);
+          setLoadingList(false);
+        }, () => setLoadingList(false));
+      } catch (e) { setLoadingList(false); }
+    })();
+    return () => { cancelled = true; unsub(); };
+  }, []);
 
-  const loadThread = async (sid) => {
-    if (!sid) return;
-    try {
-      const r = await api.get(`/teacher/chats/${sid}`);
-      setMessages(Array.isArray(r.data?.messages) ? r.data.messages : []);
-      if (r.data?.me) setMe(String(r.data.me));
-    } catch (e) { setMessages([]); }
-    finally { setLoadingThread(false); }
-  };
-
-  useEffect(() => { loadConvos(); const t = setInterval(loadConvos, 15000); return () => clearInterval(t); }, []);
-
+  // Listen to the open thread.
   useEffect(() => {
     if (!active) return;
-    setLoadingThread(true);
-    loadThread(active.studentId);
-    const t = setInterval(() => loadThread(active.studentId), 8000);
-    return () => clearInterval(t);
-  }, [active]);
+    setLoadingThread(true); setServerMsgs([]); setPending([]);
+    const q = query(collection(db, 'chats', String(active.studentId), 'messages'), orderBy('createdAt', 'asc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setServerMsgs(arr);
+      setPending((p) => p.filter((pm) => !arr.some((s) => s.from === 'teacher' && s.text === pm.text)));
+      setLoadingThread(false);
+    }, () => setLoadingThread(false));
+    api.post(`/teacher/chats/${active.studentId}/read`).catch(() => {});
+    return () => unsub();
+  }, [active?.studentId]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  const messages = [...serverMsgs, ...pending];
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [serverMsgs.length, pending.length]);
 
-  const open = (c) => { setMessages([]); setActive(c); setConvos((cs) => cs.map((x) => (x.studentId === c.studentId ? { ...x, unread: 0 } : x))); };
+  const open = (c) => { setActive(c); };
 
   const send = async (e) => {
     e?.preventDefault();
     const t = text.trim();
     if (!t || sending || !active) return;
     setSending(true); setText('');
-    setMessages((m) => [...m, { _id: 'tmp-' + Date.now(), from: 'teacher', text: t, createdAt: new Date().toISOString() }]);
-    try { await api.post(`/teacher/chats/${active.studentId}`, { text: t }); loadThread(active.studentId); }
-    catch (e) { /* keep optimistic */ }
+    setPending((p) => [...p, { id: 'tmp-' + Date.now(), from: 'teacher', senderId: me, text: t, createdAt: new Date().toISOString() }]);
+    try { await api.post(`/teacher/chats/${active.studentId}`, { text: t }); }
+    catch (e) { /* listener reconciles */ }
     finally { setSending(false); }
   };
 
-  const fmtTime = (d) => { try { return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  const fmtTime = (d) => { const dt = toDate(d); try { return dt ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
 
   return (
     <div className="bg-[#f8fafc] min-h-screen pb-24">
@@ -78,10 +94,10 @@ const Chat = () => {
                   <div className="h-11 w-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black shrink-0">{(c.studentName || '?').charAt(0)}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-bold text-slate-900 text-[15px] truncate">{c.studentName}</p>
-                      {c.unread > 0 && <span className="bg-blue-600 text-white text-[10px] font-black rounded-full px-2 py-0.5 shrink-0">{c.unread}</span>}
+                      <p className="font-bold text-slate-900 text-[15px] truncate">{c.studentName || 'Student'}{c.classSection ? <span className="text-slate-400 font-medium text-xs"> · {c.classSection}</span> : null}</p>
+                      {c.schoolUnread > 0 && <span className="bg-blue-600 text-white text-[10px] font-black rounded-full px-2 py-0.5 shrink-0">{c.schoolUnread}</span>}
                     </div>
-                    <p className="text-xs text-slate-400 truncate">{c.lastFrom !== 'parent' && c.lastSenderName ? c.lastSenderName + ': ' : ''}{c.lastMessage}</p>
+                    <p className="text-xs text-slate-400 truncate">{c.lastFrom && c.lastFrom !== 'parent' && c.lastSenderName ? c.lastSenderName + ': ' : ''}{c.lastText}</p>
                   </div>
                 </button>
               ))
@@ -93,7 +109,7 @@ const Chat = () => {
               <button onClick={() => setActive(null)} className="text-slate-500 p-1"><ChevronLeft className="h-5 w-5" /></button>
               <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black">{(active.studentName || '?').charAt(0)}</div>
               <div className="min-w-0">
-                <p className="font-black text-slate-900 text-sm truncate">{active.studentName}</p>
+                <p className="font-black text-slate-900 text-sm truncate">{active.studentName || 'Student'}</p>
                 <p className="text-[11px] text-slate-400">{active.classSection ? active.classSection + ' • ' : ''}Parent group</p>
               </div>
             </div>
@@ -111,7 +127,7 @@ const Chat = () => {
                   const prev = messages[i - 1];
                   const showName = !mine && (!prev || prev.from !== m.from || prev.senderName !== m.senderName);
                   return (
-                    <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                    <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
                         {showName && <p className={`text-[11px] font-extrabold mb-0.5 ${nameTone(m)}`}>{senderLabel(m)}</p>}
                         <p className="text-[14px] leading-snug whitespace-pre-wrap break-words">{m.text}</p>

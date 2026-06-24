@@ -105,9 +105,11 @@ router.post('/api/teacher/homework', c.postTeacherHomework);
  */
 router.post('/api/teacher/change-password', c.postTeacherChangepassword);
 
-// Teacher <-> parent chat
+// Teacher <-> parent GROUP chat (reads realtime via Firestore; writes here)
+router.get('/api/teacher/firebase-token', c.getTeacherFirebaseToken);
 router.get('/api/teacher/chats', c.getTeacherChats);
 router.get('/api/teacher/chats/:studentId', c.getTeacherChatThread);
 router.post('/api/teacher/chats/:studentId', c.postTeacherChatMessage);
+router.post('/api/teacher/chats/:studentId/read', c.postTeacherChatRead);
 
 export default router;

@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
+import { db, ensureChatAuth } from '../firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 const StudentProfile = () => {
     const location = useLocation();
@@ -23,41 +25,50 @@ const StudentProfile = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [attStats, setAttStats] = useState({ present: 0, absent: 0, percentage: 0, total: 0 });
 
-    // --- Parent chat (per student; uses /api/admin/messages/:studentId) ---
-    const [chatMsgs, setChatMsgs] = useState([]);
+    // --- Parent GROUP chat (realtime via Firestore; writes via /api/admin/messages/:id) ---
+    const [chatMsgs, setChatMsgs] = useState([]);      // from Firestore
+    const [chatPending, setChatPending] = useState([]); // optimistic admin messages
     const [chatText, setChatText] = useState('');
     const [chatSending, setChatSending] = useState(false);
     const [chatLoading, setChatLoading] = useState(false);
     const chatEndRef = useRef(null);
-    const fmtChatTime = (d) => { try { return new Date(d).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
-    const loadChat = async () => {
-        if (!student?._id) return;
-        try {
-            const r = await axios.get(`${ADMIN_API_BASE}/messages/${student._id}`);
-            setChatMsgs(Array.isArray(r.data?.messages) ? r.data.messages : []);
-        } catch (e) { /* ignore */ }
-        finally { setChatLoading(false); }
-    };
+    const toDate = (v) => { try { return v?.toDate ? v.toDate() : (v ? new Date(v) : null); } catch { return null; } };
+    const fmtChatTime = (d) => { const dt = toDate(d); try { return dt ? dt.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
+    const chatAll = [...chatMsgs, ...chatPending];
     const sendChat = async (e) => {
         e?.preventDefault();
         const t = chatText.trim();
         if (!t || chatSending || !student?._id) return;
         setChatSending(true);
         setChatText('');
-        setChatMsgs((m) => [...m, { _id: 'tmp-' + Date.now(), from: 'admin', text: t, createdAt: new Date().toISOString() }]);
-        try { await axios.post(`${ADMIN_API_BASE}/messages/${student._id}`, { text: t }); loadChat(); }
-        catch (e) { /* keep optimistic */ }
+        setChatPending((m) => [...m, { id: 'tmp-' + Date.now(), from: 'admin', senderName: 'School Office', text: t, createdAt: new Date().toISOString() }]);
+        try { await axios.post(`${ADMIN_API_BASE}/messages/${student._id}`, { text: t }); }
+        catch (e) { /* listener reconciles */ }
         finally { setChatSending(false); }
     };
     useEffect(() => {
         if (activeTab !== 'Parent Chat' || !student?._id) return;
+        let unsub = () => {};
+        let cancelled = false;
         setChatLoading(true);
-        loadChat();
-        const t = setInterval(loadChat, 8000);
-        return () => clearInterval(t);
+        (async () => {
+            try {
+                await ensureChatAuth(async () => (await axios.get(`${ADMIN_API_BASE}/firebase-token`)).data);
+                if (cancelled) return;
+                const q = query(collection(db, 'chats', String(student._id), 'messages'), orderBy('createdAt', 'asc'));
+                unsub = onSnapshot(q, (snap) => {
+                    const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                    setChatMsgs(arr);
+                    setChatPending((p) => p.filter((pm) => !arr.some((s) => s.from === 'admin' && s.text === pm.text)));
+                    setChatLoading(false);
+                }, () => setChatLoading(false));
+                axios.post(`${ADMIN_API_BASE}/messages/${student._id}/read`).catch(() => {});
+            } catch (e) { setChatLoading(false); }
+        })();
+        return () => { cancelled = true; unsub(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, student?._id]);
-    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs]);
+    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs.length, chatPending.length]);
 
     useEffect(() => {
         if (student?._id) {
@@ -390,22 +401,22 @@ const StudentProfile = () => {
                         {activeTab === 'Parent Chat' && (
                             <div className="animate-fade-in flex flex-col" style={{ height: '58vh' }}>
                                 <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                                    {chatLoading && chatMsgs.length === 0 ? (
+                                    {chatLoading && chatAll.length === 0 ? (
                                         <p className="text-center text-slate-400 text-sm py-10">Loading…</p>
-                                    ) : chatMsgs.length === 0 ? (
+                                    ) : chatAll.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                                             <span className="material-symbols-outlined text-5xl mb-3 text-slate-200">forum</span>
                                             <p className="text-sm font-medium">No messages yet with this parent.</p>
                                             <p className="text-xs text-slate-300 mt-1">Send a message — the parent sees it in their app.</p>
                                         </div>
                                     ) : (
-                                        chatMsgs.map((m, i) => {
+                                        chatAll.map((m, i) => {
                                             const mine = m.from === 'admin';
-                                            const prev = chatMsgs[i - 1];
+                                            const prev = chatAll[i - 1];
                                             const showName = !mine && (!prev || prev.from !== m.from || prev.senderName !== m.senderName);
                                             const label = m.senderName || (m.from === 'teacher' ? 'Teacher' : 'Parent');
                                             return (
-                                                <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                                                <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                                                     <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
                                                         {showName && <p className={`text-[11px] font-extrabold mb-0.5 ${m.from === 'teacher' ? 'text-blue-600' : 'text-emerald-600'}`}>{label}</p>}
                                                         <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>

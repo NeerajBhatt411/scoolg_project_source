@@ -1,0 +1,37 @@
+rules_version = '2';
+
+// Scoolg parent <-> school GROUP chat.
+// One document per student: chats/{studentId}, with a messages subcollection.
+// CLIENTS ARE READ-ONLY — every write goes through the backend (service account),
+// which bypasses these rules. Reads are scoped by the custom-token claims the
+// backend mints (role + schoolId + studentId).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isParent(sid) { return signedIn() && request.auth.token.studentId == sid; }
+    function isStaffOfSchool(school) {
+      return signedIn()
+        && (request.auth.token.role == 'teacher' || request.auth.token.role == 'admin')
+        && request.auth.token.schoolId == school;
+    }
+
+    match /chats/{studentId} {
+      // Parent of this student, or any teacher/admin of the same school.
+      allow read: if isParent(studentId)
+        || (resource != null && isStaffOfSchool(resource.data.schoolId));
+      allow write: if false; // backend only
+
+      match /messages/{msgId} {
+        allow read: if isParent(studentId)
+          || isStaffOfSchool(get(/databases/$(database)/documents/chats/$(studentId)).data.schoolId);
+        allow write: if false; // backend only
+      }
+    }
+
+    // Everything else stays locked.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
