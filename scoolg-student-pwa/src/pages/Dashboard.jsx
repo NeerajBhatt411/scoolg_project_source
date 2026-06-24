@@ -32,6 +32,7 @@ const Dashboard = () => {
     const [attendanceStats, setAttendanceStats] = useState({ percentage: 0, present: 0, absent: 0, leave: 0, total: 0 });
     const [upcomingEvents, setUpcomingEvents] = useState([]);
     const [pendingHomework, setPendingHomework] = useState(0);
+    const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const now = new Date();
@@ -74,6 +75,12 @@ const Dashboard = () => {
 
                 // Homework
                 setPendingHomework(hwData.filter(h => h.status === 'Pending').length);
+
+                // Notices (delivered via the notification inbox)
+                try {
+                    const notif = await getCached('student:notifications', () => api.get('/notifications').then(r => Array.isArray(r.data?.items) ? r.data.items : []));
+                    setNotices(notif);
+                } catch (e) { setNotices([]); }
 
                 // Upcoming Events
                 try {
@@ -209,41 +216,26 @@ const Dashboard = () => {
                     <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100">
                       <div className="flex justify-between items-center mb-6">
                             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2">
-                                <ClipboardCheck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                                Attendance Overview
+                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                                Notices
                             </h2>
                       </div>
-                      <div className="bg-slate-50 rounded-[24px] p-6 sm:p-8 border border-slate-100 flex flex-col items-center">
-                        <div className="w-full flex items-end justify-center gap-6 sm:gap-10 h-40 sm:h-48 mt-2 mb-6">
-                            {/* Present Bar */}
-                            <div className="flex flex-col items-center h-full group w-12 sm:w-16">
-                                <span className="text-[11px] sm:text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-100 shadow-sm px-2.5 py-1 rounded-xl z-10 mb-2 transition-transform group-hover:-translate-y-1">{attendanceStats.present}</span>
-                                <div className="flex-1 w-full flex items-end bg-slate-100/50 rounded-t-2xl p-1 pb-0">
-                                    <div className="w-full bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-t-xl transition-all duration-1000 shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] group-hover:from-emerald-400 group-hover:to-emerald-300" style={{ height: `${attendanceStats.total ? Math.max((attendanceStats.present/attendanceStats.total)*100, 5) : 5}%` }}></div>
+                      <div className="space-y-3">
+                        {notices.length === 0 ? (
+                            <div className="py-10 text-center bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+                                <p className="text-slate-500 text-sm font-medium">No notices</p>
+                            </div>
+                        ) : (
+                            notices.slice(0, 6).map((n) => (
+                                <div key={n._id} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <h4 className="text-sm font-bold text-slate-900 leading-tight">{n.title}</h4>
+                                        <span className="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">{new Date(n.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                                    </div>
+                                    {n.body && <p className="text-xs text-slate-500 mt-1 leading-relaxed">{n.body}</p>}
                                 </div>
-                                <span className="text-[10px] sm:text-xs font-extrabold text-slate-500 uppercase tracking-widest mt-2">Present</span>
-                            </div>
-                            
-                            {/* Absent Bar */}
-                            <div className="flex flex-col items-center h-full group w-12 sm:w-16">
-                                <span className="text-[11px] sm:text-xs font-black text-rose-700 bg-rose-50 border border-rose-100 shadow-sm px-2.5 py-1 rounded-xl z-10 mb-2 transition-transform group-hover:-translate-y-1">{attendanceStats.absent}</span>
-                                <div className="flex-1 w-full flex items-end bg-slate-100/50 rounded-t-2xl p-1 pb-0">
-                                    <div className="w-full bg-gradient-to-t from-rose-500 to-rose-400 rounded-t-xl transition-all duration-1000 shadow-[0_0_15px_rgba(244,63,94,0.3)] group-hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] group-hover:from-rose-400 group-hover:to-rose-300" style={{ height: `${attendanceStats.total ? Math.max((attendanceStats.absent/attendanceStats.total)*100, 5) : 5}%` }}></div>
-                                </div>
-                                <span className="text-[10px] sm:text-xs font-extrabold text-slate-500 uppercase tracking-widest mt-2">Absent</span>
-                            </div>
-
-                        </div>
-                        <div className="w-full border-t border-slate-200/60 pt-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Overall Attendance</p>
-                                <p className="text-xl sm:text-2xl font-black text-slate-900">{attendanceStats.percentage}%</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Days</p>
-                                <p className="text-xl sm:text-2xl font-black text-slate-900">{attendanceStats.total}</p>
-                            </div>
-                        </div>
+                            ))
+                        )}
                       </div>
                       
                       {/* Upcoming Events List */}
