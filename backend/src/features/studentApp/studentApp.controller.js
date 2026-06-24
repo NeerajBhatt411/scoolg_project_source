@@ -7,6 +7,9 @@ import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
 import { Message } from '../../../models/Message.js';
+import { Teacher } from '../../../models/Teacher.js';
+import { DeviceToken } from '../../../models/DeviceToken.js';
+import { sendToTokens } from '../../utils/push.js';
 
 export const getStudentVerifycampusByCode = async (req, res) => {
     try {
@@ -203,12 +206,49 @@ const studentFromAuth = async (req) => {
     return Student.findById(decoded.id).select('schoolId firstName lastName class section').lean();
 };
 
+// A conversation = (studentId, party, teacherId). Admin convo also matches legacy
+// docs that predate the `party` field.
+const convoFilter = (studentId, party, teacherId) => {
+    if (party === 'teacher' && teacherId) return { studentId, party: 'teacher', teacherId };
+    return { studentId, party: { $in: ['admin', null] }, teacherId: null };
+};
+
+// Who the parent can chat with: the school office (admin) + every teacher.
+export const getStudentChatContacts = async (req, res) => {
+    try {
+        const student = await studentFromAuth(req);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        const school = await School.findById(student.schoolId).select('formData').lean();
+        const teachers = await Teacher.find({ schoolId: student.schoolId, status: { $ne: 'Left' } })
+            .select('fullName profileImageUrl').lean();
+
+        const unread = await Message.find({ studentId: student._id, from: { $ne: 'parent' }, readByParent: false })
+            .select('party teacherId').lean();
+        let adminUnread = 0; const teacherUnread = {};
+        unread.forEach(m => {
+            if (m.party === 'teacher' && m.teacherId) teacherUnread[String(m.teacherId)] = (teacherUnread[String(m.teacherId)] || 0) + 1;
+            else adminUnread++;
+        });
+
+        const contacts = [
+            { type: 'admin', id: 'admin', name: `${school?.formData?.schoolName || 'School'} Office`, role: 'School Admin', avatar: school?.formData?.logo || school?.formData?.schoolLogo || '', unread: adminUnread },
+            ...teachers.map(t => ({ type: 'teacher', id: String(t._id), name: t.fullName, role: 'Teacher', avatar: t.profileImageUrl || '', unread: teacherUnread[String(t._id)] || 0 })),
+        ];
+        res.json({ contacts });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
 export const getStudentMessages = async (req, res) => {
     try {
         const student = await studentFromAuth(req);
         if (!student) return res.status(404).json({ error: "Student not found" });
-        const messages = await Message.find({ studentId: student._id }).sort({ createdAt: 1 }).lean();
-        await Message.updateMany({ studentId: student._id, from: 'admin', readByParent: false }, { readByParent: true });
+        const party = req.query.party === 'teacher' ? 'teacher' : 'admin';
+        const teacherId = req.query.teacherId || null;
+        const filter = convoFilter(student._id, party, teacherId);
+        const messages = await Message.find(filter).sort({ createdAt: 1 }).lean();
+        await Message.updateMany({ ...filter, from: { $ne: 'parent' }, readByParent: false }, { readByParent: true });
         res.json({ messages });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
@@ -221,13 +261,28 @@ export const postStudentMessage = async (req, res) => {
         if (!student) return res.status(404).json({ error: "Student not found" });
         const text = (req.body?.text || '').trim();
         if (!text) return res.status(400).json({ error: "Message text required" });
+        const party = req.body.party === 'teacher' ? 'teacher' : 'admin';
+        const teacherId = party === 'teacher' ? (req.body.teacherId || null) : null;
+        if (party === 'teacher' && !teacherId) return res.status(400).json({ error: "teacherId required" });
+
         const msg = await Message.create({
             schoolId: student.schoolId,
             studentId: student._id,
+            party, teacherId,
             from: 'parent',
             text,
             readByParent: true,
         });
+
+        // Notify the chosen teacher's devices (admin sees unread in the panel).
+        try {
+            if (party === 'teacher') {
+                const toks = await DeviceToken.find({ role: 'teacher', userId: String(teacherId) }).select('token').lean();
+                const name = [student.firstName, student.lastName].filter(Boolean).join(' ');
+                if (toks.length) sendToTokens(toks.map(t => t.token), { title: `💬 ${name || 'A parent'} messaged you`, body: text.slice(0, 80), data: { link: '/chat' } });
+            }
+        } catch (e) { /* push best-effort */ }
+
         res.status(201).json(msg);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });

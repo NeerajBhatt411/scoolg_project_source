@@ -15,6 +15,7 @@ import Notices from './pages/Notices';
 import Students from './pages/Students';
 import Calendar from './pages/Calendar';
 import Notifications from './pages/Notifications';
+import Chat from './pages/Chat';
 import { useAuth } from './context/AuthContext';
 
 // Cool, premium loading animation using the School's Logo
@@ -86,6 +87,7 @@ const App = () => {
         <Route path="/students" element={<Students />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/chat" element={<Chat />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

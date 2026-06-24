@@ -105,4 +105,9 @@ router.post('/api/teacher/homework', c.postTeacherHomework);
  */
 router.post('/api/teacher/change-password', c.postTeacherChangepassword);
 
+// Teacher <-> parent chat
+router.get('/api/teacher/chats', c.getTeacherChats);
+router.get('/api/teacher/chats/:studentId', c.getTeacherChatThread);
+router.post('/api/teacher/chats/:studentId', c.postTeacherChatMessage);
+
 export default router;

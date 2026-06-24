@@ -53,8 +53,10 @@ export const getAdminThread = async (req, res) => {
         const school = await resolveSchool(req);
         if (!school) return res.status(404).json({ error: "School not found" });
         const { studentId } = req.params;
-        const messages = await Message.find({ schoolId: school._id, studentId }).sort({ createdAt: 1 }).lean();
-        await Message.updateMany({ schoolId: school._id, studentId, from: 'parent', readByAdmin: false }, { readByAdmin: true });
+        // Admin office thread only (party=admin; also matches legacy docs).
+        const filter = { schoolId: school._id, studentId, party: { $in: ['admin', null] }, teacherId: null };
+        const messages = await Message.find(filter).sort({ createdAt: 1 }).lean();
+        await Message.updateMany({ ...filter, from: 'parent', readBySchool: false }, { readBySchool: true });
         res.json({ messages });
     } catch (err) {
         res.status(500).json({ error: "Failed to load messages" });
@@ -73,9 +75,11 @@ export const postAdminMessage = async (req, res) => {
         const msg = await Message.create({
             schoolId: school._id,
             studentId,
+            party: 'admin',
+            teacherId: null,
             from: 'admin',
             text,
-            readByAdmin: true,
+            readBySchool: true,
         });
 
         // Best-effort push to the parent's devices.

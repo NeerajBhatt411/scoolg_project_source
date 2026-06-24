@@ -154,6 +154,7 @@ router.get('/api/student/attendance', c.getStudentAttendance);
 router.get('/api/student/calendar', c.getStudentCalendar);
 
 // Parent <-> school chat
+router.get('/api/student/chat/contacts', c.getStudentChatContacts);
 router.get('/api/student/messages', c.getStudentMessages);
 router.post('/api/student/messages', c.postStudentMessage);
 

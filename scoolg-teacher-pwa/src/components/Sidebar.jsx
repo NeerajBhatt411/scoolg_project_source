@@ -14,6 +14,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
 
     const navItems = [
         { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
+        { name: 'Chat', icon: 'chat', path: '/chat' },
         { name: 'Students', icon: 'group', path: '/students' },
         { name: 'My Classes', icon: 'class', path: '/classes' },
         { name: 'Timetable', icon: 'calendar_today', path: '/timetable' },

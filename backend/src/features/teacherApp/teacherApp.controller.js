@@ -10,7 +10,9 @@ import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
-import { notifyClassStudents, notify } from '../../utils/push.js';
+import { Message } from '../../../models/Message.js';
+import { DeviceToken } from '../../../models/DeviceToken.js';
+import { notifyClassStudents, notify, sendToTokens } from '../../utils/push.js';
 import { teacherFromToken } from '../../utils/teacherAuth.js';
 
 export const getTeacherDiary = async (req, res) => {
@@ -338,6 +340,69 @@ export const postTeacherChangepassword = async (req, res) => {
         teacher.isPasswordChanged = true;
         await teacher.save();
         res.json({ message: "Password updated successfully" });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// --- Teacher <-> Parent chat ---
+export const getTeacherChats = async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const msgs = await Message.find({ schoolId: teacher.schoolId, party: 'teacher', teacherId: teacher._id }).sort({ createdAt: -1 }).lean();
+        const byStudent = new Map();
+        for (const m of msgs) {
+            const key = String(m.studentId);
+            if (!byStudent.has(key)) byStudent.set(key, { studentId: key, lastMessage: m.text, lastFrom: m.from, lastAt: m.createdAt, unread: 0 });
+            if (m.from === 'parent' && !m.readBySchool) byStudent.get(key).unread++;
+        }
+        const convos = [...byStudent.values()];
+        const students = await Student.find({ _id: { $in: convos.map(c => c.studentId) } }).select('firstName lastName class section').lean();
+        const sMap = {}; students.forEach(s => { sMap[String(s._id)] = s; });
+        convos.forEach(c => {
+            const s = sMap[c.studentId];
+            c.studentName = s ? [s.firstName, s.lastName].filter(Boolean).join(' ') : 'Student';
+            c.classSection = s ? `${s.class || ''}${s.section ? ' - ' + s.section : ''}` : '';
+        });
+        res.json({ conversations: convos });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+export const getTeacherChatThread = async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const { studentId } = req.params;
+        const filter = { schoolId: teacher.schoolId, party: 'teacher', teacherId: teacher._id, studentId };
+        const messages = await Message.find(filter).sort({ createdAt: 1 }).lean();
+        await Message.updateMany({ ...filter, from: 'parent', readBySchool: false }, { readBySchool: true });
+        res.json({ messages });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+export const postTeacherChatMessage = async (req, res) => {
+    try {
+        const teacher = await teacherFromToken(req);
+        const { studentId } = req.params;
+        const text = (req.body?.text || '').trim();
+        if (!text) return res.status(400).json({ error: "Message text required" });
+        const msg = await Message.create({
+            schoolId: teacher.schoolId,
+            studentId,
+            party: 'teacher',
+            teacherId: teacher._id,
+            from: 'teacher',
+            text,
+            readBySchool: true,
+        });
+        try {
+            const toks = await DeviceToken.find({ role: 'student', userId: String(studentId) }).select('token').lean();
+            if (toks.length) sendToTokens(toks.map(t => t.token), { title: `💬 Message from ${teacher.fullName || 'your teacher'}`, body: text.slice(0, 80), data: { link: '/chat' } });
+        } catch (e) { /* best-effort */ }
+        res.status(201).json(msg);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
