@@ -27,6 +27,7 @@ const StudentProfile = lazy(() => import('./pages/StudentProfile'));
 const Support = lazy(() => import('./pages/Support'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const TeacherDiary = lazy(() => import('./pages/TeacherDiary'));
+const Messages = lazy(() => import('./pages/Messages'));
 
 // Loading Fallback
 const PageLoading = () => (
@@ -131,6 +132,10 @@ function App() {
                             <Route
                                 path="/notifications"
                                 element={<ProtectedRoute><Notifications /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/messages"
+                                element={<ProtectedRoute><Messages /></ProtectedRoute>}
                             />
                             <Route
                                 path="/gallery"

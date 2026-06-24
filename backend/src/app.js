@@ -26,6 +26,7 @@ import studentAppRoutes from './features/studentApp/studentApp.routes.js';
 import teacherAppRoutes from './features/teacherApp/teacherApp.routes.js';
 import notificationsRoutes from './features/notifications/notifications.routes.js';
 import publicSiteRoutes from './features/publicSite/publicSite.routes.js';
+import messagesRoutes from './features/messages/messages.routes.js';
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use(studentAppRoutes);
 app.use(teacherAppRoutes);
 app.use(notificationsRoutes);
 app.use(publicSiteRoutes);
+app.use(messagesRoutes);
 
 export default app;
 export { app };

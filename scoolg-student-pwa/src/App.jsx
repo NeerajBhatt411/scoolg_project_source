@@ -14,6 +14,7 @@ import Calendar from './pages/Calendar';
 import Exams from './pages/Exams';
 import Subjects from './pages/Subjects';
 import Notifications from './pages/Notifications';
+import Chat from './pages/Chat';
 import { useAuth } from './context/AuthContext';
 
 const BootLoader = () => {
@@ -80,6 +81,7 @@ const App = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/homework" element={<Homework />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/results" element={<Results />} />
         <Route path="/fees" element={<Fees />} />

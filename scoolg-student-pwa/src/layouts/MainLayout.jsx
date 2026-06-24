@@ -17,6 +17,7 @@ const MainLayout = () => {
     if (path.includes('timetable')) return 'Schedule';
     if (path.includes('attendance')) return 'Tracking';
     if (path.includes('homework')) return 'Homework';
+    if (path.includes('chat')) return 'Chat';
     if (path.includes('results')) return 'Results';
     if (path.includes('subjects')) return 'Subjects';
     if (path.includes('exams')) return 'Exams';
@@ -58,7 +59,7 @@ const MainLayout = () => {
           {[
             { name: 'Home', path: '/dashboard', icon: 'dashboard' },
             { name: 'Timetable', path: '/timetable', icon: 'calendar_today' },
-            { name: 'Homework', path: '/homework', icon: 'menu_book' },
+            { name: 'Chat', path: '/chat', icon: 'chat' },
             { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
           ].map((item) => (
             <NavLink key={item.path} to={item.path} className="flex-1 flex justify-center">

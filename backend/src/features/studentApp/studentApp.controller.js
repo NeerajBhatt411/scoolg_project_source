@@ -6,6 +6,7 @@ import { Student } from '../../../models/Student.js';
 import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
+import { Message } from '../../../models/Message.js';
 
 export const getStudentVerifycampusByCode = async (req, res) => {
     try {
@@ -190,6 +191,44 @@ export const getStudentCalendar = async (req, res) => {
         const yearStart = `${new Date().getFullYear()}-01-01`;
         const events = await CalendarEvent.find({ schoolId: student.schoolId, date: { $gte: yearStart } }).sort({ date: 1 }).lean();
         res.json(events);
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// --- Parent <-> School chat (the parent uses the student app) ---
+const studentFromAuth = async (req) => {
+    const token = (req.headers.authorization || '').split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+    return Student.findById(decoded.id).select('schoolId firstName lastName class section').lean();
+};
+
+export const getStudentMessages = async (req, res) => {
+    try {
+        const student = await studentFromAuth(req);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        const messages = await Message.find({ studentId: student._id }).sort({ createdAt: 1 }).lean();
+        await Message.updateMany({ studentId: student._id, from: 'admin', readByParent: false }, { readByParent: true });
+        res.json({ messages });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+export const postStudentMessage = async (req, res) => {
+    try {
+        const student = await studentFromAuth(req);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        const text = (req.body?.text || '').trim();
+        if (!text) return res.status(400).json({ error: "Message text required" });
+        const msg = await Message.create({
+            schoolId: student.schoolId,
+            studentId: student._id,
+            from: 'parent',
+            text,
+            readByParent: true,
+        });
+        res.status(201).json(msg);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }
