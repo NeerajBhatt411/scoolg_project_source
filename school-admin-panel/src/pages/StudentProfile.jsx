@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -22,6 +22,42 @@ const StudentProfile = () => {
     const [allAttendance, setAllAttendance] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [attStats, setAttStats] = useState({ present: 0, absent: 0, percentage: 0, total: 0 });
+
+    // --- Parent chat (per student; uses /api/admin/messages/:studentId) ---
+    const [chatMsgs, setChatMsgs] = useState([]);
+    const [chatText, setChatText] = useState('');
+    const [chatSending, setChatSending] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
+    const chatEndRef = useRef(null);
+    const fmtChatTime = (d) => { try { return new Date(d).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+    const loadChat = async () => {
+        if (!student?._id) return;
+        try {
+            const r = await axios.get(`${ADMIN_API_BASE}/messages/${student._id}`);
+            setChatMsgs(Array.isArray(r.data?.messages) ? r.data.messages : []);
+        } catch (e) { /* ignore */ }
+        finally { setChatLoading(false); }
+    };
+    const sendChat = async (e) => {
+        e?.preventDefault();
+        const t = chatText.trim();
+        if (!t || chatSending || !student?._id) return;
+        setChatSending(true);
+        setChatText('');
+        setChatMsgs((m) => [...m, { _id: 'tmp-' + Date.now(), from: 'admin', text: t, createdAt: new Date().toISOString() }]);
+        try { await axios.post(`${ADMIN_API_BASE}/messages/${student._id}`, { text: t }); loadChat(); }
+        catch (e) { /* keep optimistic */ }
+        finally { setChatSending(false); }
+    };
+    useEffect(() => {
+        if (activeTab !== 'Parent Chat' || !student?._id) return;
+        setChatLoading(true);
+        loadChat();
+        const t = setInterval(loadChat, 8000);
+        return () => clearInterval(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, student?._id]);
+    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs]);
 
     useEffect(() => {
         if (student?._id) {
@@ -75,7 +111,7 @@ const StudentProfile = () => {
         );
     }
 
-    const tabs = ['Personal', 'Academic', 'Attendance', 'Exams', 'Documents'];
+    const tabs = ['Personal', 'Parent Chat', 'Academic', 'Attendance', 'Exams', 'Documents'];
     const isFrozen = student.status === 'Inactive';
 
     const handleStatusChange = async () => {
@@ -348,6 +384,39 @@ const StudentProfile = () => {
                                 <span className="material-symbols-outlined text-6xl mb-4 text-slate-200">{activeTab === 'Exams' ? 'quiz' : 'event_available'}</span>
                                 <h3 className="text-lg font-bold text-slate-600 mb-1">Not Enough Data</h3>
                                 <p className="text-sm text-slate-400">There corresponds no records for this term yet.</p>
+                            </div>
+                        )}
+
+                        {activeTab === 'Parent Chat' && (
+                            <div className="animate-fade-in flex flex-col" style={{ height: '58vh' }}>
+                                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                                    {chatLoading && chatMsgs.length === 0 ? (
+                                        <p className="text-center text-slate-400 text-sm py-10">Loading…</p>
+                                    ) : chatMsgs.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                                            <span className="material-symbols-outlined text-5xl mb-3 text-slate-200">forum</span>
+                                            <p className="text-sm font-medium">No messages yet with this parent.</p>
+                                            <p className="text-xs text-slate-300 mt-1">Send a message — the parent sees it in their app.</p>
+                                        </div>
+                                    ) : (
+                                        chatMsgs.map((m) => {
+                                            const mine = m.from === 'admin';
+                                            return (
+                                                <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${mine ? 'bg-blue-600 text-white rounded-br-md' : 'bg-white text-slate-900 border border-slate-100 rounded-bl-md'}`}>
+                                                        <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>
+                                                        <span className={`block text-[10px] mt-1 ${mine ? 'text-blue-100' : 'text-slate-400'}`}>{fmtChatTime(m.createdAt)}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <form onSubmit={sendChat} className="mt-3 flex items-center gap-2">
+                                    <input value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Message the parent…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
+                                    <button type="submit" disabled={!chatText.trim() || chatSending} className="h-11 px-5 rounded-full bg-blue-600 text-white font-bold text-sm disabled:opacity-40">Send</button>
+                                </form>
                             </div>
                         )}
                     </div>

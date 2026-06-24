@@ -5,7 +5,10 @@ import { DeviceToken } from '../../../models/DeviceToken.js';
 import { sendToTokens } from '../../utils/push.js';
 
 const resolveSchool = (req) => {
-    const schoolId = req.query.schoolId || req.body?.schoolId;
+    // Prefer the authenticated token (adminGuard sets req.user); fall back to the
+    // schoolId the panel sends.
+    const fromToken = req.user?.type === 'staff' ? req.user?.schoolId : req.user?.id;
+    const schoolId = fromToken || req.query.schoolId || req.body?.schoolId;
     if (!schoolId) return null;
     return School.findOne({ id: schoolId });
 };
