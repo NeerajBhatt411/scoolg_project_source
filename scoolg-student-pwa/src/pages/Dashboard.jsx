@@ -118,7 +118,7 @@ const Dashboard = () => {
                         <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-3xl mb-3">{(school?.name || 'S').charAt(0)}</div>
                     )}
                     <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">{school?.name || 'School'}</h1>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-400 mt-1">Student Portal</p>
+                    <p className="text-xs sm:text-sm font-semibold text-slate-400 mt-1">Parent Portal</p>
                 </div>
 
                 {/* Top Stat Cards */}
