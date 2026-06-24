@@ -9,22 +9,8 @@ const Subjects = () => {
   const [loading, setLoading] = useState(!cachedSubjects);
 
   useEffect(() => {
-    if (!cachedSubjects) {
-      const mockSubjects = [
-        { id: 1, name: 'Mathematics', code: 'MATH-101', teacher: 'Mr. Smith', totalClasses: 45, attended: 40 },
-        { id: 2, name: 'Science', code: 'SCI-102', teacher: 'Mrs. Johnson', totalClasses: 40, attended: 35 },
-        { id: 3, name: 'English Literature', code: 'ENG-103', teacher: 'Ms. Davis', totalClasses: 35, attended: 33 },
-        { id: 4, name: 'History', code: 'HIS-104', teacher: 'Mr. Brown', totalClasses: 30, attended: 28 },
-        { id: 5, name: 'Computer Science', code: 'CS-105', teacher: 'Mr. Wilson', totalClasses: 25, attended: 25 },
-        { id: 6, name: 'Physical Education', code: 'PE-106', teacher: 'Coach Taylor', totalClasses: 20, attended: 18 }
-      ];
-
-      setTimeout(() => {
-        cachedSubjects = mockSubjects;
-        setSubjects(mockSubjects);
-        setLoading(false);
-      }, 500);
-    }
+    // No subjects API yet — show the honest empty state instead of fake data.
+    setLoading(false);
   }, []);
 
   return (

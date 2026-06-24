@@ -7,16 +7,8 @@ const Exams = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mockExams = [
-      { id: 1, title: 'Unit Test 1', subject: 'Mathematics', classInfo: 'Class 10-A', date: '2026-05-15', status: 'Completed', marksEntered: false },
-      { id: 2, title: 'Unit Test 1', subject: 'Physics', classInfo: 'Class 10-A', date: '2026-05-17', status: 'Completed', marksEntered: true },
-      { id: 3, title: 'Half Yearly', subject: 'Science', classInfo: 'Class 9-B', date: '2026-08-10', status: 'Upcoming', marksEntered: false },
-    ];
-
-    setTimeout(() => {
-      setExams(mockExams);
-      setLoading(false);
-    }, 700);
+    // No exams API yet — show the honest empty state instead of fake exams.
+    setLoading(false);
   }, []);
 
   return (
@@ -34,6 +26,14 @@ const Exams = () => {
             [...Array(3)].map((_, i) => (
               <div key={i} className="h-32 w-full rounded-[24px] bg-white border border-slate-100 shadow-sm animate-pulse" />
             ))
+          ) : exams.length === 0 ? (
+            <div className="py-16 text-center bg-white rounded-[32px] border border-slate-100 border-dashed">
+              <div className="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileEdit className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">No exams yet</h3>
+              <p className="text-slate-500 text-sm">Exam scheduling &amp; marks will appear here once available.</p>
+            </div>
           ) : (
             exams.map((exam) => (
               <div key={exam.id} className="bg-[#faf9f6] rounded-[24px] shadow-[0_8px_20px_rgba(120,113,108,0.06)] border border-stone-200/60 border-b-[4px] border-b-stone-300/60 flex flex-col sm:flex-row overflow-hidden hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(120,113,108,0.1)] hover:border-b-stone-400/50 transition-all cursor-default">

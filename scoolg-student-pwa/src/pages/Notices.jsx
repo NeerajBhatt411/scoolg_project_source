@@ -8,40 +8,8 @@ const Notices = () => {
   const [activeTab, setActiveTab] = useState('All');
 
   useEffect(() => {
-    if (!cachedNotices) {
-      const mockNotices = [
-        {
-          id: 1,
-          title: 'Mid-Term Examinations Schedule',
-          description: 'The mid-term examinations for classes 9 to 12 will commence from next Monday. Please ensure you carry your admit cards.',
-          type: 'Exams',
-          date: new Date(Date.now() - 86400000).toISOString(),
-          author: 'Exam Department',
-        },
-        {
-          id: 2,
-          title: 'Annual Sports Meet 2026',
-          description: 'We are thrilled to announce our Annual Sports Meet next month. Students are requested to submit their names for participation to their class teachers.',
-          type: 'Events',
-          date: new Date(Date.now() - 172800000).toISOString(),
-          author: 'Principal',
-        },
-        {
-          id: 3,
-          title: 'Winter Vacation Announcement',
-          description: 'School will remain closed for winter vacation starting from 25th December. Classes will resume on 5th January.',
-          type: 'General',
-          date: new Date().toISOString(),
-          author: 'Admin Office',
-        }
-      ];
-
-      setTimeout(() => {
-        cachedNotices = mockNotices;
-        setNotices(mockNotices);
-        setLoading(false);
-      }, 800);
-    }
+    // No notices API yet — show the honest empty state instead of fake data.
+    setLoading(false);
   }, []);
 
   const formatDate = (dateString) => {
