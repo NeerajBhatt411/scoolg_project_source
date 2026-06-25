@@ -32,21 +32,32 @@ const facilityIcon = (f) => {
   return 'Sparkles';
 };
 
-// Branded full-screen loader shown while a school's live data is being fetched
-// (so visitors never see the demo template flash before the real content).
-const LoadingScreen = () => (
-  <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#ffffff', zIndex: 9999, gap: '22px' }}>
-    <style>{`@keyframes cwspin{to{transform:rotate(360deg)}}@keyframes cwpulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
-    <div style={{ position: 'relative', width: 84, height: 84, display: 'grid', placeItems: 'center' }}>
-      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid #ece9fb', borderTopColor: '#4B2ED5', animation: 'cwspin 0.8s linear infinite' }} />
-      <Icons.GraduationCap size={36} color="#4B2ED5" style={{ animation: 'cwpulse 1.4s ease-in-out infinite' }} />
+// Branded full-screen loader (with a climbing % counter) shown while a school's
+// live data is being fetched — so visitors never see the demo template flash.
+const LoadingScreen = ({ name }) => {
+  const [pct, setPct] = useState(4);
+  useEffect(() => {
+    const t = setInterval(() => setPct((p) => (p >= 96 ? 96 : p + Math.max(1, Math.ceil((97 - p) / 9)))), 130);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#ffffff', zIndex: 9999, gap: '20px' }}>
+      <style>{`@keyframes cwspin{to{transform:rotate(360deg)}}@keyframes cwpulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
+      <div style={{ position: 'relative', width: 96, height: 96, display: 'grid', placeItems: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid #ece9fb', borderTopColor: '#4B2ED5', animation: 'cwspin 0.8s linear infinite' }} />
+        <Icons.GraduationCap size={40} color="#4B2ED5" style={{ animation: 'cwpulse 1.4s ease-in-out infinite' }} />
+      </div>
+      <div style={{ fontWeight: 900, fontSize: '2.1rem', color: '#4B2ED5', letterSpacing: '-0.02em', fontFamily: 'Outfit, sans-serif' }}>{pct}%</div>
+      <div style={{ width: 200, maxWidth: '60vw', height: 6, borderRadius: 99, background: '#ece9fb', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #6d4bff, #4B2ED5)', borderRadius: 99, transition: 'width .25s ease' }} />
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 4 }}>
+        <p style={{ fontWeight: 800, fontSize: '1.02rem', color: '#1f2937', margin: 0 }}>Loading {name || 'your school'}…</p>
+        <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: 5, letterSpacing: '0.04em' }}>Powered by Scoolg</p>
+      </div>
     </div>
-    <div style={{ textAlign: 'center' }}>
-      <p style={{ fontWeight: 800, fontSize: '1.05rem', color: '#1f2937', margin: 0 }}>Loading your school…</p>
-      <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>Powered by Scoolg</p>
-    </div>
-  </div>
-);
+  );
+};
 
 const App = () => {
   // Onboarding preview (localStorage) is the initial source; on a real school
@@ -111,7 +122,8 @@ const App = () => {
       leadership: (data.leadership && data.leadership.length)
         ? data.leadership.map((member, i) => ({
             id: i + 1,
-            image: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=4B2ED5&color=fff&bold=true`,
+            // Use the uploaded photo if there is one; otherwise a clean initials avatar.
+            image: member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=4B2ED5&color=fff&bold=true`,
             name: member.name || 'Leadership Member',
             title: member.role || 'Board Member',
             description: member.message || '',
@@ -178,7 +190,7 @@ const App = () => {
     </div>
   );
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen name={subdomain ? subdomain.charAt(0).toUpperCase() + subdomain.slice(1) : ''} />;
 
   return (
     <div style={{ position: 'relative' }}>
