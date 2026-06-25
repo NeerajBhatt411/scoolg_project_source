@@ -29,12 +29,16 @@ const MainLayout = () => {
     return 'ScoolG';
   };
 
+  // Chat is a full-screen experience (WhatsApp-style): hide the top header and
+  // the bottom nav so it fills the screen; the chat page has its own back button.
+  const isChat = location.pathname.startsWith('/chat');
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex">
       {/* MOBILE OVERLAY */}
       {mobileNavOpen && (
-        <div 
-          onClick={() => setMobileNavOpen(false)} 
+        <div
+          onClick={() => setMobileNavOpen(false)}
           className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
         ></div>
       )}
@@ -43,17 +47,18 @@ const MainLayout = () => {
       <Sidebar mobileOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* MAIN CONTENT AREA */}
-      <div className="w-full lg:pl-[280px] min-h-screen flex flex-col pb-20 lg:pb-0">
-        
-        {/* TOP HEADER (Consistent across Desktop & Mobile) */}
-        <TopHeader title={getPageTitle(location.pathname)} showSearch={false} />
+      <div className={`w-full lg:pl-[280px] min-h-screen flex flex-col ${isChat ? '' : 'pb-20 lg:pb-0'}`}>
+
+        {/* TOP HEADER (hidden on the full-screen chat) */}
+        {!isChat && <TopHeader title={getPageTitle(location.pathname)} showSearch={false} />}
 
         <main className="w-full flex-1">
           <Outlet />
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAV (Teacher PWA Style) */}
+      {/* MOBILE BOTTOM NAV (hidden on the full-screen chat) */}
+      {!isChat && (
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 pb-safe">
         <div className="flex items-center justify-around px-2 pt-2 pb-2">
           {[
@@ -75,6 +80,7 @@ const MainLayout = () => {
           ))}
         </div>
       </nav>
+      )}
     </div>
   );
 };

@@ -13,13 +13,19 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+// Backend sends DATA-ONLY messages, so we show exactly ONE notification here
+// (a 'notification' payload would also be auto-shown by the browser -> duplicates).
 messaging.onBackgroundMessage((payload) => {
+  const d = payload.data || {};
   const n = payload.notification || {};
-  self.registration.showNotification(n.title || 'Scoolg', {
-    body: n.body || '',
+  self.registration.showNotification(d.title || n.title || 'Scoolg', {
+    body: d.body || n.body || '',
     icon: '/scoolg-logo.png',
     badge: '/scoolg-logo.png',
-    data: payload.data || {},
+    tag: d.link || 'scoolg',   // collapse repeats for the same screen
+    renotify: true,
+    data: d,
   });
 });
 

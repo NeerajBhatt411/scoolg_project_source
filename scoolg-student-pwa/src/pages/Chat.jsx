@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { db, ensureChatAuth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Send, MessagesSquare, ChevronRight, X, Users } from 'lucide-react';
+import { Send, MessagesSquare, ChevronLeft, Users, X } from 'lucide-react';
 
 const Avatar = ({ src, name, size = 'h-10 w-10', tone = 'blue' }) => (
   src
@@ -23,6 +24,7 @@ const TypingDots = () => (
 );
 
 const Chat = () => {
+  const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
@@ -117,22 +119,25 @@ const Chat = () => {
   const fmtTime = (d) => { const dt = toDate(d); try { return dt ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-3">
-      <div className="bg-white rounded-[26px] border border-slate-100 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.15)] flex flex-col overflow-hidden relative" style={{ height: 'calc(100vh - 200px)', minHeight: '460px' }}>
+    <div className="flex flex-col bg-white relative" style={{ height: '100dvh' }}>
 
-        {/* Group header — tap to see members (display only) */}
-        <button onClick={() => setShowMembers(true)} className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-3 shrink-0 hover:bg-slate-50/80 transition-colors text-left bg-white">
-          <Avatar src={group?.logo} name={group?.name} size="h-11 w-11" />
-          <div className="min-w-0 flex-1">
-            <p className="font-black text-slate-900 text-[15px] truncate">{group?.name || 'School'}</p>
-            {typers.length ? (
-              <p className="text-[11px] text-blue-500 font-semibold flex items-center gap-1.5">{typingLabel}<TypingDots /></p>
-            ) : (
-              <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1"><Users className="h-3 w-3" /> {group?.memberCount || members.length} members · tap to view</p>
-            )}
-          </div>
-          <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
-        </button>
+        {/* Full-screen header: back button (-> home) + tappable group info (members) */}
+        <div className="px-2 py-2.5 border-b border-slate-100 flex items-center gap-1 shrink-0 bg-white">
+          <button onClick={() => navigate('/dashboard')} aria-label="Back" className="h-10 w-10 grid place-items-center rounded-full text-slate-600 hover:bg-slate-100 active:scale-95 transition shrink-0">
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button onClick={() => setShowMembers(true)} className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-xl px-1 py-1 hover:bg-slate-50 transition-colors">
+            <Avatar src={group?.logo} name={group?.name} size="h-10 w-10" />
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-slate-900 text-[15px] truncate">{group?.name || 'School'}</p>
+              {typers.length ? (
+                <p className="text-[11px] text-blue-500 font-semibold flex items-center gap-1.5">{typingLabel}<TypingDots /></p>
+              ) : (
+                <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1"><Users className="h-3 w-3" /> {group?.memberCount || members.length} members · tap to view</p>
+              )}
+            </div>
+          </button>
+        </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#f6f8fb]">
@@ -172,7 +177,7 @@ const Chat = () => {
         </div>
 
         {/* Input */}
-        <form onSubmit={send} className="p-2.5 border-t border-slate-100 flex items-center gap-2 shrink-0 bg-white">
+        <form onSubmit={send} className="p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] border-t border-slate-100 flex items-center gap-2 shrink-0 bg-white">
           <input value={text} onChange={onChange} onBlur={stopTyping} placeholder="Type a message…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/40" />
           <button type="submit" disabled={!text.trim() || sending} className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 disabled:opacity-40 active:scale-95 transition-transform"><Send className="h-5 w-5" /></button>
         </form>
@@ -207,7 +212,6 @@ const Chat = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };

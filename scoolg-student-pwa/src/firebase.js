@@ -65,6 +65,21 @@ export async function initPush({ role, userId, schoolId, onToken }) {
 
     onMessage(messaging, (payload) => {
       window.dispatchEvent(new CustomEvent('push-message', { detail: payload }));
+      // App is OPEN (foreground): FCM won't auto-show anything. Surface a single
+      // system notification ourselves — unless the user is already on the chat
+      // screen (they see it live there).
+      try {
+        const d = payload.data || {};
+        const onChat = typeof location !== 'undefined' && location.pathname.startsWith('/chat');
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !onChat) {
+          navigator.serviceWorker.getRegistration('/firebase-push/').then((reg) => {
+            reg && reg.showNotification(d.title || 'Scoolg', {
+              body: d.body || '', icon: '/scoolg-logo.png', badge: '/scoolg-logo.png',
+              tag: d.link || 'scoolg', renotify: true, data: d,
+            });
+          }).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
     });
 
     return token;

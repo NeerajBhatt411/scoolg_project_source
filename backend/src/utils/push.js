@@ -57,15 +57,25 @@ const getAccessToken = async () => {
 };
 
 const sendOne = async (accessToken, token, payload) => {
+    // DATA-ONLY message (no `notification` block). With a `notification` block the
+    // browser auto-displays it AND our service worker's onBackgroundMessage shows
+    // one too -> two notifications (one with icon, one without). Sending data-only
+    // means the SW shows exactly ONE, fully under our control.
+    const link = (payload.data && payload.data.link) || payload.link || '/';
+    const data = {
+        title: String(payload.title || 'Scoolg'),
+        body: String(payload.body || ''),
+        link: String(link),
+        ...Object.fromEntries(Object.entries(payload.data || {}).map(([k, v]) => [k, String(v)])),
+    };
     const res = await fetch(`https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
             message: {
                 token,
-                notification: { title: payload.title, body: payload.body },
-                data: Object.fromEntries(Object.entries(payload.data || {}).map(([k, v]) => [k, String(v)])),
-                webpush: { fcmOptions: { link: payload.link || '/' } },
+                data,
+                webpush: { fcmOptions: { link } },
             },
         }),
     });
