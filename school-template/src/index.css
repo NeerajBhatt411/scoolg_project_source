@@ -463,11 +463,15 @@ textarea.form-control {
 
 /* Footer */
 footer {
-  background: var(--primary);
-  color: var(--white);
-  padding: 80px 5% 40px;
+  background: linear-gradient(180deg, #14161d 0%, #0b0c11 100%);
+  color: #fff;
+  padding: 84px 5% 40px;
   margin-top: 80px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+footer a { color: rgba(255, 255, 255, 0.72); transition: color .2s ease; }
+footer a:hover { color: #fff; }
+.footer-bottom { border-top: 1px solid rgba(255, 255, 255, 0.08); }
 
 .footer-grid {
   display: grid;

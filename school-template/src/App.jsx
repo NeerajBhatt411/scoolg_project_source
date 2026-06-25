@@ -337,7 +337,7 @@ const App = () => {
                 <h2 className="section-title">Premium Facilities</h2>
                 <p className="section-subtitle">Discover the state-of-the-art infrastructure we provide for our students' holistic growth.</p>
               </div>
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '22px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '22px' }}>
                 {[
                   ...(facilities || []).filter((f) => f && f !== 'OTHER'),
                   ...((otherFacilities || '').split(',').map((f) => f.trim()).filter(Boolean)),
@@ -560,8 +560,8 @@ const App = () => {
             </ul>
           </div>
         </div>
-        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 30, opacity: 0.6, fontSize: '0.9rem' }}>
-          &copy; 2026 ScoolG Educational Group. All rights reserved.
+        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 30, opacity: 0.65, fontSize: '0.9rem' }}>
+          &copy; {new Date().getFullYear()} {hero.title}. All rights reserved. &nbsp;·&nbsp; Powered by Scoolg
         </div>
       </footer>
     </div>
