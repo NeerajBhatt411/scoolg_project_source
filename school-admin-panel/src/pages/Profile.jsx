@@ -383,7 +383,8 @@ const Profile = () => {
                 </SectionCard>
 
                 <SectionCard icon={<ImageIcon />} iconBg="#ecfeff" iconColor="#0891b2" title="Cover / Feature Image" full>
-                    <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50" style={{ aspectRatio: '16 / 6' }}>
+                    {/* Same crop/proportion as the website hero (object-cover), just smaller. */}
+                    <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50" style={{ maxWidth: '460px', height: '360px' }}>
                         {src.coverImage
                             ? <img src={src.coverImage} alt="Cover" className="w-full h-full object-cover" />
                             : <div className="w-full h-full grid place-items-center text-slate-300 text-sm font-semibold">No cover image yet</div>}

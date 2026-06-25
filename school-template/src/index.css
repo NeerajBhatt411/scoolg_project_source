@@ -255,11 +255,11 @@ nav {
 .hero-image-main {
   width: 100%;
   max-width: 560px;
-  height: auto;            /* show the image at its OWN aspect ratio — no crop, no stretch */
-  display: block;
   margin-left: auto;
   border-radius: 32px;
   box-shadow: var(--shadow-lg);
+  object-fit: cover;
+  height: 460px;
 }
 
 .hero-tag {
@@ -521,9 +521,9 @@ footer a:hover { color: #fff; }
     grid-template-columns: 1fr;
   }
 
-  /* On phones the hero image stacks full-width at its natural aspect ratio. */
+  /* On phones the hero image stacks full-width — tidy banner height. */
   .hero-image-main {
-    height: auto;
+    height: 260px;
     max-width: 100%;
   }
 
