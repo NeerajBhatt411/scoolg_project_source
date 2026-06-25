@@ -88,6 +88,18 @@ const App = () => {
       .finally(() => setTimeout(() => setLoading(false), 550));
   }, []);
 
+  // Set the browser tab title + favicon to this school's name & logo.
+  useEffect(() => {
+    const d = currentOnboardingData;
+    if (!d) return;
+    if (d.schoolName) document.title = d.schoolName;
+    if (d.logo) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+      link.href = d.logo;
+    }
+  }, [currentOnboardingData]);
+
   const data = currentOnboardingData;
   const isReal = !!data;   // a real school's data is loaded (vs. demo/preview)
 
@@ -202,7 +214,7 @@ const App = () => {
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
           <div className="logo" style={{ minWidth: '150px' }}>
             <img src={logo || "https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true"} alt="Logo" style={{ height: '54px', borderRadius: '12px', objectFit: 'contain' }} />
-            <span style={{ marginLeft: '10px' }}>{hero.title.split(' ')[0]}</span>
+            <span style={{ lineHeight: 1.1, whiteSpace: 'nowrap' }}>{hero.title.split(' ')[0]}</span>
           </div>
 
           {navLinks}
