@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Loader2, User, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X } from 'lucide-react';
-import { ADMIN_API_BASE } from '../lib/api';
+import { Save, Loader2, User, Users, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X, Camera } from 'lucide-react';
+import { ADMIN_API_BASE, API_BASE } from '../lib/api';
 import MenuButton from '../components/MenuButton';
 
 // Only these fields are editable; everything else is identity/system data.
@@ -13,9 +13,39 @@ const Profile = () => {
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [leaderUploading, setLeaderUploading] = useState(null); // index being uploaded
     const [message, setMessage] = useState(null);   // { type: 'ok'|'err', text }
 
     const schoolId = localStorage.getItem('scoolg_school_id');
+
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+    });
+
+    // Upload a new school logo -> Cloudinary -> save it on the profile.
+    const handleLogoChange = async (file) => {
+        if (!file) return;
+        if (!file.type?.startsWith('image/')) { setMessage({ type: 'err', text: 'Please choose an image file (PNG/JPG).' }); return; }
+        setUploadingLogo(true); setMessage(null);
+        try {
+            const base64 = await fileToBase64(file);
+            const up = await axios.post(`${API_BASE}/upload`, { file: base64, folder: 'Logos', schoolName: formData?.schoolName || 'School' });
+            const url = up.data?.url;
+            if (!url) throw new Error('Upload failed');
+            await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, { logo: url });
+            setFormData((prev) => ({ ...prev, logo: url, schoolLogo: url }));
+            setMessage({ type: 'ok', text: 'Logo updated! It will show on your website shortly.' });
+            setTimeout(() => setMessage(null), 4000);
+        } catch (err) {
+            setMessage({ type: 'err', text: err.response?.data?.error || 'Logo upload failed — try a smaller image (under ~2MB).' });
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
 
     useEffect(() => { fetchProfile(); /* eslint-disable-next-line */ }, []);
 
@@ -34,11 +64,37 @@ const Profile = () => {
     const cancelEdit = () => { setEditing(false); setMessage(null); };
     const setField = (k, v) => setDraft((p) => ({ ...p, [k]: v }));
 
+    // --- Leadership editing (in the draft) ---
+    const setLeader = (i, key, val) => setDraft((p) => {
+        const list = [...(p.leadership || [])];
+        list[i] = { ...list[i], [key]: val };
+        return { ...p, leadership: list };
+    });
+    const addLeader = () => setDraft((p) => ({ ...p, leadership: [...(p.leadership || []), { name: '', role: '', message: '', photo: '' }] }));
+    const removeLeader = (i) => setDraft((p) => ({ ...p, leadership: (p.leadership || []).filter((_, idx) => idx !== i) }));
+    const handleLeaderPhoto = async (i, file) => {
+        if (!file) return;
+        if (!file.type?.startsWith('image/')) { setMessage({ type: 'err', text: 'Please choose an image file.' }); return; }
+        setLeaderUploading(i);
+        try {
+            const base64 = await fileToBase64(file);
+            const up = await axios.post(`${API_BASE}/upload`, { file: base64, folder: 'Leadership', schoolName: formData?.schoolName || 'School' });
+            if (up.data?.url) setLeader(i, 'photo', up.data.url);
+            else throw new Error('Upload failed');
+        } catch (err) {
+            setMessage({ type: 'err', text: 'Photo upload failed — try a smaller image.' });
+        } finally {
+            setLeaderUploading(null);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true); setMessage(null);
         try {
             const payload = {};
             EDITABLE_KEYS.forEach((k) => { payload[k] = draft[k] ?? ''; });
+            payload.leadership = (Array.isArray(draft.leadership) ? draft.leadership : [])
+                .filter((m) => (m.name || '').trim() || (m.role || '').trim() || (m.message || '').trim() || m.photo);
             await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, payload);
             setFormData((prev) => ({ ...prev, ...payload }));
             setEditing(false);
@@ -176,15 +232,28 @@ const Profile = () => {
 
             {/* identity header (read-only) */}
             <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
-                {logo ? (
-                    <div className="h-24 w-24 rounded-3xl shrink-0 flex items-center justify-center overflow-hidden">
-                        <img src={logo} alt="School logo" className="max-h-full max-w-full object-contain" />
-                    </div>
-                ) : (
-                    <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shrink-0 shadow-lg shadow-blue-600/20">
-                        {(formData.schoolName?.charAt(0) || 'S').toUpperCase()}
-                    </div>
-                )}
+                <div className="relative h-24 w-24 shrink-0 group">
+                    {logo ? (
+                        <div className="h-24 w-24 rounded-3xl flex items-center justify-center overflow-hidden bg-slate-50 border border-slate-100">
+                            <img src={logo} alt="School logo" className="max-h-full max-w-full object-contain" />
+                        </div>
+                    ) : (
+                        <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white grid place-items-center text-4xl font-black shadow-lg shadow-blue-600/20">
+                            {(formData.schoolName?.charAt(0) || 'S').toUpperCase()}
+                        </div>
+                    )}
+                    {/* Change-logo overlay (always available) */}
+                    <label title="Change logo" className="absolute inset-0 rounded-3xl bg-slate-900/55 text-white flex flex-col items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        {uploadingLogo
+                            ? <Loader2 size={20} className="animate-spin" />
+                            : <><Camera size={20} /><span className="text-[10px] font-bold">Change</span></>}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploadingLogo} onChange={(e) => handleLogoChange(e.target.files?.[0])} />
+                    </label>
+                    {/* always-visible hint so it's discoverable on touch devices too */}
+                    <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-blue-600 text-white grid place-items-center shadow-md ring-2 ring-white pointer-events-none">
+                        <Camera size={13} />
+                    </span>
+                </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">{formData.schoolName || 'Your School'}</h2>
@@ -225,6 +294,51 @@ const Profile = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Field label="Vision Statement" k="vision" textarea />
                         <Field label="Mission Statement" k="mission" textarea />
+                    </div>
+                </SectionCard>
+
+                <SectionCard icon={<Users />} iconBg="#f5f3ff" iconColor="#7c3aed" title="Leadership Team" full>
+                    <div className="space-y-4">
+                        {(src.leadership || []).length === 0 && !editing && (
+                            <p className="text-sm text-slate-300">No leadership added yet. Click “Edit Profile” to add your Principal, Vice Principal etc.</p>
+                        )}
+                        {(src.leadership || []).map((m, i) => (
+                            <div key={i} className="flex gap-4 items-start p-4 rounded-2xl border border-slate-100 bg-slate-50/40">
+                                <div className="relative h-16 w-16 shrink-0">
+                                    {m.photo
+                                        ? <img src={m.photo} alt="" className="h-16 w-16 rounded-2xl object-cover border border-slate-200" />
+                                        : <div className="h-16 w-16 rounded-2xl bg-violet-100 text-violet-600 grid place-items-center font-black text-xl">{(m.name?.charAt(0) || '?').toUpperCase()}</div>}
+                                    {editing && (
+                                        <label title="Upload photo" className="absolute inset-0 rounded-2xl bg-slate-900/35 text-white grid place-items-center cursor-pointer">
+                                            {leaderUploading === i ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLeaderPhoto(i, e.target.files?.[0])} />
+                                        </label>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-2">
+                                    {editing ? (
+                                        <>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <input value={m.name || ''} onChange={(e) => setLeader(i, 'name', e.target.value)} placeholder="Full name" className={inputCls} />
+                                                <input value={m.role || ''} onChange={(e) => setLeader(i, 'role', e.target.value)} placeholder="Role (e.g. Principal)" className={inputCls} />
+                                            </div>
+                                            <textarea value={m.message || ''} onChange={(e) => setLeader(i, 'message', e.target.value)} placeholder="Message / vision…" className={inputCls + ' h-20 py-2 resize-none'} />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="font-bold text-slate-800">{m.name || '—'}{m.role && <span className="text-xs font-semibold text-violet-600"> · {m.role}</span>}</p>
+                                            {m.message && <p className="text-sm text-slate-500 leading-relaxed">{m.message}</p>}
+                                        </>
+                                    )}
+                                </div>
+                                {editing && (
+                                    <button onClick={() => removeLeader(i)} className="text-red-500 hover:bg-red-50 rounded-lg p-1.5 shrink-0" title="Remove"><X size={16} /></button>
+                                )}
+                            </div>
+                        ))}
+                        {editing && (
+                            <button onClick={addLeader} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-violet-600 font-bold text-sm hover:border-violet-300 hover:bg-violet-50 transition-colors">+ Add Member</button>
+                        )}
                     </div>
                 </SectionCard>
             </div>
