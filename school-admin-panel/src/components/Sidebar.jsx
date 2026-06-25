@@ -16,17 +16,27 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const [apiDone, setApiDone] = useState(!!cachedLogo);
 
     useEffect(() => {
-        // Logo is cached in localStorage and rarely changes — only hit the API
-        // when we don't already have it, instead of on every login/navigation.
-        if (!schoolId || cachedLogo) { setApiDone(true); return; }
+        // Always refresh the logo from the profile (the cached value paints
+        // instantly; this keeps it correct after the admin changes it in Profile).
+        if (!schoolId) { setApiDone(true); return; }
         axios.get(`${ADMIN_API_BASE}/profile/${schoolId}`)
             .then((res) => {
                 const l = res.data?.logo || res.data?.schoolLogo || '';
-                if (l) { setLogo(l); localStorage.setItem('scoolg_school_logo', l); }
+                if (l) {
+                    localStorage.setItem('scoolg_school_logo', l);
+                    setLogo((prev) => { if (prev !== l) setLogoReady(false); return l; });
+                }
             })
             .catch(() => {})
             .finally(() => setApiDone(true));
     }, [schoolId]);
+
+    // Live update when the admin changes the logo on the Profile page.
+    useEffect(() => {
+        const onLogo = (e) => { const url = e.detail; if (url) { setLogoReady(false); setLogo(url); } };
+        window.addEventListener('school-logo-updated', onLogo);
+        return () => window.removeEventListener('school-logo-updated', onLogo);
+    }, []);
 
     const handleLogout = () => {
         logout();

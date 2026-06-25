@@ -254,10 +254,12 @@ nav {
 
 .hero-image-main {
   width: 100%;
+  max-width: 560px;
+  margin-left: auto;
   border-radius: 32px;
   box-shadow: var(--shadow-lg);
   object-fit: cover;
-  height: 500px;
+  height: 460px;
 }
 
 .hero-tag {
@@ -517,6 +519,12 @@ footer a:hover { color: #fff; }
   .contact-container,
   .notice-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* On phones the hero image stacks full-width — keep it a tidy banner height
+     instead of a giant 500px block. */
+  .hero-image-main {
+    height: 260px;
   }
 
   .notice-featured {

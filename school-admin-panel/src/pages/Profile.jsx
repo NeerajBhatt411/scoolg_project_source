@@ -40,6 +40,9 @@ const Profile = () => {
             if (!url) throw new Error('Upload failed');
             await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, { logo: url });
             setFormData((prev) => ({ ...prev, logo: url, schoolLogo: url }));
+            // Keep the sidebar in sync (cache + live event) so it updates immediately.
+            localStorage.setItem('scoolg_school_logo', url);
+            window.dispatchEvent(new CustomEvent('school-logo-updated', { detail: url }));
             setMessage({ type: 'ok', text: 'Logo updated! It will show on your website shortly.' });
             setTimeout(() => setMessage(null), 4000);
         } catch (err) {
