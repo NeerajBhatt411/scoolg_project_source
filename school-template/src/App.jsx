@@ -201,7 +201,7 @@ const App = () => {
       <header>
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
           <div className="logo" style={{ minWidth: '150px' }}>
-            <img src={logo || "https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true"} alt="Logo" style={{ height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+            <img src={logo || "https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true"} alt="Logo" style={{ height: '54px', borderRadius: '12px', objectFit: 'contain' }} />
             <span style={{ marginLeft: '10px' }}>{hero.title.split(' ')[0]}</span>
           </div>
 
@@ -358,9 +358,9 @@ const App = () => {
                   <div
                     key={i}
                     className="card"
-                    style={{ padding: '30px 22px', textAlign: 'center', background: 'white', borderRadius: '22px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', transition: 'transform .22s ease, box-shadow .22s ease' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 30px -12px rgba(75,46,213,.28)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                    style={{ padding: '32px 22px', textAlign: 'center', background: 'white', borderRadius: '22px', border: '1px solid rgba(16,24,40,0.05)', boxShadow: 'var(--shadow-card)', transition: 'transform .32s cubic-bezier(.2,.7,.2,1), box-shadow .32s ease, border-color .32s ease' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 26px 48px -18px rgba(75,46,213,.30)'; e.currentTarget.style.borderColor = 'rgba(75,46,213,0.20)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.borderColor = 'rgba(16,24,40,0.05)'; }}
                   >
                     <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, var(--accent-soft), #ffffff)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', color: 'var(--accent)', boxShadow: 'inset 0 0 0 1px var(--border-color)' }}>
                       <LucideIcon name={facilityIcon(f)} size={28} />
@@ -550,7 +550,7 @@ const App = () => {
         <div className="footer-grid">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
-              <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '50px', borderRadius: '12px', objectFit: 'contain' }} />
+              <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '58px', borderRadius: '13px', objectFit: 'contain' }} />
               {hero.title.split(' ')[0]}
             </div>
             <p style={{ opacity: 0.8, maxWidth: 400 }}>Empowering students to achieve excellence and shaping the visionary leaders of tomorrow through holistic education paradigms.</p>
