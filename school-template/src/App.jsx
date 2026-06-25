@@ -11,24 +11,69 @@ const LucideIcon = ({ name, ...props }) => {
   return I ? <I {...props} /> : null;
 };
 
+// Pick a relevant icon for a facility from its name (so every card isn't the
+// same tick mark). Falls back to a sparkle for anything unrecognised.
+const facilityIcon = (f) => {
+  const s = (f || '').toLowerCase();
+  if (s.includes('librar')) return 'BookOpen';
+  if (s.includes('comput') || s.includes(' it')) return 'Laptop';
+  if (s.includes('smart') || s.includes('class')) return 'Presentation';
+  if (s.includes('science') || s.includes('lab')) return 'FlaskConical';
+  if (s.includes('sport') || s.includes('ground') || s.includes('gym') || s.includes('play')) return 'Trophy';
+  if (s.includes('audi') || s.includes('theat') || s.includes('hall')) return 'Drama';
+  if (s.includes('transport') || s.includes('bus')) return 'Bus';
+  if (s.includes('hostel') || s.includes('board') || s.includes('dorm')) return 'BedDouble';
+  if (s.includes('cafe') || s.includes('canteen') || s.includes('mess') || s.includes('food')) return 'UtensilsCrossed';
+  if (s.includes('medical') || s.includes('health') || s.includes('infirmary') || s.includes('clinic')) return 'Stethoscope';
+  if (s.includes('music') || s.includes('art') || s.includes('dance')) return 'Music2';
+  if (s.includes('swim') || s.includes('pool')) return 'Waves';
+  if (s.includes('wifi') || s.includes('internet') || s.includes('digital')) return 'Wifi';
+  if (s.includes('secur') || s.includes('cctv') || s.includes('safe')) return 'ShieldCheck';
+  return 'Sparkles';
+};
+
+// Branded full-screen loader shown while a school's live data is being fetched
+// (so visitors never see the demo template flash before the real content).
+const LoadingScreen = () => (
+  <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#ffffff', zIndex: 9999, gap: '22px' }}>
+    <style>{`@keyframes cwspin{to{transform:rotate(360deg)}}@keyframes cwpulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
+    <div style={{ position: 'relative', width: 84, height: 84, display: 'grid', placeItems: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid #ece9fb', borderTopColor: '#4B2ED5', animation: 'cwspin 0.8s linear infinite' }} />
+      <Icons.GraduationCap size={36} color="#4B2ED5" style={{ animation: 'cwpulse 1.4s ease-in-out infinite' }} />
+    </div>
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ fontWeight: 800, fontSize: '1.05rem', color: '#1f2937', margin: 0 }}>Loading your school…</p>
+      <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>Powered by Scoolg</p>
+    </div>
+  </div>
+);
+
 const App = () => {
   // Onboarding preview (localStorage) is the initial source; on a real school
   // subdomain (e.g. gajera.scoolg.com) we replace it with that school's live data.
+  // Detect the school subdomain (e.g. countrywide.scoolg.com -> "countrywide").
+  const subdomain = (() => {
+    const parts = window.location.hostname.split('.');
+    const ignore = ['www', 'scoolg', 'localhost', '127'];
+    return parts.length >= 3 && !ignore.includes(parts[0]) ? parts[0] : null;
+  })();
+
+  // On a real school subdomain, ignore any stale localStorage preview and load
+  // THAT school's live data; on the apex/demo we keep the onboarding preview.
   const [currentOnboardingData, setCurrentOnboardingData] = useState(() => {
+    if (subdomain) return null;
     const saved = localStorage.getItem('onboardingData');
     return saved ? JSON.parse(saved) : null;
   });
+  const [loading, setLoading] = useState(!!subdomain);
 
   useEffect(() => {
-    const host = window.location.hostname;            // e.g. gajera.scoolg.com
-    const parts = host.split('.');
-    const ignore = ['www', 'scoolg', 'localhost', '127'];
-    const sub = parts.length >= 3 && !ignore.includes(parts[0]) ? parts[0] : null;
-    if (!sub) return; // apex/preview/dev → keep localStorage preview
-    fetch(`${API_BASE}/public/school/${sub}`)
+    if (!subdomain) return; // apex/preview/dev → keep localStorage preview
+    fetch(`${API_BASE}/public/school/${subdomain}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d && d.formData) setCurrentOnboardingData(d.formData); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const data = currentOnboardingData;
@@ -132,6 +177,8 @@ const App = () => {
       <a href="#contact" className={`nav-item ${activeTab === 'contact' ? 'active' : ''}`} onClick={() => handleNavClick(currentPage, 'contact')}>Contact</a>
     </div>
   );
+
+  if (loading) return <LoadingScreen />;
 
   return (
     <div style={{ position: 'relative' }}>
@@ -290,23 +337,22 @@ const App = () => {
                 <h2 className="section-title">Premium Facilities</h2>
                 <p className="section-subtitle">Discover the state-of-the-art infrastructure we provide for our students' holistic growth.</p>
               </div>
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
-                {/* Display Standard Facilities */}
-                {facilities?.filter(f => f !== 'OTHER').map((f, i) => (
-                  <div key={i} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                      <LucideIcon name="CheckCircle" size={24} />
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '22px' }}>
+                {[
+                  ...(facilities || []).filter((f) => f && f !== 'OTHER'),
+                  ...((otherFacilities || '').split(',').map((f) => f.trim()).filter(Boolean)),
+                ].map((f, i) => (
+                  <div
+                    key={i}
+                    className="card"
+                    style={{ padding: '30px 22px', textAlign: 'center', background: 'white', borderRadius: '22px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', transition: 'transform .22s ease, box-shadow .22s ease' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 30px -12px rgba(75,46,213,.28)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                  >
+                    <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, var(--accent-soft), #ffffff)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', color: 'var(--accent)', boxShadow: 'inset 0 0 0 1px var(--border-color)' }}>
+                      <LucideIcon name={facilityIcon(f)} size={28} />
                     </div>
-                    <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f}</h4>
-                  </div>
-                ))}
-                {/* Display Other Facilities (Split by comma) */}
-                {otherFacilities?.split(',').filter(f => f.trim()).map((f, i) => (
-                  <div key={`other-${i}`} className="card hover-reveal" style={{ padding: '24px', textAlign: 'center', background: 'white', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ width: '50px', height: '50px', background: 'var(--accent-soft)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
-                      <LucideIcon name="PlusCircle" size={24} />
-                    </div>
-                    <h4 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{f.trim()}</h4>
+                    <h4 style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1f2937' }}>{f}</h4>
                   </div>
                 ))}
               </div>
