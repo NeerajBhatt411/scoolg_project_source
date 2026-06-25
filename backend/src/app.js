@@ -35,8 +35,12 @@ app.use(corsMiddleware);   // manual CORS + preflight (Netlify-safe)
 app.use(cors());
 app.use(express.json({ limit: '15mb' }));   // base64 image/file uploads exceed the 100kb default
 
-// Swagger UI at /docs and /api-docs
-mountSwagger(app);
+// Swagger UI at /docs and /api-docs. It scans every route file for JSDoc at
+// startup (slow cold starts on serverless), so it's now OPT-IN: set
+// ENABLE_SWAGGER=true in your local .env to get the docs. Off in prod = faster.
+if (process.env.ENABLE_SWAGGER === 'true') {
+    mountSwagger(app);
+}
 
 // --- Health Check & Test ---
 app.get('/api/health', (req, res) => res.json({ status: "Scoolg Local Backend Online! ✨" }));

@@ -75,7 +75,12 @@ const sendOne = async (accessToken, token, payload) => {
             message: {
                 token,
                 data,
-                webpush: { fcmOptions: { link } },
+                webpush: {
+                    // High urgency = the push service delivers immediately instead of
+                    // batching/holding it (helps the "notification comes 10 min late").
+                    headers: { Urgency: 'high', TTL: '86400' },
+                    fcmOptions: { link },
+                },
             },
         }),
     });
