@@ -429,7 +429,7 @@ export const getTeacherFirebaseToken = async (req, res) => {
             schoolId: String(teacher.schoolId),
             teacherId: String(teacher._id),
         });
-        res.json({ token, teacherId: String(teacher._id), schoolId: String(teacher.schoolId) });
+        res.json({ token, teacherId: String(teacher._id), schoolId: String(teacher.schoolId), name: teacher.fullName || 'Teacher' });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

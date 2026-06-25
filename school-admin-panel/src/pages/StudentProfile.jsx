@@ -5,7 +5,16 @@ import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { db, ensureChatAuth } from '../firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+const ChatTypingDots = () => (
+    <span className="inline-flex gap-1 items-center">
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+    </span>
+);
+const chatTyperName = (t) => (t.role === 'parent' ? 'Parent' : (t.name || (t.role === 'teacher' ? 'Teacher' : 'School Office')));
 
 const StudentProfile = () => {
     const location = useLocation();
@@ -31,16 +40,37 @@ const StudentProfile = () => {
     const [chatText, setChatText] = useState('');
     const [chatSending, setChatSending] = useState(false);
     const [chatLoading, setChatLoading] = useState(false);
+    const [chatTypers, setChatTypers] = useState([]);
     const chatEndRef = useRef(null);
+    const chatMeRef = useRef({ uid: null, name: 'School Office', schoolId: '' });
+    const chatTypingDocRef = useRef(null);
+    const chatPingRef = useRef(0);
+    const chatStopTimerRef = useRef(null);
     const toDate = (v) => { try { return v?.toDate ? v.toDate() : (v ? new Date(v) : null); } catch { return null; } };
     const fmtChatTime = (d) => { const dt = toDate(d); try { return dt ? dt.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
     const chatAll = [...chatMsgs, ...chatPending];
+    const stopChatTyping = () => {
+        const d = chatTypingDocRef.current; if (!d) return;
+        clearTimeout(chatStopTimerRef.current);
+        setDoc(d, { name: chatMeRef.current.name, role: 'admin', schoolId: chatMeRef.current.schoolId, typing: false, at: serverTimestamp() }).catch(() => {});
+    };
+    const signalChatTyping = () => {
+        const d = chatTypingDocRef.current; if (!d) return;
+        const now = Date.now();
+        if (now - chatPingRef.current > 1500) {
+            chatPingRef.current = now;
+            setDoc(d, { name: chatMeRef.current.name, role: 'admin', schoolId: chatMeRef.current.schoolId, typing: true, at: serverTimestamp() }).catch(() => {});
+        }
+        clearTimeout(chatStopTimerRef.current);
+        chatStopTimerRef.current = setTimeout(stopChatTyping, 3000);
+    };
+    const onChatChange = (e) => { const v = e.target.value; setChatText(v); if (v.trim()) signalChatTyping(); else stopChatTyping(); };
     const sendChat = async (e) => {
         e?.preventDefault();
         const t = chatText.trim();
         if (!t || chatSending || !student?._id) return;
         setChatSending(true);
-        setChatText('');
+        setChatText(''); stopChatTyping();
         setChatPending((m) => [...m, { id: 'tmp-' + Date.now(), from: 'admin', senderName: 'School Office', text: t, createdAt: new Date().toISOString() }]);
         try { await axios.post(`${ADMIN_API_BASE}/messages/${student._id}`, { text: t }); }
         catch (e) { /* listener reconciles */ }
@@ -48,27 +78,36 @@ const StudentProfile = () => {
     };
     useEffect(() => {
         if (activeTab !== 'Parent Chat' || !student?._id) return;
-        let unsub = () => {};
+        let unsub = () => {}, unsubT = () => {};
         let cancelled = false;
-        setChatLoading(true);
+        setChatLoading(true); setChatTypers([]);
+        const sid = String(student._id);
         (async () => {
             try {
-                await ensureChatAuth(async () => (await axios.get(`${ADMIN_API_BASE}/firebase-token`)).data);
+                const td = (await axios.get(`${ADMIN_API_BASE}/firebase-token`)).data;
+                const u = await ensureChatAuth(async () => td);
                 if (cancelled) return;
-                const q = query(collection(db, 'chats', String(student._id), 'messages'), orderBy('createdAt', 'asc'));
+                chatMeRef.current = { uid: u?.uid, name: td?.name || 'School Office', schoolId: String(td?.schoolId || '') };
+                chatTypingDocRef.current = u?.uid ? doc(db, 'chats', sid, 'typing', u.uid) : null;
+                const q = query(collection(db, 'chats', sid, 'messages'), orderBy('createdAt', 'asc'));
                 unsub = onSnapshot(q, (snap) => {
                     const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
                     setChatMsgs(arr);
                     setChatPending((p) => p.filter((pm) => !arr.some((s) => s.from === 'admin' && s.text === pm.text)));
                     setChatLoading(false);
                 }, () => setChatLoading(false));
-                axios.post(`${ADMIN_API_BASE}/messages/${student._id}/read`).catch(() => {});
+                unsubT = onSnapshot(collection(db, 'chats', sid, 'typing'), (snap) => {
+                    const now = Date.now();
+                    setChatTypers(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+                        .filter((t) => t.id !== chatMeRef.current.uid && t.typing && t.at?.toMillis && (now - t.at.toMillis() < 8000)));
+                }, () => {});
+                axios.post(`${ADMIN_API_BASE}/messages/${sid}/read`).catch(() => {});
             } catch (e) { setChatLoading(false); }
         })();
-        return () => { cancelled = true; unsub(); };
+        return () => { cancelled = true; unsub(); unsubT(); stopChatTyping(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, student?._id]);
-    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs.length, chatPending.length]);
+    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs.length, chatPending.length, chatTypers.length]);
 
     useEffect(() => {
         if (student?._id) {
@@ -426,10 +465,18 @@ const StudentProfile = () => {
                                             );
                                         })
                                     )}
+                                    {chatTypers.length > 0 && (
+                                        <div className="flex justify-start">
+                                            <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm flex items-center gap-2">
+                                                <span className="text-[11px] font-bold text-slate-500">{chatTypers.length > 1 ? 'Several people' : chatTyperName(chatTypers[0])}</span>
+                                                <ChatTypingDots />
+                                            </div>
+                                        </div>
+                                    )}
                                     <div ref={chatEndRef} />
                                 </div>
                                 <form onSubmit={sendChat} className="mt-3 flex items-center gap-2">
-                                    <input value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Message the parent…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
+                                    <input value={chatText} onChange={onChatChange} onBlur={stopChatTyping} placeholder="Message the parent…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
                                     <button type="submit" disabled={!chatText.trim() || chatSending} className="h-11 px-5 rounded-full bg-blue-600 text-white font-bold text-sm disabled:opacity-40">Send</button>
                                 </form>
                             </div>

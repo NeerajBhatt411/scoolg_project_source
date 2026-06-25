@@ -112,7 +112,7 @@ export const sendChatMessage = async (opts) => {
         {
             update: {
                 name: `${DOCS()}/chats/${sid}/messages/${msgId}`,
-                fields: fsFields({ from: opts.from, senderName: opts.senderName || '', senderId: opts.senderId ? String(opts.senderId) : null, text }),
+                fields: fsFields({ schoolId: String(opts.schoolId), from: opts.from, senderName: opts.senderName || '', senderId: opts.senderId ? String(opts.senderId) : null, text }),
             },
             updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
         },

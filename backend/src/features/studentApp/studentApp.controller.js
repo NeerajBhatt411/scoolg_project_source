@@ -282,12 +282,13 @@ export const getStudentFirebaseToken = async (req, res) => {
     try {
         const student = await studentFromAuth(req);
         if (!student) return res.status(404).json({ error: "Student not found" });
+        const name = [student.firstName, student.lastName].filter(Boolean).join(' ');
         const token = mintCustomToken(`p_${student._id}`, {
             role: 'parent',
             schoolId: String(student.schoolId),
             studentId: String(student._id),
         });
-        res.json({ token, studentId: String(student._id), schoolId: String(student.schoolId) });
+        res.json({ token, studentId: String(student._id), schoolId: String(student.schoolId), name });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

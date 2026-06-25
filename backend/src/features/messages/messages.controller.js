@@ -112,7 +112,7 @@ export const getAdminFirebaseToken = async (req, res) => {
         const school = await resolveSchool(req);
         if (!school) return res.status(404).json({ error: "School not found" });
         const token = mintCustomToken(`a_${school._id}`, { role: 'admin', schoolId: String(school._id) });
-        res.json({ token, schoolId: String(school._id) });
+        res.json({ token, schoolId: String(school._id), name: 'School Office' });
     } catch (err) {
         res.status(500).json({ error: "Failed to mint token" });
     }

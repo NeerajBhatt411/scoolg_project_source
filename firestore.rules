@@ -1,10 +1,11 @@
 rules_version = '2';
 
 // Scoolg parent <-> school GROUP chat.
-// One document per student: chats/{studentId}, with a messages subcollection.
-// CLIENTS ARE READ-ONLY — every write goes through the backend (service account),
-// which bypasses these rules. Reads are scoped by the custom-token claims the
-// backend mints (role + schoolId + studentId).
+// One document per student: chats/{studentId}, with `messages` + `typing`
+// subcollections. MESSAGES are written only by the backend (service account,
+// which bypasses rules). TYPING docs are written by the clients (each member
+// owns one doc keyed by their auth uid). Reads are scoped by the custom-token
+// claims the backend mints (role + schoolId + studentId).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -17,15 +18,30 @@ service cloud.firestore {
     }
 
     match /chats/{studentId} {
-      // Parent of this student, or any teacher/admin of the same school.
       allow read: if isParent(studentId)
         || (resource != null && isStaffOfSchool(resource.data.schoolId));
       allow write: if false; // backend only
 
+      // Each message carries its schoolId, so reads need no cross-doc lookups.
       match /messages/{msgId} {
         allow read: if isParent(studentId)
-          || isStaffOfSchool(get(/databases/$(database)/documents/chats/$(studentId)).data.schoolId);
+          || (resource != null && isStaffOfSchool(resource.data.schoolId));
         allow write: if false; // backend only
+      }
+
+      // Ephemeral "is typing" presence. A member may write ONLY their own doc
+      // (id == their auth uid) and only for their own school.
+      match /typing/{uid} {
+        allow read: if isParent(studentId)
+          || (resource != null && isStaffOfSchool(resource.data.schoolId));
+        allow write: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.schoolId == request.auth.token.schoolId
+          && (
+            (request.auth.token.role == 'parent' && request.auth.token.studentId == studentId)
+            || request.auth.token.role == 'teacher'
+            || request.auth.token.role == 'admin'
+          );
       }
     }
 
