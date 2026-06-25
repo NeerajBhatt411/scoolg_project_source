@@ -33,28 +33,28 @@ const facilityIcon = (f) => {
 };
 
 // Branded full-screen loader (with a climbing % counter) shown while a school's
-// live data is being fetched — so visitors never see the demo template flash.
-const LoadingScreen = ({ name }) => {
-  const [pct, setPct] = useState(4);
+// live data is being fetched. Shows the SCHOOL'S OWN logo once it's available.
+const LoadingScreen = ({ logo, name }) => {
+  const [pct, setPct] = useState(6);
   useEffect(() => {
-    const t = setInterval(() => setPct((p) => (p >= 96 ? 96 : p + Math.max(1, Math.ceil((97 - p) / 9)))), 130);
+    const t = setInterval(() => setPct((p) => (p >= 100 ? 100 : p + Math.max(1, Math.ceil((101 - p) / 8)))), 110);
     return () => clearInterval(t);
   }, []);
+  const initial = (name || 'S').charAt(0).toUpperCase();
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#ffffff', zIndex: 9999, gap: '20px' }}>
-      <style>{`@keyframes cwspin{to{transform:rotate(360deg)}}@keyframes cwpulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
-      <div style={{ position: 'relative', width: 96, height: 96, display: 'grid', placeItems: 'center' }}>
+      <style>{`@keyframes cwspin{to{transform:rotate(360deg)}}@keyframes cwpulse{0%,100%{opacity:.6}50%{opacity:1}}`}</style>
+      <div style={{ position: 'relative', width: 108, height: 108, display: 'grid', placeItems: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '4px solid #ece9fb', borderTopColor: '#4B2ED5', animation: 'cwspin 0.8s linear infinite' }} />
-        <Icons.GraduationCap size={40} color="#4B2ED5" style={{ animation: 'cwpulse 1.4s ease-in-out infinite' }} />
+        {logo
+          ? <img src={logo} alt="" style={{ width: 68, height: 68, borderRadius: 16, objectFit: 'contain', animation: 'cwpulse 1.5s ease-in-out infinite' }} />
+          : <div style={{ width: 68, height: 68, borderRadius: 16, background: 'linear-gradient(135deg,#6d4bff,#4B2ED5)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: '1.9rem', fontFamily: 'Outfit, sans-serif', animation: 'cwpulse 1.5s ease-in-out infinite' }}>{initial}</div>}
       </div>
       <div style={{ fontWeight: 900, fontSize: '2.1rem', color: '#4B2ED5', letterSpacing: '-0.02em', fontFamily: 'Outfit, sans-serif' }}>{pct}%</div>
       <div style={{ width: 200, maxWidth: '60vw', height: 6, borderRadius: 99, background: '#ece9fb', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #6d4bff, #4B2ED5)', borderRadius: 99, transition: 'width .25s ease' }} />
       </div>
-      <div style={{ textAlign: 'center', marginTop: 4 }}>
-        <p style={{ fontWeight: 800, fontSize: '1.02rem', color: '#1f2937', margin: 0 }}>Loading {name || 'your school'}…</p>
-        <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: 5, letterSpacing: '0.04em' }}>Powered by Scoolg</p>
-      </div>
+      <p style={{ fontWeight: 800, fontSize: '1.02rem', color: '#1f2937', margin: 0 }}>Loading {name || 'your school'}…</p>
     </div>
   );
 };
@@ -84,7 +84,8 @@ const App = () => {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d && d.formData) setCurrentOnboardingData(d.formData); })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      // brief hold so the school's logo is visible on the loader before reveal
+      .finally(() => setTimeout(() => setLoading(false), 550));
   }, []);
 
   const data = currentOnboardingData;
@@ -190,7 +191,7 @@ const App = () => {
     </div>
   );
 
-  if (loading) return <LoadingScreen name={subdomain ? subdomain.charAt(0).toUpperCase() + subdomain.slice(1) : ''} />;
+  if (loading) return <LoadingScreen logo={currentOnboardingData?.logo} name={subdomain ? subdomain.charAt(0).toUpperCase() + subdomain.slice(1) : ''} />;
 
   return (
     <div style={{ position: 'relative' }}>
