@@ -148,8 +148,10 @@ header {
 }
 
 .logo img {
-  height: 64px !important;
+  height: 84px !important;
   width: auto;
+  max-width: 260px;
+  object-fit: contain;
 }
 
 nav {

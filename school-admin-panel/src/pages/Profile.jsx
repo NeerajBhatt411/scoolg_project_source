@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Loader2, User, Users, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X, Camera } from 'lucide-react';
+import { Save, Loader2, User, Users, Phone, MapPin, Globe, Mail, BadgeCheck, Lock, Pencil, X, Camera, Image as ImageIcon, Images, Plus } from 'lucide-react';
 import { ADMIN_API_BASE, API_BASE } from '../lib/api';
 import MenuButton from '../components/MenuButton';
 
@@ -15,6 +15,8 @@ const Profile = () => {
     const [saving, setSaving] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [leaderUploading, setLeaderUploading] = useState(null); // index being uploaded
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [galleryAdding, setGalleryAdding] = useState(false);
     const [message, setMessage] = useState(null);   // { type: 'ok'|'err', text }
 
     const schoolId = localStorage.getItem('scoolg_school_id');
@@ -88,11 +90,46 @@ const Profile = () => {
         }
     };
 
+    // --- Cover (feature) image + Gallery (edited in the draft, saved on Save) ---
+    const handleCoverChange = async (file) => {
+        if (!file) return;
+        if (!file.type?.startsWith('image/')) { setMessage({ type: 'err', text: 'Please choose an image file.' }); return; }
+        setCoverUploading(true);
+        try {
+            const base64 = await fileToBase64(file);
+            const up = await axios.post(`${API_BASE}/upload`, { file: base64, folder: 'Cover', schoolName: formData?.schoolName || 'School' });
+            if (up.data?.url) setDraft((p) => ({ ...p, coverImage: up.data.url }));
+            else throw new Error('Upload failed');
+        } catch (err) {
+            setMessage({ type: 'err', text: 'Cover upload failed — try a smaller image.' });
+        } finally { setCoverUploading(false); }
+    };
+    const addGalleryImage = async (file) => {
+        if (!file) return;
+        if (!file.type?.startsWith('image/')) { setMessage({ type: 'err', text: 'Please choose an image file.' }); return; }
+        setGalleryAdding(true);
+        try {
+            const base64 = await fileToBase64(file);
+            const up = await axios.post(`${API_BASE}/upload`, { file: base64, folder: 'Gallery', schoolName: formData?.schoolName || 'School' });
+            if (up.data?.url) setDraft((p) => ({ ...p, gallery: [...(p.gallery || []), up.data.url] }));
+            else throw new Error('Upload failed');
+        } catch (err) {
+            setMessage({ type: 'err', text: 'Image upload failed — try a smaller image.' });
+        } finally { setGalleryAdding(false); }
+    };
+    const removeGalleryImage = (i) => setDraft((p) => {
+        const g = p.gallery || [];
+        if (g.length <= 1) { setMessage({ type: 'err', text: 'At least 1 gallery image is required.' }); setTimeout(() => setMessage(null), 3000); return p; }
+        return { ...p, gallery: g.filter((_, idx) => idx !== i) };
+    });
+
     const handleSave = async () => {
         setSaving(true); setMessage(null);
         try {
             const payload = {};
             EDITABLE_KEYS.forEach((k) => { payload[k] = draft[k] ?? ''; });
+            payload.coverImage = draft.coverImage || '';
+            payload.gallery = Array.isArray(draft.gallery) ? draft.gallery : [];
             payload.leadership = (Array.isArray(draft.leadership) ? draft.leadership : [])
                 .filter((m) => (m.name || '').trim() || (m.role || '').trim() || (m.message || '').trim() || m.photo);
             await axios.patch(`${ADMIN_API_BASE}/profile/${schoolId}`, payload);
@@ -340,6 +377,45 @@ const Profile = () => {
                             <button onClick={addLeader} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-violet-600 font-bold text-sm hover:border-violet-300 hover:bg-violet-50 transition-colors">+ Add Member</button>
                         )}
                     </div>
+                </SectionCard>
+
+                <SectionCard icon={<ImageIcon />} iconBg="#ecfeff" iconColor="#0891b2" title="Cover / Feature Image" full>
+                    <div className="rounded-2xl overflow-hidden border border-slate-100 bg-slate-50" style={{ aspectRatio: '16 / 6' }}>
+                        {src.coverImage
+                            ? <img src={src.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                            : <div className="w-full h-full grid place-items-center text-slate-300 text-sm font-semibold">No cover image yet</div>}
+                    </div>
+                    {editing && (
+                        <label className="mt-3 inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm cursor-pointer transition-colors">
+                            {coverUploading ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />} Change cover image
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCoverChange(e.target.files?.[0])} />
+                        </label>
+                    )}
+                </SectionCard>
+
+                <SectionCard icon={<Images />} iconBg="#fdf4ff" iconColor="#c026d3" title="Gallery" full>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {(src.gallery || []).map((url, i) => (
+                            <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                {editing && (
+                                    <button onClick={() => removeGalleryImage(i)} title="Delete" className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow-md ring-2 ring-white">
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        {editing && (
+                            <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 grid place-items-center text-slate-400 hover:border-fuchsia-300 hover:bg-fuchsia-50 cursor-pointer transition-colors">
+                                {galleryAdding
+                                    ? <Loader2 size={20} className="animate-spin" />
+                                    : <div className="flex flex-col items-center gap-1"><Plus size={22} /><span className="text-[11px] font-bold">Add image</span></div>}
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => addGalleryImage(e.target.files?.[0])} />
+                            </label>
+                        )}
+                    </div>
+                    {(src.gallery || []).length === 0 && !editing && <p className="text-sm text-slate-300">No gallery images yet.</p>}
+                    {editing && <p className="text-xs text-slate-400 mt-3">Tap an image's ✕ to delete · at least 1 image required.</p>}
                 </SectionCard>
             </div>
         </div>
