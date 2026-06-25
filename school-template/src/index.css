@@ -148,7 +148,7 @@ header {
 }
 
 .logo img {
-  height: 84px !important;
+  height: 74px !important;
   width: auto;
   max-width: 260px;
   object-fit: contain;
@@ -516,7 +516,7 @@ footer a:hover { color: #fff; }
     gap: 8px;
   }
   .logo img {
-    height: 52px !important;
+    height: 46px !important;
     max-width: 170px;
   }
 

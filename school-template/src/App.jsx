@@ -214,7 +214,6 @@ const App = () => {
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
           <div className="logo" style={{ minWidth: '150px' }}>
             <img src={logo || "https://ui-avatars.com/api/?name=L&background=4B2ED5&color=fff&rounded=true&bold=true"} alt="Logo" style={{ height: '54px', borderRadius: '12px', objectFit: 'contain' }} />
-            <span style={{ lineHeight: 1.1, whiteSpace: 'nowrap' }}>{hero.title.split(' ')[0]}</span>
           </div>
 
           {navLinks}
