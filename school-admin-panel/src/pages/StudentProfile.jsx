@@ -189,7 +189,7 @@ const StudentProfile = () => {
         );
     }
 
-    const tabs = ['Personal', 'Parent Chat', 'Academic', 'Attendance', 'Exams', 'Documents'];
+    const tabs = ['Personal', 'Credentials', 'Parent Chat', 'Academic', 'Attendance', 'Exams', 'Documents'];
     const isFrozen = student.status === 'Inactive';
 
     // App password shown to the admin: stored first-time password if present, else
@@ -320,34 +320,6 @@ const StudentProfile = () => {
                             <span className="material-symbols-outlined text-[18px]">badge</span>
                             ID: {student.studentAppId} <span className="mx-2 text-slate-300">|</span> Roll: {student.rollNumber}
                         </div>
-                        {/* App login credentials — copy ID + password (password only while still default) */}
-                        <div className="mt-3 w-full sm:max-w-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2.5">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Login ID</p>
-                                    <p className="font-mono font-extrabold text-slate-800 text-sm truncate">{student.studentAppId}</p>
-                                </div>
-                                <button onClick={() => { navigator.clipboard?.writeText(student.studentAppId); toast.success('Login ID copied'); }} className="shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy login ID">
-                                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                                </button>
-                            </div>
-                            <div className="h-px bg-slate-200"></div>
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Password{shownAppPw ? ` · ${appPwCaption}` : ''}</p>
-                                    {shownAppPw ? (
-                                        <p className="font-mono font-extrabold text-blue-700 text-sm truncate tracking-wide">{shownAppPw}</p>
-                                    ) : (
-                                        <p className="text-emerald-600 text-sm font-bold inline-flex items-center gap-1"><span className="material-symbols-outlined text-[15px]">check_circle</span>Changed by student</p>
-                                    )}
-                                </div>
-                                {shownAppPw && (
-                                    <button onClick={() => { navigator.clipboard?.writeText(shownAppPw); toast.success('Password copied'); }} className="shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy password">
-                                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -365,12 +337,6 @@ const StudentProfile = () => {
                         <>
                             <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span className="material-symbols-outlined text-[18px]">edit</span> Edit
-                            </button>
-                            <button onClick={handleResendCredentials} disabled={resending} className="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
-                                <span className="material-symbols-outlined text-[18px]">mail</span> {resending ? 'Sending…' : 'Email Login'}
-                            </button>
-                            <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
-                                <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}
                             </button>
                             <button onClick={handleStatusChange} className={`px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm ${isFrozen ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
                                 <span className="material-symbols-outlined text-[18px]">sync_alt</span> {isFrozen ? 'Mark Active' : 'Mark Inactive'}
@@ -402,6 +368,54 @@ const StudentProfile = () => {
                 <div className="flex flex-col lg:flex-row flex-1">
                     {/* Left Detail Form Canvas */}
                     <div className="flex-1 p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
+                        {activeTab === 'Credentials' && (
+                            <div className="space-y-6 animate-fade-in max-w-md">
+                                <h3 className="flex items-center gap-2 text-lg font-extrabold text-slate-800">
+                                    <span className="material-symbols-outlined text-blue-600">key</span>
+                                    App Login Credentials
+                                </h3>
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">Login ID</p>
+                                            <p className="font-mono font-extrabold text-slate-800 text-base truncate">{student.studentAppId}</p>
+                                        </div>
+                                        <button onClick={() => { navigator.clipboard?.writeText(student.studentAppId); toast.success('Login ID copied'); }} className="shrink-0 w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy login ID">
+                                            <span className="material-symbols-outlined text-[20px]">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <div className="h-px bg-slate-200"></div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">Password{shownAppPw ? ` · ${appPwCaption}` : ''}</p>
+                                            {shownAppPw ? (
+                                                <p className="font-mono font-extrabold text-blue-700 text-base truncate tracking-wide">{shownAppPw}</p>
+                                            ) : (
+                                                <p className="text-emerald-600 text-base font-bold inline-flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">check_circle</span>Changed by student</p>
+                                            )}
+                                        </div>
+                                        {shownAppPw && (
+                                            <button onClick={() => { navigator.clipboard?.writeText(shownAppPw); toast.success('Password copied'); }} className="shrink-0 w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy password">
+                                                <span className="material-symbols-outlined text-[20px]">content_copy</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    {shownAppPw
+                                        ? "This is the student's first-time password — it disappears here once the student sets their own."
+                                        : "The student has set their own password. Use the buttons below to email or reset their login details."}
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                    <button onClick={handleResendCredentials} disabled={resending} className="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                        <span className="material-symbols-outlined text-[18px]">mail</span> {resending ? 'Sending…' : 'Email Login'}
+                                    </button>
+                                    <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                        <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         {activeTab === 'Personal' && (
                             <div className="space-y-10 animate-fade-in">
                                 <div>
