@@ -40,6 +40,10 @@ const Students = () => {
         return true;
     }).sort((a, b) => (parseInt(a.rollNumber, 10) || 0) - (parseInt(b.rollNumber, 10) || 0));
 
+    // Counts for the CURRENT view (selected class + section), not the whole school.
+    const maleCount = filteredStudents.filter(s => String(s.gender || '').toLowerCase() === 'male').length;
+    const femaleCount = filteredStudents.filter(s => String(s.gender || '').toLowerCase() === 'female').length;
+
     const handleExportPasswords = () => {
         const doc = new jsPDF();
         
@@ -113,7 +117,7 @@ const Students = () => {
                             {loadingStats && !stats ? (
                                 <Shimmer className="h-6 w-32" />
                             ) : (
-                                <h3 className="text-xl font-bold">{stats?.total || 0} Total Students</h3>
+                                <h3 className="text-xl font-bold">{filteredStudents.length} Total Students</h3>
                             )}
                             <p className="text-sm text-on-surface-variant font-medium">Active Enrolled</p>
                         </div>
@@ -309,7 +313,7 @@ const Students = () => {
                             {loadingStats && !stats ? (
                                 <Shimmer className="h-8 w-16 mb-2" />
                             ) : (
-                                <p className="text-2xl font-extrabold">{stats?.male || 0}</p>
+                                <p className="text-2xl font-extrabold">{maleCount}</p>
                             )}
                             <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Male Students</p>
                         </div>
@@ -320,7 +324,7 @@ const Students = () => {
                             {loadingStats && !stats ? (
                                 <Shimmer className="h-8 w-16 mb-2" />
                             ) : (
-                                <p className="text-2xl font-extrabold">{stats?.female || 0}</p>
+                                <p className="text-2xl font-extrabold">{femaleCount}</p>
                             )}
                             <p className="text-[11px] uppercase font-bold text-on-surface-variant mt-1">Female Students</p>
                         </div>
