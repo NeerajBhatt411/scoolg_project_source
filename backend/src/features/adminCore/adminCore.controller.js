@@ -39,13 +39,15 @@ export const getAdminDashboardStats = async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        const [students, teachers, classes] = await Promise.all([
+        const [students, teachers, classes, male, female] = await Promise.all([
             Student.countDocuments({ schoolId: school._id }),
             Teacher.countDocuments({ schoolId: school._id }),
-            ClassModel.countDocuments({ schoolId: school._id })
+            ClassModel.countDocuments({ schoolId: school._id }),
+            Student.countDocuments({ schoolId: school._id, gender: { $regex: /^male$/i } }),
+            Student.countDocuments({ schoolId: school._id, gender: { $regex: /^female$/i } })
         ]);
 
-        res.json({ students, teachers, classes });
+        res.json({ students, teachers, classes, male, female });
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch stats" });
     }
