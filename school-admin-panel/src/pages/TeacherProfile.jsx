@@ -186,22 +186,35 @@ const TeacherProfile = () => {
                             <span className="material-symbols-outlined text-[18px]">badge</span>
                             App ID: <span className="font-mono text-slate-700">{teacher.teacherAppId}</span>
                         </div>
-                        <div className="flex items-center flex-wrap gap-2 text-sm font-semibold mt-2">
-                            <span className="material-symbols-outlined text-[18px] text-slate-500">key</span>
-                            <span className="text-slate-500">App password:</span>
-                            {teacher.tempPassword ? (
-                                <>
-                                    <span className="font-mono font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg tracking-wide">{teacher.tempPassword}</span>
-                                    <button onClick={() => { navigator.clipboard?.writeText(teacher.tempPassword); toast.success('Copied'); }} className="text-slate-400 hover:text-blue-600 transition-colors" title="Copy password">
+                        {/* App login credentials — copy ID + password (password only while still default) */}
+                        <div className="mt-3 w-full sm:max-w-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Login ID</p>
+                                    <p className="font-mono font-extrabold text-slate-800 text-sm truncate">{teacher.teacherAppId}</p>
+                                </div>
+                                <button onClick={() => { navigator.clipboard?.writeText(teacher.teacherAppId); toast.success('Login ID copied'); }} className="shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy login ID">
+                                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                </button>
+                            </div>
+                            <div className="h-px bg-slate-200"></div>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Password{teacher.tempPassword ? ' · until teacher changes it' : ''}</p>
+                                    {teacher.tempPassword ? (
+                                        <p className="font-mono font-extrabold text-blue-700 text-sm truncate tracking-wide">{teacher.tempPassword}</p>
+                                    ) : teacher.isPasswordChanged ? (
+                                        <p className="text-emerald-600 text-sm font-bold inline-flex items-center gap-1"><span className="material-symbols-outlined text-[15px]">check_circle</span>Changed by teacher</p>
+                                    ) : (
+                                        <p className="text-amber-600 text-xs font-semibold">Created earlier — use Edit to set one</p>
+                                    )}
+                                </div>
+                                {teacher.tempPassword && (
+                                    <button onClick={() => { navigator.clipboard?.writeText(teacher.tempPassword); toast.success('Password copied'); }} className="shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors" title="Copy password">
                                         <span className="material-symbols-outlined text-[18px]">content_copy</span>
                                     </button>
-                                    <span className="text-[11px] font-medium text-slate-400">(until teacher changes it)</span>
-                                </>
-                            ) : teacher.isPasswordChanged ? (
-                                <span className="text-emerald-600 inline-flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">check_circle</span>Set by teacher</span>
-                            ) : (
-                                <span className="text-amber-600 text-[12px] font-semibold">Created earlier — use Edit to set a new password</span>
-                            )}
+                                )}
+                            </div>
                         </div>
                         {classTeacherOf.length > 0 && (
                             <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 mt-2">
