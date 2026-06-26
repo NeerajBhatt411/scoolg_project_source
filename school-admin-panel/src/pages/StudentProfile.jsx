@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE, API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
+import { useAdmin } from '../context/AdminContext';
 import { db, ensureChatAuth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -20,7 +21,8 @@ const StudentProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { toast } = useToast();
-    
+    const { refreshStudents } = useAdmin();
+
     // Store original student to fallback/init
     const [student, setStudent] = useState(location.state?.student);
     
@@ -29,6 +31,8 @@ const StudentProfile = () => {
     const [editData, setEditData] = useState(student || {});
     const [isSaving, setIsSaving] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
+    const [resetting, setResetting] = useState(false);
+    const [resetResult, setResetResult] = useState(null); // { password, emailed, parentEmail }
 
     const fileToBase64Img = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
     const handlePhotoChange = async (file) => {
@@ -42,8 +46,9 @@ const StudentProfile = () => {
             await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, { profileImageUrl: url });
             setStudent(prev => ({ ...prev, profileImageUrl: url }));
             setEditData(prev => ({ ...prev, profileImageUrl: url }));
-            toast?.('Photo updated', 'success');
-        } catch (e) { toast?.('Photo upload failed — try a smaller image', 'error'); }
+            refreshStudents?.(true); // propagate the new avatar to the students list
+            toast.success('Photo updated');
+        } catch (e) { toast.error('Photo upload failed — try a smaller image'); }
         finally { setPhotoUploading(false); }
     };
 
@@ -182,6 +187,13 @@ const StudentProfile = () => {
     const tabs = ['Personal', 'Parent Chat', 'Academic', 'Attendance', 'Exams', 'Documents'];
     const isFrozen = student.status === 'Inactive';
 
+    // App password shown to the admin: stored first-time password if present, else
+    // the DOB default for legacy accounts that never changed it, else "Set by student".
+    const _dob = student.dateOfBirth ? new Date(student.dateOfBirth) : null;
+    const _dobPw = _dob ? `${String(_dob.getDate()).padStart(2, '0')}${String(_dob.getMonth() + 1).padStart(2, '0')}${_dob.getFullYear()}` : '';
+    const shownAppPw = student.tempPassword || (!student.isPasswordChanged ? _dobPw : '');
+    const appPwCaption = student.tempPassword ? 'until student changes it' : 'date of birth';
+
     const handleStatusChange = async () => {
         const newStatus = isFrozen ? 'Active' : 'Inactive';
         if (!window.confirm(`Are you sure you want to mark this student as ${newStatus}?`)) return;
@@ -192,6 +204,26 @@ const StudentProfile = () => {
             setEditData(res.data.student);
         } catch (err) {
             toast.error('Failed to update status.');
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!window.confirm("Reset this student's password to a fresh temporary one? They'll be asked to set a new password on their next login.")) return;
+        setResetting(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/students/${student._id}/reset-password`);
+            const newTemp = res.data?.appCredentials?.password;
+            setResetResult({
+                password: newTemp,
+                emailed: !!res.data?.emailed,
+                parentEmail: res.data?.parentEmail || null,
+            });
+            setStudent(prev => ({ ...prev, tempPassword: newTemp, isPasswordChanged: false }));
+            refreshStudents?.(true);
+        } catch (err) {
+            toast.error('Failed to reset password. Please try again.');
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -269,6 +301,21 @@ const StudentProfile = () => {
                             <span className="material-symbols-outlined text-[18px]">badge</span>
                             ID: {student.studentAppId} <span className="mx-2 text-slate-300">|</span> Roll: {student.rollNumber}
                         </div>
+                        <div className="flex items-center flex-wrap gap-2 text-sm font-semibold mt-2">
+                            <span className="material-symbols-outlined text-[18px] text-slate-500">key</span>
+                            <span className="text-slate-500">App password:</span>
+                            {shownAppPw ? (
+                                <>
+                                    <span className="font-mono font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg tracking-wide">{shownAppPw}</span>
+                                    <button onClick={() => { navigator.clipboard?.writeText(shownAppPw); toast.success('Copied'); }} className="text-slate-400 hover:text-blue-600 transition-colors" title="Copy password">
+                                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                    </button>
+                                    <span className="text-[11px] font-medium text-slate-400">({appPwCaption})</span>
+                                </>
+                            ) : (
+                                <span className="text-emerald-600 inline-flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">check_circle</span>Set by student</span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -286,6 +333,9 @@ const StudentProfile = () => {
                         <>
                             <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span className="material-symbols-outlined text-[18px]">edit</span> Edit
+                            </button>
+                            <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}
                             </button>
                             <button onClick={handleStatusChange} className={`px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm ${isFrozen ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
                                 <span className="material-symbols-outlined text-[18px]">sync_alt</span> {isFrozen ? 'Mark Active' : 'Mark Inactive'}
@@ -599,6 +649,36 @@ const StudentProfile = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Reset-password result modal */}
+            {resetResult && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" onClick={() => setResetResult(null)}>
+                    <div className="w-full max-w-[420px] bg-white rounded-3xl shadow-2xl border border-slate-100 p-7" onClick={(e) => e.stopPropagation()}>
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined">lock_reset</span>
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Password reset</h3>
+                        <p className="text-sm text-slate-500 font-medium mt-1.5 mb-5">
+                            {resetResult.emailed
+                                ? `New login details were emailed to the parent (${resetResult.parentEmail}).`
+                                : (resetResult.parentEmail
+                                    ? "We couldn't email the parent right now — share the temporary password below."
+                                    : 'No parent email is on file — share the temporary password below.')}
+                        </p>
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 mb-4">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Temporary password</p>
+                                <p className="font-mono font-extrabold text-lg text-blue-700 tracking-wide truncate">{resetResult.password}</p>
+                            </div>
+                            <button onClick={() => { navigator.clipboard?.writeText(resetResult.password); toast.success('Copied'); }} className="shrink-0 w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">content_copy</span>
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-5">The student will be asked to set their own password the next time they sign in.</p>
+                        <button onClick={() => setResetResult(null)} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors">Done</button>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-fade-in {

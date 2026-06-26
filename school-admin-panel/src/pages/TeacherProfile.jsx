@@ -11,7 +11,7 @@ const TeacherProfile = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     // classes from the shared cache — no need to refetch on every teacher view.
-    const { classes: classesList } = useAdmin();
+    const { classes: classesList, refreshTeachers } = useAdmin();
     
     // Store original teacher to fallback/init
     const [teacher, setTeacher] = useState(location.state?.teacher);
@@ -34,8 +34,9 @@ const TeacherProfile = () => {
             await axios.patch(`${ADMIN_API_BASE}/teachers/${teacher._id}`, { profileImageUrl: url });
             setTeacher(prev => ({ ...prev, profileImageUrl: url }));
             setEditData(prev => ({ ...prev, profileImageUrl: url }));
-            toast?.('Photo updated', 'success');
-        } catch (e) { toast?.('Photo upload failed — try a smaller image', 'error'); }
+            refreshTeachers?.(); // propagate the new avatar to the teachers list
+            toast.success('Photo updated');
+        } catch (e) { toast.error('Photo upload failed — try a smaller image'); }
         finally { setPhotoUploading(false); }
     };
 
@@ -184,6 +185,23 @@ const TeacherProfile = () => {
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 mt-2">
                             <span className="material-symbols-outlined text-[18px]">badge</span>
                             App ID: <span className="font-mono text-slate-700">{teacher.teacherAppId}</span>
+                        </div>
+                        <div className="flex items-center flex-wrap gap-2 text-sm font-semibold mt-2">
+                            <span className="material-symbols-outlined text-[18px] text-slate-500">key</span>
+                            <span className="text-slate-500">App password:</span>
+                            {teacher.tempPassword ? (
+                                <>
+                                    <span className="font-mono font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg tracking-wide">{teacher.tempPassword}</span>
+                                    <button onClick={() => { navigator.clipboard?.writeText(teacher.tempPassword); toast.success('Copied'); }} className="text-slate-400 hover:text-blue-600 transition-colors" title="Copy password">
+                                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                                    </button>
+                                    <span className="text-[11px] font-medium text-slate-400">(until teacher changes it)</span>
+                                </>
+                            ) : teacher.isPasswordChanged ? (
+                                <span className="text-emerald-600 inline-flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">check_circle</span>Set by teacher</span>
+                            ) : (
+                                <span className="text-amber-600 text-[12px] font-semibold">Created earlier — use Edit to set a new password</span>
+                            )}
                         </div>
                         {classTeacherOf.length > 0 && (
                             <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 mt-2">

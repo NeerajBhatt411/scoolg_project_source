@@ -8,6 +8,9 @@ const StudentSchema = new mongoose.Schema({
     studentAppId: { type: String, required: true, unique: true }, // e.g., STU-DPS-1002
     password: { type: String, required: true }, // Auto-generated initially
     isPasswordChanged: { type: Boolean, default: false },
+    tempPassword: { type: String },        // Plaintext first-time password, shown to admin UNTIL the student changes it (then cleared)
+    resetOtp: { type: String },            // Forgot-password code (sent to parentEmail)
+    resetOtpExpires: { type: Number },     // Epoch-ms expiry for the reset code
 
     // --- 3. Academic Details ---
     admissionNumber: { type: String }, // Optional. If user doesn't provide, backend will generate it.

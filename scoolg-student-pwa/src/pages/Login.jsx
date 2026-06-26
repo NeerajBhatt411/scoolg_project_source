@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import loginBg from '../assets/new_banner.jpeg';
 
 const Login = () => {
@@ -11,6 +12,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -18,11 +20,11 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     const result = await login(null, studentId.trim(), password);
-    
+
     if (result.success) {
-      navigate('/dashboard', { replace: true });
+      navigate(result.mustChange ? '/change-password' : '/dashboard', { replace: true });
     } else {
       setError(result.message);
       setLoading(false);
@@ -82,9 +84,14 @@ const Login = () => {
                 <button disabled={loading} type="submit" className="w-full mt-7 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-[15px] font-bold h-[54px] shadow-lg shadow-blue-600/20 active:scale-[0.98]">
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login'}
                 </button>
+
+                <button type="button" onClick={() => setForgotOpen(true)}
+                  className="w-full text-center text-sm text-blue-600 font-semibold hover:underline mt-1">
+                  Forgot password?
+                </button>
               </form>
 
-              <p className="text-center text-sm text-slate-500 mt-7">
+              <p className="text-center text-sm text-slate-500 mt-6">
                 Don't have your Student ID? <span className="text-blue-600 font-semibold cursor-pointer hover:underline">Ask your teacher.</span>
               </p>
               <p className="text-center text-xs text-slate-400 mt-2">You stay signed in on this device until you log out.</p>
@@ -93,6 +100,8 @@ const Login = () => {
         </div>
         <p className="text-center text-xs font-semibold text-slate-400 mt-6 tracking-wide">© 2026 Scoolg · All rights reserved</p>
       </motion.div>
+
+      <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
     </div>
   );
 };

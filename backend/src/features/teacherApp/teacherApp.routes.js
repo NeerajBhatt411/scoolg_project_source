@@ -105,6 +105,10 @@ router.post('/api/teacher/homework', c.postTeacherHomework);
  */
 router.post('/api/teacher/change-password', c.postTeacherChangepassword);
 
+// Forgot / reset password (OTP emailed to the teacher's email on file)
+router.post('/api/teacher/forgot-password', c.postTeacherForgotpassword);
+router.post('/api/teacher/reset-password', c.postTeacherResetpassword);
+
 // Teacher <-> parent GROUP chat (reads realtime via Firestore; writes here)
 router.get('/api/teacher/firebase-token', c.getTeacherFirebaseToken);
 router.get('/api/teacher/chats', c.getTeacherChats);

@@ -147,10 +147,10 @@ const AddTeacher = () => {
                     newErrors.phone = "Phone number must be exactly 10 digits.";
                 }
             }
-            if (formData.email) {
-                if (!emailRegex.test(formData.email)) {
-                    newErrors.email = "Please enter a valid email address.";
-                }
+            if (!formData.email || !formData.email.trim()) {
+                newErrors.email = "Email is required";
+            } else if (!emailRegex.test(formData.email)) {
+                newErrors.email = "Please enter a valid email address.";
             }
             if (!trimmedAddress || trimmedAddress.length < 5) newErrors.residentialAddress = "Address is required";
         } else if (step === 3) {
@@ -177,7 +177,7 @@ const AddTeacher = () => {
         const trimmedAddress = formData.residentialAddress.trim();
         const trimmedQualification = formData.highestQualification.trim();
         const trimmedSpecialization = formData.specialization.trim();
-        const emailValid = !formData.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email || '');
 
         if (step === 1) {
             if (!trimmedFullName || trimmedFullName.length < 2 || !formData.gender || !formData.dateOfBirth || formData.dateOfBirth > today) {
@@ -413,8 +413,9 @@ const AddTeacher = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address (Optional)</label>
-                                            <input type="email" value={formData.email} onChange={e=>handleInputChange('email', e.target.value)} placeholder="teacher@email.com" className="w-full h-12 px-4 rounded-xl border border-transparent bg-slate-50 focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none" />
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address <span className="text-red-500">*</span></label>
+                                            <input type="email" value={formData.email} onChange={e=>handleInputChange('email', e.target.value)} placeholder="teacher@email.com" className={`w-full h-12 px-4 rounded-xl border ${errors.email ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
+                                            {errors.email && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.email}</p>}
                                         </div>
 
                                         <div className="space-y-2 md:col-span-2">

@@ -15,6 +15,7 @@ import { DeviceToken } from '../../../models/DeviceToken.js';
 import { notifyClassStudents, notify, sendToTokens } from '../../utils/push.js';
 import { teacherFromToken } from '../../utils/teacherAuth.js';
 import { mintCustomToken, sendChatMessage, markChatRead } from '../../utils/firebaseChat.js';
+import { sendResetOtpEmail, maskEmail } from '../../utils/email.js';
 
 export const getTeacherDiary = async (req, res) => {
     try {
@@ -339,10 +340,80 @@ export const postTeacherChangepassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         teacher.password = await bcrypt.hash(newPassword, salt);
         teacher.isPasswordChanged = true;
+        teacher.tempPassword = undefined; // admin can no longer see it once changed
         await teacher.save();
         res.json({ message: "Password updated successfully" });
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// Forgot password — teacher enters their Teacher ID or email; a 6-digit code is
+// emailed to the teacher's email on file. Generic response to avoid leaking ids.
+export const postTeacherForgotpassword = async (req, res) => {
+    try {
+        const { teacherAppId } = req.body;
+        if (!teacherAppId) return res.status(400).json({ error: "Teacher ID or email is required" });
+        const id = String(teacherAppId).trim();
+        const teacher = await Teacher.findOne({
+            $or: [{ teacherAppId: id.toUpperCase() }, { email: id.toLowerCase() }]
+        });
+        const generic = { message: "If an account matches, a reset code has been sent to its email." };
+        if (!teacher) return res.json(generic);
+        if (teacher.status && teacher.status !== 'Active') return res.json(generic);
+        if (!teacher.email) {
+            return res.status(200).json({ needsAdmin: true, message: "No email is on file for this account. Please ask your school admin to reset your password." });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        teacher.resetOtp = otp;
+        teacher.resetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        await teacher.save();
+
+        try {
+            await sendResetOtpEmail({ to: teacher.email, otp, appName: 'Scoolg Teacher App' });
+            console.log(`✅ Teacher reset OTP sent for ${teacher.teacherAppId}`);
+        } catch (mailErr) {
+            console.error("❌ Teacher reset email failed:", mailErr.message);
+            return res.status(500).json({ error: "Could not send reset email. Please try again later." });
+        }
+        return res.json({ ...generic, sentTo: maskEmail(teacher.email) });
+    } catch (err) {
+        console.error("Teacher forgot password error:", err);
+        return res.status(500).json({ error: "Could not process request" });
+    }
+};
+
+// Reset password using the emailed OTP.
+export const postTeacherResetpassword = async (req, res) => {
+    try {
+        let { teacherAppId, otp, newPassword } = req.body;
+        if (!teacherAppId || !otp || !newPassword) {
+            return res.status(400).json({ error: "Teacher ID, code and new password are required" });
+        }
+        if (newPassword.length < 4) return res.status(400).json({ error: "Password must be at least 4 characters" });
+        const id = String(teacherAppId).trim();
+        const teacher = await Teacher.findOne({
+            $or: [{ teacherAppId: id.toUpperCase() }, { email: id.toLowerCase() }]
+        });
+        otp = String(otp).trim();
+        if (!teacher || !teacher.resetOtp) return res.status(400).json({ error: "Invalid or expired reset code" });
+        if (teacher.resetOtp !== otp) return res.status(400).json({ error: "Invalid reset code" });
+        if (!teacher.resetOtpExpires || teacher.resetOtpExpires < Date.now()) {
+            return res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        teacher.password = await bcrypt.hash(newPassword, salt);
+        teacher.isPasswordChanged = true;
+        teacher.tempPassword = undefined; // admin can no longer see it once changed
+        teacher.resetOtp = undefined;
+        teacher.resetOtpExpires = undefined;
+        await teacher.save();
+        return res.json({ message: "Password reset successfully. You can now log in." });
+    } catch (err) {
+        console.error("Teacher reset password error:", err);
+        return res.status(500).json({ error: "Could not reset password" });
     }
 };
 

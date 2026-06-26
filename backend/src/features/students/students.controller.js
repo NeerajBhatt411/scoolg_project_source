@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { Student } from '../../../models/Student.js';
 import { nextStudentIds } from '../../utils/appId.js';
+import { sendCredentialsEmail } from '../../utils/email.js';
+
+const STUDENT_APP_URL = process.env.STUDENT_APP_URL || '';
 
 export const postAdminStudents = async (req, res) => {
     try {
@@ -10,6 +13,11 @@ export const postAdminStudents = async (req, res) => {
 
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
+
+        // Parent email is required so login credentials can be emailed.
+        const parentEmail = String(req.body.parentEmail || '').trim().toLowerCase();
+        if (!parentEmail) return res.status(400).json({ error: "Parent email is required" });
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return res.status(400).json({ error: "Please enter a valid parent email" });
 
         // School-prefixed, globally-unique App ID (e.g. GAJ001)
         const [studentAppId] = await nextStudentIds(school, 1);
@@ -26,14 +34,33 @@ export const postAdminStudents = async (req, res) => {
             ...req.body,
             schoolId: school._id,
             studentAppId,
-            password: hashedPassword
+            parentEmail,
+            password: hashedPassword,
+            tempPassword: plainPassword // visible to admin until the student changes it
         });
 
         await newStudent.save();
 
+        // Auto-email login credentials to the parent (if a parent email is on file).
+        let emailed = false;
+        if (newStudent.parentEmail) {
+            const r = await sendCredentialsEmail({
+                to: newStudent.parentEmail,
+                name: `${newStudent.firstName} ${newStudent.lastName}`.trim(),
+                loginLabel: 'Student ID',
+                loginId: studentAppId,
+                password: plainPassword,
+                roleLabel: 'student account',
+                appName: 'Scoolg Student App',
+                loginUrl: STUDENT_APP_URL,
+            });
+            emailed = !!r?.sent;
+        }
+
         res.status(201).json({
             message: "Student added successfully",
             student: newStudent,
+            emailed,
             appCredentials: {
                 studentAppId,
                 password: plainPassword // Send back once so admin can print/save it
@@ -56,6 +83,7 @@ export const postAdminStudentsBulk = async (req, res) => {
         if (!school) return res.status(404).json({ error: "School not found" });
 
         const createdStudents = [];
+        const emailJobs = []; // { to, name, studentAppId, password } for parents with an email
         const salt = await bcrypt.genSalt(10);
         
         // School-prefixed, globally-unique App IDs (e.g. GAJ001, GAJ002 ...)
@@ -103,7 +131,8 @@ export const postAdminStudentsBulk = async (req, res) => {
                 section: sectionName || 'N/A', // Mongoose schema requires section
                 schoolId: school._id,
                 studentAppId,
-                password: hashedPassword
+                password: hashedPassword,
+                tempPassword: plainPassword // visible to admin until the student changes it
             };
 
             if (studentData.dateOfBirth) studentObj.dateOfBirth = studentData.dateOfBirth;
@@ -120,11 +149,34 @@ export const postAdminStudentsBulk = async (req, res) => {
                 studentAppId: newStudent.studentAppId,
                 password: plainPassword // Send back plain-text once for the UI to display/download
             });
+
+            if (newStudent.parentEmail) {
+                emailJobs.push({
+                    to: newStudent.parentEmail,
+                    name: `${newStudent.firstName} ${newStudent.lastName || ''}`.trim(),
+                    studentAppId: newStudent.studentAppId,
+                    password: plainPassword,
+                });
+            }
         }
+
+        // Auto-email credentials to parents that have an email (parallel, best-effort).
+        const results = await Promise.allSettled(emailJobs.map(j => sendCredentialsEmail({
+            to: j.to,
+            name: j.name,
+            loginLabel: 'Student ID',
+            loginId: j.studentAppId,
+            password: j.password,
+            roleLabel: 'student account',
+            appName: 'Scoolg Student App',
+            loginUrl: STUDENT_APP_URL,
+        })));
+        const emailedCount = results.filter(r => r.status === 'fulfilled' && r.value?.sent).length;
 
         res.status(201).json({
             message: `${createdStudents.length} students added successfully`,
-            students: createdStudents
+            students: createdStudents,
+            emailedCount
         });
     } catch (err) {
         console.error("❌ Bulk add students error:", err);
@@ -172,5 +224,57 @@ export const putAdminStudentsById = async (req, res) => {
     } catch (err) {
         console.error("❌ Update student error:", err);
         res.status(500).json({ error: "Failed to update student details" });
+    }
+};
+
+// Admin resets a student's password back to a fresh temporary one (DOB by default).
+// Forces a change on next login (isPasswordChanged=false) and emails the parent if
+// an email is on file. Returns the new temp password once for the admin to share.
+export const postAdminStudentsResetPassword = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        // New temp password = DOB (DDMMYYYY) when available, else a short random one.
+        let plainPassword;
+        if (student.dateOfBirth) {
+            const d = new Date(student.dateOfBirth);
+            plainPassword = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}${d.getFullYear()}`;
+        } else {
+            plainPassword = `SCG-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        student.password = await bcrypt.hash(plainPassword, salt);
+        student.isPasswordChanged = false; // force change on next login
+        student.tempPassword = plainPassword; // visible to admin until the student changes it
+        student.resetOtp = undefined;
+        student.resetOtpExpires = undefined;
+        await student.save();
+
+        let emailed = false;
+        if (student.parentEmail) {
+            const r = await sendCredentialsEmail({
+                to: student.parentEmail,
+                name: `${student.firstName} ${student.lastName || ''}`.trim(),
+                loginLabel: 'Student ID',
+                loginId: student.studentAppId,
+                password: plainPassword,
+                roleLabel: 'student account',
+                appName: 'Scoolg Student App',
+                loginUrl: STUDENT_APP_URL,
+            });
+            emailed = !!r?.sent;
+        }
+
+        res.json({
+            message: "Password reset successfully",
+            emailed,
+            parentEmail: student.parentEmail || null,
+            appCredentials: { studentAppId: student.studentAppId, password: plainPassword }
+        });
+    } catch (err) {
+        console.error("❌ Reset student password error:", err);
+        res.status(500).json({ error: "Failed to reset password" });
     }
 };

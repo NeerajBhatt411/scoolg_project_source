@@ -54,12 +54,21 @@ const Students = () => {
         const tableRows = [];
         
         filteredStudents.forEach(student => {
-            const dob = new Date(student.dateOfBirth);
-            const dd = String(dob.getDate()).padStart(2, '0');
-            const mm = String(dob.getMonth() + 1).padStart(2, '0');
-            const yyyy = dob.getFullYear();
-            const password = `${dd}${mm}${yyyy}`;
-            
+            // Prefer the stored first-time password; fall back to DOB for legacy
+            // accounts that never changed it; show "Changed" once the student set their own.
+            let password;
+            if (student.tempPassword) {
+                password = student.tempPassword;
+            } else if (student.isPasswordChanged) {
+                password = 'Changed by student';
+            } else {
+                const dob = new Date(student.dateOfBirth);
+                const dd = String(dob.getDate()).padStart(2, '0');
+                const mm = String(dob.getMonth() + 1).padStart(2, '0');
+                const yyyy = dob.getFullYear();
+                password = `${dd}${mm}${yyyy}`;
+            }
+
             tableRows.push([
                 student.rollNumber || 'NA',
                 `${student.firstName} ${student.lastName}`,

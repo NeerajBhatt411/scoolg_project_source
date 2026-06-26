@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
-import { transporter, renderEmail } from '../../utils/email.js';
+import { transporter, renderEmail, sendCredentialsEmail } from '../../utils/email.js';
 import { slugify } from '../../utils/slug.js';
 import { registerSchoolDomain } from '../../utils/vercel.js';
 
@@ -149,6 +149,23 @@ export const patchOnboardingUpdateById = async (req, res) => {
         }
 
         await school.save();
+
+        // On final completion, email the admin their login credentials (email +
+        // generated password + campus code). Best-effort — never blocks onboarding.
+        if (currentStep === 8 && generatedPassword) {
+            const loginEmail = school.email || school.formData?.email;
+            await sendCredentialsEmail({
+                to: loginEmail,
+                name: school.formData?.ownerName || school.formData?.schoolName,
+                loginLabel: 'Login email',
+                loginId: loginEmail,
+                password: generatedPassword,
+                roleLabel: 'school admin account',
+                appName: 'Scoolg Admin Panel',
+                loginUrl: process.env.ADMIN_PANEL_URL || '',
+                extraRows: school.campusCode ? [{ label: 'Campus code', value: school.campusCode }] : [],
+            });
+        }
 
         // On final completion, auto-register the public website subdomain on
         // Vercel (e.g. gajera.scoolg.com). Never throws — onboarding is unaffected.

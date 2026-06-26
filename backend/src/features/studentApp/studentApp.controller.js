@@ -11,6 +11,18 @@ import { Teacher } from '../../../models/Teacher.js';
 import { DeviceToken } from '../../../models/DeviceToken.js';
 import { sendToTokens } from '../../utils/push.js';
 import { mintCustomToken, sendChatMessage, markChatRead } from '../../utils/firebaseChat.js';
+import { sendResetOtpEmail, maskEmail } from '../../utils/email.js';
+
+// Case-insensitive Student ID lookup (exact upper first, regex fallback for legacy ids).
+const findStudentByAppId = async (raw) => {
+    const id = String(raw || '').trim();
+    let student = await Student.findOne({ studentAppId: id.toUpperCase() });
+    if (!student) {
+        const esc = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        student = await Student.findOne({ studentAppId: { $regex: `^${esc}$`, $options: 'i' } });
+    }
+    return student;
+};
 
 export const getStudentVerifycampusByCode = async (req, res) => {
     try {
@@ -35,12 +47,7 @@ export const postStudentLogin = async (req, res) => {
         
         // Case-insensitive lookup: fast exact match for new (GAJ001) + numeric ids,
         // then a case-insensitive fallback so any legacy lowercase id still logs in.
-        const raw = String(studentAppId).trim();
-        let student = await Student.findOne({ studentAppId: raw.toUpperCase() });
-        if (!student) {
-            const esc = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            student = await Student.findOne({ studentAppId: { $regex: `^${esc}$`, $options: 'i' } });
-        }
+        const student = await findStudentByAppId(studentAppId);
         if (!student) return res.status(401).json({ error: "Invalid ID or Password" });
 
         const isMatch = await bcrypt.compare(password, student.password);
@@ -58,9 +65,101 @@ export const postStudentLogin = async (req, res) => {
             { expiresIn: '30d' } // Long lived
         );
 
-        res.json({ accessToken, refreshToken, studentId: student._id });
+        res.json({ accessToken, refreshToken, studentId: student._id, isPasswordChanged: student.isPasswordChanged });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+// Change the logged-in student's password (used by the forced first-login screen
+// and the voluntary "change password" in Profile). Sets isPasswordChanged = true.
+export const postStudentChangepassword = async (req, res) => {
+    try {
+        const token = (req.headers.authorization || '').split(' ')[1];
+        if (!token) return res.status(401).json({ error: "No token provided" });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+        const student = await Student.findById(decoded.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const { currentPassword, newPassword } = req.body;
+        if (!newPassword || newPassword.length < 4) return res.status(400).json({ error: "Password must be at least 4 characters" });
+        // If a current password is supplied (voluntary change), verify it.
+        if (currentPassword) {
+            const ok = await bcrypt.compare(currentPassword, student.password);
+            if (!ok) return res.status(401).json({ error: "Current password is incorrect" });
+        }
+        const salt = await bcrypt.genSalt(10);
+        student.password = await bcrypt.hash(newPassword, salt);
+        student.isPasswordChanged = true;
+        student.tempPassword = undefined; // admin can no longer see it once changed
+        await student.save();
+        res.json({ message: "Password updated successfully" });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+// Forgot password — student enters their Student ID; a 6-digit code is emailed to
+// the parentEmail on file. Generic response so we don't reveal which ids exist.
+export const postStudentForgotpassword = async (req, res) => {
+    try {
+        const { studentAppId } = req.body;
+        if (!studentAppId) return res.status(400).json({ error: "Student ID is required" });
+
+        const student = await findStudentByAppId(studentAppId);
+        const generic = { message: "If this Student ID has a parent email on file, a reset code has been sent there." };
+        if (!student) return res.json(generic);
+        if (!student.parentEmail) {
+            return res.status(200).json({ needsAdmin: true, message: "No parent email is on file for this account. Please ask your school admin to reset your password." });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        student.resetOtp = otp;
+        student.resetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        await student.save();
+
+        try {
+            await sendResetOtpEmail({ to: student.parentEmail, otp, appName: 'Scoolg Student App' });
+            console.log(`✅ Student reset OTP sent for ${student.studentAppId}`);
+        } catch (mailErr) {
+            console.error("❌ Student reset email failed:", mailErr.message);
+            return res.status(500).json({ error: "Could not send reset email. Please try again later." });
+        }
+        return res.json({ ...generic, sentTo: maskEmail(student.parentEmail) });
+    } catch (err) {
+        console.error("Student forgot password error:", err);
+        return res.status(500).json({ error: "Could not process request" });
+    }
+};
+
+// Reset password using the emailed OTP.
+export const postStudentResetpassword = async (req, res) => {
+    try {
+        let { studentAppId, otp, newPassword } = req.body;
+        if (!studentAppId || !otp || !newPassword) {
+            return res.status(400).json({ error: "Student ID, code and new password are required" });
+        }
+        if (newPassword.length < 4) return res.status(400).json({ error: "Password must be at least 4 characters" });
+
+        const student = await findStudentByAppId(studentAppId);
+        otp = String(otp).trim();
+        if (!student || !student.resetOtp) return res.status(400).json({ error: "Invalid or expired reset code" });
+        if (student.resetOtp !== otp) return res.status(400).json({ error: "Invalid reset code" });
+        if (!student.resetOtpExpires || student.resetOtpExpires < Date.now()) {
+            return res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        student.password = await bcrypt.hash(newPassword, salt);
+        student.isPasswordChanged = true;
+        student.tempPassword = undefined; // admin can no longer see it once changed
+        student.resetOtp = undefined;
+        student.resetOtpExpires = undefined;
+        await student.save();
+        return res.json({ message: "Password reset successfully. You can now log in." });
+    } catch (err) {
+        console.error("Student reset password error:", err);
+        return res.status(500).json({ error: "Could not reset password" });
     }
 };
 

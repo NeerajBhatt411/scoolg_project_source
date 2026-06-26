@@ -5,6 +5,9 @@ const TeacherSchema = new mongoose.Schema({
     teacherAppId: { type: String, required: true, unique: true }, // e.g., TCH101
     password: { type: String, required: true },
     isPasswordChanged: { type: Boolean, default: false },
+    tempPassword: { type: String },        // Plaintext first-time password, shown to admin UNTIL the teacher changes it (then cleared)
+    resetOtp: { type: String },            // Forgot-password code (sent to teacher email)
+    resetOtpExpires: { type: Number },     // Epoch-ms expiry for the reset code
     fullName: { type: String, required: true }, // Changed from firstName, lastName based on old UI
     gender: { type: String },
     dateOfBirth: { type: Date },

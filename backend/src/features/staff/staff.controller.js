@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { StaffUser } from '../../../models/StaffUser.js';
 import { schoolFromReq, genPassword } from '../../utils/adminAuth.js';
+import { sendCredentialsEmail } from '../../utils/email.js';
+
+const ADMIN_PANEL_URL = process.env.ADMIN_PANEL_URL || '';
 
 export const postAdminStaff = async (req, res) => {
     try {
@@ -34,9 +37,22 @@ export const postAdminStaff = async (req, res) => {
             status: 'Active'
         });
 
+        // Auto-email login credentials to the new staff member.
+        const mail = await sendCredentialsEmail({
+            to: normalizedEmail,
+            name: fullName.trim(),
+            loginLabel: 'Login email',
+            loginId: normalizedEmail,
+            password: plainPassword,
+            roleLabel: `${staff.role} account`,
+            appName: 'Scoolg Admin Panel',
+            loginUrl: ADMIN_PANEL_URL,
+        });
+
         // Return the generated password ONCE so the admin can share it.
         res.status(201).json({
             staff: { ...staff.toObject(), password: undefined },
+            emailed: !!mail?.sent,
             credentials: { email: normalizedEmail, password: plainPassword }
         });
     } catch (err) {

@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
         password
       });
 
-      const { accessToken, refreshToken, studentId } = loginRes.data;
+      const { accessToken, refreshToken, studentId, isPasswordChanged } = loginRes.data;
 
       localStorage.setItem('student_token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
@@ -117,7 +117,9 @@ export const AuthProvider = ({ children }) => {
       // Fetch profile to get user and school info
       await fetchUserProfile(accessToken);
 
-      return { success: true };
+      // mustChange -> account is still on the default/generated password.
+      // (!== true also catches legacy docs where the flag was never stored.)
+      return { success: true, mustChange: isPasswordChanged !== true };
     } catch (error) {
 
       console.error('Login error:', error);

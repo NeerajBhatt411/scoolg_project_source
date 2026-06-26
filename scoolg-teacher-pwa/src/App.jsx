@@ -16,6 +16,7 @@ import Students from './pages/Students';
 import Calendar from './pages/Calendar';
 import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
+import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
 
 // Cool, premium loading animation using the School's Logo
@@ -66,14 +67,24 @@ const GuestOnly = ({ children }) => {
   return children;
 };
 
+// Force a password change for accounts still on the default/generated password.
+// (!== true also catches legacy docs where the flag was never stored.)
+const PasswordGate = ({ children }) => {
+  const { teacher, loading } = useAuth();
+  if (loading) return <BootLoader />;
+  if (teacher && teacher.isPasswordChanged !== true) return <Navigate to="/change-password" replace />;
+  return children;
+};
+
 const App = () => {
   return (
     <>
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+      <Route path="/change-password" element={<Protected><ChangePassword /></Protected>} />
 
-      <Route element={<Protected><MainLayout /></Protected>}>
+      <Route element={<Protected><PasswordGate><MainLayout /></PasswordGate></Protected>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/classes" element={<MyClasses />} />

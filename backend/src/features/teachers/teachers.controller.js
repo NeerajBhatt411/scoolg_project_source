@@ -5,6 +5,9 @@ import { Timetable } from '../../../models/Timetable.js';
 import { Teacher } from '../../../models/Teacher.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
 import { nextTeacherIds } from '../../utils/appId.js';
+import { sendCredentialsEmail } from '../../utils/email.js';
+
+const TEACHER_APP_URL = process.env.TEACHER_APP_URL || '';
 
 export const postAdminTeachers = async (req, res) => {
     try {
@@ -51,7 +54,11 @@ export const postAdminTeachers = async (req, res) => {
         if (normalizedPhone.length !== 10) {
             return res.status(400).json({ error: "Phone number must be exactly 10 digits" });
         }
-        if (normalizedEmail && !emailRegex.test(normalizedEmail)) {
+        // Email is required so login credentials can be emailed to the teacher.
+        if (!normalizedEmail) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+        if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({ error: "Please enter a valid email address" });
         }
         if (!normalizedQualification) {
@@ -104,10 +111,11 @@ export const postAdminTeachers = async (req, res) => {
             schoolId: school._id,
             teacherAppId,
             password: hashedPassword,
+            tempPassword: plainPassword, // visible to admin until the teacher changes it
             fullName: normalizedFullName,
             gender: normalizedGender,
             dateOfBirth: parsedDateOfBirth,
-            email: normalizedEmail || undefined,
+            email: normalizedEmail,
             phone: normalizedPhone,
             profileImageUrl: normalizedProfileImageUrl,
             highestQualification: normalizedQualification,
@@ -119,9 +127,26 @@ export const postAdminTeachers = async (req, res) => {
 
         await newTeacher.save();
 
+        // Auto-email login credentials to the teacher (if an email is on file).
+        let emailed = false;
+        if (normalizedEmail) {
+            const r = await sendCredentialsEmail({
+                to: normalizedEmail,
+                name: normalizedFullName,
+                loginLabel: 'Teacher ID',
+                loginId: teacherAppId,
+                password: plainPassword,
+                roleLabel: 'teacher account',
+                appName: 'Scoolg Teacher App',
+                loginUrl: TEACHER_APP_URL,
+            });
+            emailed = !!r?.sent;
+        }
+
         res.status(201).json({
             message: "Teacher added successfully",
             teacher: newTeacher,
+            emailed,
             appCredentials: {
                 teacherAppId,
                 password: plainPassword
@@ -154,9 +179,11 @@ export const patchAdminTeachersById = async (req, res) => {
         const update = {};
         for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
         if (req.body.password && String(req.body.password).trim()) {
+            const newPw = String(req.body.password).trim();
             const salt = await bcrypt.genSalt(10);
-            update.password = await bcrypt.hash(String(req.body.password).trim(), salt);
+            update.password = await bcrypt.hash(newPw, salt);
             update.isPasswordChanged = false;
+            update.tempPassword = newPw; // visible to admin until the teacher changes it
         }
         const teacher = await Teacher.findByIdAndUpdate(req.params.id, update, { new: true }).populate('subjects');
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });

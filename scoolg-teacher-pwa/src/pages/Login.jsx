@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-reac
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import loginBg from '../assets/new_banner.jpeg';
 
 const Login = () => {
@@ -13,6 +14,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -21,7 +23,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     const result = await login(teacherAppId.trim(), password);
-    if (result.success) navigate('/dashboard', { replace: true });
+    if (result.success) navigate(result.isPasswordChanged !== true ? '/change-password' : '/dashboard', { replace: true });
     else { setError(result.message); setLoading(false); }
   };
 
@@ -78,9 +80,14 @@ const Login = () => {
                 <Button disabled={loading} type="submit" size="lg" className="w-full !mt-7 text-[15px] font-bold h-[54px] shadow-lg shadow-primary/20">
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Login'}
                 </Button>
+
+                <button type="button" onClick={() => setForgotOpen(true)}
+                  className="w-full text-center text-sm text-primary font-semibold hover:underline mt-1">
+                  Forgot password?
+                </button>
               </form>
 
-              <p className="text-center text-sm text-muted-foreground mt-7">
+              <p className="text-center text-sm text-muted-foreground mt-6">
                 Don't have your Teacher ID? <span className="text-primary font-semibold">Ask your school admin.</span>
               </p>
               <p className="text-center text-xs text-muted-foreground/60 mt-2">You stay signed in on this device until you log out.</p>
@@ -89,6 +96,8 @@ const Login = () => {
         </Card>
         <p className="text-center text-xs font-semibold text-muted-foreground/60 mt-6 tracking-wide">© 2026 Scoolg · All rights reserved</p>
       </motion.div>
+
+      <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
     </div>
   );
 };

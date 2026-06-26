@@ -1,11 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BadgeCheck, User, Users, GraduationCap, KeyRound, LogOut, MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Profile = () => {
   const { user, logout } = useAuth();
-  
+  const navigate = useNavigate();
+
   if (!user) return null;
 
   const name = user.firstName || 'Student';
@@ -109,7 +111,7 @@ const Profile = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-          <button className="bg-white border border-slate-200 text-slate-700 h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all hover:bg-slate-50 hover:border-slate-300">
+          <button onClick={() => navigate('/change-password')} className="bg-white border border-slate-200 text-slate-700 h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all hover:bg-slate-50 hover:border-slate-300">
             <KeyRound size={20} strokeWidth={2.5} />
             Change Password
           </button>

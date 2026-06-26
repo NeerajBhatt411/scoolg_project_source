@@ -61,6 +61,11 @@ router.get('/api/student/verify-campus/:code', c.getStudentVerifycampusByCode);
  */
 router.post('/api/student/login', c.postStudentLogin);
 
+// Password management (forced first-login change, voluntary change, forgot/reset)
+router.post('/api/student/change-password', c.postStudentChangepassword);
+router.post('/api/student/forgot-password', c.postStudentForgotpassword);
+router.post('/api/student/reset-password', c.postStudentResetpassword);
+
 /**
  * @swagger
  * /api/auth/refresh:

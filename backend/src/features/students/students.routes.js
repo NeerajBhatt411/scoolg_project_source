@@ -84,4 +84,13 @@ router.get('/api/admin/students', c.getAdminStudents);
  */
 router.put('/api/admin/students/:id', c.putAdminStudentsById);
 
+/**
+ * @swagger
+ * /api/admin/students/{id}/reset-password:
+ *   post:
+ *     summary: Admin resets a student's password to a fresh temporary one
+ *     tags: [School Admin - Students]
+ */
+router.post('/api/admin/students/:id/reset-password', c.postAdminStudentsResetPassword);
+
 export default router;

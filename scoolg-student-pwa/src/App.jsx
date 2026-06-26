@@ -15,6 +15,7 @@ import Exams from './pages/Exams';
 import Subjects from './pages/Subjects';
 import Notifications from './pages/Notifications';
 import Chat from './pages/Chat';
+import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
 
 const BootLoader = () => {
@@ -69,15 +70,25 @@ const GuestOnly = ({ children }) => {
   return children;
 };
 
+// Force a password change for accounts still on the default/generated password.
+// (!== true also catches legacy docs where the flag was never stored.)
+const PasswordGate = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <BootLoader />;
+  if (user && user.isPasswordChanged !== true) return <Navigate to="/change-password" replace />;
+  return children;
+};
+
 const App = () => {
   return (
     <>
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+      <Route path="/change-password" element={<Protected><ChangePassword /></Protected>} />
 
 
-      <Route element={<Protected><MainLayout /></Protected>}>
+      <Route element={<Protected><PasswordGate><MainLayout /></PasswordGate></Protected>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/homework" element={<Homework />} />
