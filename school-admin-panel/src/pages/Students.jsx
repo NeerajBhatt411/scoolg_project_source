@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
 import Dropdown from '../components/Dropdown';
@@ -19,14 +19,26 @@ const Students = () => {
         refreshStudents();
     }, []);
 
+    // Class list sorted naturally (Class 1, 2 … 10), and students sorted by roll number.
+    const classNames = [...new Set(students.map(s => s.class).filter(Boolean))]
+        .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+    const uniqueClasses = ['All', ...classNames];
+    const uniqueSections = ['All', ...new Set(students.map(s => s.section).filter(Boolean))];
+
+    // Default to the first class on load (so students show without picking a class).
+    const didDefault = useRef(false);
+    useEffect(() => {
+        if (!didDefault.current && classNames.length) {
+            setClassFilter(classNames[0]);
+            didDefault.current = true;
+        }
+    }, [classNames.length]);
+
     const filteredStudents = students.filter(student => {
         if (classFilter !== 'All' && student.class !== classFilter) return false;
         if (sectionFilter !== 'All' && student.section !== sectionFilter) return false;
         return true;
-    });
-
-    const uniqueClasses = ['All', ...new Set(students.map(s => s.class).filter(Boolean))];
-    const uniqueSections = ['All', ...new Set(students.map(s => s.section).filter(Boolean))];
+    }).sort((a, b) => (parseInt(a.rollNumber, 10) || 0) - (parseInt(b.rollNumber, 10) || 0));
 
     const handleExportPasswords = () => {
         const doc = new jsPDF();
@@ -228,7 +240,7 @@ const Students = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5"><span className="text-sm font-bold text-blue-600">#{student.rollNumber || 'NA'}</span></td>
+                                            <td className="px-6 py-5"><span className="text-sm font-bold text-blue-600">{student.rollNumber || 'NA'}</span></td>
                                             <td className="px-6 py-5"><span className="text-sm font-semibold">{student.class} - Sec {student.section}</span></td>
                                             <td className="px-6 py-5 hidden lg:table-cell"><span className="text-sm font-medium text-on-surface-variant">{student.fatherName}</span></td>
                                             <td className="px-6 py-5 hidden md:table-cell"><span className="text-sm font-medium text-on-surface-variant">
