@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ADMIN_API_BASE } from '../lib/api';
+import { ADMIN_API_BASE, API_BASE } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { db, ensureChatAuth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -28,6 +28,24 @@ const StudentProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState(student || {});
     const [isSaving, setIsSaving] = useState(false);
+    const [photoUploading, setPhotoUploading] = useState(false);
+
+    const fileToBase64Img = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+    const handlePhotoChange = async (file) => {
+        if (!file || !file.type?.startsWith('image/')) return;
+        setPhotoUploading(true);
+        try {
+            const base64 = await fileToBase64Img(file);
+            const up = await axios.post(`${API_BASE}/upload`, { file: base64, folder: 'Students', schoolName: 'School' });
+            const url = up.data?.url;
+            if (!url) throw new Error('Upload failed');
+            await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, { profileImageUrl: url });
+            setStudent(prev => ({ ...prev, profileImageUrl: url }));
+            setEditData(prev => ({ ...prev, profileImageUrl: url }));
+            toast?.('Photo updated', 'success');
+        } catch (e) { toast?.('Photo upload failed — try a smaller image', 'error'); }
+        finally { setPhotoUploading(false); }
+    };
 
     const [activeTab, setActiveTab] = useState('Personal');
     const [allAttendance, setAllAttendance] = useState([]);
@@ -209,10 +227,20 @@ const StudentProfile = () => {
             {/* Top Identity Card */}
             <div className={`bg-white rounded-3xl p-5 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 shadow-sm border ${isFrozen ? 'border-red-200 bg-red-50/20' : 'border-slate-100'}`}>
                 <div className="flex items-start gap-4 sm:gap-6 min-w-0">
-                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-md flex-shrink-0 bg-slate-100 border-4 border-white flex items-center justify-center text-3xl font-bold text-slate-400">
-                        {student.profileImageUrl ? (
-                            <img src={student.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : student.firstName.charAt(0)}
+                    <div className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0 group">
+                        <div className="w-full h-full rounded-3xl overflow-hidden shadow-md bg-slate-100 border-4 border-white flex items-center justify-center text-3xl font-bold text-slate-400">
+                            {student.profileImageUrl ? (
+                                <img src={student.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : student.firstName.charAt(0)}
+                        </div>
+                        <label title="Change photo" className="absolute inset-0 rounded-3xl bg-slate-900/55 text-white flex flex-col items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <span className="material-symbols-outlined text-[20px]">{photoUploading ? 'hourglass_top' : 'photo_camera'}</span>
+                            <span className="text-[10px] font-bold">{photoUploading ? '...' : 'Change'}</span>
+                            <input type="file" accept="image/*" className="hidden" disabled={photoUploading} onChange={(e) => handlePhotoChange(e.target.files?.[0])} />
+                        </label>
+                        <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-blue-600 text-white grid place-items-center shadow-md ring-2 ring-white pointer-events-none">
+                            <span className="material-symbols-outlined text-[15px]">photo_camera</span>
+                        </span>
                     </div>
                     <div className="space-y-1 mt-1 min-w-0">
                         <div className="flex items-center gap-3 flex-wrap">
