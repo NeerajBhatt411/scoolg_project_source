@@ -153,6 +153,11 @@ export const patchAdminTeachersById = async (req, res) => {
             'status', 'profileImageUrl', 'dateOfBirth', 'dateOfJoining'];
         const update = {};
         for (const k of allowed) if (req.body[k] !== undefined) update[k] = req.body[k];
+        if (req.body.password && String(req.body.password).trim()) {
+            const salt = await bcrypt.genSalt(10);
+            update.password = await bcrypt.hash(String(req.body.password).trim(), salt);
+            update.isPasswordChanged = false;
+        }
         const teacher = await Teacher.findByIdAndUpdate(req.params.id, update, { new: true }).populate('subjects');
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
         res.json(teacher);
