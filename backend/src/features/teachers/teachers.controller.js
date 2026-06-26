@@ -94,9 +94,9 @@ export const postAdminTeachers = async (req, res) => {
         // School-prefixed, globally-unique Teacher App ID (e.g. GAJT01)
         const [teacherAppId] = await nextTeacherIds(school, 1);
 
-        // Generate short Password: PASS-XYZ
+        // Use an admin-provided password if given, else a short auto one (PASS-XYZ).
         const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-        const plainPassword = `PASS-${randomSuffix}`;
+        const plainPassword = (req.body.password && String(req.body.password).trim()) || `PASS-${randomSuffix}`;
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(plainPassword, salt);
 

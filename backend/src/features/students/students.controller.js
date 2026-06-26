@@ -65,16 +65,16 @@ export const postAdminStudentsBulk = async (req, res) => {
         for (const studentData of students) {
             const studentAppId = appIds[idx++];
 
-            // Generate password from DOB
+            // Use an admin-provided password if given, else derive from DOB.
             const dobStr = studentData.dateOfBirth;
-            let plainPassword = "password123"; // Fallback
-            if (dobStr && dobStr.includes('-')) {
+            let plainPassword = (studentData.password && String(studentData.password).trim()) || "password123"; // override or fallback
+            if (!studentData.password && dobStr && dobStr.includes('-')) {
                 const parts = dobStr.split('-'); // [yyyy, mm, dd]
                 if (parts.length === 3) {
                     // YYYY-MM-DD to DDMMYYYY
                     plainPassword = `${parts[2].substring(0,2)}${parts[1]}${parts[0]}`;
                 }
-            } else if (dobStr) {
+            } else if (!studentData.password && dobStr) {
                 // If it's a Date object
                 const d = new Date(dobStr);
                 const dd = String(d.getDate()).padStart(2, '0');
