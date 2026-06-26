@@ -32,8 +32,12 @@ const TeacherProfile = () => {
             const url = up.data?.url;
             if (!url) throw new Error('Upload failed');
             await axios.patch(`${ADMIN_API_BASE}/teachers/${teacher._id}`, { profileImageUrl: url });
-            setTeacher(prev => ({ ...prev, profileImageUrl: url }));
+            const updated = { ...teacher, profileImageUrl: url };
+            setTeacher(updated);
             setEditData(prev => ({ ...prev, profileImageUrl: url }));
+            // Persist into navigation/history state so a page refresh keeps the new photo
+            // (this page restores its data from location.state on reload).
+            navigate(location.pathname, { replace: true, state: { ...(location.state || {}), teacher: updated } });
             refreshTeachers?.(); // propagate the new avatar to the teachers list
             toast.success('Photo updated');
         } catch (e) { toast.error('Photo upload failed — try a smaller image'); }

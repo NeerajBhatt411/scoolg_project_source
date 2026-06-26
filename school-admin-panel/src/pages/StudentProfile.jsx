@@ -44,8 +44,12 @@ const StudentProfile = () => {
             const url = up.data?.url;
             if (!url) throw new Error('Upload failed');
             await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, { profileImageUrl: url });
-            setStudent(prev => ({ ...prev, profileImageUrl: url }));
+            const updated = { ...student, profileImageUrl: url };
+            setStudent(updated);
             setEditData(prev => ({ ...prev, profileImageUrl: url }));
+            // Persist into navigation/history state so a page refresh keeps the new photo
+            // (this page restores its data from location.state on reload).
+            navigate(location.pathname, { replace: true, state: { ...(location.state || {}), student: updated } });
             refreshStudents?.(true); // propagate the new avatar to the students list
             toast.success('Photo updated');
         } catch (e) { toast.error('Photo upload failed — try a smaller image'); }
