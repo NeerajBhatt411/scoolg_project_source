@@ -21,6 +21,9 @@ const TeacherProfile = () => {
     const [editData, setEditData] = useState(teacher || {});
     const [isSaving, setIsSaving] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
+    const [resetting, setResetting] = useState(false);
+    const [resending, setResending] = useState(false);
+    const [resetResult, setResetResult] = useState(null); // { password, emailed, email }
 
     const fileToBase64 = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
     const handlePhotoChange = async (file) => {
@@ -113,6 +116,38 @@ const TeacherProfile = () => {
             setEditData(res.data);
         } catch (e) {
             toast.error(e.response?.data?.error || 'Failed to update status');
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!window.confirm("Reset this teacher's password to a fresh temporary one? They'll be asked to set a new password on their next login.")) return;
+        setResetting(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/teachers/${teacher._id}/reset-password`);
+            const newTemp = res.data?.appCredentials?.password;
+            setResetResult({ password: newTemp, emailed: !!res.data?.emailed, email: res.data?.email || null });
+            const updated = { ...teacher, tempPassword: newTemp, isPasswordChanged: false };
+            setTeacher(updated);
+            navigate(location.pathname, { replace: true, state: { ...(location.state || {}), teacher: updated } });
+            refreshTeachers?.();
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to reset password');
+        } finally {
+            setResetting(false);
+        }
+    };
+
+    const handleResendCredentials = async () => {
+        setResending(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/teachers/${teacher._id}/resend-credentials`);
+            if (res.data?.changed) toast.info(res.data.message);
+            else if (res.data?.emailed) toast.success(`Login details emailed to ${res.data.email}`);
+            else toast.error("Couldn't send the email right now");
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to send login details');
+        } finally {
+            setResending(false);
         }
     };
 
@@ -243,6 +278,12 @@ const TeacherProfile = () => {
                         <>
                             <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span className="material-symbols-outlined text-[18px]">edit</span> Edit
+                            </button>
+                            <button onClick={handleResendCredentials} disabled={resending} className="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                <span className="material-symbols-outlined text-[18px]">mail</span> {resending ? 'Sending…' : 'Email Login'}
+                            </button>
+                            <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}
                             </button>
                             <button onClick={handleStatusChange} className={`px-5 py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm ${isFrozen ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
                                 <span className="material-symbols-outlined text-[18px]">sync_alt</span> {isFrozen ? 'Mark Active' : 'Mark Inactive'}
@@ -566,6 +607,36 @@ const TeacherProfile = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Reset-password result modal */}
+            {resetResult && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" onClick={() => setResetResult(null)}>
+                    <div className="w-full max-w-[420px] bg-white rounded-3xl shadow-2xl border border-slate-100 p-7" onClick={(e) => e.stopPropagation()}>
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined">lock_reset</span>
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Password reset</h3>
+                        <p className="text-sm text-slate-500 font-medium mt-1.5 mb-5">
+                            {resetResult.emailed
+                                ? `New login details were emailed to the teacher (${resetResult.email}).`
+                                : (resetResult.email
+                                    ? "We couldn't email the teacher right now — share the temporary password below."
+                                    : 'No email is on file — share the temporary password below.')}
+                        </p>
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 mb-4">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Temporary password</p>
+                                <p className="font-mono font-extrabold text-lg text-blue-700 tracking-wide truncate">{resetResult.password}</p>
+                            </div>
+                            <button onClick={() => { navigator.clipboard?.writeText(resetResult.password); toast.success('Copied'); }} className="shrink-0 w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">content_copy</span>
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-5">The teacher will be asked to set their own password the next time they sign in.</p>
+                        <button onClick={() => setResetResult(null)} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors">Done</button>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-fade-in {

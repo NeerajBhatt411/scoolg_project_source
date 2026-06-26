@@ -32,6 +32,7 @@ const StudentProfile = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
     const [resetting, setResetting] = useState(false);
+    const [resending, setResending] = useState(false);
     const [resetResult, setResetResult] = useState(null); // { password, emailed, parentEmail }
 
     const fileToBase64Img = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
@@ -231,6 +232,20 @@ const StudentProfile = () => {
         }
     };
 
+    const handleResendCredentials = async () => {
+        setResending(true);
+        try {
+            const res = await axios.post(`${ADMIN_API_BASE}/students/${student._id}/resend-credentials`);
+            if (res.data?.changed) toast.info(res.data.message);
+            else if (res.data?.emailed) toast.success(`Login details emailed to ${res.data.email}`);
+            else toast.error("Couldn't send the email right now");
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to send login details');
+        } finally {
+            setResending(false);
+        }
+    };
+
     const handleSaveEdit = async () => {
         setIsSaving(true);
         try {
@@ -350,6 +365,9 @@ const StudentProfile = () => {
                         <>
                             <button onClick={() => setIsEditing(true)} disabled={isFrozen} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span className="material-symbols-outlined text-[18px]">edit</span> Edit
+                            </button>
+                            <button onClick={handleResendCredentials} disabled={resending} className="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
+                                <span className="material-symbols-outlined text-[18px]">mail</span> {resending ? 'Sending…' : 'Email Login'}
                             </button>
                             <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
                                 <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}

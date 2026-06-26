@@ -193,6 +193,77 @@ export const patchAdminTeachersById = async (req, res) => {
     }
 };
 
+// Admin resets a teacher's password to a fresh temporary one. Forces a change on
+// next login and emails the new credentials to the teacher.
+export const postAdminTeachersResetPassword = async (req, res) => {
+    try {
+        const teacher = await Teacher.findById(req.params.id);
+        if (!teacher) return res.status(404).json({ error: "Teacher not found" });
+
+        const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+        const plainPassword = `PASS-${randomSuffix}`;
+        const salt = await bcrypt.genSalt(10);
+        teacher.password = await bcrypt.hash(plainPassword, salt);
+        teacher.isPasswordChanged = false; // force change on next login
+        teacher.tempPassword = plainPassword; // visible to admin until the teacher changes it
+        teacher.resetOtp = undefined;
+        teacher.resetOtpExpires = undefined;
+        await teacher.save();
+
+        let emailed = false;
+        if (teacher.email) {
+            const r = await sendCredentialsEmail({
+                to: teacher.email,
+                name: teacher.fullName,
+                loginLabel: 'Teacher ID',
+                loginId: teacher.teacherAppId,
+                password: plainPassword,
+                roleLabel: 'teacher account',
+                appName: 'Scoolg Teacher App',
+                loginUrl: TEACHER_APP_URL,
+            });
+            emailed = !!r?.sent;
+        }
+
+        res.json({
+            message: "Password reset successfully",
+            emailed,
+            email: teacher.email || null,
+            appCredentials: { teacherAppId: teacher.teacherAppId, password: plainPassword }
+        });
+    } catch (err) {
+        console.error("Reset teacher password error:", err);
+        res.status(500).json({ error: "Failed to reset password" });
+    }
+};
+
+// Re-send the existing login credentials to the teacher's email. Only works while
+// the teacher is still on the first-time password (tempPassword present).
+export const postAdminTeachersResendCredentials = async (req, res) => {
+    try {
+        const teacher = await Teacher.findById(req.params.id);
+        if (!teacher) return res.status(404).json({ error: "Teacher not found" });
+        if (!teacher.email) return res.status(400).json({ error: "No email is on file for this teacher" });
+        if (!teacher.tempPassword) {
+            return res.json({ changed: true, message: "This teacher has already set their own password. Use Reset Password to send new login details." });
+        }
+        const r = await sendCredentialsEmail({
+            to: teacher.email,
+            name: teacher.fullName,
+            loginLabel: 'Teacher ID',
+            loginId: teacher.teacherAppId,
+            password: teacher.tempPassword,
+            roleLabel: 'teacher account',
+            appName: 'Scoolg Teacher App',
+            loginUrl: TEACHER_APP_URL,
+        });
+        return res.json({ emailed: !!r?.sent, email: teacher.email });
+    } catch (err) {
+        console.error("Resend teacher credentials error:", err);
+        res.status(500).json({ error: "Failed to send login details" });
+    }
+};
+
 export const getAdminTeachersByIdSchedule = async (req, res) => {
     try {
         const teacher = await Teacher.findById(req.params.id);

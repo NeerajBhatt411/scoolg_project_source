@@ -93,4 +93,7 @@ router.put('/api/admin/students/:id', c.putAdminStudentsById);
  */
 router.post('/api/admin/students/:id/reset-password', c.postAdminStudentsResetPassword);
 
+// Re-send the current login credentials to the parent's email.
+router.post('/api/admin/students/:id/resend-credentials', c.postAdminStudentsResendCredentials);
+
 export default router;

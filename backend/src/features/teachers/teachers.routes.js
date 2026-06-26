@@ -52,6 +52,12 @@ router.get('/api/admin/teachers', c.getAdminTeachers);
 // Update a teacher document (admin edit).
 router.patch('/api/admin/teachers/:id', c.patchAdminTeachersById);
 
+// Admin resets a teacher's password to a fresh temporary one (emails the teacher).
+router.post('/api/admin/teachers/:id/reset-password', c.postAdminTeachersResetPassword);
+
+// Re-send the current login credentials to the teacher's email.
+router.post('/api/admin/teachers/:id/resend-credentials', c.postAdminTeachersResendCredentials);
+
 // A teacher's weekly schedule (derived from timetables) + the sections they're class-teacher of.
 router.get('/api/admin/teachers/:id/schedule', c.getAdminTeachersByIdSchedule);
 

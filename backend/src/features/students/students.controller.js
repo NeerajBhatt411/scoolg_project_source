@@ -278,3 +278,30 @@ export const postAdminStudentsResetPassword = async (req, res) => {
         res.status(500).json({ error: "Failed to reset password" });
     }
 };
+
+// Re-send the existing login credentials to the parent's email. Only works while
+// the student is still on the first-time password (tempPassword present).
+export const postAdminStudentsResendCredentials = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        if (!student.parentEmail) return res.status(400).json({ error: "No parent email is on file for this student" });
+        if (!student.tempPassword) {
+            return res.json({ changed: true, message: "This student has already set their own password. Use Reset Password to send new login details." });
+        }
+        const r = await sendCredentialsEmail({
+            to: student.parentEmail,
+            name: `${student.firstName} ${student.lastName || ''}`.trim(),
+            loginLabel: 'Student ID',
+            loginId: student.studentAppId,
+            password: student.tempPassword,
+            roleLabel: 'student account',
+            appName: 'Scoolg Student App',
+            loginUrl: STUDENT_APP_URL,
+        });
+        return res.json({ emailed: !!r?.sent, email: student.parentEmail });
+    } catch (err) {
+        console.error("❌ Resend student credentials error:", err);
+        res.status(500).json({ error: "Failed to send login details" });
+    }
+};
