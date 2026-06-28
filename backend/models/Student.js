@@ -41,7 +41,10 @@ const StudentSchema = new mongoose.Schema({
     permanentAddress: { type: String },
 
     // --- 7. Status ---
-    status: { type: String, enum: ['Active', 'Inactive', 'Transferred'], default: 'Active' }
+    status: { type: String, enum: ['Active', 'Inactive', 'Transferred'], default: 'Active' },
+
+    // Parent ↔ school chat: when true the parent can't send messages (school muted them).
+    chatDisabled: { type: Boolean, default: false }
 
 }, { timestamps: true });
 

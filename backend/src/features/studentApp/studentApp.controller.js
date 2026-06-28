@@ -305,7 +305,7 @@ export const getStudentCalendar = async (req, res) => {
 const studentFromAuth = async (req) => {
     const token = (req.headers.authorization || '').split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
-    return Student.findById(decoded.id).select('schoolId firstName lastName class section').lean();
+    return Student.findById(decoded.id).select('schoolId firstName lastName class section chatDisabled').lean();
 };
 
 // Members shown in the group (display only): the School Office + every teacher.
@@ -352,6 +352,7 @@ export const postStudentMessage = async (req, res) => {
     try {
         const student = await studentFromAuth(req);
         if (!student) return res.status(404).json({ error: "Student not found" });
+        if (student.chatDisabled) return res.status(403).json({ error: "Messaging has been turned off by the school.", chatDisabled: true });
         const text = (req.body?.text || '').trim();
         if (!text) return res.status(400).json({ error: "Message text required" });
 

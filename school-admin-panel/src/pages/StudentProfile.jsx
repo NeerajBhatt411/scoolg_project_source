@@ -34,6 +34,7 @@ const StudentProfile = () => {
     const [resetting, setResetting] = useState(false);
     const [resending, setResending] = useState(false);
     const [resetResult, setResetResult] = useState(null); // { password, emailed, parentEmail }
+    const [chatToggling, setChatToggling] = useState(false);
 
     const fileToBase64Img = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
     const handlePhotoChange = async (file) => {
@@ -229,6 +230,22 @@ const StudentProfile = () => {
             toast.error('Failed to reset password. Please try again.');
         } finally {
             setResetting(false);
+        }
+    };
+
+    const toggleParentChat = async () => {
+        setChatToggling(true);
+        try {
+            const res = await axios.put(`${ADMIN_API_BASE}/students/${student._id}`, { chatDisabled: !student.chatDisabled });
+            const updated = res.data.student;
+            setStudent(updated);
+            navigate(location.pathname, { replace: true, state: { ...(location.state || {}), student: updated } });
+            refreshStudents?.(true);
+            toast.success(updated.chatDisabled ? 'Parent chat disabled' : 'Parent chat enabled');
+        } catch (e) {
+            toast.error('Could not update chat setting');
+        } finally {
+            setChatToggling(false);
         }
     };
 
@@ -566,6 +583,20 @@ const StudentProfile = () => {
 
                         {activeTab === 'Parent Chat' && (
                             <div className="animate-fade-in flex flex-col" style={{ height: '58vh' }}>
+                                {/* Mute / unmute the parent's messaging */}
+                                <div className={`flex items-center justify-between gap-3 mb-3 px-4 py-3 rounded-2xl border ${student.chatDisabled ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <span className={`material-symbols-outlined text-[20px] ${student.chatDisabled ? 'text-amber-600' : 'text-emerald-600'}`}>{student.chatDisabled ? 'comments_disabled' : 'forum'}</span>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-800">Parent messaging</p>
+                                            <p className="text-[11px] font-medium text-slate-500 truncate">{student.chatDisabled ? 'Parent is blocked from sending messages' : 'Parent can send messages'}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={toggleParentChat} disabled={chatToggling}
+                                        className={`shrink-0 px-4 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${student.chatDisabled ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-amber-100 hover:bg-amber-200 text-amber-700'}`}>
+                                        {chatToggling ? '…' : (student.chatDisabled ? 'Enable chat' : 'Disable chat')}
+                                    </button>
+                                </div>
                                 <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
                                     {chatLoading && chatAll.length === 0 ? (
                                         <p className="text-center text-slate-400 text-sm py-10">Loading…</p>

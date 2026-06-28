@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { db, ensureChatAuth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Send, MessagesSquare, ChevronLeft, Users, X } from 'lucide-react';
+import { Send, MessagesSquare, ChevronLeft, Users, X, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Avatar = ({ src, name, size = 'h-10 w-10', tone = 'blue' }) => (
   src
@@ -25,6 +26,9 @@ const TypingDots = () => (
 
 const Chat = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [localBlocked, setLocalBlocked] = useState(false);
+  const blocked = !!(user?.chatDisabled || localBlocked); // school turned off parent messaging
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
@@ -106,12 +110,20 @@ const Chat = () => {
 
   const send = async (e) => {
     e?.preventDefault();
+    if (blocked) return;
     const t = text.trim();
     if (!t || sending) return;
     setSending(true); setText(''); stopTyping();
-    setPending((p) => [...p, { id: 'tmp-' + Date.now(), from: 'parent', text: t, createdAt: new Date().toISOString() }]);
+    const tmpId = 'tmp-' + Date.now();
+    setPending((p) => [...p, { id: tmpId, from: 'parent', text: t, createdAt: new Date().toISOString() }]);
     try { await api.post('/student/messages', { text: t }); }
-    catch (e) { /* listener reconciles */ }
+    catch (err) {
+      // School turned messaging off mid-session -> block UI and drop the optimistic bubble.
+      if (err?.response?.status === 403) {
+        setLocalBlocked(true);
+        setPending((p) => p.filter((m) => m.id !== tmpId));
+      } // else the realtime listener reconciles
+    }
     finally { setSending(false); }
   };
 
@@ -176,11 +188,18 @@ const Chat = () => {
           <div ref={endRef} />
         </div>
 
-        {/* Input */}
-        <form onSubmit={send} className="p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] border-t border-slate-100 flex items-center gap-2 shrink-0 bg-white">
-          <input value={text} onChange={onChange} onBlur={stopTyping} placeholder="Type a message…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/40" />
-          <button type="submit" disabled={!text.trim() || sending} className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 disabled:opacity-40 active:scale-95 transition-transform"><Send className="h-5 w-5" /></button>
-        </form>
+        {/* Input — or a notice when the school has disabled messaging */}
+        {blocked ? (
+          <div className="p-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] border-t border-slate-100 bg-slate-50 flex items-center justify-center gap-2 text-center shrink-0">
+            <Lock className="h-4 w-4 text-slate-400 shrink-0" />
+            <p className="text-[13px] font-semibold text-slate-500">Messaging has been turned off by the school.</p>
+          </div>
+        ) : (
+          <form onSubmit={send} className="p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] border-t border-slate-100 flex items-center gap-2 shrink-0 bg-white">
+            <input value={text} onChange={onChange} onBlur={stopTyping} placeholder="Type a message…" className="flex-1 h-11 rounded-full bg-slate-100 px-4 text-[14px] outline-none focus:ring-2 focus:ring-blue-500/40" />
+            <button type="submit" disabled={!text.trim() || sending} className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 disabled:opacity-40 active:scale-95 transition-transform"><Send className="h-5 w-5" /></button>
+          </form>
+        )}
 
         {/* Members sheet — DISPLAY ONLY (no 1-on-1 chat) */}
         {showMembers && (

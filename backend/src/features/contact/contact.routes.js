@@ -7,4 +7,7 @@ const router = Router();
 router.post('/api/contact', c.postContact);
 router.post('/api/demo', c.postBookDemo);
 
+// Per-school public website enquiry (emails that school's contact email).
+router.post('/api/school-enquiry', c.postSchoolEnquiry);
+
 export default router;

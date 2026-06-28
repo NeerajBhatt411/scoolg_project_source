@@ -78,6 +78,31 @@ const App = () => {
   });
   const [loading, setLoading] = useState(!!subdomain);
 
+  // --- Admission / contact enquiry form (emails the school's own inbox) ---
+  const [enq, setEnq] = useState({ name: '', email: '', phone: '', message: '' });
+  const [enqState, setEnqState] = useState({ loading: false, ok: false, error: '' });
+  const setEnqField = (k) => (e) => setEnq((f) => ({ ...f, [k]: e.target.value }));
+  const scrollToContact = () => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+  const submitEnquiry = async (e) => {
+    e.preventDefault();
+    if (!enq.name.trim()) return setEnqState({ loading: false, ok: false, error: 'Please enter your name.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enq.email)) return setEnqState({ loading: false, ok: false, error: 'Please enter a valid email.' });
+    if (!enq.message.trim()) return setEnqState({ loading: false, ok: false, error: 'Please write a message.' });
+    setEnqState({ loading: true, ok: false, error: '' });
+    try {
+      const res = await fetch(`${API_BASE}/school-enquiry`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: subdomain, ...enq }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not send your enquiry.');
+      setEnqState({ loading: false, ok: true, error: '' });
+      setEnq({ name: '', email: '', phone: '', message: '' });
+    } catch (err) {
+      setEnqState({ loading: false, ok: false, error: err.message });
+    }
+  };
+
   useEffect(() => {
     if (!subdomain) return; // apex/preview/dev → keep localStorage preview
     fetch(`${API_BASE}/public/school/${subdomain}`)
@@ -235,8 +260,8 @@ const App = () => {
               <h1>{hero.title}</h1>
               <p className="hero-description">{hero.description}</p>
               <div className="hero-buttons">
-                <button className="btn btn-primary">{hero.ctaPrimary}</button>
-                <button className="btn btn-secondary">{hero.ctaSecondary}</button>
+                <button className="btn btn-primary" onClick={scrollToContact}>{hero.ctaPrimary}</button>
+                <button className="btn btn-secondary" onClick={scrollToContact}>{hero.ctaSecondary}</button>
               </div>
             </div>
             <div className="hero-image-container">
@@ -478,7 +503,7 @@ const App = () => {
                       </li>
                     ))}
                   </ul>
-                  <button className={`btn ${plan.isFeatured ? '' : 'btn-secondary'}`} style={{ width: '100%', background: plan.isFeatured ? 'white' : '', color: plan.isFeatured ? 'var(--primary)' : '' }}>Register Now</button>
+                  <button onClick={scrollToContact} className={`btn ${plan.isFeatured ? '' : 'btn-secondary'}`} style={{ width: '100%', background: plan.isFeatured ? 'white' : '', color: plan.isFeatured ? 'var(--primary)' : '' }}>Register Now</button>
                 </div>
               ))}
             </div>
@@ -534,25 +559,40 @@ const App = () => {
             </div>
           </div>
 
-          <div>
-            <div className="form-group">
-              <label>Your Name</label>
-              <input type="text" className="form-control" placeholder="John Doe" />
-            </div>
-            <div className="form-group">
-              <label>Email Address</label>
-              <input type="email" className="form-control" placeholder="john@example.com" />
-            </div>
-            <div className="form-group">
-              <label>Phone Number</label>
-              <input type="text" className="form-control" placeholder="+1 234 567 890" />
-            </div>
-            <div className="form-group">
-              <label>Message</label>
-              <textarea className="form-control" placeholder="How can we help you?"></textarea>
-            </div>
-            <button className="btn btn-primary" style={{ width: '100%', padding: '16px' }}>Send Message</button>
-          </div>
+          <form onSubmit={submitEnquiry}>
+            {enqState.ok ? (
+              <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857', padding: '24px', borderRadius: '20px', textAlign: 'center', fontWeight: 600 }}>
+                <Icons.Mail size={28} style={{ marginBottom: 8 }} />
+                <p style={{ marginBottom: 4 }}>Thank you! Your enquiry has been sent.</p>
+                <p style={{ fontSize: '0.9rem', color: '#059669', fontWeight: 500 }}>The school will get back to you shortly.</p>
+              </div>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label>Your Name</label>
+                  <input type="text" className="form-control" placeholder="John Doe" value={enq.name} onChange={setEnqField('name')} />
+                </div>
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input type="email" className="form-control" placeholder="john@example.com" value={enq.email} onChange={setEnqField('email')} />
+                </div>
+                <div className="form-group">
+                  <label>Phone Number</label>
+                  <input type="text" className="form-control" placeholder="+1 234 567 890" value={enq.phone} onChange={setEnqField('phone')} />
+                </div>
+                <div className="form-group">
+                  <label>Message</label>
+                  <textarea className="form-control" placeholder="How can we help you?" value={enq.message} onChange={setEnqField('message')}></textarea>
+                </div>
+                {enqState.error && (
+                  <p style={{ color: '#DC2626', fontSize: '0.875rem', fontWeight: 600, marginBottom: 12 }}>{enqState.error}</p>
+                )}
+                <button type="submit" disabled={enqState.loading} className="btn btn-primary" style={{ width: '100%', padding: '16px', opacity: enqState.loading ? 0.6 : 1 }}>
+                  {enqState.loading ? 'Sending…' : 'Send Message'}
+                </button>
+              </>
+            )}
+          </form>
         </div>
       </section>
 

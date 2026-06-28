@@ -1,4 +1,5 @@
 import { transporter, renderEmail, esc } from '../../utils/email.js';
+import { School } from '../../../models/School.js';
 
 // Where website enquiries / demo requests are delivered. Override via env if needed.
 const RECIPIENTS = (process.env.CONTACT_RECIPIENTS || 'neerajbhattadx@gmail.com,scoolg.dev@gmail.com')
@@ -45,6 +46,46 @@ export const postContact = async (req, res) => {
     } catch (err) {
         console.error("Contact form error:", err.message);
         return res.status(500).json({ error: "Could not send your message. Please try again." });
+    }
+};
+
+// POST /api/school-enquiry — admission/contact enquiry from a per-school public
+// website (e.g. countrywide.scoolg.com). Emails the school's own contact email.
+export const postSchoolEnquiry = async (req, res) => {
+    try {
+        const slug = String(req.body.slug || '').trim().toLowerCase();
+        const name = String(req.body.name || '').trim();
+        const email = String(req.body.email || '').trim();
+        const phone = String(req.body.phone || '').trim();
+        const message = String(req.body.message || '').trim();
+        if (!slug) return res.status(400).json({ error: "Missing school" });
+        if (!name) return res.status(400).json({ error: "Name is required" });
+        if (!isEmail(email)) return res.status(400).json({ error: "A valid email is required" });
+        if (!message) return res.status(400).json({ error: "Message is required" });
+
+        const school = await School.findOne({ slug });
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const schoolEmail = school.email || school.formData?.email;
+        if (!schoolEmail) return res.status(400).json({ error: "This school has no contact email configured." });
+        const schoolName = school.formData?.schoolName || 'the school';
+
+        await transporter.sendMail({
+            from: `"${schoolName} Website" <${process.env.GMAIL_USER}>`,
+            to: schoolEmail,
+            replyTo: email,
+            subject: `📩 New admission enquiry — ${name}`,
+            text: `New enquiry from your school website\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '-'}\n\nMessage:\n${message}`,
+            html: renderEmail({
+                heading: 'New website enquiry',
+                preheader: `${name} enquired via your ${esc(schoolName)} website`,
+                intro: `You received a new enquiry from your <b>${esc(schoolName)}</b> website:${detailTable([['Name', name], ['Email', email], phone && ['Phone', phone]])}${noteBlock(message)}`,
+                note: `Reply directly to this email to respond to ${esc(name)}.`,
+            })
+        });
+        return res.json({ ok: true, message: "Thanks! The school will get back to you shortly." });
+    } catch (err) {
+        console.error("School enquiry error:", err.message);
+        return res.status(500).json({ error: "Could not send your enquiry. Please try again." });
     }
 };
 
