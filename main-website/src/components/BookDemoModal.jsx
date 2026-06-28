@@ -64,7 +64,7 @@ export default function BookDemoModal({ open, onClose }) {
         } finally { setLoading(false); }
     };
 
-    const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100 dark:focus:bg-slate-800';
+    const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100 dark:focus:bg-slate-800';
 
     const prettyPicked = form.date
         ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -190,7 +190,7 @@ export default function BookDemoModal({ open, onClose }) {
                                     </div>
 
                                     <textarea
-                                        className="w-full p-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all resize-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100"
+                                        className="w-full p-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100"
                                         rows={2} placeholder="Anything you'd like us to know? (optional)" value={form.notes} onChange={set('notes')} />
 
                                     <button disabled={loading} type="submit"

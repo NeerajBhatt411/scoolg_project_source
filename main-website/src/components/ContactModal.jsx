@@ -37,7 +37,7 @@ export default function ContactModal({ open, onClose }) {
         } finally { setLoading(false); }
     };
 
-    const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100 dark:focus:bg-slate-800';
+    const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100 dark:focus:bg-slate-800';
 
     return (
         <AnimatePresence>
@@ -93,7 +93,7 @@ export default function ContactModal({ open, onClose }) {
                                         <input className={inputCls} placeholder="Phone (optional)" value={form.phone} onChange={set('phone')} />
                                     </div>
                                     <textarea
-                                        className="w-full p-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all resize-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100"
+                                        className="w-full p-4 rounded-xl border border-gray-200 bg-gray-50 text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100"
                                         rows={4} placeholder="How can we help you?" value={form.message} onChange={set('message')} />
                                     <button disabled={loading} type="submit"
                                         className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-60">
