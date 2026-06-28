@@ -3,17 +3,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
+import { useToast } from '../context/ToastContext';
 
 const ClassDetail = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { getSections, students, teachers } = useAdmin();
+    const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id');
     const cls = location.state?.cls;
 
     const [sections, setSections] = useState([]);
     const [activeSection, setActiveSection] = useState(null); // sectionName
     const [timetable, setTimetable] = useState(null);
+    const [assigning, setAssigning] = useState(false);
 
     const teacherById = useMemo(() => {
         const m = {}; (teachers || []).forEach((t) => { m[String(t._id)] = t; }); return m;
@@ -49,6 +52,20 @@ const ClassDetail = () => {
 
     const currentSection = sections.find((s) => s.sectionName === activeSection);
     const classTeacher = currentSection?.classTeacherId ? teacherById[String(currentSection.classTeacherId)] : null;
+
+    const assignClassTeacher = async (teacherId) => {
+        if (!currentSection?._id) return;
+        setAssigning(true);
+        try {
+            await axios.patch(`${ADMIN_API_BASE}/sections/${currentSection._id}`, { classTeacherId: teacherId || null });
+            setSections((prev) => prev.map((s) => (s._id === currentSection._id ? { ...s, classTeacherId: teacherId || null } : s)));
+            toast.success(teacherId ? 'Class teacher assigned' : 'Class teacher removed');
+        } catch (e) {
+            toast.error('Could not update class teacher');
+        } finally {
+            setAssigning(false);
+        }
+    };
 
     const sectionStudents = (students || [])
         .filter((s) => s.class === cls.className && s.section === activeSection)
@@ -149,6 +166,20 @@ const ClassDetail = () => {
                         ) : (
                             <p className="text-sm text-slate-400 italic">No class teacher assigned for Section {activeSection}.</p>
                         )}
+
+                        {/* Assign / change the class teacher right here */}
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-1.5">
+                            {classTeacher ? 'Change class teacher' : 'Assign class teacher'}
+                        </label>
+                        <select
+                            value={currentSection?.classTeacherId ? String(currentSection.classTeacherId) : ''}
+                            onChange={(e) => assignClassTeacher(e.target.value)}
+                            disabled={assigning || !currentSection}
+                            className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50">
+                            <option value="">— Not assigned —</option>
+                            {(teachers || []).map((t) => <option key={t._id} value={t._id}>{t.fullName}</option>)}
+                        </select>
+                        {!currentSection && <p className="text-[11px] text-slate-400 mt-2">Pick a section first.</p>}
                     </div>
 
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
