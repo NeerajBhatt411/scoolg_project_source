@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProfileButton from '../components/ProfileButton';
 import MenuButton from '../components/MenuButton';
 import Dropdown from '../components/Dropdown';
@@ -10,9 +11,10 @@ import { useToast } from '../context/ToastContext';
 const Classes = () => {
     // classes & teachers come from the shared AdminContext cache (loaded once at
     // app start) so visiting this page doesn't refetch them every time.
-    const { classes, teachers, invalidateAcademic, refreshClasses } = useAdmin();
+    const { classes, teachers, students, invalidateAcademic, refreshClasses } = useAdmin();
     const teachersList = teachers;
     const { toast } = useToast();
+    const navigate = useNavigate();
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(classes.length === 0);
 
@@ -235,7 +237,7 @@ const Classes = () => {
                                             <div className="flex items-center gap-4 mt-1">
                                                 <div className="flex items-center gap-1.5 text-slate-500">
                                                     <span className="material-symbols-outlined text-[16px]">group</span>
-                                                    <span className="text-[13px] font-semibold">0 Students</span>
+                                                    <span className="text-[13px] font-semibold">{(students || []).filter(s => s.class === cls.className).length} Students</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-slate-500">
                                                     <span className="material-symbols-outlined text-[16px]">layers</span>
@@ -269,7 +271,11 @@ const Classes = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-4 pt-2 md:pt-0 justify-end md:justify-start">
+                                    <div className="flex items-center gap-3 pt-2 md:pt-0 justify-end md:justify-start">
+                                        <button onClick={() => navigate('/classes/detail', { state: { cls } })} className="px-5 py-2.5 bg-blue-50 text-blue-700 font-bold text-sm rounded-xl hover:bg-blue-100 transition-colors inline-flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                            View Details
+                                        </button>
                                         <button onClick={() => openManageClass(cls)} className="px-5 py-2.5 bg-[#2563eb] text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
                                             <span className="material-symbols-outlined text-[18px]">tune</span>
                                             Manage Class
