@@ -16,6 +16,20 @@ const SchoolProfile = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState(school?.formData || {});
+    const [overview, setOverview] = useState(null);
+    const [loadingData, setLoadingData] = useState(false);
+
+    // Load the school's operational data when the "Data" tab is opened.
+    useEffect(() => {
+        if (activeTab !== 'Data' || overview || !school?.id) return;
+        setLoadingData(true);
+        fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/overview`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => setOverview(d))
+            .catch(() => {})
+            .finally(() => setLoadingData(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, school?.id]);
 
     if (!school) {
         return (
@@ -25,7 +39,7 @@ const SchoolProfile = () => {
         );
     }
 
-    const tabs = ['Overview', 'Contact Info', 'Academic', 'Gallery', 'Advanced'];
+    const tabs = ['Overview', 'Data', 'Contact Info', 'Academic', 'Gallery', 'Advanced'];
     const isActive = school.status !== 'PENDING' && school.status !== 'SUSPENDED' && school.status !== 'INACTIVE';
 
     const handleStatusChange = async (newStatus) => {
@@ -293,7 +307,7 @@ const SchoolProfile = () => {
                                 className={`pb-5 pt-5 px-4 font-black text-xs uppercase tracking-widest transition-all relative whitespace-nowrap flex items-center gap-2 ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text'}`}
                             >
                                 <span className="material-symbols-outlined text-[18px]">
-                                    {tab === 'Overview' ? 'info' : tab === 'Contact Info' ? 'alternate_email' : tab === 'Academic' ? 'school' : tab === 'Gallery' ? 'photo_library' : 'developer_mode'}
+                                    {tab === 'Overview' ? 'info' : tab === 'Data' ? 'database' : tab === 'Contact Info' ? 'alternate_email' : tab === 'Academic' ? 'school' : tab === 'Gallery' ? 'photo_library' : 'developer_mode'}
                                 </span>
                                 {tab}
                                 {activeTab === tab && (
@@ -359,6 +373,93 @@ const SchoolProfile = () => {
                                             {(!school.formData?.leadership || school.formData.leadership.filter(l => l.name).length === 0) && <p className="text-sm text-text-muted font-bold opacity-50">No leadership data recorded.</p>}
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'Data' && (
+                                <div className="space-y-10 animate-fade-in">
+                                    <h3 className="flex items-center gap-3 text-xl font-black text-text">
+                                        <span className="material-symbols-outlined text-primary text-3xl">database</span>
+                                        School Records
+                                    </h3>
+                                    {loadingData && !overview ? (
+                                        <p className="text-text-muted font-bold py-10 text-center">Loading school data…</p>
+                                    ) : !overview ? (
+                                        <p className="text-text-muted font-bold py-10 text-center">Could not load data.</p>
+                                    ) : (
+                                        <>
+                                            {/* Counts */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                {[['Students', overview.counts.students, 'group'], ['Teachers', overview.counts.teachers, 'co_present'], ['Classes', overview.counts.classes, 'school'], ['Sections', overview.counts.sections, 'layers'], ['Attendance', overview.counts.attendances, 'fact_check'], ['Homework', overview.counts.homeworks, 'assignment'], ['Calendar', overview.counts.calendarEvents, 'event']].map(([label, val, icon]) => (
+                                                    <div key={label} className="bg-surface-container/30 border border-border/50 rounded-3xl p-5">
+                                                        <span className="material-symbols-outlined text-primary text-2xl">{icon}</span>
+                                                        <p className="text-3xl font-black text-text mt-2 leading-none">{val}</p>
+                                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1">{label}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Teachers */}
+                                            <div>
+                                                <h4 className="text-sm font-black text-text-muted uppercase tracking-widest mb-4">Teachers ({overview.teachers.length})</h4>
+                                                {overview.teachers.length === 0 ? <p className="text-text-muted text-sm font-bold opacity-50">None yet.</p> : (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        {overview.teachers.map((t) => (
+                                                            <div key={t._id} className="flex items-center gap-3 p-4 bg-surface-container-low rounded-3xl border border-border/30">
+                                                                <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black overflow-hidden shrink-0">
+                                                                    {t.profileImageUrl ? <img src={t.profileImageUrl} className="w-full h-full object-cover" alt="" /> : (t.fullName || '?').charAt(0)}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="font-black text-text truncate">{t.fullName}</p>
+                                                                    <p className="text-[11px] font-bold text-text-muted truncate">{t.teacherAppId} · {t.email || t.phone || ''}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Classes */}
+                                            <div>
+                                                <h4 className="text-sm font-black text-text-muted uppercase tracking-widest mb-4">Classes ({overview.classes.length})</h4>
+                                                {overview.classes.length === 0 ? <p className="text-text-muted text-sm font-bold opacity-50">None yet.</p> : (
+                                                    <div className="space-y-3">
+                                                        {overview.classes.map((c) => (
+                                                            <div key={c._id} className="p-4 bg-surface-container-low rounded-3xl border border-border/30">
+                                                                <p className="font-black text-text mb-2">{c.className}</p>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {(c.subjects || []).length ? c.subjects.map((s, i) => <span key={i} className="px-3 py-1 bg-primary/10 text-primary text-[11px] font-black rounded-lg uppercase tracking-wider">{s}</span>) : <span className="text-text-muted text-xs italic">No subjects</span>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Students */}
+                                            <div>
+                                                <h4 className="text-sm font-black text-text-muted uppercase tracking-widest mb-4">Students ({overview.students.length})</h4>
+                                                {overview.students.length === 0 ? <p className="text-text-muted text-sm font-bold opacity-50">None yet.</p> : (
+                                                    <div className="max-h-[440px] overflow-y-auto custom-scrollbar rounded-3xl border border-border/40 divide-y divide-border/30">
+                                                        {overview.students.map((s, i) => (
+                                                            <div key={s._id} className="flex items-center gap-4 px-5 py-3 bg-surface">
+                                                                <span className="w-8 text-xs font-black text-text-muted shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                                                                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm overflow-hidden shrink-0">
+                                                                    {s.profileImageUrl ? <img src={s.profileImageUrl} className="w-full h-full object-cover" alt="" /> : (s.firstName || '?').charAt(0)}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-black text-text text-sm truncate">{s.firstName} {s.lastName}</p>
+                                                                    <p className="text-[11px] font-bold text-text-muted truncate">{s.studentAppId}</p>
+                                                                </div>
+                                                                <span className="text-xs font-black text-text-muted shrink-0">{s.class} · {s.section}</span>
+                                                                <span className="text-xs font-black text-primary shrink-0 w-10 text-right">#{s.rollNumber || 'NA'}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

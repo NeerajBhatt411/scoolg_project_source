@@ -27,6 +27,9 @@ router.get('/api/superadmin/dashboard', c.getSuperadminDashboard);
  */
 router.get('/api/superadmin/schools', c.getSuperadminSchools);
 
+// Full operational data for one school (students/teachers/classes/counts).
+router.get('/api/superadmin/schools/:id/overview', c.getSuperadminSchoolByIdOverview);
+
 /**
  * @swagger
  * /api/superadmin/schools/{id}/approve:

@@ -1,7 +1,40 @@
 import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { Student } from '../../../models/Student.js';
+import { Teacher } from '../../../models/Teacher.js';
+import { ClassModel } from '../../../models/Class.js';
+import { Section } from '../../../models/Section.js';
+import { Attendance } from '../../../models/Attendance.js';
+import { Homework } from '../../../models/Homework.js';
+import { CalendarEvent } from '../../../models/CalendarEvent.js';
 import { transporter, esc, renderEmail } from '../../utils/email.js';
+
+// Full per-school operational data for the super-admin drill-down ("see each
+// school's own students/teachers/classes/attendance in one place").
+export const getSuperadminSchoolByIdOverview = async (req, res) => {
+    try {
+        const school = await School.findOne({ id: req.params.id });
+        if (!school) return res.status(404).json({ error: "School not found" });
+        const sid = school._id;
+        const [students, teachers, classes, sections, attendances, homeworks, calendarEvents] = await Promise.all([
+            Student.find({ schoolId: sid }).select('firstName lastName studentAppId class section rollNumber gender status profileImageUrl').sort({ class: 1, section: 1, rollNumber: 1 }).lean(),
+            Teacher.find({ schoolId: sid }).select('fullName teacherAppId email phone status profileImageUrl').sort({ fullName: 1 }).lean(),
+            ClassModel.find({ schoolId: sid }).select('className subjects').sort({ className: 1 }).lean(),
+            Section.find({ schoolId: sid }).select('sectionName classId').lean(),
+            Attendance.countDocuments({ schoolId: sid }),
+            Homework.countDocuments({ schoolId: sid }),
+            CalendarEvent.countDocuments({ schoolId: sid }),
+        ]);
+        res.json({
+            school: { id: school.id, name: school.formData?.schoolName, email: school.email, campusCode: school.campusCode, status: school.status },
+            counts: { students: students.length, teachers: teachers.length, classes: classes.length, sections: sections.length, attendances, homeworks, calendarEvents },
+            students, teachers, classes,
+        });
+    } catch (err) {
+        console.error("School overview error:", err);
+        res.status(500).json({ error: "Failed to load school data" });
+    }
+};
 
 export const getSuperadminDashboard = async (req, res) => {
     try {
