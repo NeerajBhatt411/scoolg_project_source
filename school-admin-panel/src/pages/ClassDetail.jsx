@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 const ClassDetail = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { getSections, students, teachers } = useAdmin();
+    const { getSections, students, teachers, loadingStudents } = useAdmin();
     const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id');
     const cls = location.state?.cls;
@@ -17,6 +17,7 @@ const ClassDetail = () => {
     const [activeSection, setActiveSection] = useState(null); // sectionName
     const [timetable, setTimetable] = useState(null);
     const [assigning, setAssigning] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const teacherById = useMemo(() => {
         const m = {}; (teachers || []).forEach((t) => { m[String(t._id)] = t; }); return m;
@@ -26,11 +27,12 @@ const ClassDetail = () => {
         if (!cls?._id) return;
         // force=true -> always fetch fresh sections (so a just-assigned class teacher
         // shows up on re-open instead of a stale cached value).
+        setLoading(true);
         getSections(cls._id, true).then((secs) => {
             const list = secs || [];
             setSections(list);
             setActiveSection((prev) => prev || (list[0]?.sectionName ?? null));
-        });
+        }).finally(() => setLoading(false));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cls?._id]);
 
@@ -94,6 +96,7 @@ const ClassDetail = () => {
     const subjects = Array.from(new Set([...(cls.subjects || []), ...subjectTeacherMap.keys()]));
 
     const initials = (n) => (n || '?').trim().charAt(0).toUpperCase();
+    const showSkeleton = loading || loadingStudents;
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20">
@@ -105,6 +108,7 @@ const ClassDetail = () => {
                 <h1 className="text-xl sm:text-3xl font-black text-blue-700 tracking-tight truncate">{cls.className}</h1>
             </div>
 
+            {showSkeleton ? <ClassDetailSkeleton /> : (<>
             {/* Top summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <SummaryCard icon="group" label="Total students" value={classTotal} />
@@ -214,9 +218,52 @@ const ClassDetail = () => {
                     </div>
                 </div>
             </div>
+            </>)}
         </div>
     );
 };
+
+// Loading shimmer shown while sections/students load.
+const Bar = ({ className = '' }) => <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
+const ClassDetailSkeleton = () => (
+    <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
+                    <Bar className="h-7 w-7 rounded-lg" />
+                    <Bar className="h-6 w-12" />
+                    <Bar className="h-2.5 w-20" />
+                </div>
+            ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+            {[...Array(3)].map((_, i) => <Bar key={i} className="h-9 w-28 rounded-xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+                <Bar className="h-5 w-40" />
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                        <Bar className="h-10 w-10 rounded-full" />
+                        <div className="flex-1 space-y-2"><Bar className="h-3.5 w-40" /><Bar className="h-2.5 w-24" /></div>
+                        <Bar className="h-3.5 w-10" />
+                    </div>
+                ))}
+            </div>
+            <div className="space-y-6">
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-4">
+                    <Bar className="h-5 w-32" />
+                    <div className="flex items-center gap-3"><Bar className="h-12 w-12 rounded-full" /><div className="flex-1 space-y-2"><Bar className="h-3.5 w-28" /><Bar className="h-2.5 w-20" /></div></div>
+                    <Bar className="h-11 w-full" />
+                </div>
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-3">
+                    <Bar className="h-5 w-40" />
+                    {[...Array(4)].map((_, i) => <div key={i} className="flex justify-between"><Bar className="h-3.5 w-20" /><Bar className="h-3.5 w-24" /></div>)}
+                </div>
+            </div>
+        </div>
+    </>
+);
 
 const SummaryCard = ({ icon, label, value }) => (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col gap-2">
