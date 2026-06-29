@@ -53,7 +53,11 @@ const ClassDetail = () => {
     }
 
     const currentSection = sections.find((s) => s.sectionName === activeSection);
-    const classTeacher = currentSection?.classTeacherId ? teacherById[String(currentSection.classTeacherId)] : null;
+    // The sections API returns classTeacherId POPULATED (a full teacher object); fall
+    // back to a raw-id lookup just in case.
+    const _ct = currentSection?.classTeacherId;
+    const classTeacher = _ct ? (typeof _ct === 'object' ? _ct : teacherById[String(_ct)]) : null;
+    const classTeacherIdStr = _ct ? String(typeof _ct === 'object' ? _ct._id : _ct) : '';
 
     const assignClassTeacher = async (teacherId) => {
         if (!currentSection?._id) return;
@@ -176,7 +180,7 @@ const ClassDetail = () => {
                             {classTeacher ? 'Change class teacher' : 'Assign class teacher'}
                         </label>
                         <select
-                            value={currentSection?.classTeacherId ? String(currentSection.classTeacherId) : ''}
+                            value={classTeacherIdStr}
                             onChange={(e) => assignClassTeacher(e.target.value)}
                             disabled={assigning || !currentSection}
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50">
