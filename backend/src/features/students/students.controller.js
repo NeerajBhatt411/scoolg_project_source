@@ -14,9 +14,10 @@ export const postAdminStudents = async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        // Parent email is optional; validated only if provided (no longer emailed).
+        // Parent email is required (used for password recovery — credentials are NOT emailed).
         const parentEmail = String(req.body.parentEmail || '').trim().toLowerCase();
-        if (parentEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return res.status(400).json({ error: "Please enter a valid parent email" });
+        if (!parentEmail) return res.status(400).json({ error: "Parent email is required" });
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return res.status(400).json({ error: "Please enter a valid parent email" });
 
         // School-prefixed, globally-unique App ID (e.g. GAJ001)
         const [studentAppId] = await nextStudentIds(school, 1);

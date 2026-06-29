@@ -173,7 +173,7 @@ const AddStudent = () => {
             if (!formData.fatherName || formData.fatherName.length < 2) newErrors.fatherName = true;
             if (!formData.motherName || formData.motherName.length < 2) newErrors.motherName = true;
             if (!formData.primaryContact || !/^\d{10}$/.test(formData.primaryContact)) newErrors.primaryContact = true;
-            if (formData.parentEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail)) newErrors.parentEmail = true;
+            if (!formData.parentEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail)) newErrors.parentEmail = true;
         } else if (step === 3) {
             if (!formData.class) newErrors.class = true;
             if (!formData.section) newErrors.section = true;
@@ -190,7 +190,7 @@ const AddStudent = () => {
         if (step === 1) {
             return formData.firstName.length >= 2 && formData.lastName.length >= 2 && formData.rollNumber && formData.dateOfBirth && formData.dateOfBirth <= today && formData.gender;
         } else if (step === 2) {
-            const emailValid = !formData.parentEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail);
+            const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail || '');
             return formData.fatherName.length >= 2 && formData.motherName.length >= 2 && /^\d{10}$/.test(formData.primaryContact) && emailValid;
         } else if (step === 3) {
             return formData.class && formData.section && formData.dateOfAdmission && formData.dateOfAdmission <= today && formData.currentAddress.length >= 5;
@@ -611,9 +611,9 @@ const AddStudent = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Parent Email (Optional)</label>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Parent Email <span className="text-red-500">*</span></label>
                                             <input type="email" value={formData.parentEmail} onChange={e=>handleInputChange('parentEmail', e.target.value)} placeholder="parent@email.com" className={`w-full h-12 px-4 rounded-xl border ${errors.parentEmail ? 'border-red-500 bg-red-50/30' : 'border-transparent bg-slate-50'} focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-[#2563eb]/20 transition-all text-sm font-semibold text-slate-800 outline-none`} />
-                                            {errors.parentEmail && <p className="text-[10px] text-red-500 font-bold ml-1">Invalid email format</p>}
+                                            {errors.parentEmail && <p className="text-[10px] text-red-500 font-bold ml-1">A valid parent email is required (for password recovery)</p>}
                                         </div>
                                     </>
                                 )}

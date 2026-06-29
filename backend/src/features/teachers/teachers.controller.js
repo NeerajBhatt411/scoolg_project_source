@@ -54,8 +54,11 @@ export const postAdminTeachers = async (req, res) => {
         if (normalizedPhone.length !== 10) {
             return res.status(400).json({ error: "Phone number must be exactly 10 digits" });
         }
-        // Email is optional; validated only if provided (no longer emailed).
-        if (normalizedEmail && !emailRegex.test(normalizedEmail)) {
+        // Email is required (used for password recovery — credentials are NOT emailed).
+        if (!normalizedEmail) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+        if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({ error: "Please enter a valid email address" });
         }
         if (!normalizedQualification) {
