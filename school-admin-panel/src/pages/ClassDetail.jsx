@@ -24,7 +24,9 @@ const ClassDetail = () => {
 
     useEffect(() => {
         if (!cls?._id) return;
-        getSections(cls._id).then((secs) => {
+        // force=true -> always fetch fresh sections (so a just-assigned class teacher
+        // shows up on re-open instead of a stale cached value).
+        getSections(cls._id, true).then((secs) => {
             const list = secs || [];
             setSections(list);
             setActiveSection((prev) => prev || (list[0]?.sectionName ?? null));
@@ -58,7 +60,9 @@ const ClassDetail = () => {
         setAssigning(true);
         try {
             await axios.patch(`${ADMIN_API_BASE}/sections/${currentSection._id}`, { classTeacherId: teacherId || null });
-            setSections((prev) => prev.map((s) => (s._id === currentSection._id ? { ...s, classTeacherId: teacherId || null } : s)));
+            // refresh the shared sections cache so the assignment persists on re-open/refresh
+            const fresh = await getSections(cls._id, true);
+            setSections(fresh || []);
             toast.success(teacherId ? 'Class teacher assigned' : 'Class teacher removed');
         } catch (e) {
             toast.error('Could not update class teacher');

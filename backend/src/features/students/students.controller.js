@@ -14,18 +14,14 @@ export const postAdminStudents = async (req, res) => {
         const school = await School.findOne({ id: schoolId });
         if (!school) return res.status(404).json({ error: "School not found" });
 
-        // Parent email is required so login credentials can be emailed.
+        // Parent email is optional; validated only if provided (no longer emailed).
         const parentEmail = String(req.body.parentEmail || '').trim().toLowerCase();
-        if (!parentEmail) return res.status(400).json({ error: "Parent email is required" });
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return res.status(400).json({ error: "Please enter a valid parent email" });
+        if (parentEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return res.status(400).json({ error: "Please enter a valid parent email" });
 
         // School-prefixed, globally-unique App ID (e.g. GAJ001)
         const [studentAppId] = await nextStudentIds(school, 1);
-        const dobObj = new Date(req.body.dateOfBirth);
-        const dd = String(dobObj.getDate()).padStart(2, '0');
-        const mm = String(dobObj.getMonth() + 1).padStart(2, '0');
-        const yyyy = dobObj.getFullYear();
-        const plainPassword = `${dd}${mm}${yyyy}`; // Default password is DOB
+        // Login password: a random 6-digit code the school hands out (not emailed).
+        const plainPassword = String(Math.floor(100000 + Math.random() * 900000));
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(plainPassword, salt);
@@ -41,26 +37,9 @@ export const postAdminStudents = async (req, res) => {
 
         await newStudent.save();
 
-        // Auto-email login credentials to the parent (if a parent email is on file).
-        let emailed = false;
-        if (newStudent.parentEmail) {
-            const r = await sendCredentialsEmail({
-                to: newStudent.parentEmail,
-                name: `${newStudent.firstName} ${newStudent.lastName}`.trim(),
-                loginLabel: 'Student ID',
-                loginId: studentAppId,
-                password: plainPassword,
-                roleLabel: 'student account',
-                appName: 'Scoolg Student App',
-                loginUrl: STUDENT_APP_URL,
-            });
-            emailed = !!r?.sent;
-        }
-
         res.status(201).json({
             message: "Student added successfully",
             student: newStudent,
-            emailed,
             appCredentials: {
                 studentAppId,
                 password: plainPassword // Send back once so admin can print/save it
@@ -83,7 +62,6 @@ export const postAdminStudentsBulk = async (req, res) => {
         if (!school) return res.status(404).json({ error: "School not found" });
 
         const createdStudents = [];
-        const emailJobs = []; // { to, name, studentAppId, password } for parents with an email
         const salt = await bcrypt.genSalt(10);
         
         // School-prefixed, globally-unique App IDs (e.g. GAJ001, GAJ002 ...)
@@ -93,23 +71,8 @@ export const postAdminStudentsBulk = async (req, res) => {
         for (const studentData of students) {
             const studentAppId = appIds[idx++];
 
-            // Use an admin-provided password if given, else derive from DOB.
-            const dobStr = studentData.dateOfBirth;
-            let plainPassword = (studentData.password && String(studentData.password).trim()) || "password123"; // override or fallback
-            if (!studentData.password && dobStr && dobStr.includes('-')) {
-                const parts = dobStr.split('-'); // [yyyy, mm, dd]
-                if (parts.length === 3) {
-                    // YYYY-MM-DD to DDMMYYYY
-                    plainPassword = `${parts[2].substring(0,2)}${parts[1]}${parts[0]}`;
-                }
-            } else if (!studentData.password && dobStr) {
-                // If it's a Date object
-                const d = new Date(dobStr);
-                const dd = String(d.getDate()).padStart(2, '0');
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const yyyy = d.getFullYear();
-                plainPassword = `${dd}${mm}${yyyy}`;
-            }
+            // Login password: admin override if given, else a random 6-digit code.
+            const plainPassword = (studentData.password && String(studentData.password).trim()) || String(Math.floor(100000 + Math.random() * 900000));
 
             const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
@@ -149,34 +112,11 @@ export const postAdminStudentsBulk = async (req, res) => {
                 studentAppId: newStudent.studentAppId,
                 password: plainPassword // Send back plain-text once for the UI to display/download
             });
-
-            if (newStudent.parentEmail) {
-                emailJobs.push({
-                    to: newStudent.parentEmail,
-                    name: `${newStudent.firstName} ${newStudent.lastName || ''}`.trim(),
-                    studentAppId: newStudent.studentAppId,
-                    password: plainPassword,
-                });
-            }
         }
-
-        // Auto-email credentials to parents that have an email (parallel, best-effort).
-        const results = await Promise.allSettled(emailJobs.map(j => sendCredentialsEmail({
-            to: j.to,
-            name: j.name,
-            loginLabel: 'Student ID',
-            loginId: j.studentAppId,
-            password: j.password,
-            roleLabel: 'student account',
-            appName: 'Scoolg Student App',
-            loginUrl: STUDENT_APP_URL,
-        })));
-        const emailedCount = results.filter(r => r.status === 'fulfilled' && r.value?.sent).length;
 
         res.status(201).json({
             message: `${createdStudents.length} students added successfully`,
-            students: createdStudents,
-            emailedCount
+            students: createdStudents
         });
     } catch (err) {
         console.error("❌ Bulk add students error:", err);
@@ -235,14 +175,8 @@ export const postAdminStudentsResetPassword = async (req, res) => {
         const student = await Student.findById(req.params.id);
         if (!student) return res.status(404).json({ error: "Student not found" });
 
-        // New temp password = DOB (DDMMYYYY) when available, else a short random one.
-        let plainPassword;
-        if (student.dateOfBirth) {
-            const d = new Date(student.dateOfBirth);
-            plainPassword = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}${d.getFullYear()}`;
-        } else {
-            plainPassword = `SCG-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-        }
+        // New temp password = a random 6-digit code the school hands out (not emailed).
+        const plainPassword = String(Math.floor(100000 + Math.random() * 900000));
 
         const salt = await bcrypt.genSalt(10);
         student.password = await bcrypt.hash(plainPassword, salt);
@@ -252,25 +186,8 @@ export const postAdminStudentsResetPassword = async (req, res) => {
         student.resetOtpExpires = undefined;
         await student.save();
 
-        let emailed = false;
-        if (student.parentEmail) {
-            const r = await sendCredentialsEmail({
-                to: student.parentEmail,
-                name: `${student.firstName} ${student.lastName || ''}`.trim(),
-                loginLabel: 'Student ID',
-                loginId: student.studentAppId,
-                password: plainPassword,
-                roleLabel: 'student account',
-                appName: 'Scoolg Student App',
-                loginUrl: STUDENT_APP_URL,
-            });
-            emailed = !!r?.sent;
-        }
-
         res.json({
             message: "Password reset successfully",
-            emailed,
-            parentEmail: student.parentEmail || null,
             appCredentials: { studentAppId: student.studentAppId, password: plainPassword }
         });
     } catch (err) {

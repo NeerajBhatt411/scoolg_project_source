@@ -54,11 +54,8 @@ export const postAdminTeachers = async (req, res) => {
         if (normalizedPhone.length !== 10) {
             return res.status(400).json({ error: "Phone number must be exactly 10 digits" });
         }
-        // Email is required so login credentials can be emailed to the teacher.
-        if (!normalizedEmail) {
-            return res.status(400).json({ error: "Email is required" });
-        }
-        if (!emailRegex.test(normalizedEmail)) {
+        // Email is optional; validated only if provided (no longer emailed).
+        if (normalizedEmail && !emailRegex.test(normalizedEmail)) {
             return res.status(400).json({ error: "Please enter a valid email address" });
         }
         if (!normalizedQualification) {
@@ -101,9 +98,8 @@ export const postAdminTeachers = async (req, res) => {
         // School-prefixed, globally-unique Teacher App ID (e.g. GAJT01)
         const [teacherAppId] = await nextTeacherIds(school, 1);
 
-        // Use an admin-provided password if given, else a short auto one (PASS-XYZ).
-        const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-        const plainPassword = (req.body.password && String(req.body.password).trim()) || `PASS-${randomSuffix}`;
+        // Login password: admin override if given, else a random 6-digit code (not emailed).
+        const plainPassword = (req.body.password && String(req.body.password).trim()) || String(Math.floor(100000 + Math.random() * 900000));
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
@@ -127,26 +123,9 @@ export const postAdminTeachers = async (req, res) => {
 
         await newTeacher.save();
 
-        // Auto-email login credentials to the teacher (if an email is on file).
-        let emailed = false;
-        if (normalizedEmail) {
-            const r = await sendCredentialsEmail({
-                to: normalizedEmail,
-                name: normalizedFullName,
-                loginLabel: 'Teacher ID',
-                loginId: teacherAppId,
-                password: plainPassword,
-                roleLabel: 'teacher account',
-                appName: 'Scoolg Teacher App',
-                loginUrl: TEACHER_APP_URL,
-            });
-            emailed = !!r?.sent;
-        }
-
         res.status(201).json({
             message: "Teacher added successfully",
             teacher: newTeacher,
-            emailed,
             appCredentials: {
                 teacherAppId,
                 password: plainPassword
@@ -200,8 +179,8 @@ export const postAdminTeachersResetPassword = async (req, res) => {
         const teacher = await Teacher.findById(req.params.id);
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
 
-        const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-        const plainPassword = `PASS-${randomSuffix}`;
+        // New temp password = a random 6-digit code the school hands out (not emailed).
+        const plainPassword = String(Math.floor(100000 + Math.random() * 900000));
         const salt = await bcrypt.genSalt(10);
         teacher.password = await bcrypt.hash(plainPassword, salt);
         teacher.isPasswordChanged = false; // force change on next login
@@ -210,25 +189,8 @@ export const postAdminTeachersResetPassword = async (req, res) => {
         teacher.resetOtpExpires = undefined;
         await teacher.save();
 
-        let emailed = false;
-        if (teacher.email) {
-            const r = await sendCredentialsEmail({
-                to: teacher.email,
-                name: teacher.fullName,
-                loginLabel: 'Teacher ID',
-                loginId: teacher.teacherAppId,
-                password: plainPassword,
-                roleLabel: 'teacher account',
-                appName: 'Scoolg Teacher App',
-                loginUrl: TEACHER_APP_URL,
-            });
-            emailed = !!r?.sent;
-        }
-
         res.json({
             message: "Password reset successfully",
-            emailed,
-            email: teacher.email || null,
             appCredentials: { teacherAppId: teacher.teacherAppId, password: plainPassword }
         });
     } catch (err) {

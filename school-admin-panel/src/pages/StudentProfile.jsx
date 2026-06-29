@@ -420,13 +420,10 @@ const StudentProfile = () => {
                                 </div>
                                 <p className="text-xs text-slate-400 leading-relaxed">
                                     {shownAppPw
-                                        ? "This is the student's first-time password — it disappears here once the student sets their own."
-                                        : "The student has set their own password. Use the buttons below to email or reset their login details."}
+                                        ? "This is the student's first-time password — share it with the parent. It disappears here once the student sets their own."
+                                        : "The student has set their own password. Use Reset Password to issue fresh login details."}
                                 </p>
                                 <div className="flex flex-wrap gap-3">
-                                    <button onClick={handleResendCredentials} disabled={resending} className="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
-                                        <span className="material-symbols-outlined text-[18px]">mail</span> {resending ? 'Sending…' : 'Email Login'}
-                                    </button>
                                     <button onClick={handleResetPassword} disabled={resetting} className="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50">
                                         <span className="material-symbols-outlined text-[18px]">lock_reset</span> {resetting ? 'Resetting…' : 'Reset Password'}
                                     </button>
