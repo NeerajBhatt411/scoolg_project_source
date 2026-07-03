@@ -281,11 +281,6 @@ const Classes = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[#2563eb]">
-                                        <button onClick={() => openManageClass(cls)} title="Edit class" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-blue-50 transition-colors">
-                                            <span className="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
-                                    </div>
                                 </div>
 
                                 <div className="h-[1px] w-full bg-slate-100 my-4"></div>
