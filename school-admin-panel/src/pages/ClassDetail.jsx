@@ -21,6 +21,9 @@ const ClassDetail = () => {
     const [editingName, setEditingName] = useState(false);
     const [nameInput, setNameInput] = useState('');
     const [savingName, setSavingName] = useState(false);
+    const [diary, setDiary] = useState([]);
+    const [diaryTeacher, setDiaryTeacher] = useState('all'); // 'all' | teacherId
+    const [loadingDiary, setLoadingDiary] = useState(false);
 
     const teacherById = useMemo(() => {
         const m = {}; (teachers || []).forEach((t) => { m[String(t._id)] = t; }); return m;
@@ -48,6 +51,18 @@ const ClassDetail = () => {
             .catch(() => { if (!cancelled) setTimetable(null); });
         return () => { cancelled = true; };
     }, [cls?.className, activeSection, schoolId]);
+
+    // Teacher diary for the whole class (all sections), newest first.
+    useEffect(() => {
+        if (!cls?.className) return;
+        let cancelled = false;
+        setLoadingDiary(true);
+        axios.get(`${ADMIN_API_BASE}/teacher-diary?schoolId=${schoolId}&className=${encodeURIComponent(cls.className)}`)
+            .then((r) => { if (!cancelled) setDiary(Array.isArray(r.data) ? r.data : []); })
+            .catch(() => { if (!cancelled) setDiary([]); })
+            .finally(() => { if (!cancelled) setLoadingDiary(false); });
+        return () => { cancelled = true; };
+    }, [cls?.className, schoolId]);
 
     if (!cls) {
         return (
@@ -120,6 +135,12 @@ const ClassDetail = () => {
 
     const initials = (n) => (n || '?').trim().charAt(0).toUpperCase();
     const showSkeleton = loading || loadingStudents;
+
+    // Teacher diary: unique teachers seen in the entries + the active filter.
+    const diaryTeachers = Array.from(new Map(diary.filter((d) => d.teacherId).map((d) => [String(d.teacherId._id), d.teacherId])).values());
+    const filteredDiary = diaryTeacher === 'all' ? diary : diary.filter((d) => String(d.teacherId?._id) === diaryTeacher);
+    const fmtDate = (d) => { try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return d; } };
+    const chipCls = (active) => `px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20">
@@ -254,6 +275,47 @@ const ClassDetail = () => {
                         )}
                         <p className="text-[11px] text-slate-400 mt-4 leading-relaxed">Subject teachers are derived from this section's timetable. Set them up in the Timetable section.</p>
                     </div>
+                </div>
+            </div>
+
+            {/* Teacher Diary — what teachers taught in this class, date-wise */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="font-extrabold text-slate-800 flex items-center gap-2"><span className="material-symbols-outlined text-blue-600">menu_book</span> Teacher Diary</h3>
+                    <span className="text-sm font-bold text-slate-400">{filteredDiary.length}</span>
+                </div>
+                {diaryTeachers.length > 0 && (
+                    <div className="px-6 pt-4 flex flex-wrap gap-2">
+                        <button onClick={() => setDiaryTeacher('all')} className={chipCls(diaryTeacher === 'all')}>All teachers</button>
+                        {diaryTeachers.map((t) => (
+                            <button key={t._id} onClick={() => setDiaryTeacher(String(t._id))} className={chipCls(diaryTeacher === String(t._id))}>{t.fullName}</button>
+                        ))}
+                    </div>
+                )}
+                <div className="p-6 space-y-3">
+                    {loadingDiary ? (
+                        [...Array(3)].map((_, i) => <div key={i} className="animate-pulse bg-slate-100 rounded-2xl h-20" />)
+                    ) : filteredDiary.length === 0 ? (
+                        <div className="py-10 text-center text-slate-400">
+                            <span className="material-symbols-outlined text-5xl text-slate-200 mb-2">edit_note</span>
+                            <p className="font-bold text-slate-500">No diary entries for this class yet</p>
+                        </div>
+                    ) : (
+                        filteredDiary.map((entry) => (
+                            <div key={entry._id} className="border border-slate-100 rounded-2xl p-4">
+                                <div className="flex items-center justify-between gap-3 mb-2">
+                                    <span className="text-sm font-bold text-slate-800 truncate">{entry.teacherId?.fullName || 'Teacher'}</span>
+                                    <span className="text-xs font-semibold text-slate-400 shrink-0">{fmtDate(entry.date)}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {entry.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded">{entry.subject}</span>}
+                                    {entry.sectionName && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded">Sec {entry.sectionName}</span>}
+                                    {entry.locked && <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded inline-flex items-center gap-0.5"><span className="material-symbols-outlined text-[12px]">lock</span>Locked</span>}
+                                </div>
+                                <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{entry.note}</p>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
             </>)}

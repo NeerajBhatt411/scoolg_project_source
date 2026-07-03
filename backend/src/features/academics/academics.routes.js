@@ -99,6 +99,9 @@ router.patch('/api/admin/classes/:id', c.patchAdminClassesById);
 // Rename a class (cascades the new name to students/timetables/homework/diaries).
 router.patch('/api/admin/classes/:id/rename', c.patchAdminClassesByIdRename);
 
+// Delete a class (+ its sections & timetables).
+router.delete('/api/admin/classes/:id', c.deleteAdminClassesById);
+
 // --- Subjects API ---
 router.post('/api/admin/subjects', c.postAdminSubjects);
 

@@ -29,6 +29,7 @@ const Classes = () => {
     const [manageClass, setManageClass] = useState(null);
     const [renameVal, setRenameVal] = useState('');
     const [renaming, setRenaming] = useState(false);
+    const [deletingClass, setDeletingClass] = useState(false);
     const [editSubjects, setEditSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
     const [newSecName, setNewSecName] = useState('');
@@ -123,6 +124,25 @@ const Classes = () => {
         } catch (e) {
             toast.error(e.response?.data?.error || 'Failed to rename class');
         } finally { setRenaming(false); }
+    };
+
+    const deleteClass = async () => {
+        const studentCount = (students || []).filter(s => s.class === manageClass.className).length;
+        const msg = studentCount > 0
+            ? `Delete "${manageClass.className}"?\n\nIt has ${studentCount} student(s) — they will be left without a class. Its sections & timetable will also be removed.\n\nAre you sure?`
+            : `Delete "${manageClass.className}"?\n\nIts sections & timetable will also be removed.\n\nAre you sure?`;
+        if (!window.confirm(msg)) return;
+        setDeletingClass(true);
+        try {
+            await axios.delete(`${ADMIN_API_BASE}/classes/${manageClass._id}`);
+            toast.success('Class deleted');
+            setManageClass(null);
+            invalidateAcademic?.();
+            await refreshClasses(true);
+            await fetchSections();
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to delete class');
+        } finally { setDeletingClass(false); }
     };
     const addSubjectChip = () => {
         const v = subjectInput.trim();
@@ -464,8 +484,11 @@ const Classes = () => {
                             </div>
                         </div>
 
-                        <div className="px-6 py-4 border-t border-slate-100 shrink-0">
-                            <button onClick={() => setManageClass(null)} className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Done</button>
+                        <div className="px-6 py-4 border-t border-slate-100 shrink-0 flex gap-3">
+                            <button onClick={deleteClass} disabled={deletingClass} className="h-11 px-5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm transition-colors disabled:opacity-60 inline-flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[18px]">delete</span> {deletingClass ? 'Deleting…' : 'Delete Class'}
+                            </button>
+                            <button onClick={() => setManageClass(null)} className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Done</button>
                         </div>
                     </div>
                 </div>

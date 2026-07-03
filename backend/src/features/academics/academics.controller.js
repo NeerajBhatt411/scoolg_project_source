@@ -7,6 +7,31 @@ import { Timetable } from '../../../models/Timetable.js';
 import { Homework } from '../../../models/Homework.js';
 import { TeacherDiary } from '../../../models/TeacherDiary.js';
 
+// Delete a class + its sections and timetables. Students of the class are left
+// intact (admin reassigns them); we report how many remain.
+export const deleteAdminClassesById = async (req, res) => {
+    try {
+        const cls = await ClassModel.findById(req.params.id);
+        if (!cls) return res.status(404).json({ error: "Class not found" });
+        const sid = cls.schoolId;
+        const name = cls.className;
+        const [secs, tts] = await Promise.all([
+            Section.deleteMany({ classId: cls._id }),
+            Timetable.deleteMany({ schoolId: sid, className: name }),
+        ]);
+        await cls.deleteOne();
+        const remainingStudents = await Student.countDocuments({ schoolId: sid, class: name });
+        res.json({
+            message: "Class deleted",
+            deleted: { sections: secs.deletedCount, timetables: tts.deletedCount },
+            remainingStudents,
+        });
+    } catch (err) {
+        console.error("Delete class error:", err);
+        res.status(500).json({ error: "Failed to delete class" });
+    }
+};
+
 // Rename a class AND cascade the new name to every denormalized reference
 // (students, timetables, homework, teacher diaries all store the class name as a
 // string). Sections/attendance reference classId so they need no change.
