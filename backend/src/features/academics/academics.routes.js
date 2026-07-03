@@ -96,6 +96,9 @@ router.patch('/api/admin/sections/:id', c.patchAdminSectionsById);
 // Update a class (subjects / name / order).
 router.patch('/api/admin/classes/:id', c.patchAdminClassesById);
 
+// Rename a class (cascades the new name to students/timetables/homework/diaries).
+router.patch('/api/admin/classes/:id/rename', c.patchAdminClassesByIdRename);
+
 // --- Subjects API ---
 router.post('/api/admin/subjects', c.postAdminSubjects);
 

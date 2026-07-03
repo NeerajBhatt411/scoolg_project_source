@@ -27,6 +27,8 @@ const Classes = () => {
 
     // Manage Class modal state (sections + subjects together)
     const [manageClass, setManageClass] = useState(null);
+    const [renameVal, setRenameVal] = useState('');
+    const [renaming, setRenaming] = useState(false);
     const [editSubjects, setEditSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
     const [newSecName, setNewSecName] = useState('');
@@ -105,7 +107,23 @@ const Classes = () => {
     };
 
     // --- Manage Class (sections + subjects in one place) ---
-    const openManageClass = (cls) => { setManageClass(cls); setEditSubjects([...(cls.subjects || [])]); setSubjectInput(''); setNewSecName(''); setSubjectsSaved(false); };
+    const openManageClass = (cls) => { setManageClass(cls); setRenameVal(cls.className || ''); setEditSubjects([...(cls.subjects || [])]); setSubjectInput(''); setNewSecName(''); setSubjectsSaved(false); };
+
+    const saveClassName = async () => {
+        const name = renameVal.trim();
+        if (!name || name === manageClass.className) return;
+        setRenaming(true);
+        try {
+            const res = await axios.patch(`${ADMIN_API_BASE}/classes/${manageClass._id}/rename`, { className: name });
+            setManageClass(c => c ? { ...c, className: name } : c);
+            invalidateAcademic?.();
+            await refreshClasses(true);
+            const u = res.data?.updated || {};
+            toast.success(`Class renamed to "${name}" (updated ${u.students || 0} students, ${u.timetables || 0} timetables)`);
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to rename class');
+        } finally { setRenaming(false); }
+    };
     const addSubjectChip = () => {
         const v = subjectInput.trim();
         if (v && !editSubjects.includes(v)) setEditSubjects([...editSubjects, v]);
@@ -247,7 +265,7 @@ const Classes = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 text-[#2563eb]">
-                                        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-blue-50 transition-colors">
+                                        <button onClick={() => openManageClass(cls)} title="Edit class" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-blue-50 transition-colors">
                                             <span className="material-symbols-outlined text-[20px]">edit</span>
                                         </button>
                                     </div>
@@ -372,6 +390,19 @@ const Classes = () => {
                         </div>
 
                         <div className="px-6 py-5 overflow-y-auto space-y-7">
+                            {/* Class name (rename) */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-blue-600 text-[20px]">badge</span>
+                                    <h4 className="font-black text-slate-800">Class Name</h4>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input value={renameVal} onChange={(e) => setRenameVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveClassName(); } }} className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white transition-all" />
+                                    <button onClick={saveClassName} disabled={renaming || !renameVal.trim() || renameVal.trim() === manageClass.className} className="px-4 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors disabled:opacity-50">{renaming ? '…' : 'Rename'}</button>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1.5">Renaming also updates this class's students, timetables &amp; homework.</p>
+                            </div>
+
                             {/* Sections */}
                             <div>
                                 <div className="flex items-center gap-2 mb-3">

@@ -2,6 +2,50 @@ import { School } from '../../../models/School.js';
 import { ClassModel } from '../../../models/Class.js';
 import { Section } from '../../../models/Section.js';
 import { Subject } from '../../../models/Subject.js';
+import { Student } from '../../../models/Student.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { Homework } from '../../../models/Homework.js';
+import { TeacherDiary } from '../../../models/TeacherDiary.js';
+
+// Rename a class AND cascade the new name to every denormalized reference
+// (students, timetables, homework, teacher diaries all store the class name as a
+// string). Sections/attendance reference classId so they need no change.
+export const patchAdminClassesByIdRename = async (req, res) => {
+    try {
+        const newName = String(req.body.className || '').trim();
+        if (!newName) return res.status(400).json({ error: "Class name is required" });
+        const cls = await ClassModel.findById(req.params.id);
+        if (!cls) return res.status(404).json({ error: "Class not found" });
+        const oldName = cls.className;
+        if (oldName === newName) return res.json({ class: cls, updated: {} });
+
+        const dup = await ClassModel.findOne({ schoolId: cls.schoolId, className: newName, _id: { $ne: cls._id } });
+        if (dup) return res.status(409).json({ error: "A class with this name already exists" });
+
+        cls.className = newName;
+        await cls.save();
+
+        const sid = cls.schoolId;
+        const [students, timetables, homeworks, diaries] = await Promise.all([
+            Student.updateMany({ schoolId: sid, class: oldName }, { $set: { class: newName } }),
+            Timetable.updateMany({ schoolId: sid, className: oldName }, { $set: { className: newName } }),
+            Homework.updateMany({ schoolId: sid, className: oldName }, { $set: { className: newName } }),
+            TeacherDiary.updateMany({ schoolId: sid, className: oldName }, { $set: { className: newName } }),
+        ]);
+        res.json({
+            class: cls,
+            updated: {
+                students: students.modifiedCount,
+                timetables: timetables.modifiedCount,
+                homeworks: homeworks.modifiedCount,
+                diaries: diaries.modifiedCount,
+            }
+        });
+    } catch (err) {
+        console.error("Rename class error:", err);
+        res.status(500).json({ error: "Failed to rename class" });
+    }
+};
 
 export const postAdminClasses = async (req, res) => {
     try {

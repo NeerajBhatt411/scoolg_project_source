@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 const ClassDetail = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { getSections, students, teachers, loadingStudents } = useAdmin();
+    const { getSections, students, teachers, loadingStudents, refreshStudents, invalidateAcademic } = useAdmin();
     const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id');
     const cls = location.state?.cls;
@@ -18,6 +18,9 @@ const ClassDetail = () => {
     const [timetable, setTimetable] = useState(null);
     const [assigning, setAssigning] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [editingName, setEditingName] = useState(false);
+    const [nameInput, setNameInput] = useState('');
+    const [savingName, setSavingName] = useState(false);
 
     const teacherById = useMemo(() => {
         const m = {}; (teachers || []).forEach((t) => { m[String(t._id)] = t; }); return m;
@@ -77,6 +80,26 @@ const ClassDetail = () => {
         }
     };
 
+    const saveName = async () => {
+        const name = nameInput.trim();
+        if (!name || name === cls.className) { setEditingName(false); return; }
+        setSavingName(true);
+        try {
+            await axios.patch(`${ADMIN_API_BASE}/classes/${cls._id}/rename`, { className: name });
+            // Update navigation state so cls.className reflects the new name here, then
+            // refresh students so the list re-matches the renamed class.
+            navigate(location.pathname, { replace: true, state: { ...(location.state || {}), cls: { ...cls, className: name } } });
+            invalidateAcademic?.();
+            refreshStudents?.(true);
+            toast.success('Class renamed');
+            setEditingName(false);
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to rename class');
+        } finally {
+            setSavingName(false);
+        }
+    };
+
     const sectionStudents = (students || [])
         .filter((s) => s.class === cls.className && s.section === activeSection)
         .sort((a, b) => (parseInt(a.rollNumber, 10) || 0) - (parseInt(b.rollNumber, 10) || 0));
@@ -105,7 +128,22 @@ const ClassDetail = () => {
                 <button onClick={() => navigate('/classes')} aria-label="Back" className="shrink-0 -ml-1 w-9 h-9 grid place-items-center rounded-lg text-slate-700 hover:bg-slate-100 active:scale-90 transition-all">
                     <span className="material-symbols-outlined text-[24px]">arrow_back</span>
                 </button>
-                <h1 className="text-xl sm:text-3xl font-black text-blue-700 tracking-tight truncate">{cls.className}</h1>
+                {editingName ? (
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <input autoFocus value={nameInput} onChange={(e) => setNameInput(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                            className="flex-1 min-w-0 h-10 px-3 rounded-xl border border-blue-300 bg-blue-50/40 text-lg sm:text-2xl font-black text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/30" />
+                        <button onClick={saveName} disabled={savingName} className="px-3 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-50">{savingName ? '…' : 'Save'}</button>
+                        <button onClick={() => setEditingName(false)} className="px-3 h-10 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm">Cancel</button>
+                    </div>
+                ) : (
+                    <>
+                        <h1 className="text-xl sm:text-3xl font-black text-blue-700 tracking-tight truncate">{cls.className}</h1>
+                        <button onClick={() => { setNameInput(cls.className); setEditingName(true); }} title="Rename class" className="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                    </>
+                )}
             </div>
 
             {showSkeleton ? <ClassDetailSkeleton /> : (<>
