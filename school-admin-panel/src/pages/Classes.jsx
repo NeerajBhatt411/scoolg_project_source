@@ -30,6 +30,7 @@ const Classes = () => {
     const [renameVal, setRenameVal] = useState('');
     const [renaming, setRenaming] = useState(false);
     const [deletingClass, setDeletingClass] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [editSubjects, setEditSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
     const [newSecName, setNewSecName] = useState('');
@@ -126,16 +127,12 @@ const Classes = () => {
         } finally { setRenaming(false); }
     };
 
-    const deleteClass = async () => {
-        const studentCount = (students || []).filter(s => s.class === manageClass.className).length;
-        const msg = studentCount > 0
-            ? `Delete "${manageClass.className}"?\n\nIt has ${studentCount} student(s) — they will be left without a class. Its sections & timetable will also be removed.\n\nAre you sure?`
-            : `Delete "${manageClass.className}"?\n\nIts sections & timetable will also be removed.\n\nAre you sure?`;
-        if (!window.confirm(msg)) return;
+    const confirmDeleteClass = async () => {
         setDeletingClass(true);
         try {
             await axios.delete(`${ADMIN_API_BASE}/classes/${manageClass._id}`);
             toast.success('Class deleted');
+            setShowDeleteConfirm(false);
             setManageClass(null);
             invalidateAcademic?.();
             await refreshClasses(true);
@@ -485,10 +482,35 @@ const Classes = () => {
                         </div>
 
                         <div className="px-6 py-4 border-t border-slate-100 shrink-0 flex gap-3">
-                            <button onClick={deleteClass} disabled={deletingClass} className="h-11 px-5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm transition-colors disabled:opacity-60 inline-flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-[18px]">delete</span> {deletingClass ? 'Deleting…' : 'Delete Class'}
+                            <button onClick={() => setShowDeleteConfirm(true)} className="h-11 px-5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm transition-colors inline-flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[18px]">delete</span> Delete Class
                             </button>
                             <button onClick={() => setManageClass(null)} className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors">Done</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete-class confirmation dialog */}
+            {showDeleteConfirm && manageClass && (
+                <div onClick={() => !deletingClass && setShowDeleteConfirm(false)} className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl w-full max-w-sm p-7 shadow-2xl animate-fade-in-up">
+                        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 mx-auto">
+                            <span className="material-symbols-outlined text-3xl">delete</span>
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 text-center mb-2">Delete "{manageClass.className}"?</h3>
+                        <p className="text-sm text-slate-500 text-center font-medium mb-1">
+                            {(() => {
+                                const n = (students || []).filter(s => s.class === manageClass.className).length;
+                                return n > 0
+                                    ? <>This class has <b className="text-slate-800">{n} student{n > 1 ? 's' : ''}</b> — they'll be left without a class.</>
+                                    : 'This class has no students.';
+                            })()}
+                        </p>
+                        <p className="text-xs text-slate-400 text-center mb-6">Its sections &amp; timetable will also be removed. This can't be undone.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowDeleteConfirm(false)} disabled={deletingClass} className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-colors disabled:opacity-50">Cancel</button>
+                            <button onClick={confirmDeleteClass} disabled={deletingClass} className="flex-1 h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-colors disabled:opacity-50">{deletingClass ? 'Deleting…' : 'Delete'}</button>
                         </div>
                     </div>
                 </div>

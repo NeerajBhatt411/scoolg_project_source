@@ -22,7 +22,8 @@ const ClassDetail = () => {
     const [nameInput, setNameInput] = useState('');
     const [savingName, setSavingName] = useState(false);
     const [diary, setDiary] = useState([]);
-    const [diaryTeacher, setDiaryTeacher] = useState('all'); // 'all' | teacherId
+    const [diaryTeacher, setDiaryTeacher] = useState(null); // null = teacher list, else selected teacherId
+    const [classTimetables, setClassTimetables] = useState([]);
     const [loadingDiary, setLoadingDiary] = useState(false);
 
     const teacherById = useMemo(() => {
@@ -61,6 +62,16 @@ const ClassDetail = () => {
             .then((r) => { if (!cancelled) setDiary(Array.isArray(r.data) ? r.data : []); })
             .catch(() => { if (!cancelled) setDiary([]); })
             .finally(() => { if (!cancelled) setLoadingDiary(false); });
+        return () => { cancelled = true; };
+    }, [cls?.className, schoolId]);
+
+    // Class timetables (all sections) — used to list every teacher who teaches this class.
+    useEffect(() => {
+        if (!cls?.className) return;
+        let cancelled = false;
+        axios.get(`${ADMIN_API_BASE}/timetables?schoolId=${schoolId}`)
+            .then((r) => { if (!cancelled) setClassTimetables((Array.isArray(r.data) ? r.data : []).filter((tt) => tt.className === cls.className)); })
+            .catch(() => { if (!cancelled) setClassTimetables([]); });
         return () => { cancelled = true; };
     }, [cls?.className, schoolId]);
 
@@ -136,11 +147,16 @@ const ClassDetail = () => {
     const initials = (n) => (n || '?').trim().charAt(0).toUpperCase();
     const showSkeleton = loading || loadingStudents;
 
-    // Teacher diary: unique teachers seen in the entries + the active filter.
-    const diaryTeachers = Array.from(new Map(diary.filter((d) => d.teacherId).map((d) => [String(d.teacherId._id), d.teacherId])).values());
-    const filteredDiary = diaryTeacher === 'all' ? diary : diary.filter((d) => String(d.teacherId?._id) === diaryTeacher);
     const fmtDate = (d) => { try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return d; } };
-    const chipCls = (active) => `px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+    // Every teacher who teaches this class: class-teacher assignments + timetable + diary.
+    const classTeacherIds = new Set();
+    sections.forEach((s) => { const ct = s.classTeacherId; if (ct) classTeacherIds.add(String(typeof ct === 'object' ? ct._id : ct)); });
+    diary.forEach((d) => { if (d.teacherId?._id) classTeacherIds.add(String(d.teacherId._id)); });
+    classTimetables.forEach((tt) => (tt.schedule || []).forEach((day) => (day.periods || []).forEach((p) => { if (p.teacherId) classTeacherIds.add(String(p.teacherId)); })));
+    const classTeachersList = Array.from(classTeacherIds).map((id) => teacherById[id]).filter(Boolean).sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    const diaryCountFor = (id) => diary.filter((d) => String(d.teacherId?._id) === String(id)).length;
+    const selectedTeacher = diaryTeacher ? teacherById[String(diaryTeacher)] : null;
+    const selectedEntries = diaryTeacher ? diary.filter((d) => String(d.teacherId?._id) === String(diaryTeacher)) : [];
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20">
@@ -278,45 +294,58 @@ const ClassDetail = () => {
                 </div>
             </div>
 
-            {/* Teacher Diary — what teachers taught in this class, date-wise */}
+            {/* Teacher Diary — list of teachers who teach this class -> click for their diary */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="font-extrabold text-slate-800 flex items-center gap-2"><span className="material-symbols-outlined text-blue-600">menu_book</span> Teacher Diary</h3>
-                    <span className="text-sm font-bold text-slate-400">{filteredDiary.length}</span>
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                    {diaryTeacher && (
+                        <button onClick={() => setDiaryTeacher(null)} title="Back to teachers" className="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"><span className="material-symbols-outlined text-[20px]">arrow_back</span></button>
+                    )}
+                    <h3 className="font-extrabold text-slate-800 flex items-center gap-2 flex-1 min-w-0">
+                        <span className="material-symbols-outlined text-blue-600">menu_book</span>
+                        <span className="truncate">{selectedTeacher ? `${selectedTeacher.fullName} — Diary` : 'Teacher Diary'}</span>
+                    </h3>
                 </div>
-                {diaryTeachers.length > 0 && (
-                    <div className="px-6 pt-4 flex flex-wrap gap-2">
-                        <button onClick={() => setDiaryTeacher('all')} className={chipCls(diaryTeacher === 'all')}>All teachers</button>
-                        {diaryTeachers.map((t) => (
-                            <button key={t._id} onClick={() => setDiaryTeacher(String(t._id))} className={chipCls(diaryTeacher === String(t._id))}>{t.fullName}</button>
-                        ))}
-                    </div>
-                )}
-                <div className="p-6 space-y-3">
-                    {loadingDiary ? (
-                        [...Array(3)].map((_, i) => <div key={i} className="animate-pulse bg-slate-100 rounded-2xl h-20" />)
-                    ) : filteredDiary.length === 0 ? (
-                        <div className="py-10 text-center text-slate-400">
-                            <span className="material-symbols-outlined text-5xl text-slate-200 mb-2">edit_note</span>
-                            <p className="font-bold text-slate-500">No diary entries for this class yet</p>
-                        </div>
+
+                {loadingDiary ? (
+                    <div className="p-6 space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="animate-pulse bg-slate-100 rounded-2xl h-16" />)}</div>
+                ) : !diaryTeacher ? (
+                    classTeachersList.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400"><span className="material-symbols-outlined text-5xl text-slate-200 mb-2">group_off</span><p className="font-bold text-slate-500">No teachers linked to this class yet</p></div>
                     ) : (
-                        filteredDiary.map((entry) => (
+                        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {classTeachersList.map((t) => {
+                                const cnt = diaryCountFor(t._id);
+                                return (
+                                    <button key={t._id} onClick={() => setDiaryTeacher(String(t._id))} className="text-left flex items-center gap-3 p-4 rounded-2xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-colors">
+                                        <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">{t.profileImageUrl ? <img src={t.profileImageUrl} className="w-full h-full object-cover" alt="" /> : initials(t.fullName)}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-slate-800 truncate">{t.fullName}</p>
+                                            <p className="text-[11px] font-semibold text-slate-400">{cnt} diary {cnt === 1 ? 'entry' : 'entries'}</p>
+                                        </div>
+                                        <span className="material-symbols-outlined text-slate-300 shrink-0">chevron_right</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )
+                ) : (
+                    <div className="p-6 space-y-3">
+                        {selectedEntries.length === 0 ? (
+                            <div className="py-10 text-center text-slate-400"><span className="material-symbols-outlined text-5xl text-slate-200 mb-2">edit_note</span><p className="font-bold text-slate-500">No diary entries from this teacher yet</p></div>
+                        ) : selectedEntries.map((entry) => (
                             <div key={entry._id} className="border border-slate-100 rounded-2xl p-4">
                                 <div className="flex items-center justify-between gap-3 mb-2">
-                                    <span className="text-sm font-bold text-slate-800 truncate">{entry.teacherId?.fullName || 'Teacher'}</span>
-                                    <span className="text-xs font-semibold text-slate-400 shrink-0">{fmtDate(entry.date)}</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mb-2">
-                                    {entry.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded">{entry.subject}</span>}
-                                    {entry.sectionName && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded">Sec {entry.sectionName}</span>}
-                                    {entry.locked && <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded inline-flex items-center gap-0.5"><span className="material-symbols-outlined text-[12px]">lock</span>Locked</span>}
+                                    <span className="text-xs font-bold text-blue-600 inline-flex items-center gap-1"><span className="material-symbols-outlined text-[15px]">calendar_today</span>{fmtDate(entry.date)}</span>
+                                    <div className="flex flex-wrap gap-2 justify-end">
+                                        {entry.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded">{entry.subject}</span>}
+                                        {entry.sectionName && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded">Sec {entry.sectionName}</span>}
+                                    </div>
                                 </div>
                                 <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{entry.note}</p>
                             </div>
-                        ))
-                    )}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
             </>)}
         </div>
