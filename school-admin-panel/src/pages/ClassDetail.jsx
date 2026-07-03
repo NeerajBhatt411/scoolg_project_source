@@ -5,6 +5,10 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 
+const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const pad2 = (n) => String(n).padStart(2, '0');
+
 const ClassDetail = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -25,6 +29,8 @@ const ClassDetail = () => {
     const [diaryTeacher, setDiaryTeacher] = useState(null); // null = teacher list, else selected teacherId
     const [diaryMode, setDiaryMode] = useState(false);       // Teacher Diary tab active?
     const [classTimetables, setClassTimetables] = useState([]);
+    const [diaryMonth, setDiaryMonth] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
+    const [selectedDay, setSelectedDay] = useState(null);    // 'YYYY-MM-DD'
     const [loadingDiary, setLoadingDiary] = useState(false);
 
     const teacherById = useMemo(() => {
@@ -75,6 +81,17 @@ const ClassDetail = () => {
             .catch(() => { if (!cancelled) setClassTimetables([]); });
         return () => { cancelled = true; };
     }, [cls?.className, schoolId]);
+
+    // Opening a teacher -> jump the calendar to their latest entry's month.
+    useEffect(() => {
+        if (!diaryTeacher) return;
+        const entries = diary.filter((d) => String(d.teacherId?._id) === String(diaryTeacher));
+        const latest = entries[0]?.date; // diary is sorted date desc
+        const base = latest ? new Date(String(latest).slice(0, 10) + 'T00:00:00') : new Date();
+        setDiaryMonth({ y: base.getFullYear(), m: base.getMonth() });
+        setSelectedDay(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [diaryTeacher]);
 
     if (!cls) {
         return (
@@ -158,6 +175,9 @@ const ClassDetail = () => {
     const diaryCountFor = (id) => diary.filter((d) => String(d.teacherId?._id) === String(id)).length;
     const selectedTeacher = diaryTeacher ? teacherById[String(diaryTeacher)] : null;
     const selectedEntries = diaryTeacher ? diary.filter((d) => String(d.teacherId?._id) === String(diaryTeacher)) : [];
+    const stepDiaryMonth = (delta) => setDiaryMonth(({ y, m }) => { const d = new Date(y, m + delta, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
+    const entriesByDate = {};
+    selectedEntries.forEach((e) => { const k = String(e.date).slice(0, 10); (entriesByDate[k] = entriesByDate[k] || []).push(e); });
 
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1200px] mx-auto pb-20">
@@ -334,22 +354,61 @@ const ClassDetail = () => {
                             })}
                         </div>
                     )
+                ) : selectedEntries.length === 0 ? (
+                    <div className="py-10 text-center text-slate-400"><span className="material-symbols-outlined text-5xl text-slate-200 mb-2">edit_note</span><p className="font-bold text-slate-500">No diary entries from this teacher yet</p></div>
                 ) : (
-                    <div className="p-6 space-y-3">
-                        {selectedEntries.length === 0 ? (
-                            <div className="py-10 text-center text-slate-400"><span className="material-symbols-outlined text-5xl text-slate-200 mb-2">edit_note</span><p className="font-bold text-slate-500">No diary entries from this teacher yet</p></div>
-                        ) : selectedEntries.map((entry) => (
-                            <div key={entry._id} className="border border-slate-100 rounded-2xl p-4">
-                                <div className="flex items-center justify-between gap-3 mb-2">
-                                    <span className="text-xs font-bold text-blue-600 inline-flex items-center gap-1"><span className="material-symbols-outlined text-[15px]">calendar_today</span>{fmtDate(entry.date)}</span>
-                                    <div className="flex flex-wrap gap-2 justify-end">
-                                        {entry.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded">{entry.subject}</span>}
-                                        {entry.sectionName && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded">Sec {entry.sectionName}</span>}
-                                    </div>
+                    <div className="p-6 flex flex-col lg:flex-row gap-6">
+                        {/* Month calendar */}
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 w-full lg:w-[320px] shrink-0">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-bold text-slate-800">{MONTHS[diaryMonth.m]} {diaryMonth.y}</span>
+                                <div className="flex gap-1">
+                                    <button onClick={() => stepDiaryMonth(-1)} className="w-8 h-8 rounded-lg grid place-items-center text-slate-500 hover:bg-slate-200 transition-colors"><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
+                                    <button onClick={() => stepDiaryMonth(1)} className="w-8 h-8 rounded-lg grid place-items-center text-slate-500 hover:bg-slate-200 transition-colors"><span className="material-symbols-outlined text-[18px]">chevron_right</span></button>
                                 </div>
-                                <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{entry.note}</p>
                             </div>
-                        ))}
+                            <div className="grid grid-cols-7 gap-1 mb-1">{WEEK.map((d, i) => <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase">{d}</div>)}</div>
+                            <div className="grid grid-cols-7 gap-1">
+                                {Array.from({ length: (new Date(diaryMonth.y, diaryMonth.m, 1).getDay() + 6) % 7 }).map((_, i) => <div key={'e' + i} />)}
+                                {Array.from({ length: new Date(diaryMonth.y, diaryMonth.m + 1, 0).getDate() }, (_, i) => i + 1).map((d) => {
+                                    const key = `${diaryMonth.y}-${pad2(diaryMonth.m + 1)}-${pad2(d)}`;
+                                    const has = !!entriesByDate[key];
+                                    const sel = selectedDay === key;
+                                    return (
+                                        <button key={d} disabled={!has} onClick={() => setSelectedDay(key)}
+                                            className={`h-9 rounded-lg text-sm font-semibold relative transition-all ${sel ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : has ? 'text-blue-700 bg-blue-50 hover:bg-blue-100' : 'text-slate-300 cursor-default'}`}>
+                                            {d}
+                                            {has && !sel && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-3 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Days with diary entries</p>
+                        </div>
+
+                        {/* Selected day's entries */}
+                        <div className="flex-1 min-w-0">
+                            {selectedDay && (entriesByDate[selectedDay] || []).length > 0 ? (
+                                <div className="space-y-3">
+                                    <p className="text-sm font-bold text-slate-700 mb-1">{fmtDate(selectedDay)}</p>
+                                    {(entriesByDate[selectedDay] || []).map((entry) => (
+                                        <div key={entry._id} className="border border-slate-100 rounded-2xl p-4">
+                                            <div className="flex flex-wrap gap-2 mb-2">
+                                                {entry.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded">{entry.subject}</span>}
+                                                {entry.sectionName && <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-bold rounded">Sec {entry.sectionName}</span>}
+                                            </div>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{entry.note}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
+                                    <span className="material-symbols-outlined text-5xl text-slate-200 mb-2">event_note</span>
+                                    <p className="font-bold text-slate-500">Tap a highlighted date</p>
+                                    <p className="text-xs">to see what was taught that day</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
