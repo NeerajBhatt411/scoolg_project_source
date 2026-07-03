@@ -23,6 +23,7 @@ const ClassDetail = () => {
     const [savingName, setSavingName] = useState(false);
     const [diary, setDiary] = useState([]);
     const [diaryTeacher, setDiaryTeacher] = useState(null); // null = teacher list, else selected teacherId
+    const [diaryMode, setDiaryMode] = useState(false);       // Teacher Diary tab active?
     const [classTimetables, setClassTimetables] = useState([]);
     const [loadingDiary, setLoadingDiary] = useState(false);
 
@@ -192,18 +193,21 @@ const ClassDetail = () => {
                 <SummaryCard icon="badge" label="In this section" value={sectionStudents.length} />
             </div>
 
-            {/* Section tabs */}
-            {sections.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {sections.map((s) => (
-                        <button key={s._id} onClick={() => setActiveSection(s.sectionName)}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeSection === s.sectionName ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'}`}>
-                            Section {s.sectionName}
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* Tabs: sections + Teacher Diary */}
+            <div className="flex flex-wrap gap-2">
+                {sections.map((s) => (
+                    <button key={s._id} onClick={() => { setActiveSection(s.sectionName); setDiaryMode(false); }}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${!diaryMode && activeSection === s.sectionName ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'}`}>
+                        Section {s.sectionName}
+                    </button>
+                ))}
+                <button onClick={() => setDiaryMode(true)}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors inline-flex items-center gap-1.5 ${diaryMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'}`}>
+                    <span className="material-symbols-outlined text-[18px]">menu_book</span> Teacher Diary
+                </button>
+            </div>
 
+            {!diaryMode && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: students */}
                 <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
@@ -293,8 +297,10 @@ const ClassDetail = () => {
                     </div>
                 </div>
             </div>
+            )}
 
-            {/* Teacher Diary — list of teachers who teach this class -> click for their diary */}
+            {/* Teacher Diary tab — list of teachers who teach this class -> click for their diary */}
+            {diaryMode && (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
                     {diaryTeacher && (
@@ -347,6 +353,7 @@ const ClassDetail = () => {
                     </div>
                 )}
             </div>
+            )}
             </>)}
         </div>
     );
