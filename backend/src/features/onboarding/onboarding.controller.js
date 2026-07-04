@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { School } from '../../../models/School.js';
 import { transporter, renderEmail, sendCredentialsEmail } from '../../utils/email.js';
-import { slugify } from '../../utils/slug.js';
+import { slugify, validateSlug } from '../../utils/slug.js';
 import { registerSchoolDomain } from '../../utils/vercel.js';
 
 // OTP is persisted on the School document (otp + otpExpires) — required because
@@ -117,20 +117,33 @@ export const patchOnboardingUpdateById = async (req, res) => {
         school.formData = { ...school.formData, ...formData };
         if (currentStep) school.currentStep = currentStep;
 
-        // Auto-generate a unique public-website slug from the school name (once).
-        if (!school.slug && school.formData?.schoolName) {
-            const base = slugify(school.formData.schoolName);
-            if (base) {
-                let candidate = base, n = 1;
-                while (await School.findOne({ slug: candidate, id: { $ne: school.id } })) {
-                    candidate = `${base}-${++n}`;
-                }
-                school.slug = candidate;
-            }
+        // Owner-chosen public website address (the "Website address" field on the
+        // onboarding form -> ptgpnayak.scoolg.com). Validate + ensure it's unique
+        // across schools. This is the source of truth for the subdomain now.
+        const desiredSlug = school.formData?.websiteSlug;
+        if (desiredSlug) {
+            const v = validateSlug(desiredSlug);
+            if (!v.ok) return res.status(400).json({ error: v.error });
+            const clash = await School.findOne({ slug: v.slug, id: { $ne: school.id } }).select('id').lean();
+            if (clash) return res.status(409).json({ error: `"${v.slug}.scoolg.com" is already taken. Please choose another.` });
+            school.slug = v.slug;
+            school.formData.websiteSlug = v.slug; // persist the normalised value
         }
 
         let generatedPassword = null;
         if (currentStep === 8 && school.status !== "COMPLETED") {
+            // Fallback: if the owner never picked a website address, derive a unique
+            // one from the school name so the public site still goes live.
+            if (!school.slug && school.formData?.schoolName) {
+                const base = slugify(school.formData.schoolName);
+                if (base) {
+                    let candidate = base, n = 1;
+                    while (await School.findOne({ slug: candidate, id: { $ne: school.id } })) {
+                        candidate = `${base}-${++n}`;
+                    }
+                    school.slug = candidate;
+                }
+            }
             school.status = "COMPLETED";
             // Generate a random 8-char password
             // Branded Password generation (e.g. SCOOLG-XY12AB)
@@ -192,4 +205,26 @@ export const getOnboardingById = async (req, res) => {
     const school = await School.findOne({ id });
     if (!school) return res.status(404).json({ error: "Not found" });
     res.json(school.formData);
+};
+
+// Live availability check for the onboarding "Website address" field.
+// GET /api/onboarding/slug-available?slug=ptgpnayak&id=<schoolId>
+// Returns { available, slug (normalised), reason }.
+export const getOnboardingSlugAvailable = async (req, res) => {
+    try {
+        const { slug: raw, id } = req.query;
+        const v = validateSlug(raw);
+        if (!v.ok) return res.json({ available: false, slug: v.slug, reason: v.error });
+        const taken = await School.findOne({
+            slug: v.slug,
+            ...(id ? { id: { $ne: id } } : {}),
+        }).select('id').lean();
+        return res.json({
+            available: !taken,
+            slug: v.slug,
+            reason: taken ? 'This website address is already taken.' : '',
+        });
+    } catch (err) {
+        return res.status(500).json({ available: false, reason: 'Could not check availability.' });
+    }
 };

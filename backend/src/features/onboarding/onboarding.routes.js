@@ -47,6 +47,10 @@ router.post('/api/onboarding/start', c.postOnboardingStart);
  */
 router.post('/api/onboarding/verify', c.postOnboardingVerify);
 
+// Live check for the "Website address" field (must be BEFORE the /:id route so
+// "slug-available" isn't captured as an :id).
+router.get('/api/onboarding/slug-available', c.getOnboardingSlugAvailable);
+
 router.patch('/api/onboarding/update/:id', c.patchOnboardingUpdateById);
 
 router.get('/api/onboarding/:id', c.getOnboardingById);

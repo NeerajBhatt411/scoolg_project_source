@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ADMIN_LOGIN_URL } from '../adminUrl';
 
@@ -71,6 +71,7 @@ const SchoolOnboarding = () => {
   };
   const [formData, setFormData] = useState({
     schoolName: '',
+    websiteSlug: '', // owner-chosen public website address -> <slug>.scoolg.com
     email: '',
     establishedYear: '',
     schoolStrength: '',
@@ -111,6 +112,24 @@ const SchoolOnboarding = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [slugStatus, setSlugStatus] = useState('idle'); // idle|checking|available|taken|invalid
+
+  // Live availability check for the "Website address" field (debounced).
+  useEffect(() => {
+    const s = (formData.websiteSlug || '').replace(/^-+|-+$/g, '');
+    if (!s) { setSlugStatus('idle'); return; }
+    if (s.length < 3) { setSlugStatus('invalid'); return; }
+    setSlugStatus('checking');
+    const t = setTimeout(async () => {
+      try {
+        const url = joinURL(API_BASE_URL, `/onboarding/slug-available?slug=${encodeURIComponent(s)}${schoolId ? `&id=${schoolId}` : ''}`);
+        const res = await fetch(url);
+        const d = await res.json();
+        setSlugStatus(d.available ? 'available' : 'taken');
+      } catch { setSlugStatus('idle'); }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [formData.websiteSlug, schoolId]);
 
   const clearError = (key) => {
     setErrors(prev => {
@@ -186,6 +205,10 @@ const SchoolOnboarding = () => {
     const nextErrors = {};
     if (currentStep === 1) {
       if (!formData.schoolName.trim()) nextErrors.schoolName = 'School name is required.';
+      const cleanSlug = (formData.websiteSlug || '').replace(/^-+|-+$/g, '');
+      if (!cleanSlug) nextErrors.websiteSlug = 'Website address is required.';
+      else if (cleanSlug.length < 3) nextErrors.websiteSlug = 'Website address must be at least 3 characters.';
+      else if (slugStatus === 'taken') nextErrors.websiteSlug = 'That website address is taken. Please choose another.';
       if (!formData.email.trim()) nextErrors.email = 'Email is required.';
       if (!isEmailVerified) nextErrors.emailVerified = 'Email verification is required.';
       if (!formData.establishedYear.trim()) nextErrors.establishedYear = 'Established year is required.';
@@ -540,6 +563,37 @@ const SchoolOnboarding = () => {
                   className={fieldClass('schoolName')}
                 />
                 {errors.schoolName && <p className="text-[12px] text-red-500 mt-1">{errors.schoolName}</p>}
+              </div>
+
+              {/* Website Address (public site subdomain) */}
+              <div>
+                <label className={labelClass}>Website Address <span className="text-red-500">*</span></label>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={formData.websiteSlug}
+                    onChange={(e) => handleInputChange('websiteSlug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="e.g. ptgpnayak"
+                    className={`${fieldClass('websiteSlug')} pr-28`}
+                  />
+                  <span className="absolute right-3 text-[13px] font-bold text-gray-400 pointer-events-none">.scoolg.com</span>
+                </div>
+                {formData.websiteSlug && slugStatus === 'checking' && (
+                  <p className="text-[12px] text-gray-400 mt-1">Checking availability…</p>
+                )}
+                {formData.websiteSlug && slugStatus === 'available' && (
+                  <p className="text-[12px] text-green-600 mt-1 font-semibold">✓ {formData.websiteSlug}.scoolg.com is available</p>
+                )}
+                {formData.websiteSlug && slugStatus === 'taken' && (
+                  <p className="text-[12px] text-red-500 mt-1">That address is already taken. Please try another.</p>
+                )}
+                {formData.websiteSlug && slugStatus === 'invalid' && (
+                  <p className="text-[12px] text-red-500 mt-1">Use at least 3 characters (letters, numbers, hyphens).</p>
+                )}
+                {!formData.websiteSlug && !errors.websiteSlug && (
+                  <p className="text-[12px] text-gray-400 mt-1">This becomes your school's public website link — choose it carefully.</p>
+                )}
+                {errors.websiteSlug && <p className="text-[12px] text-red-500 mt-1">{errors.websiteSlug}</p>}
               </div>
 
               {/* Email Section */}

@@ -158,14 +158,18 @@ const App = () => {
         ],
       },
       leadership: (data.leadership && data.leadership.length)
-        ? data.leadership.map((member, i) => ({
-            id: i + 1,
-            // Use the uploaded photo if there is one; otherwise a clean initials avatar.
-            image: member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=4B2ED5&color=fff&bold=true`,
-            name: member.name || 'Leadership Member',
-            title: member.role || 'Board Member',
-            description: member.message || '',
-          }))
+        // Only real, filled-in leaders — the onboarding form ships 3 blank slots,
+        // so skip any entry with no name (otherwise an empty "?" card shows up).
+        ? data.leadership
+            .filter((m) => m && (m.name || '').trim())
+            .map((member, i) => ({
+              id: i + 1,
+              // Use the uploaded photo if there is one; otherwise a clean initials avatar.
+              image: member.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'M')}&background=4B2ED5&color=fff&bold=true`,
+              name: member.name || 'Leadership Member',
+              title: member.role || 'Board Member',
+              description: member.message || '',
+            }))
         : [],
       gallery: (data.gallery && data.gallery.length)
         ? data.gallery.map((url, i) => ({ id: i + 1, url, category: 'Campus', isLarge: i === 0 }))
@@ -602,7 +606,7 @@ const App = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
               <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '58px', borderRadius: '13px', objectFit: 'contain' }} />
-              {hero.title.split(' ')[0]}
+              <span style={{ lineHeight: 1.15 }}>{hero.title}</span>
             </div>
             <p style={{ opacity: 0.8, maxWidth: 400 }}>Empowering students to achieve excellence and shaping the visionary leaders of tomorrow through holistic education paradigms.</p>
           </div>
