@@ -9,7 +9,10 @@ const AuthContext = createContext();
 
 const loadSavedAccounts = () => {
   try {
-    return JSON.parse(localStorage.getItem('saved_accounts')) || [];
+    const raw = JSON.parse(localStorage.getItem('saved_accounts'));
+    // Guard against a corrupt/legacy value that parses to a non-array (e.g. an
+    // object) — .find() on it during render would white-screen the whole app.
+    return Array.isArray(raw) ? raw : [];
   } catch (e) {
     return [];
   }
@@ -169,7 +172,7 @@ export const AuthProvider = ({ children }) => {
   const getSavedAccounts = () => loadSavedAccounts();
 
   return (
-    <AuthContext.Provider value={{ user, school, token, loading, login, logout, fetchUserProfile, mobileNavOpen, setMobileNavOpen, switchAccount, getSavedAccounts }}>
+    <AuthContext.Provider value={{ user, school, token, loading, login, logout, fetchUserProfile, setUser, mobileNavOpen, setMobileNavOpen, switchAccount, getSavedAccounts }}>
       {children}
     </AuthContext.Provider>
   );

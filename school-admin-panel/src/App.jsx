@@ -70,7 +70,8 @@ const ProtectedRoute = ({ children }) => {
                         <button
                             onClick={() => {
                                 localStorage.clear();
-                                window.location.href = '/admin/login';
+                                const base = import.meta.env.BASE_URL || '/';
+                                window.location.href = (base.endsWith('/') ? base : base + '/') + 'login';
                             }}
                             className="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg shadow-slate-200"
                         >

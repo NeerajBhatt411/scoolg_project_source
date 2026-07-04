@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearCache } from './cache';
 
 // Always use the live backend (no local dependency).
 const api = axios.create({
@@ -29,6 +30,7 @@ api.interceptors.response.use(
       localStorage.removeItem('teacher_token');
       localStorage.removeItem('teacher_profile');
       localStorage.removeItem('teacher_school_info');
+      clearCache(); // wipe cached data so the next teacher never sees the previous one's
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }

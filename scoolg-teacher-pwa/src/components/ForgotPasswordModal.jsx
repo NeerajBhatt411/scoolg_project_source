@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, KeyRound, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, BadgeCheck, ArrowRight } from 'lucide-react';
 import api from '../utils/api';
@@ -20,12 +20,37 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [resendIn, setResendIn] = useState(0); // seconds left before "Resend" re-enables
 
   const resetState = () => {
     setStep('id'); setTeacherAppId(''); setOtp(''); setNewPassword('');
-    setConfirm(''); setShow(false); setError(''); setInfo(''); setLoading(false);
+    setConfirm(''); setShow(false); setError(''); setInfo(''); setLoading(false); setResendIn(0);
   };
-  const close = () => { resetState(); onClose(); };
+  // Plain close preserves the flow so tapping the backdrop to fetch the emailed
+  // code doesn't wipe the entered code; "start over"/finish resets everything.
+  const close = () => { onClose(); };
+  const finish = () => { resetState(); onClose(); };
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  const errText = (err, fallback) =>
+    err.response?.data?.error || err.response?.data?.message || fallback;
+
+  const requestCode = async () => {
+    const res = await api.post('/teacher/forgot-password', { teacherAppId: teacherAppId.trim() });
+    if (res.data?.needsAdmin) {
+      setError(res.data.message || 'No email is on file. Please ask your school admin to reset your password.');
+      return false;
+    }
+    setInfo(res.data?.sentTo
+      ? `We've sent a 6-digit code to ${res.data.sentTo}.`
+      : (res.data?.message || 'If an account matches, a reset code has been sent.'));
+    return true;
+  };
 
   const sendCode = async (e) => {
     e.preventDefault();
@@ -33,21 +58,29 @@ const ForgotPasswordModal = ({ open, onClose }) => {
     if (!teacherAppId.trim()) return setError('Please enter your Teacher ID or email.');
     setLoading(true);
     try {
-      const res = await api.post('/teacher/forgot-password', { teacherAppId: teacherAppId.trim() });
-      if (res.data?.needsAdmin) { setError(res.data.message); return; }
-      setInfo(res.data?.sentTo
-        ? `We've sent a 6-digit code to ${res.data.sentTo}.`
-        : (res.data?.message || 'If an account matches, a reset code has been sent.'));
-      setStep('reset');
+      const ok = await requestCode();
+      if (ok) { setStep('reset'); setResendIn(30); }
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(errText(err, 'Something went wrong. Please try again.'));
+    } finally { setLoading(false); }
+  };
+
+  const resend = async () => {
+    if (resendIn > 0 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const ok = await requestCode();
+      if (ok) setResendIn(30);
+    } catch (err) {
+      setError(errText(err, 'Could not resend the code. Please try again.'));
     } finally { setLoading(false); }
   };
 
   const resetPassword = async (e) => {
     e.preventDefault();
     setError('');
-    if (!otp.trim()) return setError('Enter the 6-digit code from the email.');
+    if (otp.trim().length !== 6) return setError('Enter the 6-digit code from the email.');
     if (newPassword.length < 4) return setError('Password must be at least 4 characters.');
     if (newPassword !== confirm) return setError('Passwords do not match.');
     setLoading(true);
@@ -55,7 +88,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
       await api.post('/teacher/reset-password', { teacherAppId: teacherAppId.trim(), otp: otp.trim(), newPassword });
       setStep('done');
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not reset password. Check the code and try again.');
+      setError(errText(err, 'Could not reset password. Check the code and try again.'));
     } finally { setLoading(false); }
   };
 
@@ -130,10 +163,16 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                   <button disabled={loading} type="submit" className={btnCls}>
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Reset password'}
                   </button>
-                  <button type="button" onClick={() => { setStep('id'); setError(''); }}
-                    className="w-full text-center text-sm text-muted-foreground font-semibold hover:text-foreground transition-colors">
-                    Use a different ID
-                  </button>
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <button type="button" onClick={() => { setStep('id'); setError(''); setResendIn(0); }}
+                      className="text-sm text-muted-foreground font-semibold hover:text-foreground transition-colors">
+                      Use a different ID
+                    </button>
+                    <button type="button" onClick={resend} disabled={resendIn > 0 || loading}
+                      className="text-sm text-primary font-bold hover:text-primary/80 transition-colors disabled:text-muted-foreground disabled:cursor-not-allowed">
+                      {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+                    </button>
+                  </div>
                 </form>
               </>
             )}
@@ -144,7 +183,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 <p className="text-sm text-muted-foreground font-medium mt-1.5 mb-6">
                   Your password has been reset. You can now sign in with your new password.
                 </p>
-                <button onClick={close} className={btnCls}>Back to login</button>
+                <button onClick={finish} className={btnCls}>Back to login</button>
               </>
             )}
           </motion.div>

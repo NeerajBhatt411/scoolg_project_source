@@ -53,6 +53,11 @@ export const postStudentLogin = async (req, res) => {
         const isMatch = await bcrypt.compare(password, student.password);
         if (!isMatch) return res.status(401).json({ error: "Invalid ID or Password" });
 
+        // Block students who have left the school (matches teacher-login behaviour).
+        if (student.status && student.status !== 'Active') {
+            return res.status(403).json({ error: "This account is inactive. Please contact your school." });
+        }
+
         const accessToken = jwt.sign(
             { id: student._id, schoolId: student.schoolId, role: 'student' },
             process.env.JWT_SECRET || 'scoolg_secret_99',

@@ -12,9 +12,12 @@ import api from '../utils/api';
  *  - voluntary: opened from Profile; requires the current password and can go back.
  */
 const ChangePassword = () => {
-  const { user, fetchUserProfile, logout } = useAuth();
+  const { user, fetchUserProfile, setUser, logout } = useAuth();
   const navigate = useNavigate();
-  const forced = user?.isPasswordChanged === false;
+  // Match App.jsx's gate exactly (isPasswordChanged !== true) so a legacy account
+  // whose flag was never stored gets the "forced" screen (no current-password
+  // field, no Back) instead of the voluntary one, which would trap it.
+  const forced = user?.isPasswordChanged !== true;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -33,7 +36,10 @@ const ChangePassword = () => {
     setLoading(true);
     try {
       await api.post('/student/change-password', forced ? { newPassword } : { currentPassword, newPassword });
-      await fetchUserProfile();
+      // Optimistically release the forced-change gate so a slow/cold /me can't
+      // bounce the user back to this screen; then revalidate in the background.
+      setUser((prev) => (prev ? { ...prev, isPasswordChanged: true } : prev));
+      fetchUserProfile();
       setDone(true);
       setTimeout(() => navigate('/dashboard', { replace: true }), 1100);
     } catch (err) {

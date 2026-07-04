@@ -63,8 +63,7 @@ export const postAdminStudentsBulk = async (req, res) => {
         if (!school) return res.status(404).json({ error: "School not found" });
 
         const createdStudents = [];
-        const salt = await bcrypt.genSalt(10);
-        
+
         // School-prefixed, globally-unique App IDs (e.g. GAJ001, GAJ002 ...)
         const appIds = await nextStudentIds(school, students.length);
 
@@ -75,7 +74,9 @@ export const postAdminStudentsBulk = async (req, res) => {
             // Login password: admin override if given, else a random 6-digit code.
             const plainPassword = (studentData.password && String(studentData.password).trim()) || String(Math.floor(100000 + Math.random() * 900000));
 
-            const hashedPassword = await bcrypt.hash(plainPassword, salt);
+            // Per-student salt so two students who happen to share a 6-digit code
+            // don't produce identical hashes.
+            const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
             // Create new student object combining UI provided class/section and CSV data
             const studentObj = {

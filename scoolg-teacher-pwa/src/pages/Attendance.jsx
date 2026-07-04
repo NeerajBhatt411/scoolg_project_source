@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { getCached, peekCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { CheckCircle2, Send, Users, ChevronDown } from 'lucide-react';
+import { todayLocal } from '../utils/date';
 
 const Attendance = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const Attendance = () => {
 
   const [classes, setClasses] = useState(() => peekCache('teacher:my-classes') || []);
   const [selected, setSelected] = useState(prefill || null); // {className, sectionName, sectionId, classId}
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [students, setStudents] = useState([]);
   const [marks, setMarks] = useState({}); // studentId -> 'P' | 'A'
   const [loading, setLoading] = useState(false);
@@ -110,7 +111,7 @@ const Attendance = () => {
                <input 
                  type="date" 
                  value={date} 
-                 max={new Date().toISOString().split('T')[0]} 
+                 max={todayLocal()} 
                  onChange={(e) => setDate(e.target.value)} 
                  className="w-full appearance-none h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none cursor-pointer"
                />

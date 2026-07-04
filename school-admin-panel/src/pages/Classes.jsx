@@ -276,7 +276,7 @@ const Classes = () => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-slate-500">
                                                     <span className="material-symbols-outlined text-[16px]">layers</span>
-                                                    <span className="text-[13px] font-semibold">{sections.filter(s => String(s.classId) === String(cls._id)).length} Sections</span>
+                                                    <span className="text-[13px] font-semibold">{sections.filter(s => String(s.classId?._id || s.classId) === String(cls._id)).length} Sections</span>
                                                 </div>
                                             </div>
                                         </div>

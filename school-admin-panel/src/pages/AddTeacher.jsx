@@ -236,6 +236,13 @@ const AddTeacher = () => {
                 if (res.data && res.data.appCredentials) {
                     setSuccessData(res.data);
                     refreshTeachers(); // keep shared teacher cache fresh for timetable, etc.
+                } else {
+                    // Created (2xx) but no credentials returned: confirm and go back to
+                    // the list instead of stranding the admin on the form (re-submit
+                    // would create a duplicate teacher).
+                    refreshTeachers();
+                    toast.success("Teacher added successfully.");
+                    navigate('/teachers');
                 }
             } catch (err) {
                 console.error(err);

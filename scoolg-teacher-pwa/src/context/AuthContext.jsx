@@ -55,7 +55,11 @@ export const AuthProvider = ({ children }) => {
       if (res.data.school) localStorage.setItem('teacher_school_info', JSON.stringify(res.data.school));
     } catch (error) {
       console.error('Failed to fetch teacher profile:', error);
-      logout();
+      // Only a real auth failure (expired/invalid token) should end the session.
+      // A network error or a slow serverless cold start must NOT log the teacher
+      // out — keep the hydrated profile so the app stays usable and the next
+      // request revalidates. (This was the #1 "randomly logged out" cause.)
+      if (error?.response?.status === 401) logout();
     } finally {
       setLoading(false);
     }
@@ -65,10 +69,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/teacher/login', { teacherAppId, password });
       const { accessToken } = res.data;
+      clearCache(); // start clean so a previous teacher's cached data can't leak
       localStorage.setItem('teacher_token', accessToken);
-      setToken(accessToken);
       api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-      await fetchProfile();
+      setToken(accessToken); // triggers the token effect -> fetchProfile()
       return { success: true, isPasswordChanged: res.data.isPasswordChanged };
     } catch (error) {
       return {
@@ -90,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ teacher, school, token, loading, login, logout, fetchProfile, mobileNavOpen, setMobileNavOpen }}>
+    <AuthContext.Provider value={{ teacher, school, token, loading, login, logout, fetchProfile, setTeacher, mobileNavOpen, setMobileNavOpen }}>
       {children}
     </AuthContext.Provider>
   );

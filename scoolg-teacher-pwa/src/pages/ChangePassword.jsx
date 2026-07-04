@@ -11,10 +11,13 @@ import api from '../utils/api';
  * manually for a voluntary change.
  */
 const ChangePassword = () => {
-  const { teacher, fetchProfile, logout } = useAuth();
+  const { teacher, fetchProfile, setTeacher, logout } = useAuth();
   const navigate = useNavigate();
-  const forced = teacher?.isPasswordChanged === false;
+  // Match App.jsx's gate exactly (isPasswordChanged !== true) so a legacy account
+  // whose flag was never stored gets the "forced" screen, not the voluntary one.
+  const forced = teacher?.isPasswordChanged !== true;
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [show, setShow] = useState(false);
@@ -25,12 +28,21 @@ const ChangePassword = () => {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!forced && !currentPassword) return setError('Please enter your current password.');
     if (newPassword.length < 4) return setError('Password must be at least 4 characters.');
     if (newPassword !== confirm) return setError('Passwords do not match.');
     setLoading(true);
     try {
-      await api.post('/teacher/change-password', { newPassword });
-      await fetchProfile();
+      const payload = forced ? { newPassword } : { currentPassword, newPassword };
+      await api.post('/teacher/change-password', payload);
+      // Optimistically reflect the change locally so the forced-change gate
+      // releases immediately, even if the background /me is slow on a cold start.
+      setTeacher((prev) => {
+        const next = { ...(prev || {}), isPasswordChanged: true };
+        try { localStorage.setItem('teacher_profile', JSON.stringify(next)); } catch { /* quota */ }
+        return next;
+      });
+      fetchProfile(); // revalidate in the background (not awaited)
       setDone(true);
       setTimeout(() => navigate('/dashboard', { replace: true }), 1100);
     } catch (err) {
@@ -76,10 +88,17 @@ const ChangePassword = () => {
               )}
 
               <form onSubmit={submit} className="space-y-4">
+                {!forced && (
+                  <div className="relative">
+                    <Lock className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input className={inputCls} type={show ? 'text' : 'password'} placeholder="Current password"
+                      value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" autoFocus />
+                  </div>
+                )}
                 <div className="relative">
                   <Lock className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <input className={inputCls} type={show ? 'text' : 'password'} placeholder="New password"
-                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" autoFocus />
+                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" autoFocus={forced} />
                   <button type="button" onClick={() => setShow(s => !s)}
                     className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors">
                     {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}

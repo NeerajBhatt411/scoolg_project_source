@@ -52,7 +52,7 @@ export const postAdminLogin = async (req, res) => {
                     allowedModules: staff.allowedModules || []
                 },
                 process.env.JWT_SECRET || 'scoolg_secret_99',
-                { expiresIn: '7d' }
+                { expiresIn: '30d' }
             );
 
             return res.json({
@@ -91,7 +91,7 @@ export const postAdminLogin = async (req, res) => {
         const token = jwt.sign(
             { id: school.id, email: school.email, type: 'owner', role: 'Owner' },
             process.env.JWT_SECRET || 'scoolg_secret_99',
-            { expiresIn: '7d' }
+            { expiresIn: '30d' }
         );
 
         res.json({

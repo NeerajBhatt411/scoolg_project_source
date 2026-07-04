@@ -335,8 +335,14 @@ export const postTeacherHomework = async (req, res) => {
 export const postTeacherChangepassword = async (req, res) => {
     try {
         const teacher = await teacherFromToken(req);
-        const { newPassword } = req.body;
+        const { currentPassword, newPassword } = req.body;
         if (!newPassword || newPassword.length < 4) return res.status(400).json({ error: "Password too short" });
+        // If a current password is supplied (voluntary change from Profile), verify
+        // it. The forced first-login change omits it and is allowed (token proves it).
+        if (currentPassword) {
+            const ok = await bcrypt.compare(currentPassword, teacher.password);
+            if (!ok) return res.status(401).json({ error: "Current password is incorrect" });
+        }
         const salt = await bcrypt.genSalt(10);
         teacher.password = await bcrypt.hash(newPassword, salt);
         teacher.isPasswordChanged = true;

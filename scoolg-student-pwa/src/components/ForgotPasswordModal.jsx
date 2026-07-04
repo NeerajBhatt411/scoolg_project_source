@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, KeyRound, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, BadgeCheck, ArrowRight } from 'lucide-react';
 import api from '../utils/api';
@@ -20,12 +20,40 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [resendIn, setResendIn] = useState(0); // seconds left before "Resend" re-enables
 
   const resetState = () => {
     setStep('id'); setStudentAppId(''); setOtp(''); setNewPassword('');
-    setConfirm(''); setShow(false); setError(''); setInfo(''); setLoading(false);
+    setConfirm(''); setShow(false); setError(''); setInfo(''); setLoading(false); setResendIn(0);
   };
-  const close = () => { resetState(); onClose(); };
+  // Plain close does NOT wipe the flow: a user who taps the backdrop to open their
+  // email app and copy the code returns to the same step with their code intact.
+  const close = () => { onClose(); };
+  // Explicit "start over" / finish resets everything for the next time.
+  const finish = () => { resetState(); onClose(); };
+
+  // Countdown tick for the resend cooldown.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
+  const errText = (err, fallback) =>
+    err.response?.data?.error || err.response?.data?.message || fallback;
+
+  // Shared "request a code" call used by the initial send and by Resend.
+  const requestCode = async () => {
+    const res = await api.post('/student/forgot-password', { studentAppId: studentAppId.trim() });
+    if (res.data?.needsAdmin) {
+      setError(res.data.message || 'No email is on file. Please ask your school admin to reset your password.');
+      return false;
+    }
+    setInfo(res.data?.sentTo
+      ? `We've sent a 6-digit code to ${res.data.sentTo}.`
+      : (res.data?.message || 'If a parent email is on file, a reset code has been sent.'));
+    return true;
+  };
 
   const sendCode = async (e) => {
     e.preventDefault();
@@ -33,21 +61,29 @@ const ForgotPasswordModal = ({ open, onClose }) => {
     if (!studentAppId.trim()) return setError('Please enter your Student ID.');
     setLoading(true);
     try {
-      const res = await api.post('/student/forgot-password', { studentAppId: studentAppId.trim() });
-      if (res.data?.needsAdmin) { setError(res.data.message); return; }
-      setInfo(res.data?.sentTo
-        ? `We've sent a 6-digit code to ${res.data.sentTo}.`
-        : (res.data?.message || 'If a parent email is on file, a reset code has been sent.'));
-      setStep('reset');
+      const ok = await requestCode();
+      if (ok) { setStep('reset'); setResendIn(30); }
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(errText(err, 'Something went wrong. Please try again.'));
+    } finally { setLoading(false); }
+  };
+
+  const resend = async () => {
+    if (resendIn > 0 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const ok = await requestCode();
+      if (ok) setResendIn(30);
+    } catch (err) {
+      setError(errText(err, 'Could not resend the code. Please try again.'));
     } finally { setLoading(false); }
   };
 
   const resetPassword = async (e) => {
     e.preventDefault();
     setError('');
-    if (!otp.trim()) return setError('Enter the 6-digit code from the email.');
+    if (otp.trim().length !== 6) return setError('Enter the 6-digit code from the email.');
     if (newPassword.length < 4) return setError('Password must be at least 4 characters.');
     if (newPassword !== confirm) return setError('Passwords do not match.');
     setLoading(true);
@@ -55,7 +91,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
       await api.post('/student/reset-password', { studentAppId: studentAppId.trim(), otp: otp.trim(), newPassword });
       setStep('done');
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not reset password. Check the code and try again.');
+      setError(errText(err, 'Could not reset password. Check the code and try again.'));
     } finally { setLoading(false); }
   };
 
@@ -131,10 +167,16 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-[15px] font-bold h-[52px] shadow-lg shadow-blue-600/20 active:scale-[0.98]">
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Reset password'}
                   </button>
-                  <button type="button" onClick={() => { setStep('id'); setError(''); }}
-                    className="w-full text-center text-sm text-slate-500 font-semibold hover:text-slate-700 transition-colors">
-                    Use a different Student ID
-                  </button>
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <button type="button" onClick={() => { setStep('id'); setError(''); setResendIn(0); }}
+                      className="text-sm text-slate-500 font-semibold hover:text-slate-700 transition-colors">
+                      Use a different ID
+                    </button>
+                    <button type="button" onClick={resend} disabled={resendIn > 0 || loading}
+                      className="text-sm text-blue-600 font-bold hover:text-blue-700 transition-colors disabled:text-slate-400 disabled:cursor-not-allowed">
+                      {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+                    </button>
+                  </div>
                 </form>
               </>
             )}
@@ -145,7 +187,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 <p className="text-sm text-slate-500 font-medium mt-1.5 mb-6">
                   Your password has been reset. You can now sign in with your new password.
                 </p>
-                <button onClick={close}
+                <button onClick={finish}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-colors text-[15px] font-bold h-[52px] shadow-lg shadow-blue-600/20 active:scale-[0.98]">
                   Back to login
                 </button>

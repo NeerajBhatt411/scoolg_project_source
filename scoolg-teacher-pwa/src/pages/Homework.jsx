@@ -5,6 +5,7 @@ import { getCached, peekCache } from '../utils/cache';
 import { useAuth } from '../context/AuthContext';
 import TopHeader from '@/components/TopHeader';
 import { Plus, X, Paperclip, Upload, Loader2, NotebookPen, Clock, BookOpen, ChevronDown } from 'lucide-react';
+import { todayLocal } from '../utils/date';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -239,7 +240,7 @@ const Homework = () => {
 
                   <div>
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Due Date *</label>
-                    <input type="date" required value={form.dueDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none transition-all" />
+                    <input type="date" required value={form.dueDate} min={todayLocal()} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none transition-all" />
                   </div>
                 </div>
 

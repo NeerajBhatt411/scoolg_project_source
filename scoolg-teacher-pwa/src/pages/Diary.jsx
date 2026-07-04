@@ -3,8 +3,9 @@ import api from '../utils/api';
 import { getCached, peekCache, setCache } from '../utils/cache';
 import TopHeader from '@/components/TopHeader';
 import { Plus, Lock, Trash2, BookOpen, ChevronDown } from 'lucide-react';
+import { todayLocal } from '../utils/date';
 
-const todayISO = () => new Date().toISOString().split('T')[0];
+const todayISO = () => todayLocal();
 const fmt = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); } catch { return d; } };
 
 const Diary = () => {

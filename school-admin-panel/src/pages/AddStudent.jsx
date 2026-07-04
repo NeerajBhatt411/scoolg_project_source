@@ -220,6 +220,12 @@ const AddStudent = () => {
                 });
                 if (res.data && res.data.appCredentials) {
                     setSuccessData(res.data);
+                } else {
+                    // Created (2xx) but no credentials in the response: don't leave the
+                    // admin on the form with no feedback (they'd re-submit and create a
+                    // duplicate). Confirm success and return to the list.
+                    toast.success("Student added successfully.");
+                    navigate('/students');
                 }
             } catch (err) {
                 console.error(err);
