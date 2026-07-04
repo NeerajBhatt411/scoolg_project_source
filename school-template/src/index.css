@@ -385,46 +385,26 @@ nav {
   border-color: var(--primary);
 }
 
+/* Masonry gallery: images keep their FULL aspect ratio (no cropping) and flow
+   into columns, so the section height is dynamic and never overlaps Contact. */
 .gallery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  height: 500px;
-}
-
-.gallery-grid-left {
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  /* min-height:0 stops a tall portrait image from growing the grid item past the
-     grid's 500px (grid items default to min-height:auto) and overflowing down into
-     the Contact section below. */
-  min-height: 0;
-  min-width: 0;
-}
-
-.gallery-grid-right {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 20px;
-  min-height: 0;
-  min-width: 0;
+  column-count: 3;
+  column-gap: 20px;
 }
 
 .gallery-img {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;            /* show the whole image, never crop */
   border-radius: var(--radius-md);
-  transition: transform 0.5s ease;
+  transition: transform 0.4s ease;
 }
 
 .gallery-img-container {
   overflow: hidden;
   border-radius: var(--radius-md);
-  min-height: 0;
-  min-width: 0;
+  margin-bottom: 20px;
+  break-inside: avoid;     /* keep each image whole within its column */
 }
 
 .gallery-img-container:hover .gallery-img {
@@ -560,16 +540,7 @@ footer a:hover { color: #fff; }
   }
 
   .gallery-grid {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-
-  .gallery-grid-left {
-    height: 300px;
-  }
-
-  .gallery-grid-right {
-    height: 600px;
+    column-count: 2;
   }
 
   .hero-text h1 {

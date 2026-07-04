@@ -465,19 +465,15 @@ const App = () => {
               <h2>Campus Gallery</h2>
             </div>
 
-            <div className="gallery-grid" style={gallery.length === 1 ? { gridTemplateColumns: '1fr' } : undefined}>
-              <div className="gallery-img-container gallery-grid-left">
-                <img src={gallery[0].url} alt="Large View" className="gallery-img" />
-              </div>
-              {gallery.length > 1 && (
-              <div className="gallery-grid-right">
-                {gallery.slice(1, 5).map(img => (
-                  <div key={img.id} className="gallery-img-container">
-                    <img src={img.url} alt={img.category} className="gallery-img" />
-                  </div>
-                ))}
-              </div>
-              )}
+            {/* Masonry: every uploaded image shown in FULL (no cropping), heights
+                flow naturally so the section grows with the content and never
+                overlaps the Contact section below. */}
+            <div className="gallery-grid">
+              {gallery.map(img => (
+                <div key={img.id} className="gallery-img-container">
+                  <img src={img.url} alt={img.category} className="gallery-img" />
+                </div>
+              ))}
             </div>
           </section>
           )}
