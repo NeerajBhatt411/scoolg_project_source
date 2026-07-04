@@ -290,7 +290,9 @@ const App = () => {
               <h2>Our Leadership</h2>
               <p>Meet the visionary leaders driving excellence at our institution with decades of pedagogical experience.</p>
             </div>
-            <div className="card-grid-3">
+            {/* When fewer than 3 leaders, center them (auto-fit stays mobile-safe:
+                it collapses to a single column on narrow screens). */}
+            <div className="card-grid-3" style={leadership.length < 3 ? { gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))', justifyContent: 'center' } : undefined}>
               {leadership.map(member => (
                 <div key={member.id} className="gray-card" style={{ background: 'var(--white)' }}>
                   <img src={member.image} alt={member.name} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', marginBottom: 20 }} />
@@ -463,10 +465,11 @@ const App = () => {
               <h2>Campus Gallery</h2>
             </div>
 
-            <div className="gallery-grid">
+            <div className="gallery-grid" style={gallery.length === 1 ? { gridTemplateColumns: '1fr' } : undefined}>
               <div className="gallery-img-container gallery-grid-left">
                 <img src={gallery[0].url} alt="Large View" className="gallery-img" />
               </div>
+              {gallery.length > 1 && (
               <div className="gallery-grid-right">
                 {gallery.slice(1, 5).map(img => (
                   <div key={img.id} className="gallery-img-container">
@@ -474,6 +477,7 @@ const App = () => {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           </section>
           )}
@@ -604,9 +608,9 @@ const App = () => {
       <footer>
         <div className="footer-grid">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
-              <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '58px', borderRadius: '13px', objectFit: 'contain' }} />
-              <span style={{ lineHeight: 1.15 }}>{hero.title}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 'clamp(1.05rem, 3.2vw, 1.5rem)', fontWeight: 800, fontFamily: 'Outfit', marginBottom: 20 }}>
+              <img src={logo || "https://ui-avatars.com/api/?name=L&background=fff&color=4B2ED5&rounded=true&bold=true"} alt="Logo" style={{ height: '48px', borderRadius: '12px', objectFit: 'contain', flexShrink: 0 }} />
+              <span style={{ lineHeight: 1.2 }}>{hero.title}</span>
             </div>
             <p style={{ opacity: 0.8, maxWidth: 400 }}>Empowering students to achieve excellence and shaping the visionary leaders of tomorrow through holistic education paradigms.</p>
           </div>
