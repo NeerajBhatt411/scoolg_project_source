@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Users, Clock, TrendingUp } from 'lucide-react';
+import { Building2, Users, Clock } from 'lucide-react';
 import {
     ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip,
