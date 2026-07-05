@@ -3,33 +3,52 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Sidebar from './components/Sidebar';
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import { ToastProvider } from './context/ToastContext';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Retry a lazy import once on failure (a stale chunk after a deploy, or a flaky
+// network while fetching a lazy page). If it still fails, reload to fetch fresh
+// assets — instead of leaving a blank white screen until a manual reload.
+const retryLazy = (importFn) => lazy(async () => {
+    try {
+        const mod = await importFn();
+        sessionStorage.removeItem('sg-lazy-retry');
+        return mod;
+    } catch (err) {
+        if (sessionStorage.getItem('sg-lazy-retry') !== '1') {
+            sessionStorage.setItem('sg-lazy-retry', '1');
+            window.location.reload();
+            return new Promise(() => {}); // never resolves; the page is reloading
+        }
+        throw err; // already retried -> let the ErrorBoundary show a friendly fallback
+    }
+});
 
 // Lazy load components
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Students = lazy(() => import('./pages/Students'));
-const AddStudent = lazy(() => import('./pages/AddStudent'));
-const Teachers = lazy(() => import('./pages/Teachers'));
-const AddTeacher = lazy(() => import('./pages/AddTeacher'));
-const TeacherProfile = lazy(() => import('./pages/TeacherProfile'));
-const Timetable = lazy(() => import('./pages/Timetable'));
-const Calendar = lazy(() => import('./pages/Calendar'));
-const Homework = lazy(() => import('./pages/Homework'));
-const Roles = lazy(() => import('./pages/Roles'));
-const Classes = lazy(() => import('./pages/Classes'));
-const ClassDetail = lazy(() => import('./pages/ClassDetail'));
-const Attendance = lazy(() => import('./pages/Attendance'));
-const AttendanceAnalytics = lazy(() => import('./pages/AttendanceAnalytics'));
-const Exams = lazy(() => import('./pages/Exams'));
-const Fees = lazy(() => import('./pages/Fees'));
-const Notices = lazy(() => import('./pages/Notices'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Login = lazy(() => import('./pages/Login'));
-const ChangePassword = lazy(() => import('./pages/ChangePassword'));
-const StudentProfile = lazy(() => import('./pages/StudentProfile'));
-const Support = lazy(() => import('./pages/Support'));
-const ScoolgNotices = lazy(() => import('./pages/ScoolgNotices'));
-const Notifications = lazy(() => import('./pages/Notifications'));
-const TeacherDiary = lazy(() => import('./pages/TeacherDiary'));
+const Dashboard = retryLazy(() => import('./pages/Dashboard'));
+const Students = retryLazy(() => import('./pages/Students'));
+const AddStudent = retryLazy(() => import('./pages/AddStudent'));
+const Teachers = retryLazy(() => import('./pages/Teachers'));
+const AddTeacher = retryLazy(() => import('./pages/AddTeacher'));
+const TeacherProfile = retryLazy(() => import('./pages/TeacherProfile'));
+const Timetable = retryLazy(() => import('./pages/Timetable'));
+const Calendar = retryLazy(() => import('./pages/Calendar'));
+const Homework = retryLazy(() => import('./pages/Homework'));
+const Roles = retryLazy(() => import('./pages/Roles'));
+const Classes = retryLazy(() => import('./pages/Classes'));
+const ClassDetail = retryLazy(() => import('./pages/ClassDetail'));
+const Attendance = retryLazy(() => import('./pages/Attendance'));
+const AttendanceAnalytics = retryLazy(() => import('./pages/AttendanceAnalytics'));
+const Exams = retryLazy(() => import('./pages/Exams'));
+const Fees = retryLazy(() => import('./pages/Fees'));
+const Notices = retryLazy(() => import('./pages/Notices'));
+const Profile = retryLazy(() => import('./pages/Profile'));
+const Login = retryLazy(() => import('./pages/Login'));
+const ChangePassword = retryLazy(() => import('./pages/ChangePassword'));
+const StudentProfile = retryLazy(() => import('./pages/StudentProfile'));
+const Support = retryLazy(() => import('./pages/Support'));
+const ScoolgNotices = retryLazy(() => import('./pages/ScoolgNotices'));
+const Notifications = retryLazy(() => import('./pages/Notifications'));
+const TeacherDiary = retryLazy(() => import('./pages/TeacherDiary'));
 
 // Loading Fallback
 const PageLoading = () => (
@@ -115,6 +134,7 @@ function App() {
         <ToastProvider>
             <AdminProvider>
                 <Router basename={import.meta.env.BASE_URL}>
+                    <ErrorBoundary>
                     <Suspense fallback={<PageLoading />}>
                         <Routes>
                             <Route path="/login" element={<Login />} />
@@ -220,6 +240,7 @@ function App() {
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                     </Suspense>
+                    </ErrorBoundary>
                 </Router>
             </AdminProvider>
         </ToastProvider>
