@@ -126,10 +126,10 @@ export const postGenerateInvoices = async (req, res) => {
     try {
         const school = await resolveSchool(req);
         if (!school) return res.status(404).json({ error: 'School not found' });
-        const { className, studentIds, title, category, amount, period, dueDate, academicYear } = req.body || {};
+        const { className, section, studentIds, title, category, amount, months, period, dueDate, academicYear } = req.body || {};
         if (!title?.trim() || amount == null) return res.status(400).json({ error: 'Title and amount are required' });
 
-        // Resolve target students.
+        // Resolve target students (by explicit ids, or class + optional section).
         let students;
         if (Array.isArray(studentIds) && studentIds.length) {
             students = await Student.find({ _id: { $in: studentIds }, schoolId: school._id, status: 'Active' })
@@ -137,36 +137,54 @@ export const postGenerateInvoices = async (req, res) => {
         } else {
             const q = { schoolId: school._id, status: 'Active' };
             if (className && className !== 'ALL') q.class = className;
+            if (section && section !== 'All') q.section = section;
             students = await Student.find(q).select('firstName lastName class section studentAppId rollNumber').lean();
         }
         if (!students.length) return res.status(400).json({ error: 'No active students match this selection' });
 
-        // Dedup: skip students who already have this exact title.
-        const existing = await FeeInvoice.find({ schoolId: school._id, studentId: { $in: students.map((s) => s._id) }, title: title.trim() })
-            .select('studentId').lean();
-        const already = new Set(existing.map((e) => String(e.studentId)));
+        // One "item" per period. If months are given (e.g. yearly = 12, quarterly = 3),
+        // create a due per student per month; else a single due with the plain title.
+        const monthList = Array.isArray(months) ? months.filter(Boolean) : [];
+        const base = title.trim();
+        const items = monthList.length
+            ? monthList.map((m) => ({ title: `${base} · ${m}`, period: String(m) }))
+            : [{ title: base, period: period || '' }];
 
-        const toCreate = students.filter((s) => !already.has(String(s._id))).map((s) => ({
-            schoolId: school._id, studentId: s._id,
-            studentName: `${s.firstName || ''} ${s.lastName || ''}`.trim(), studentAppId: s.studentAppId || '',
-            className: s.class, section: s.section, rollNumber: s.rollNumber || '',
-            title: title.trim(), category: category || 'Tuition', period: period || '',
-            amount: Number(amount), dueDate: dueDate || null, academicYear: academicYear || '',
-            status: 'PENDING', createdByName: req.user?.role === 'Owner' ? 'Admin' : (req.user?.role || 'Admin'),
-        }));
+        // Dedup: skip (student, title) pairs that already exist.
+        const titles = items.map((i) => i.title);
+        const existing = await FeeInvoice.find({ schoolId: school._id, studentId: { $in: students.map((s) => s._id) }, title: { $in: titles } })
+            .select('studentId title').lean();
+        const seen = new Set(existing.map((e) => `${e.studentId}|${e.title}`));
+        const by = req.user?.role === 'Owner' ? 'Admin' : (req.user?.role || 'Admin');
+
+        const toCreate = [];
+        for (const it of items) {
+            for (const s of students) {
+                if (seen.has(`${s._id}|${it.title}`)) continue;
+                toCreate.push({
+                    schoolId: school._id, studentId: s._id,
+                    studentName: `${s.firstName || ''} ${s.lastName || ''}`.trim(), studentAppId: s.studentAppId || '',
+                    className: s.class, section: s.section, rollNumber: s.rollNumber || '',
+                    title: it.title, category: category || 'Tuition', period: it.period,
+                    amount: Number(amount), dueDate: dueDate || null, academicYear: academicYear || '',
+                    status: 'PENDING', createdByName: by,
+                });
+            }
+        }
 
         if (toCreate.length) await FeeInvoice.insertMany(toCreate);
 
-        // Notify the students who just got a new due.
-        if (toCreate.length) {
-            const recipients = toCreate.map((t) => ({ userId: t.studentId }));
+        // Notify each student once.
+        const uniq = [...new Set(toCreate.map((t) => String(t.studentId)))];
+        if (uniq.length) {
             try {
-                await notify({ schoolId: String(school._id), toRole: 'student', recipients,
-                    title: '💳 New fee added', body: `${title.trim()} — ${money(amount)} is now due.`, type: 'fee', data: { link: '/fees' } });
+                await notify({ schoolId: String(school._id), toRole: 'student', recipients: uniq.map((id) => ({ userId: id })),
+                    title: '💳 New fee added', body: `${base} — ${money(amount)} is now due.`, type: 'fee', data: { link: '/fees' } });
             } catch (e) { console.error('[fees] due notify failed:', e.message); }
         }
 
-        res.json({ message: `${toCreate.length} due(s) created`, created: toCreate.length, skipped: already.size });
+        const skipped = (items.length * students.length) - toCreate.length;
+        res.json({ message: `${toCreate.length} due(s) created`, created: toCreate.length, skipped });
     } catch (err) {
         console.error('generate error:', err);
         res.status(500).json({ error: 'Failed to create dues' });

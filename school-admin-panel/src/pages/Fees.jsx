@@ -11,6 +11,7 @@ const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const CATEGORIES = ['Tuition', 'Exam', 'Transport', 'Admission', 'Arrears', 'Other'];
 const FREQUENCIES = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'One-Time'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
 const INV_PILL = {
@@ -41,6 +42,7 @@ const Fees = () => {
     const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id') || '';
     const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
+    const CUR_YEAR = new Date().getFullYear();
 
     const [tab, setTab] = useState('collections');
     const [summary, setSummary] = useState(null);
@@ -52,16 +54,25 @@ const Fees = () => {
 
     // filters (Dues)
     const [fClass, setFClass] = useState('ALL');
+    const [fSection, setFSection] = useState('All');
     const [fStatus, setFStatus] = useState('ALL');
+    const [duesSections, setDuesSections] = useState([]);
+    const [modalSections, setModalSections] = useState([]);
 
     // modals
-    const [feeModal, setFeeModal] = useState(null);       // add/generate fee form
-    const [structModal, setStructModal] = useState(null); // structure form
-    const [proof, setProof] = useState(null);             // payment being viewed/verified
+    const [feeModal, setFeeModal] = useState(null);
+    const [structModal, setStructModal] = useState(null);
+    const [proof, setProof] = useState(null);
     const [savingCfg, setSavingCfg] = useState(false);
     const [uploadingQr, setUploadingQr] = useState(false);
 
     const api = (p) => `${ADMIN_API_BASE}/fees${p}`;
+
+    const loadSectionsFor = useCallback((className, setter) => {
+        const cls = classes.find((c) => c.className === className);
+        if (!cls || !className || className === 'ALL') { setter([]); return; }
+        getSections(cls._id).then((d) => setter(Array.isArray(d) ? d : [])).catch(() => setter([]));
+    }, [classes, getSections]);
 
     const loadCollections = useCallback(async () => {
         try {
@@ -78,11 +89,12 @@ const Fees = () => {
         try {
             const params = new URLSearchParams({ schoolId });
             if (fClass !== 'ALL') params.append('className', fClass);
+            if (fSection !== 'All') params.append('section', fSection);
             if (fStatus !== 'ALL') params.append('status', fStatus);
             const r = await axios.get(api(`/invoices?${params.toString()}`));
             setInvoices(Array.isArray(r.data) ? r.data : []);
         } catch { setInvoices([]); } finally { setLoading(false); }
-    }, [schoolId, fClass, fStatus]);
+    }, [schoolId, fClass, fSection, fStatus]);
 
     const loadStructures = useCallback(async () => {
         setLoading(true);
@@ -103,7 +115,14 @@ const Fees = () => {
         else if (tab === 'settings') loadSettings();
     }, [tab, loadCollections, loadInvoices, loadStructures, loadSettings]);
 
+    // Load section options for the Dues filter when the class changes.
+    useEffect(() => { loadSectionsFor(fClass, setDuesSections); setFSection('All'); }, [fClass, loadSectionsFor]);
+    // Load section options for the Add-Fee modal when its class changes.
+    useEffect(() => { if (feeModal) loadSectionsFor(feeModal.target, setModalSections); }, [feeModal?.target, loadSectionsFor]); // eslint-disable-line
+
     // ---- actions ----
+    const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', title: '', category: 'Tuition', amount: '', dueDate: '', months: [], year: CUR_YEAR, ...init });
+
     const verifyPayment = async (id) => {
         try { await axios.post(api(`/payments/${id}/verify`)); toast.success('Payment verified'); setProof(null); loadCollections(); }
         catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
@@ -134,6 +153,20 @@ const Fees = () => {
         catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
     };
 
+    const submitFee = async () => {
+        if (!feeModal.title.trim() || !feeModal.amount) { toast.warning('Title and amount are required'); return; }
+        const months = (feeModal.months || []).map((m) => `${m} ${feeModal.year}`);
+        try {
+            const r = await axios.post(api('/generate'), {
+                schoolId, className: feeModal.target, section: feeModal.section,
+                title: feeModal.title.trim(), category: feeModal.category, amount: Number(feeModal.amount),
+                months, dueDate: feeModal.dueDate || null,
+            });
+            toast.success(r.data.message || 'Dues created'); setFeeModal(null);
+            if (tab === 'dues') loadInvoices(); else setTab('dues');
+        } catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
+    };
+
     const saveSettings = async () => {
         setSavingCfg(true);
         try { await axios.put(api('/settings'), { schoolId, ...settings }); toast.success('Payment details saved'); }
@@ -151,6 +184,9 @@ const Fees = () => {
     };
 
     const classOptions = [{ value: 'ALL', label: 'All classes' }, ...classes.map((c) => ({ value: c.className, label: c.className }))];
+    const duesSectionOpts = [{ value: 'All', label: 'All sections' }, ...duesSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
+    const modalSectionOpts = [{ value: 'All', label: 'All sections' }, ...modalSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
+    const toggleMonth = (m) => setFeeModal((f) => ({ ...f, months: f.months.includes(m) ? f.months.filter((x) => x !== m) : [...f.months, m] }));
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-24">
@@ -162,7 +198,6 @@ const Fees = () => {
                 <ProfileButton size={42} />
             </header>
 
-            {/* Tabs */}
             <div className="px-4 md:px-8 pt-5">
                 <div className="flex gap-2 overflow-x-auto pb-1">
                     {TABS.map((t) => (
@@ -185,7 +220,6 @@ const Fees = () => {
                             <StatCard label="To verify" value={summary?.pendingVerification ?? 0} tone="text-slate-900" />
                         </div>
 
-                        {/* Verify queue */}
                         <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden">
                             <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
                                 <span className="w-2 h-6 bg-blue-600 rounded-full" />
@@ -211,21 +245,21 @@ const Fees = () => {
                             )}
                         </section>
 
-                        {/* Class-wise pending */}
                         {summary?.byClass?.length > 0 && (
                             <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
-                                <h3 className="font-black text-slate-900 tracking-tight mb-4">Class-wise pending</h3>
+                                <h3 className="font-black text-slate-900 tracking-tight mb-4">Class-wise collection</h3>
                                 <div className="space-y-3">
-                                    {summary.byClass.slice(0, 12).map((c) => {
+                                    {summary.byClass.slice(0, 15).map((c) => {
                                         const pct = c.invoiced ? Math.round((c.collected / c.invoiced) * 100) : 0;
                                         return (
-                                            <div key={c.className}>
-                                                <div className="flex justify-between text-xs font-bold mb-1"><span className="text-slate-700">{c.className}</span><span className="text-slate-400">{money(c.pending)} pending · {pct}% collected</span></div>
+                                            <button key={c.className} onClick={() => { setFClass(c.className); setFStatus('PENDING'); setTab('dues'); }} className="w-full text-left group">
+                                                <div className="flex justify-between text-xs font-bold mb-1"><span className="text-slate-700 group-hover:text-blue-600">{c.className}</span><span className="text-slate-400">{money(c.pending)} pending · {pct}% collected</span></div>
                                                 <div className="h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} /></div>
-                                            </div>
+                                            </button>
                                         );
                                     })}
                                 </div>
+                                <p className="text-[11px] text-slate-400 font-bold mt-4">Tap a class to see who's pending (section-wise).</p>
                             </section>
                         )}
                     </>
@@ -235,9 +269,10 @@ const Fees = () => {
                 {tab === 'dues' && (
                     <>
                         <div className="flex flex-wrap items-center gap-3">
-                            <div className="w-40"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
-                            <div className="w-40"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
-                            <button onClick={() => setFeeModal({ target: 'ALL', title: '', category: 'Tuition', amount: '', period: '', dueDate: '' })}
+                            <div className="w-36"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
+                            <div className="w-36"><Dropdown value={fSection} onChange={setFSection} options={duesSectionOpts} buttonClassName="h-11" /></div>
+                            <div className="w-36"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
+                            <button onClick={() => openFee({ target: fClass, section: fSection })}
                                 className="ml-auto bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-[18px]">add</span> Add Fee
                             </button>
@@ -249,7 +284,7 @@ const Fees = () => {
                             ) : invoices.length === 0 ? (
                                 <div className="py-20 text-center space-y-3">
                                     <span className="material-symbols-outlined text-5xl text-slate-200">receipt_long</span>
-                                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No dues yet — tap "Add Fee" to create one</p>
+                                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No dues here — tap "Add Fee" to create one</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-100">
@@ -297,7 +332,7 @@ const Fees = () => {
                                         <p className="font-black text-slate-900 truncate">{s.className} · {s.label}</p>
                                         <p className="text-xs text-slate-400 font-bold">{money(s.amount)} · {s.frequency}</p>
                                     </div>
-                                    <button onClick={() => setFeeModal({ target: s.className, title: `${s.label}`, category: s.category, amount: String(s.amount), period: '', dueDate: '' })}
+                                    <button onClick={() => openFee({ target: s.className, title: s.label, category: s.category, amount: String(s.amount) })}
                                         className="shrink-0 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100">Generate</button>
                                     <button onClick={() => deleteStructure(s.id)} className="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-rose-500 hover:bg-rose-50"><span className="material-symbols-outlined text-[19px]">delete</span></button>
                                 </div>
@@ -351,27 +386,36 @@ const Fees = () => {
             {feeModal && (
                 <Modal onClose={() => setFeeModal(null)} title="Add a fee">
                     <div className="space-y-4">
-                        <Field label="Apply to">
-                            <Dropdown value={feeModal.target} onChange={(v) => setFeeModal((f) => ({ ...f, target: v }))} options={classOptions} buttonClassName="h-12 bg-slate-50" />
-                        </Field>
-                        <Field label="Fee title"><input value={feeModal.title} onChange={(e) => setFeeModal((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. April Tuition, Exam Fee" className="modal-in" /></Field>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Field label="Class"><Dropdown value={feeModal.target} onChange={(v) => setFeeModal((f) => ({ ...f, target: v, section: 'All' }))} options={classOptions} buttonClassName="h-12 bg-slate-50" /></Field>
+                            <Field label="Section"><Dropdown value={feeModal.section} onChange={(v) => setFeeModal((f) => ({ ...f, section: v }))} options={modalSectionOpts} buttonClassName="h-12 bg-slate-50" /></Field>
+                        </div>
+                        <Field label="Fee title"><input value={feeModal.title} onChange={(e) => setFeeModal((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Tuition, Exam Fee, Arrears" className="modal-in" /></Field>
                         <div className="grid grid-cols-2 gap-3">
                             <Field label="Category"><Dropdown value={feeModal.category} onChange={(v) => setFeeModal((f) => ({ ...f, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" /></Field>
                             <Field label="Amount (₹)"><input type="number" value={feeModal.amount} onChange={(e) => setFeeModal((f) => ({ ...f, amount: e.target.value }))} placeholder="1200" className="modal-in" /></Field>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Period (optional)"><input value={feeModal.period} onChange={(e) => setFeeModal((f) => ({ ...f, period: e.target.value }))} placeholder="Apr 2026" className="modal-in" /></Field>
-                            <Field label="Due date"><input type="date" value={feeModal.dueDate} onChange={(e) => setFeeModal((f) => ({ ...f, dueDate: e.target.value }))} className="modal-in" /></Field>
-                        </div>
-                        <button onClick={async () => {
-                            if (!feeModal.title.trim() || !feeModal.amount) { toast.warning('Title and amount are required'); return; }
-                            try {
-                                const r = await axios.post(api('/generate'), { schoolId, className: feeModal.target, title: feeModal.title.trim(), category: feeModal.category, amount: Number(feeModal.amount), period: feeModal.period, dueDate: feeModal.dueDate || null });
-                                toast.success(r.data.message || 'Dues created'); setFeeModal(null);
-                                if (tab === 'dues') loadInvoices(); else setTab('dues');
-                            } catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
-                        }} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">Create dues</button>
-                        <p className="text-[11px] text-slate-400 font-bold text-center">Creates one due per active student in the selection. Duplicates (same title) are skipped.</p>
+
+                        {/* Month picker: pick which months this fee is for. */}
+                        <Field label="For which months? (optional — leave blank for a one-off fee)">
+                            <div className="flex items-center gap-2 mb-2">
+                                <input type="number" value={feeModal.year} onChange={(e) => setFeeModal((f) => ({ ...f, year: e.target.value }))} className="w-24 h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 font-bold text-sm text-slate-900 outline-none" />
+                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [...MONTHS] }))} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-black">Whole year</button>
+                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [] }))} className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-black">Clear</button>
+                            </div>
+                            <div className="grid grid-cols-6 gap-1.5">
+                                {MONTHS.map((m) => (
+                                    <button type="button" key={m} onClick={() => toggleMonth(m)}
+                                        className={`h-9 rounded-lg text-xs font-black transition-colors ${feeModal.months.includes(m) ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{m}</button>
+                                ))}
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-bold mt-2">Quarterly = pick 3 · Half-yearly = 6 · Yearly = "Whole year". One due is created per selected month.</p>
+                        </Field>
+
+                        <Field label="Due date (optional)"><input type="date" value={feeModal.dueDate} onChange={(e) => setFeeModal((f) => ({ ...f, dueDate: e.target.value }))} className="modal-in" /></Field>
+
+                        <button onClick={submitFee} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">Create dues</button>
+                        <p className="text-[11px] text-slate-400 font-bold text-center">One due per active student in the selection. Duplicates (same title) are skipped.</p>
                     </div>
                 </Modal>
             )}
