@@ -9,6 +9,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      // Take control immediately so a new deploy applies on the next open (with an
+      // auto-reload) instead of serving the stale cached app until a manual refresh.
+      workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+      },
       manifest: {
         name: 'ScoolG Student',
         short_name: 'ScoolG Student',

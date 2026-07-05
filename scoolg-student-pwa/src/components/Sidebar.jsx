@@ -16,6 +16,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
         { name: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
         { name: 'Chat', icon: 'chat', path: '/chat' },
         { name: 'Timetable', icon: 'calendar_today', path: '/timetable' },
+        { name: 'Classmates', icon: 'groups', path: '/classmates' },
         { name: 'Homework', icon: 'assignment', path: '/homework' },
         { name: 'Attendance', icon: 'fact_check', path: '/attendance' },
         { name: 'Calendar', icon: 'calendar_month', path: '/calendar' },

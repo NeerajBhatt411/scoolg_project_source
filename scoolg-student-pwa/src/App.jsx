@@ -8,6 +8,7 @@ import Homework from './pages/Homework';
 import Attendance from './pages/Attendance';
 import Results from './pages/Results';
 import Fees from './pages/Fees';
+import Classmates from './pages/Classmates';
 import Profile from './pages/Profile';
 import Notices from './pages/Notices';
 import Calendar from './pages/Calendar';
@@ -96,6 +97,7 @@ const App = () => {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/results" element={<Results />} />
         <Route path="/fees" element={<Fees />} />
+        <Route path="/classmates" element={<Classmates />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/calendar" element={<Calendar />} />

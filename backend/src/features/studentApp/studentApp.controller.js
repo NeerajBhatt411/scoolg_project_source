@@ -259,6 +259,42 @@ export const getStudentHomework = async (req, res) => {
     }
 };
 
+// Classmates of the logged-in student — a roster of the SAME class + section.
+// Only non-sensitive fields (name, photo, birthday); no contact/address/parent.
+export const getStudentClassmates = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'scoolg_secret_99');
+
+        const student = await Student.findById(decoded.id).select('schoolId class section').lean();
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const classmates = await Student.find({
+            schoolId: student.schoolId,
+            class: student.class,
+            section: student.section,
+            status: 'Active',
+        }).select('firstName lastName rollNumber gender profileImageUrl dateOfBirth').sort({ rollNumber: 1, firstName: 1 }).lean();
+
+        res.json({
+            className: student.class,
+            section: student.section,
+            classmates: classmates.map((s) => ({
+                id: s._id,
+                name: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+                rollNumber: s.rollNumber || '',
+                gender: s.gender || '',
+                photo: s.profileImageUrl || '',
+                dob: s.dateOfBirth || null,
+                isMe: String(s._id) === String(decoded.id),
+            })),
+        });
+    } catch (err) {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
 export const getStudentAttendance = async (req, res) => {
     try {
         const authHeader = req.headers.authorization;

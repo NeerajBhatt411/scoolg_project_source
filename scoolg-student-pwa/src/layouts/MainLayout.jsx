@@ -45,6 +45,7 @@ const MainLayout = () => {
     if (path.includes('exams')) return 'Exams';
     if (path.includes('calendar')) return 'Calendar';
     if (path.includes('fees')) return 'Fees & Dues';
+    if (path.includes('classmates')) return 'My Classmates';
     if (path.includes('notices')) return 'Notices';
     if (path.includes('profile')) return 'My Profile';
     if (path.includes('notifications')) return 'Notifications';
@@ -85,7 +86,7 @@ const MainLayout = () => {
         <div className="flex items-center justify-around px-2 pt-2 pb-2">
           {[
             { name: 'Home', path: '/dashboard', icon: 'dashboard' },
-            { name: 'Timetable', path: '/timetable', icon: 'calendar_today' },
+            { name: 'Classmates', path: '/classmates', icon: 'groups' },
             { name: 'Chat', path: '/chat', icon: 'chat' },
             { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
           ].map((item) => (

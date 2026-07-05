@@ -129,6 +129,7 @@ router.get('/api/student/timetable', c.getStudentTimetable);
  *         description: List of homework
  */
 router.get('/api/student/homework', c.getStudentHomework);
+router.get('/api/student/classmates', c.getStudentClassmates);
 
 /**
  * @swagger
