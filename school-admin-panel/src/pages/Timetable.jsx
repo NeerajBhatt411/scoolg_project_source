@@ -122,6 +122,10 @@ const Timetable = () => {
 
     useEffect(() => {
         if (schoolId && selectedClassObj && selectedSectionObj) fetchTimetable();
+        // No class/section to load (e.g. school has no classes yet) — stop the
+        // loading skeleton so the "No Timetable Configured" empty state shows
+        // instead of an endless spinner.
+        else setIsLoading(false);
     }, [selectedClassObj, selectedSectionObj, schoolId]);
 
     const initEmptySchedule = () => {

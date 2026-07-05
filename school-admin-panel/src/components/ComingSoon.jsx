@@ -1,9 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import MenuButton from './MenuButton';
 
-const ComingSoon = ({ title = 'Coming Soon', subtitle = "We're working on it." }) => {
+const ComingSoon = ({ title = 'Coming Soon', subtitle = "We're working on it.", icon = 'auto_awesome' }) => {
     return (
-        <div className="p-8 min-h-[70vh] flex items-center justify-center">
+        <div className="min-h-screen bg-surface-container-low">
+            {/* Header keeps the mobile menu reachable so users aren't stuck here. */}
+            <div className="flex items-center gap-2 px-4 sm:px-8 pt-4">
+                <MenuButton />
+                <h2 className="text-xl font-black text-on-surface tracking-tight">{title}</h2>
+            </div>
+            <div className="p-8 min-h-[70vh] flex items-center justify-center">
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -12,7 +19,7 @@ const ComingSoon = ({ title = 'Coming Soon', subtitle = "We're working on it." }
             >
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary text-2xl">auto_awesome</span>
+                        <span className="material-symbols-outlined text-primary text-2xl">{icon}</span>
                     </div>
                     <div>
                         <h3 className="text-2xl font-extrabold text-on-surface">{title}</h3>
@@ -46,6 +53,7 @@ const ComingSoon = ({ title = 'Coming Soon', subtitle = "We're working on it." }
                     </span>
                 </motion.div>
             </motion.div>
+            </div>
         </div>
     );
 };

@@ -74,6 +74,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
         { name: 'Homework', icon: 'assignment', path: '/homework', module: 'homework' },
         { name: 'Attendance', icon: 'fact_check', path: '/attendance', module: 'attendance' },
         { name: 'Exams', icon: 'description', path: '/exams', module: 'exams' },
+        { name: 'Fees', icon: 'payments', path: '/fees', module: 'fees' },
         { name: 'Notices', icon: 'campaign', path: '/notices', module: 'notices' },
         { name: 'Roles', icon: 'verified_user', path: '/roles', module: 'roles' },
     ];
