@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_ORIGIN = 'https://scoolg-backend.netlify.app';
+// Defaults to the live backend; override locally via a .env.local file
+// (VITE_API_ORIGIN=http://localhost:5001) to test against a local backend.
+const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || 'https://scoolg-backend.netlify.app';
 
 export const ADMIN_API_BASE = `${API_ORIGIN}/api/admin`;
 export const API_BASE = `${API_ORIGIN}/api`;
