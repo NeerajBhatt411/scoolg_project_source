@@ -82,9 +82,14 @@ export const postTeacherLogin = async (req, res) => {
         if (!teacherAppId || !password) return res.status(400).json({ error: "Teacher ID & Password required" });
         teacherAppId = String(teacherAppId).trim();
 
-        // Allow login by Teacher ID (case-insensitive, e.g. GAJT01) or email.
+        // Allow login by Teacher ID or email — the ID matches case-insensitively
+        // (upper OR lower), regardless of how it was stored.
+        const esc = teacherAppId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const teacher = await Teacher.findOne({
-            $or: [{ teacherAppId: teacherAppId.toUpperCase() }, { email: teacherAppId.toLowerCase() }]
+            $or: [
+                { teacherAppId: { $regex: `^${esc}$`, $options: 'i' } },
+                { email: teacherAppId.toLowerCase() },
+            ]
         });
         if (!teacher) return res.status(401).json({ error: "No teacher account found with this ID" });
         if (teacher.status && teacher.status !== 'Active') {
@@ -208,7 +213,16 @@ export const getTeacherMyclasses = async (req, res) => {
             };
         }).filter(c => c.isClassTeacher || c.teaches);
 
-        res.json(result);
+        // Attach the REAL active-student count per class+section (no more estimates).
+        const counts = await Student.aggregate([
+            { $match: { schoolId: teacher.schoolId, status: 'Active' } },
+            { $group: { _id: { class: '$class', section: '$section' }, n: { $sum: 1 } } },
+        ]);
+        const countMap = {};
+        counts.forEach(c => { countMap[`${c._id.class}|${c._id.section}`] = c.n; });
+        const withCounts = result.map(c => ({ ...c, studentCount: countMap[`${c.className}|${c.sectionName}`] || 0 }));
+
+        res.json(withCounts);
     } catch (err) {
         res.status(401).json({ error: "Unauthorized" });
     }

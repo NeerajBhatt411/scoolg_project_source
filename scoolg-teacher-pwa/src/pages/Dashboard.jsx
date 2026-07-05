@@ -44,6 +44,7 @@ const Dashboard = () => {
     const [todayPeriods, setTodayPeriods] = useState(cachedDashboardData?.todayPeriods || []);
     const [weekCount, setWeekCount] = useState(cachedDashboardData?.weekCount || 0);
     const [classCount, setClassCount] = useState(cachedDashboardData?.classCount || 0);
+    const [studentTotal, setStudentTotal] = useState(cachedDashboardData?.studentTotal || 0);
     const [weekDays, setWeekDays] = useState(cachedDashboardData?.weekDays || [0, 0, 0, 0, 0, 0, 0]);
     const [events, setEvents] = useState(cachedDashboardData?.events || []);
     const [loading, setLoading] = useState(!cachedDashboardData);
@@ -81,6 +82,8 @@ const Dashboard = () => {
 
                 const classList = Array.isArray(cls) ? cls : [];
                 setClassCount(classList.length);
+                const stuTotal = classList.reduce((sum, c) => sum + (c.studentCount || 0), 0);
+                setStudentTotal(stuTotal);
 
                 const newEvents = Array.isArray(ev) ? ev : [];
                 setEvents(newEvents);
@@ -89,6 +92,7 @@ const Dashboard = () => {
                     todayPeriods: sched.find(d => d.dayOfWeek === todayName)?.periods || [],
                     weekCount: sched.reduce((sum, d) => sum + (d.periods?.length || 0), 0),
                     classCount: cls.length,
+                    studentTotal: stuTotal,
                     weekDays: dayCounts,
                     events: newEvents,
                 };
@@ -101,7 +105,7 @@ const Dashboard = () => {
         load();
     }, [todayName]);
 
-    const totalStudents = classCount * 38; // Estimated
+    const totalStudents = studentTotal; // real active-student count across the teacher's classes
 
     const quickActions = [
         { label: 'Take Attendance', icon: ClipboardCheck, path: '/attendance', color: 'text-blue-600', bg: 'bg-blue-50/80' },
