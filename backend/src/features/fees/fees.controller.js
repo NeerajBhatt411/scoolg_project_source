@@ -12,8 +12,10 @@ import { notify } from '../../utils/push.js';
 
 // Admin side: the JWT (owner or staff) carries the STRING School.id; resolve it
 // to the full School doc (whose _id is the ObjectId all fee rows are keyed by).
+// Trust ONLY the authenticated token — never a client-supplied schoolId (that
+// would be a cross-tenant selector).
 const resolveSchool = async (req) => {
-    const sid = req.user?.id || req.user?.schoolId || req.query.schoolId || req.body?.schoolId;
+    const sid = req.user?.id || req.user?.schoolId;
     if (!sid) return null;
     return School.findOne({ id: sid });
 };
@@ -27,6 +29,10 @@ const studentFromAuth = async (req) => {
 };
 
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+// A payable amount: finite, positive, within a sane ceiling. Returns null if bad.
+const validAmount = (a) => { const n = Number(a); return Number.isFinite(n) && n > 0 && n <= 10000000 ? n : null; };
+// Only accept http(s) URLs for the payment screenshot (blocks javascript:/data: XSS).
+const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u.trim()) ? u.trim() : '');
 
 // Alert the school office (owner + staff share userId = school.id string).
 const notifyOffice = async (school, title, body, data = {}) => {
@@ -127,7 +133,9 @@ export const postGenerateInvoices = async (req, res) => {
         const school = await resolveSchool(req);
         if (!school) return res.status(404).json({ error: 'School not found' });
         const { className, section, studentIds, title, category, amount, months, period, dueDate, academicYear } = req.body || {};
-        if (!title?.trim() || amount == null) return res.status(400).json({ error: 'Title and amount are required' });
+        if (!title?.trim()) return res.status(400).json({ error: 'Title is required' });
+        const amt = validAmount(amount);
+        if (amt == null) return res.status(400).json({ error: 'Enter a valid amount' });
 
         // Resolve target students (by explicit ids, or class + optional section).
         let students;
@@ -144,11 +152,16 @@ export const postGenerateInvoices = async (req, res) => {
 
         // One "item" per period. If months are given (e.g. yearly = 12, quarterly = 3),
         // create a due per student per month; else a single due with the plain title.
-        const monthList = Array.isArray(months) ? months.filter(Boolean) : [];
-        const base = title.trim();
+        const monthList = (Array.isArray(months) ? months.filter(Boolean) : []).slice(0, 24);
+        const base = title.trim().slice(0, 200);
         const items = monthList.length
-            ? monthList.map((m) => ({ title: `${base} · ${m}`, period: String(m) }))
-            : [{ title: base, period: period || '' }];
+            ? monthList.map((m) => ({ title: `${base} · ${String(m).slice(0, 40)}`, period: String(m).slice(0, 40) }))
+            : [{ title: base, period: String(period || '').slice(0, 40) }];
+
+        // Guard against an accidental mega-generate (e.g. all classes × 12 months).
+        if (items.length * students.length > 20000) {
+            return res.status(400).json({ error: 'Too many dues at once — narrow the class/section or the months.' });
+        }
 
         // Dedup: skip (student, title) pairs that already exist.
         const titles = items.map((i) => i.title);
@@ -166,7 +179,7 @@ export const postGenerateInvoices = async (req, res) => {
                     studentName: `${s.firstName || ''} ${s.lastName || ''}`.trim(), studentAppId: s.studentAppId || '',
                     className: s.class, section: s.section, rollNumber: s.rollNumber || '',
                     title: it.title, category: category || 'Tuition', period: it.period,
-                    amount: Number(amount), dueDate: dueDate || null, academicYear: academicYear || '',
+                    amount: amt, dueDate: dueDate || null, academicYear: academicYear || '',
                     status: 'PENDING', createdByName: by,
                 });
             }
@@ -179,7 +192,7 @@ export const postGenerateInvoices = async (req, res) => {
         if (uniq.length) {
             try {
                 await notify({ schoolId: String(school._id), toRole: 'student', recipients: uniq.map((id) => ({ userId: id })),
-                    title: '💳 New fee added', body: `${base} — ${money(amount)} is now due.`, type: 'fee', data: { link: '/fees' } });
+                    title: '💳 New fee added', body: `${base} — ${money(amt)} is now due.`, type: 'fee', data: { link: '/fees' } });
             } catch (e) { console.error('[fees] due notify failed:', e.message); }
         }
 
@@ -216,10 +229,12 @@ export const patchInvoice = async (req, res) => {
         if (!school) return res.status(404).json({ error: 'School not found' });
         const { title, amount, dueDate, status } = req.body || {};
         const upd = {};
-        if (title != null) upd.title = title;
-        if (amount != null) upd.amount = Number(amount);
+        if (title != null) upd.title = String(title).slice(0, 200);
+        if (amount != null) { const a = validAmount(amount); if (a == null) return res.status(400).json({ error: 'Enter a valid amount' }); upd.amount = a; }
         if (dueDate !== undefined) upd.dueDate = dueDate || null;
-        if (status && ['PENDING', 'PAID', 'WAIVED'].includes(status)) upd.status = status;
+        // Paying is done ONLY through the payment flow (so paidAmount/records stay
+        // consistent) — here the admin may re-open or waive, not mark PAID.
+        if (status && ['PENDING', 'WAIVED'].includes(status)) upd.status = status;
         const row = await FeeInvoice.findOneAndUpdate({ _id: req.params.id, schoolId: school._id }, upd, { new: true });
         if (!row) return res.status(404).json({ error: 'Invoice not found' });
         res.json({ message: 'Updated', invoice: row });
@@ -246,15 +261,25 @@ export const postInvoiceMarkPaid = async (req, res) => {
         if (!school) return res.status(404).json({ error: 'School not found' });
         const invoice = await FeeInvoice.findOne({ _id: req.params.id, schoolId: school._id });
         if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+        if (invoice.status === 'PAID') return res.status(400).json({ error: 'This due is already paid' });
+        if (invoice.status === 'WAIVED') return res.status(400).json({ error: 'This due is waived' });
         const { method = 'CASH', note = '', referenceNo = '' } = req.body || {};
 
-        const payment = await FeePayment.create({
-            schoolId: school._id, studentId: invoice.studentId, studentName: invoice.studentName,
-            studentAppId: invoice.studentAppId, invoiceId: invoice._id, invoiceTitle: invoice.title,
-            amount: invoice.amount, method, referenceNo, note, status: 'VERIFIED',
-            verifiedByName: req.user?.role || 'Admin', verifiedAt: new Date(),
-        });
-        invoice.status = 'PAID'; invoice.paidAmount = invoice.amount; invoice.paidVia = method;
+        // If the parent already submitted a payment for this due, reconcile THAT
+        // record (don't leave it dangling in the verify queue and don't double-count).
+        let payment = await FeePayment.findOne({ invoiceId: invoice._id, status: 'SUBMITTED' });
+        if (payment) {
+            payment.status = 'VERIFIED'; payment.verifiedByName = req.user?.role || 'Admin'; payment.verifiedAt = new Date();
+            await payment.save();
+        } else {
+            payment = await FeePayment.create({
+                schoolId: school._id, studentId: invoice.studentId, studentName: invoice.studentName,
+                studentAppId: invoice.studentAppId, invoiceId: invoice._id, invoiceTitle: invoice.title,
+                amount: invoice.amount, method, referenceNo, note, status: 'VERIFIED',
+                verifiedByName: req.user?.role || 'Admin', verifiedAt: new Date(),
+            });
+        }
+        invoice.status = 'PAID'; invoice.paidAmount = invoice.amount; invoice.paidVia = payment.method || method;
         invoice.paidAt = new Date(); invoice.paymentId = payment._id;
         await invoice.save();
 
@@ -290,15 +315,19 @@ export const postBulkInvoices = async (req, res) => {
         if (period && period !== 'All') q.period = period;
 
         if (action === 'delete') {
-            const ids = (await FeeInvoice.find(q).select('_id').lean()).map((i) => i._id);
-            if (!ids.length) return res.json({ message: 'Nothing to delete', count: 0 });
-            await FeePayment.deleteMany({ invoiceId: { $in: ids } });
+            // Never bulk-delete PAID dues — that would wipe the financial/receipt
+            // record. Paid dues can only be removed one-by-one, deliberately.
+            const ids = (await FeeInvoice.find({ ...q, status: { $ne: 'PAID' } }).select('_id').lean()).map((i) => i._id);
+            if (!ids.length) return res.json({ message: 'Nothing to delete (paid dues are protected)', count: 0 });
+            await FeePayment.deleteMany({ invoiceId: { $in: ids }, status: { $ne: 'VERIFIED' } });
             const r = await FeeInvoice.deleteMany({ _id: { $in: ids } });
             return res.json({ message: `${r.deletedCount} due(s) deleted`, count: r.deletedCount });
         }
 
         if (action === 'markPaid') {
-            const payable = await FeeInvoice.find({ ...q, status: { $in: ['PENDING', 'REJECTED', 'SUBMITTED'] } }).lean();
+            // Only un-submitted dues become cash-paid in bulk. SUBMITTED ones have a
+            // parent payment awaiting review — those go through Verify, not bulk cash.
+            const payable = await FeeInvoice.find({ ...q, status: { $in: ['PENDING', 'REJECTED'] } }).lean();
             if (!payable.length) return res.json({ message: 'Nothing to mark paid', count: 0 });
             const by = req.user?.role || 'Admin';
             await FeePayment.insertMany(payable.map((i) => ({
@@ -339,14 +368,22 @@ export const postPaymentVerify = async (req, res) => {
         if (!school) return res.status(404).json({ error: 'School not found' });
         const payment = await FeePayment.findOne({ _id: req.params.id, schoolId: school._id });
         if (!payment) return res.status(404).json({ error: 'Payment not found' });
-        if (payment.status === 'VERIFIED') return res.json({ message: 'Already verified', payment });
+        if (payment.status !== 'SUBMITTED') return res.status(400).json({ error: `Payment already ${payment.status.toLowerCase()}` });
+
+        const invoice = await FeeInvoice.findById(payment.invoiceId);
+        // Guard against double-collecting: if the due is already settled by another
+        // payment, close THIS one out without re-marking / re-counting.
+        if (invoice && invoice.status === 'PAID' && String(invoice.paymentId) !== String(payment._id)) {
+            payment.status = 'VERIFIED'; payment.verifiedByName = req.user?.role || 'Admin'; payment.verifiedAt = new Date();
+            await payment.save();
+            return res.json({ message: 'This due was already paid; payment closed', payment });
+        }
 
         payment.status = 'VERIFIED'; payment.verifiedByName = req.user?.role || 'Admin'; payment.verifiedAt = new Date();
         await payment.save();
 
-        const invoice = await FeeInvoice.findById(payment.invoiceId);
         if (invoice) {
-            invoice.status = 'PAID'; invoice.paidAmount = payment.amount; invoice.paidVia = payment.method;
+            invoice.status = 'PAID'; invoice.paidAmount = invoice.amount; invoice.paidVia = payment.method;
             invoice.paidAt = new Date(); invoice.paymentId = payment._id;
             await invoice.save();
         }
@@ -364,6 +401,7 @@ export const postPaymentReject = async (req, res) => {
         const { reason } = req.body || {};
         const payment = await FeePayment.findOne({ _id: req.params.id, schoolId: school._id });
         if (!payment) return res.status(404).json({ error: 'Payment not found' });
+        if (payment.status !== 'SUBMITTED') return res.status(400).json({ error: `Payment already ${payment.status.toLowerCase()}` });
 
         payment.status = 'REJECTED'; payment.rejectionReason = reason || ''; payment.verifiedByName = req.user?.role || 'Admin'; payment.verifiedAt = new Date();
         await payment.save();
@@ -434,10 +472,11 @@ export const getSummary = async (req, res) => {
 
 // =====================  PARENT / STUDENT  =====================
 export const getStudentFees = async (req, res) => {
+    let student;
+    try { student = await studentFromAuth(req); }
+    catch { return res.status(401).json({ error: 'Session expired. Please log in again.' }); }
+    if (!student) return res.status(404).json({ error: 'Student not found' });
     try {
-        const student = await studentFromAuth(req);
-        if (!student) return res.status(404).json({ error: 'Student not found' });
-
         const [invoices, school] = await Promise.all([
             FeeInvoice.find({ schoolId: student.schoolId, studentId: student._id }).sort({ createdAt: -1 }).lean(),
             School.findById(student.schoolId).select('paymentConfig formData').lean(),
@@ -456,27 +495,36 @@ export const getStudentFees = async (req, res) => {
         });
     } catch (err) {
         console.error('student fees error:', err);
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(500).json({ error: 'Failed to load fees' });
     }
 };
 
+const ALLOWED_METHODS = ['UPI', 'BANK', 'CASH', 'OTHER'];
+
 export const postStudentFeePay = async (req, res) => {
+    let student;
+    try { student = await studentFromAuth(req); }
+    catch { return res.status(401).json({ error: 'Session expired. Please log in again.' }); }
+    if (!student) return res.status(404).json({ error: 'Student not found' });
     try {
-        const student = await studentFromAuth(req);
-        if (!student) return res.status(404).json({ error: 'Student not found' });
-        const { invoiceId, amount, method, referenceNo, screenshotUrl, note } = req.body || {};
+        const { invoiceId, method, referenceNo, screenshotUrl, note } = req.body || {};
         if (!invoiceId) return res.status(400).json({ error: 'Invoice is required' });
 
         const invoice = await FeeInvoice.findOne({ _id: invoiceId, studentId: student._id });
         if (!invoice) return res.status(404).json({ error: 'Due not found' });
         if (invoice.status === 'PAID') return res.status(400).json({ error: 'This due is already paid' });
+        if (invoice.status === 'SUBMITTED') return res.status(400).json({ error: 'A payment for this due is already under review' });
 
         const payment = await FeePayment.create({
             schoolId: student.schoolId, studentId: student._id,
             studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(), studentAppId: student.studentAppId,
             invoiceId: invoice._id, invoiceTitle: invoice.title,
-            amount: Number(amount) || invoice.amount, method: method || 'UPI',
-            referenceNo: referenceNo || '', screenshotUrl: screenshotUrl || '', note: note || '', status: 'SUBMITTED',
+            // The amount owed is fixed by the invoice — never trust a client amount.
+            amount: invoice.amount,
+            method: ALLOWED_METHODS.includes(method) ? method : 'UPI',
+            referenceNo: String(referenceNo || '').slice(0, 80),
+            screenshotUrl: safeUrl(screenshotUrl),
+            note: String(note || '').slice(0, 500), status: 'SUBMITTED',
         });
         invoice.status = 'SUBMITTED';
         await invoice.save();

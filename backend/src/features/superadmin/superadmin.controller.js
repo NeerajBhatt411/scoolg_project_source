@@ -12,6 +12,9 @@ import { Subject } from '../../../models/Subject.js';
 import { Timetable } from '../../../models/Timetable.js';
 import { StaffUser } from '../../../models/StaffUser.js';
 import { SupportTicket } from '../../../models/SupportTicket.js';
+import { FeeInvoice } from '../../../models/FeeInvoice.js';
+import { FeePayment } from '../../../models/FeePayment.js';
+import { FeeStructure } from '../../../models/FeeStructure.js';
 import { Broadcast } from '../../../models/Broadcast.js';
 import { SuperAdminConfig } from '../../../models/SuperAdminConfig.js';
 import { transporter, esc, renderEmail } from '../../utils/email.js';
@@ -208,6 +211,9 @@ export const deleteSuperadminSchoolsById = async (req, res) => {
             CalendarEvent.deleteMany({ schoolId: sid }),
             Timetable.deleteMany({ schoolId: sid }),
             StaffUser.deleteMany({ schoolId: sid }),
+            FeeInvoice.deleteMany({ schoolId: sid }),
+            FeePayment.deleteMany({ schoolId: sid }),
+            FeeStructure.deleteMany({ schoolId: sid }),
         ]);
 
         // Delete the school itself

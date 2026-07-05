@@ -21,6 +21,8 @@ const FREQS = [
     { k: 'yearly', label: 'Yearly', hint: 'One due for the year' },
 ];
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+// Only ever treat an http(s) URL as a real screenshot link (blocks javascript:/data: URIs).
+const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u.trim()) ? u.trim() : '');
 
 const INV_PILL = {
     PENDING: 'bg-amber-100 text-amber-700',
@@ -521,9 +523,9 @@ const Fees = () => {
                             <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">{proof.method}</span>
                             {proof.referenceNo && <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">Ref: {proof.referenceNo}</span>}
                         </div>
-                        {proof.screenshotUrl ? (
-                            <a href={proof.screenshotUrl} target="_blank" rel="noreferrer" className="block rounded-2xl overflow-hidden border border-slate-100">
-                                <img src={proof.screenshotUrl} alt="Payment proof" className="w-full max-h-80 object-contain bg-slate-50" />
+                        {safeUrl(proof.screenshotUrl) ? (
+                            <a href={safeUrl(proof.screenshotUrl)} target="_blank" rel="noreferrer" className="block rounded-2xl overflow-hidden border border-slate-100">
+                                <img src={safeUrl(proof.screenshotUrl)} alt="Payment proof" className="w-full max-h-80 object-contain bg-slate-50" />
                             </a>
                         ) : (
                             <div className="py-8 text-center text-slate-400 text-sm font-bold bg-slate-50 rounded-2xl">No screenshot attached</div>

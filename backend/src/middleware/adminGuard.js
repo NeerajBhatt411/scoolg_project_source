@@ -56,7 +56,14 @@ export const adminGuard = (req, res, next) => {
     }
     req.user = decoded;
 
-    // Owner / legacy token => full access.
+    // Student-app and teacher-app tokens are signed with the SAME secret but must
+    // NEVER reach the admin surface. Reject them explicitly (they carry
+    // role:'student' or type:'teacher'); do not treat "not staff" as "is owner".
+    if (decoded.role === 'student' || decoded.type === 'student' || decoded.type === 'teacher') {
+        return res.status(403).json({ error: "Not an admin account" });
+    }
+
+    // Owner / legacy owner token => full access.
     if (decoded.type !== 'staff') return next();
 
     // Staff: enforce module access.
