@@ -87,6 +87,7 @@ const MainLayout = () => {
             { name: 'Home', path: '/dashboard', icon: 'dashboard' },
             { name: 'Timetable', path: '/timetable', icon: 'calendar_today' },
             { name: 'Chat', path: '/chat', icon: 'chat' },
+            { name: 'Fees', path: '/fees', icon: 'payments' },
             { name: 'Attendance', path: '/attendance', icon: 'fact_check' },
           ].map((item) => (
             <NavLink key={item.path} to={item.path} className="flex-1 flex justify-center">

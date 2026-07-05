@@ -22,6 +22,7 @@ const MODULE_BY_PREFIX = [
     ['/exams', 'exams'],
     ['/notices', 'notices'],
     ['/calendar', 'calendar'],
+    ['/fees', 'fees'],
 ];
 
 // Paths every authenticated user may access regardless of modules

@@ -16,6 +16,7 @@ const MODULES = [
     { key: 'attendance', label: 'Attendance', icon: 'fact_check' },
     { key: 'exams', label: 'Exams', icon: 'description' },
     { key: 'notices', label: 'Notices', icon: 'campaign' },
+    { key: 'fees', label: 'Fees', icon: 'payments' },
     { key: 'roles', label: 'Roles & Staff', icon: 'verified_user' },
 ];
 

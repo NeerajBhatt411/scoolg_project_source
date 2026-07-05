@@ -16,7 +16,18 @@ const SchoolSchema = new mongoose.Schema({
     resetOtpExpires: { type: Number }, // Forgot-password: epoch-ms expiry
     status: { type: String, default: "PENDING" },
     currentStep: { type: Number, default: 1 },
-    formData: { type: mongoose.Schema.Types.Mixed, default: {} }
+    formData: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // Manual fee-collection payee details (UPI / bank / QR) shown to parents.
+    paymentConfig: {
+        upiId: { type: String, default: '' },
+        payeeName: { type: String, default: '' },
+        bankName: { type: String, default: '' },
+        accountNumber: { type: String, default: '' },
+        ifsc: { type: String, default: '' },
+        qrImageUrl: { type: String, default: '' },
+        instructions: { type: String, default: '' },
+        methods: { type: [String], default: ['UPI', 'BANK', 'CASH'] },
+    }
 }, { timestamps: true });
 
 export const School = mongoose.models.School || mongoose.model('School', SchoolSchema);

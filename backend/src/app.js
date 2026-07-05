@@ -30,6 +30,7 @@ import publicSiteRoutes from './features/publicSite/publicSite.routes.js';
 import messagesRoutes from './features/messages/messages.routes.js';
 import contactRoutes from './features/contact/contact.routes.js';
 import supportRoutes from './features/support/support.routes.js';
+import feesRoutes from './features/fees/fees.routes.js';
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use(publicSiteRoutes);
 app.use(messagesRoutes);
 app.use(contactRoutes);
 app.use(supportRoutes);   // /api/admin support-tickets + scoolg-notices (school-facing)
+app.use(feesRoutes);      // /api/admin/fees/* (school) + /api/student/fees (parent)
 
 export default app;
 export { app };
