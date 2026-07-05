@@ -21,10 +21,13 @@ const ScoolgNotices = () => {
             const res = await axios.get(`${ADMIN_API_BASE}/scoolg-notices`);
             const list = Array.isArray(res.data) ? res.data : [];
             setNotices(list);
-            // Mark any unread ones as read (viewing the inbox = seen).
-            list.filter((n) => !n.read).forEach((n) => {
+            // Mark any unread ones as read (viewing the inbox = seen), then tell
+            // the sidebar to clear its "From Scoolg" unread badge immediately.
+            const unread = list.filter((n) => !n.read);
+            unread.forEach((n) => {
                 axios.post(`${ADMIN_API_BASE}/scoolg-notices/${n._id}/read`).catch(() => {});
             });
+            if (unread.length) window.dispatchEvent(new CustomEvent('scoolg-notices-read'));
         } catch (e) {
             setNotices([]);
         } finally {

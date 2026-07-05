@@ -14,6 +14,8 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const [logoReady, setLogoReady] = useState(false);
     // Whether the profile API (which carries the logo URL) has responded yet.
     const [apiDone, setApiDone] = useState(!!cachedLogo);
+    // Unread count of "From Scoolg" broadcasts -> shown as a badge on that link.
+    const [scoolgUnread, setScoolgUnread] = useState(0);
 
     useEffect(() => {
         // Always refresh the logo from the profile (the cached value paints
@@ -36,6 +38,24 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
         const onLogo = (e) => { const url = e.detail; if (url) { setLogoReady(false); setLogo(url); } };
         window.addEventListener('school-logo-updated', onLogo);
         return () => window.removeEventListener('school-logo-updated', onLogo);
+    }, []);
+
+    // Count unread "From Scoolg" notices for the badge. Refreshes on mount and
+    // when the tab regains focus; clears instantly when the inbox is opened
+    // (ScoolgNotices dispatches 'scoolg-notices-read' after marking them read).
+    useEffect(() => {
+        if (!localStorage.getItem('scoolg_token')) return;
+        let alive = true;
+        const load = () => {
+            axios.get(`${ADMIN_API_BASE}/scoolg-notices`)
+                .then((res) => { if (alive) setScoolgUnread((Array.isArray(res.data) ? res.data : []).filter((n) => !n.read).length); })
+                .catch(() => {});
+        };
+        load();
+        const onRead = () => setScoolgUnread(0);
+        window.addEventListener('scoolg-notices-read', onRead);
+        window.addEventListener('focus', load);
+        return () => { alive = false; window.removeEventListener('scoolg-notices-read', onRead); window.removeEventListener('focus', load); };
     }, []);
 
     const handleLogout = () => {
@@ -117,6 +137,11 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
                 >
                     <span className="material-symbols-outlined">notifications_active</span>
                     <span className="text-[0.875rem]">From Scoolg</span>
+                    {scoolgUnread > 0 && (
+                        <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-black flex items-center justify-center leading-none">
+                            {scoolgUnread > 9 ? '9+' : scoolgUnread}
+                        </span>
+                    )}
                 </NavLink>
                 <NavLink
                     to="/support"
