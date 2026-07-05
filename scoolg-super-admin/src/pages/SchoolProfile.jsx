@@ -154,7 +154,7 @@ const SchoolProfile = () => {
     return (
         <div className="p-4 sm:p-8 space-y-6 max-w-[1400px] mx-auto pb-20 relative bg-background">
             {/* Header / Identity Card */}
-            <div className={`bg-surface rounded-[40px] p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl border ${!isActive ? 'border-orange-200 bg-orange-50/10' : 'border-border'}`}>
+            <div className={`bg-surface rounded-[40px] p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl border ${!isActive ? 'border-orange-200 bg-orange-50/10' : 'border-border'}`}>
                 <div className="flex items-start gap-8">
                     {school.formData?.logo ? (
                         <img src={school.formData.logo} alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 rounded-[32px] overflow-hidden shadow-2xl flex-shrink-0 object-cover bg-surface-container border-4 border-surface" />
