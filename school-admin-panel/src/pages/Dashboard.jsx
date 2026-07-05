@@ -7,11 +7,6 @@ import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
 import AttendanceTrendChart from '../components/AttendanceTrendChart';
 
-// Illustrative weekly attendance %. TODO: wire to a real attendance-trend endpoint.
-const WEEK_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEK_ATTENDANCE = [94, 91, 96, 89, 93, 88];
-const WEEK_AVG = Math.round(WEEK_ATTENDANCE.reduce((a, b) => a + b, 0) / WEEK_ATTENDANCE.length);
-
 const CAT_META = {
     'Holiday': { icon: 'beach_access', color: '#e11d48', bg: '#fff1f2' },
     'Annual Function': { icon: 'celebration', color: '#7c3aed', bg: '#f5f3ff' },
@@ -38,6 +33,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const schoolName = localStorage.getItem('scoolg_school_name') || 'St. Andrews International';
     const [upcoming, setUpcoming] = useState([]);
+    const [att, setAtt] = useState(null); // real attendance analytics (null until loaded)
 
     const StatValue = ({ children }) =>
         (loadingStats && !stats)
@@ -55,6 +51,15 @@ const Dashboard = () => {
         // Refresh silently in background when landing on dashboard
         refreshStats(true);
     }, []);
+
+    useEffect(() => {
+        if (!schoolId) return;
+        // Real weekly attendance snapshot — shows an empty state (not a fake 92%)
+        // until attendance is actually marked.
+        axios.get(`${ADMIN_API_BASE}/attendance/analytics?schoolId=${schoolId}&range=daily`)
+            .then((res) => setAtt(res.data || { trend: [] }))
+            .catch(() => setAtt({ trend: [] }));
+    }, [schoolId]);
 
     useEffect(() => {
         if (!schoolId) return;
@@ -210,18 +215,32 @@ const Dashboard = () => {
                                 View Analytics
                             </button>
                         </div>
-                        <div className="px-2">
-                            <div className="flex items-end justify-between mb-5">
-                                <div>
-                                    <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{WEEK_AVG}%</p>
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Avg this week</p>
+                        {(() => {
+                            const attTrend = att?.trend || [];
+                            if (!att) return <div className="px-2 h-44 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600" /></div>;
+                            if (attTrend.length === 0) return (
+                                <div className="px-2 py-10 flex flex-col items-center text-center">
+                                    <span className="material-symbols-outlined text-5xl text-slate-200 mb-3">bar_chart</span>
+                                    <p className="text-slate-500 font-bold text-sm">No attendance data yet</p>
+                                    <p className="text-slate-400 text-xs font-semibold mt-1">Mark attendance to see the weekly snapshot.</p>
                                 </div>
-                                <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                    <span className="material-symbols-outlined text-[14px]">trending_up</span> Healthy
-                                </span>
-                            </div>
-                            <AttendanceTrendChart labels={WEEK_LABELS} values={WEEK_ATTENDANCE} />
-                        </div>
+                            );
+                            const avg = att?.avg ?? Math.round(attTrend.reduce((a, t) => a + (t.pct || 0), 0) / attTrend.length);
+                            return (
+                                <div className="px-2">
+                                    <div className="flex items-end justify-between mb-5">
+                                        <div>
+                                            <p className="text-3xl font-black text-slate-900 tracking-tight leading-none">{avg}%</p>
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Avg attendance</p>
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-full ${avg >= 85 ? 'text-emerald-600 bg-emerald-50' : avg >= 75 ? 'text-blue-600 bg-blue-50' : 'text-rose-600 bg-rose-50'}`}>
+                                            <span className="material-symbols-outlined text-[14px]">{avg >= 85 ? 'trending_up' : avg >= 75 ? 'trending_flat' : 'trending_down'}</span> {avg >= 85 ? 'Healthy' : avg >= 75 ? 'Average' : 'Low'}
+                                        </span>
+                                    </div>
+                                    <AttendanceTrendChart labels={attTrend.map(t => t.label)} values={attTrend.map(t => t.pct)} />
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* Scheduled Events Card (from School Calendar) */}
