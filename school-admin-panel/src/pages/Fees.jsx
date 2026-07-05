@@ -52,8 +52,11 @@ const Fees = () => {
     const [fClass, setFClass] = useState('ALL');
     const [fSection, setFSection] = useState('All');
     const [fStatus, setFStatus] = useState('ALL');
+    const [fPeriod, setFPeriod] = useState('All');
+    const [periods, setPeriods] = useState([]);
     const [duesSections, setDuesSections] = useState([]);
     const [modalSections, setModalSections] = useState([]);
+    const [bulking, setBulking] = useState(false);
 
     const [feeModal, setFeeModal] = useState(null);
     const [proof, setProof] = useState(null);
@@ -86,10 +89,16 @@ const Fees = () => {
             if (fClass !== 'ALL') params.append('className', fClass);
             if (fSection !== 'All') params.append('section', fSection);
             if (fStatus !== 'ALL') params.append('status', fStatus);
+            if (fPeriod !== 'All') params.append('period', fPeriod);
             const r = await axios.get(api(`/invoices?${params.toString()}`));
             setInvoices(Array.isArray(r.data) ? r.data : []);
         } catch { setInvoices([]); } finally { setLoading(false); }
-    }, [schoolId, fClass, fSection, fStatus]);
+    }, [schoolId, fClass, fSection, fStatus, fPeriod]);
+
+    const loadPeriods = useCallback(async () => {
+        try { const r = await axios.get(api(`/periods?schoolId=${schoolId}`)); setPeriods(Array.isArray(r.data) ? r.data : []); }
+        catch { setPeriods([]); }
+    }, [schoolId]);
 
     const loadSettings = useCallback(async () => {
         setLoading(true);
@@ -99,9 +108,9 @@ const Fees = () => {
 
     useEffect(() => {
         if (tab === 'collections') loadCollections();
-        else if (tab === 'dues') loadInvoices();
+        else if (tab === 'dues') { loadInvoices(); loadPeriods(); }
         else if (tab === 'settings') loadSettings();
-    }, [tab, loadCollections, loadInvoices, loadSettings]);
+    }, [tab, loadCollections, loadInvoices, loadPeriods, loadSettings]);
 
     useEffect(() => { loadSectionsFor(fClass, setDuesSections); setFSection('All'); }, [fClass, loadSectionsFor]);
     useEffect(() => { if (feeModal) loadSectionsFor(feeModal.target, setModalSections); }, [feeModal?.target, loadSectionsFor]); // eslint-disable-line
@@ -133,6 +142,24 @@ const Fees = () => {
         if (!window.confirm('Delete this due?')) return;
         try { await axios.delete(api(`/invoices/${inv.id}`)); toast.success('Deleted'); loadInvoices(); }
         catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
+    };
+
+    // Describe the current Dues filter for the bulk confirm dialogs.
+    const filterDesc = () => {
+        const bits = [];
+        bits.push(fClass === 'ALL' ? 'all classes' : fClass + (fSection !== 'All' ? `-${fSection}` : ''));
+        if (fStatus !== 'ALL') bits.push(INV_LABEL[fStatus]?.toLowerCase());
+        if (fPeriod !== 'All') bits.push(fPeriod);
+        return bits.join(' · ');
+    };
+    const bulkAction = async (action) => {
+        const label = action === 'delete' ? 'DELETE' : 'mark PAID (cash)';
+        if (!window.confirm(`This will ${label} every due in the current view (${filterDesc()}). This can't be undone. Continue?`)) return;
+        setBulking(true);
+        try {
+            const r = await axios.post(api('/bulk'), { schoolId, action, className: fClass, section: fSection, status: fStatus, period: fPeriod });
+            toast.success(r.data.message || 'Done'); loadInvoices();
+        } catch (e) { toast.error(e.response?.data?.error || 'Bulk action failed'); } finally { setBulking(false); }
     };
 
     const submitFee = async () => {
@@ -261,11 +288,25 @@ const Fees = () => {
                 {tab === 'dues' && (
                     <>
                         <div className="flex flex-wrap items-center gap-3">
-                            <div className="w-36"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
-                            <div className="w-36"><Dropdown value={fSection} onChange={setFSection} options={duesSectionOpts} buttonClassName="h-11" /></div>
-                            <div className="w-36"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
+                            <div className="w-32"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
+                            <div className="w-32"><Dropdown value={fSection} onChange={setFSection} options={duesSectionOpts} buttonClassName="h-11" /></div>
+                            <div className="w-32"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
+                            <div className="w-36"><Dropdown value={fPeriod} onChange={setFPeriod} options={[{ value: 'All', label: 'All months' }, ...periods.map((p) => ({ value: p, label: p }))]} buttonClassName="h-11" /></div>
                             <CreateBtn className="ml-auto" />
                         </div>
+
+                        {/* Bulk actions on the current view */}
+                        {invoices.length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{invoices.length} due(s) shown</span>
+                                <button disabled={bulking} onClick={() => bulkAction('markPaid')} className="ml-auto px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-black hover:bg-emerald-100 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[16px]">done_all</span> Mark all paid
+                                </button>
+                                <button disabled={bulking} onClick={() => bulkAction('delete')} className="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-black hover:bg-rose-100 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[16px]">delete_sweep</span> Delete all
+                                </button>
+                            </div>
+                        )}
 
                         <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden">
                             {loading ? (

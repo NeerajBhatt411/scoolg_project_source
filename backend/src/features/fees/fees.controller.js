@@ -265,6 +265,60 @@ export const postInvoiceMarkPaid = async (req, res) => {
     }
 };
 
+// Distinct periods present (drives the Dues month/period filter).
+export const getPeriods = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const periods = (await FeeInvoice.distinct('period', { schoolId: school._id })).filter(Boolean).sort();
+        res.json(periods);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load periods' });
+    }
+};
+
+// Bulk delete / mark-paid over the CURRENTLY FILTERED set (class/section/status/period).
+export const postBulkInvoices = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const { action, className, section, status, period } = req.body || {};
+        const q = { schoolId: school._id };
+        if (className && className !== 'ALL') q.className = className;
+        if (section && section !== 'All') q.section = section;
+        if (status && status !== 'ALL') q.status = status;
+        if (period && period !== 'All') q.period = period;
+
+        if (action === 'delete') {
+            const ids = (await FeeInvoice.find(q).select('_id').lean()).map((i) => i._id);
+            if (!ids.length) return res.json({ message: 'Nothing to delete', count: 0 });
+            await FeePayment.deleteMany({ invoiceId: { $in: ids } });
+            const r = await FeeInvoice.deleteMany({ _id: { $in: ids } });
+            return res.json({ message: `${r.deletedCount} due(s) deleted`, count: r.deletedCount });
+        }
+
+        if (action === 'markPaid') {
+            const payable = await FeeInvoice.find({ ...q, status: { $in: ['PENDING', 'REJECTED', 'SUBMITTED'] } }).lean();
+            if (!payable.length) return res.json({ message: 'Nothing to mark paid', count: 0 });
+            const by = req.user?.role || 'Admin';
+            await FeePayment.insertMany(payable.map((i) => ({
+                schoolId: school._id, studentId: i.studentId, studentName: i.studentName, studentAppId: i.studentAppId,
+                invoiceId: i._id, invoiceTitle: i.title, amount: i.amount, method: 'CASH', status: 'VERIFIED',
+                verifiedByName: by, verifiedAt: new Date(),
+            })));
+            await FeeInvoice.bulkWrite(payable.map((i) => ({
+                updateOne: { filter: { _id: i._id }, update: { status: 'PAID', paidVia: 'CASH', paidAmount: i.amount, paidAt: new Date() } },
+            })));
+            return res.json({ message: `${payable.length} due(s) marked paid`, count: payable.length });
+        }
+
+        res.status(400).json({ error: 'Unknown action' });
+    } catch (err) {
+        console.error('bulk error:', err);
+        res.status(500).json({ error: 'Bulk action failed' });
+    }
+};
+
 // =====================  ADMIN — Payments (verify / reject)  =====================
 export const getPayments = async (req, res) => {
     try {

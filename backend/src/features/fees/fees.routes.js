@@ -14,6 +14,8 @@ router.delete('/api/admin/fees/structure/:id', c.deleteFeeStructure);
 router.post('/api/admin/fees/generate', c.postGenerateInvoices);
 
 router.get('/api/admin/fees/invoices', c.getInvoices);
+router.get('/api/admin/fees/periods', c.getPeriods);
+router.post('/api/admin/fees/bulk', c.postBulkInvoices);
 router.patch('/api/admin/fees/invoices/:id', c.patchInvoice);
 router.delete('/api/admin/fees/invoices/:id', c.deleteInvoice);
 router.post('/api/admin/fees/invoices/:id/mark-paid', c.postInvoiceMarkPaid);
