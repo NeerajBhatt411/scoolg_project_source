@@ -10,7 +10,6 @@ import Dropdown from '../components/Dropdown';
 const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const CATEGORIES = ['Tuition', 'Exam', 'Transport', 'Admission', 'Arrears', 'Other'];
-const FREQUENCIES = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'One-Time'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
@@ -26,7 +25,6 @@ const INV_LABEL = { PENDING: 'Pending', SUBMITTED: 'Under review', PAID: 'Paid',
 const TABS = [
     { k: 'collections', label: 'Collections', icon: 'insights' },
     { k: 'dues', label: 'Dues', icon: 'receipt_long' },
-    { k: 'structure', label: 'Fee Structure', icon: 'tune' },
     { k: 'settings', label: 'Payment Settings', icon: 'qr_code_2' },
 ];
 
@@ -48,23 +46,20 @@ const Fees = () => {
     const [summary, setSummary] = useState(null);
     const [payments, setPayments] = useState([]);
     const [invoices, setInvoices] = useState([]);
-    const [structures, setStructures] = useState([]);
     const [settings, setSettings] = useState({ upiId: '', payeeName: '', bankName: '', accountNumber: '', ifsc: '', qrImageUrl: '', instructions: '', methods: ['UPI', 'BANK', 'CASH'] });
     const [loading, setLoading] = useState(true);
 
-    // filters (Dues)
     const [fClass, setFClass] = useState('ALL');
     const [fSection, setFSection] = useState('All');
     const [fStatus, setFStatus] = useState('ALL');
     const [duesSections, setDuesSections] = useState([]);
     const [modalSections, setModalSections] = useState([]);
 
-    // modals
     const [feeModal, setFeeModal] = useState(null);
-    const [structModal, setStructModal] = useState(null);
     const [proof, setProof] = useState(null);
     const [savingCfg, setSavingCfg] = useState(false);
     const [uploadingQr, setUploadingQr] = useState(false);
+    const [creating, setCreating] = useState(false);
 
     const api = (p) => `${ADMIN_API_BASE}/fees${p}`;
 
@@ -96,12 +91,6 @@ const Fees = () => {
         } catch { setInvoices([]); } finally { setLoading(false); }
     }, [schoolId, fClass, fSection, fStatus]);
 
-    const loadStructures = useCallback(async () => {
-        setLoading(true);
-        try { const r = await axios.get(api(`/structure?schoolId=${schoolId}`)); setStructures(Array.isArray(r.data) ? r.data : []); }
-        catch { setStructures([]); } finally { setLoading(false); }
-    }, [schoolId]);
-
     const loadSettings = useCallback(async () => {
         setLoading(true);
         try { const r = await axios.get(api(`/settings?schoolId=${schoolId}`)); setSettings((s) => ({ ...s, ...(r.data || {}) })); }
@@ -111,17 +100,15 @@ const Fees = () => {
     useEffect(() => {
         if (tab === 'collections') loadCollections();
         else if (tab === 'dues') loadInvoices();
-        else if (tab === 'structure') loadStructures();
         else if (tab === 'settings') loadSettings();
-    }, [tab, loadCollections, loadInvoices, loadStructures, loadSettings]);
+    }, [tab, loadCollections, loadInvoices, loadSettings]);
 
-    // Load section options for the Dues filter when the class changes.
     useEffect(() => { loadSectionsFor(fClass, setDuesSections); setFSection('All'); }, [fClass, loadSectionsFor]);
-    // Load section options for the Add-Fee modal when its class changes.
     useEffect(() => { if (feeModal) loadSectionsFor(feeModal.target, setModalSections); }, [feeModal?.target, loadSectionsFor]); // eslint-disable-line
 
     // ---- actions ----
-    const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', title: '', category: 'Tuition', amount: '', dueDate: '', months: [], year: CUR_YEAR, ...init });
+    const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', type: 'monthly', title: '', category: 'Tuition', amount: '', dueDate: '', months: [], year: CUR_YEAR, ...init });
+    const toggleMonth = (m) => setFeeModal((f) => ({ ...f, months: f.months.includes(m) ? f.months.filter((x) => x !== m) : [...f.months, m] }));
 
     const verifyPayment = async (id) => {
         try { await axios.post(api(`/payments/${id}/verify`)); toast.success('Payment verified'); setProof(null); loadCollections(); }
@@ -147,15 +134,12 @@ const Fees = () => {
         try { await axios.delete(api(`/invoices/${inv.id}`)); toast.success('Deleted'); loadInvoices(); }
         catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
     };
-    const deleteStructure = async (id) => {
-        if (!window.confirm('Delete this fee head?')) return;
-        try { await axios.delete(api(`/structure/${id}`)); toast.success('Deleted'); loadStructures(); }
-        catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
-    };
 
     const submitFee = async () => {
-        if (!feeModal.title.trim() || !feeModal.amount) { toast.warning('Title and amount are required'); return; }
-        const months = (feeModal.months || []).map((m) => `${m} ${feeModal.year}`);
+        if (!feeModal.title.trim() || !feeModal.amount) { toast.warning('Fee name and amount are required'); return; }
+        if (feeModal.type === 'monthly' && feeModal.months.length === 0) { toast.warning('Pick at least one month (or switch to One-time)'); return; }
+        const months = feeModal.type === 'monthly' ? feeModal.months.map((m) => `${m} ${feeModal.year}`) : [];
+        setCreating(true);
         try {
             const r = await axios.post(api('/generate'), {
                 schoolId, className: feeModal.target, section: feeModal.section,
@@ -164,7 +148,7 @@ const Fees = () => {
             });
             toast.success(r.data.message || 'Dues created'); setFeeModal(null);
             if (tab === 'dues') loadInvoices(); else setTab('dues');
-        } catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
+        } catch (e) { toast.error(e.response?.data?.error || 'Failed'); } finally { setCreating(false); }
     };
 
     const saveSettings = async () => {
@@ -186,7 +170,13 @@ const Fees = () => {
     const classOptions = [{ value: 'ALL', label: 'All classes' }, ...classes.map((c) => ({ value: c.className, label: c.className }))];
     const duesSectionOpts = [{ value: 'All', label: 'All sections' }, ...duesSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
     const modalSectionOpts = [{ value: 'All', label: 'All sections' }, ...modalSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
-    const toggleMonth = (m) => setFeeModal((f) => ({ ...f, months: f.months.includes(m) ? f.months.filter((x) => x !== m) : [...f.months, m] }));
+
+    const CreateBtn = ({ className = '' }) => (
+        <button onClick={() => openFee({ target: fClass, section: fSection })}
+            className={`bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 ${className}`}>
+            <span className="material-symbols-outlined text-[18px]">add</span> Create Fee
+        </button>
+    );
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-24">
@@ -262,6 +252,8 @@ const Fees = () => {
                                 <p className="text-[11px] text-slate-400 font-bold mt-4">Tap a class to see who's pending (section-wise).</p>
                             </section>
                         )}
+
+                        <div className="flex justify-center"><CreateBtn /></div>
                     </>
                 )}
 
@@ -272,19 +264,17 @@ const Fees = () => {
                             <div className="w-36"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
                             <div className="w-36"><Dropdown value={fSection} onChange={setFSection} options={duesSectionOpts} buttonClassName="h-11" /></div>
                             <div className="w-36"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
-                            <button onClick={() => openFee({ target: fClass, section: fSection })}
-                                className="ml-auto bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">add</span> Add Fee
-                            </button>
+                            <CreateBtn className="ml-auto" />
                         </div>
 
                         <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden">
                             {loading ? (
                                 <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
                             ) : invoices.length === 0 ? (
-                                <div className="py-20 text-center space-y-3">
+                                <div className="py-20 text-center space-y-4">
                                     <span className="material-symbols-outlined text-5xl text-slate-200">receipt_long</span>
-                                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No dues here — tap "Add Fee" to create one</p>
+                                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No dues here yet</p>
+                                    <div className="flex justify-center"><CreateBtn /></div>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-100">
@@ -308,36 +298,6 @@ const Fees = () => {
                                 </div>
                             )}
                         </section>
-                    </>
-                )}
-
-                {/* ============ STRUCTURE ============ */}
-                {tab === 'structure' && (
-                    <>
-                        <div className="flex items-center gap-3">
-                            <p className="text-sm text-slate-500 font-semibold">Save per-class fee heads, then generate dues in one tap.</p>
-                            <button onClick={() => setStructModal({ className: classes[0]?.className || '', label: 'Tuition Fee', category: 'Tuition', amount: '', frequency: 'Monthly' })}
-                                className="ml-auto bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-600/20 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">add</span> Add head
-                            </button>
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {structures.length === 0 && !loading && (
-                                <div className="sm:col-span-2 py-16 text-center bg-white rounded-[28px] border border-slate-100"><p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No fee heads yet</p></div>
-                            )}
-                            {structures.map((s) => (
-                                <div key={s.id} className="bg-white rounded-3xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-5 flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 grid place-items-center shrink-0"><span className="material-symbols-outlined">school</span></div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-black text-slate-900 truncate">{s.className} · {s.label}</p>
-                                        <p className="text-xs text-slate-400 font-bold">{money(s.amount)} · {s.frequency}</p>
-                                    </div>
-                                    <button onClick={() => openFee({ target: s.className, title: s.label, category: s.category, amount: String(s.amount) })}
-                                        className="shrink-0 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100">Generate</button>
-                                    <button onClick={() => deleteStructure(s.id)} className="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-rose-500 hover:bg-rose-50"><span className="material-symbols-outlined text-[19px]">delete</span></button>
-                                </div>
-                            ))}
-                        </div>
                     </>
                 )}
 
@@ -382,59 +342,69 @@ const Fees = () => {
                 )}
             </main>
 
-            {/* ===== Add Fee modal ===== */}
+            {/* ===== Create Fee modal (the single fee-creation flow) ===== */}
             {feeModal && (
-                <Modal onClose={() => setFeeModal(null)} title="Add a fee">
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Class"><Dropdown value={feeModal.target} onChange={(v) => setFeeModal((f) => ({ ...f, target: v, section: 'All' }))} options={classOptions} buttonClassName="h-12 bg-slate-50" /></Field>
-                            <Field label="Section"><Dropdown value={feeModal.section} onChange={(v) => setFeeModal((f) => ({ ...f, section: v }))} options={modalSectionOpts} buttonClassName="h-12 bg-slate-50" /></Field>
-                        </div>
-                        <Field label="Fee title"><input value={feeModal.title} onChange={(e) => setFeeModal((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Tuition, Exam Fee, Arrears" className="modal-in" /></Field>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Category"><Dropdown value={feeModal.category} onChange={(v) => setFeeModal((f) => ({ ...f, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" /></Field>
-                            <Field label="Amount (₹)"><input type="number" value={feeModal.amount} onChange={(e) => setFeeModal((f) => ({ ...f, amount: e.target.value }))} placeholder="1200" className="modal-in" /></Field>
+                <Modal onClose={() => setFeeModal(null)} title="Create a fee">
+                    <div className="space-y-5">
+                        {/* Who */}
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">1 · Who pays</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Class"><Dropdown value={feeModal.target} onChange={(v) => setFeeModal((f) => ({ ...f, target: v, section: 'All' }))} options={classOptions} buttonClassName="h-12 bg-slate-50" /></Field>
+                                <Field label="Section"><Dropdown value={feeModal.section} onChange={(v) => setFeeModal((f) => ({ ...f, section: v }))} options={modalSectionOpts} buttonClassName="h-12 bg-slate-50" /></Field>
+                            </div>
                         </div>
 
-                        {/* Month picker: pick which months this fee is for. */}
-                        <Field label="For which months? (optional — leave blank for a one-off fee)">
-                            <div className="flex items-center gap-2 mb-2">
-                                <input type="number" value={feeModal.year} onChange={(e) => setFeeModal((f) => ({ ...f, year: e.target.value }))} className="w-24 h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 font-bold text-sm text-slate-900 outline-none" />
-                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [...MONTHS] }))} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-black">Whole year</button>
-                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [] }))} className="px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-black">Clear</button>
+                        {/* What */}
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">2 · Fee details</p>
+                            <div className="space-y-3">
+                                <Field label="Fee name"><input value={feeModal.title} onChange={(e) => setFeeModal((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Tuition Fee, Exam Fee, Arrears" className="modal-in" /></Field>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field label="Category"><Dropdown value={feeModal.category} onChange={(v) => setFeeModal((f) => ({ ...f, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" /></Field>
+                                    <Field label="Amount (₹)"><input type="number" value={feeModal.amount} onChange={(e) => setFeeModal((f) => ({ ...f, amount: e.target.value }))} placeholder="1200" className="modal-in" /></Field>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-6 gap-1.5">
-                                {MONTHS.map((m) => (
-                                    <button type="button" key={m} onClick={() => toggleMonth(m)}
-                                        className={`h-9 rounded-lg text-xs font-black transition-colors ${feeModal.months.includes(m) ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>{m}</button>
+                        </div>
+
+                        {/* When */}
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">3 · How often</p>
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                {[['once', 'One-time', 'Exam, Admission, Arrears'], ['monthly', 'Monthly', 'Tuition — pick months']].map(([v, label, hint]) => (
+                                    <button type="button" key={v} onClick={() => setFeeModal((f) => ({ ...f, type: v }))}
+                                        className={`p-3 rounded-2xl border-2 text-left transition-all ${feeModal.type === v ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}>
+                                        <p className={`font-black text-sm ${feeModal.type === v ? 'text-blue-700' : 'text-slate-700'}`}>{label}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">{hint}</p>
+                                    </button>
                                 ))}
                             </div>
-                            <p className="text-[11px] text-slate-400 font-bold mt-2">Quarterly = pick 3 · Half-yearly = 6 · Yearly = "Whole year". One due is created per selected month.</p>
-                        </Field>
+
+                            {feeModal.type === 'monthly' && (
+                                <div className="bg-slate-50 rounded-2xl p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Months</span>
+                                        <input type="number" value={feeModal.year} onChange={(e) => setFeeModal((f) => ({ ...f, year: e.target.value }))} className="w-20 h-8 bg-white border border-slate-200 rounded-lg px-2 font-bold text-xs text-slate-900 outline-none" />
+                                        <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [...MONTHS] }))} className="ml-auto px-3 py-1.5 rounded-lg bg-blue-100 text-blue-600 text-[11px] font-black">Whole year</button>
+                                        <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [] }))} className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-500 text-[11px] font-black">Clear</button>
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-1.5">
+                                        {MONTHS.map((m) => (
+                                            <button type="button" key={m} onClick={() => toggleMonth(m)}
+                                                className={`h-9 rounded-lg text-xs font-black transition-colors ${feeModal.months.includes(m) ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>{m}</button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-bold mt-2">Quarterly = pick 3 · Half-yearly = 6 · Yearly = Whole year. One due per selected month.</p>
+                                </div>
+                            )}
+                        </div>
 
                         <Field label="Due date (optional)"><input type="date" value={feeModal.dueDate} onChange={(e) => setFeeModal((f) => ({ ...f, dueDate: e.target.value }))} className="modal-in" /></Field>
 
-                        <button onClick={submitFee} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">Create dues</button>
-                        <p className="text-[11px] text-slate-400 font-bold text-center">One due per active student in the selection. Duplicates (same title) are skipped.</p>
-                    </div>
-                </Modal>
-            )}
-
-            {/* ===== Structure modal ===== */}
-            {structModal && (
-                <Modal onClose={() => setStructModal(null)} title="Fee head">
-                    <div className="space-y-4">
-                        <Field label="Class"><Dropdown value={structModal.className} onChange={(v) => setStructModal((f) => ({ ...f, className: v }))} options={classes.map((c) => ({ value: c.className, label: c.className }))} buttonClassName="h-12 bg-slate-50" /></Field>
-                        <Field label="Label"><input value={structModal.label} onChange={(e) => setStructModal((f) => ({ ...f, label: e.target.value }))} placeholder="Tuition Fee" className="modal-in" /></Field>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Amount (₹)"><input type="number" value={structModal.amount} onChange={(e) => setStructModal((f) => ({ ...f, amount: e.target.value }))} placeholder="1200" className="modal-in" /></Field>
-                            <Field label="Frequency"><Dropdown value={structModal.frequency} onChange={(v) => setStructModal((f) => ({ ...f, frequency: v }))} options={FREQUENCIES} buttonClassName="h-12 bg-slate-50" /></Field>
-                        </div>
-                        <button onClick={async () => {
-                            if (!structModal.className || !structModal.amount) { toast.warning('Class and amount are required'); return; }
-                            try { await axios.post(api('/structure'), { schoolId, ...structModal, amount: Number(structModal.amount) }); toast.success('Saved'); setStructModal(null); loadStructures(); }
-                            catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
-                        }} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">Save head</button>
+                        <button onClick={submitFee} disabled={creating} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs disabled:opacity-60">
+                            {creating ? 'Creating…' : 'Create dues'}
+                        </button>
+                        <p className="text-[11px] text-slate-400 font-bold text-center">Creates one due per active student in the selection.</p>
                     </div>
                 </Modal>
             )}
