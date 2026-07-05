@@ -5,6 +5,7 @@ import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
 import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
+import ProfileButton from '../components/ProfileButton';
 import AttendanceTrendChart from '../components/AttendanceTrendChart';
 
 const CAT_META = {
@@ -93,9 +94,7 @@ const Dashboard = () => {
                         <button onClick={() => navigate('/notifications')} title="Notifications" className="h-9 w-9 flex items-center justify-center bg-slate-100 rounded-full">
                             <span className="material-symbols-outlined text-[20px] text-[#434655]">notifications</span>
                         </button>
-                        <button onClick={() => navigate('/profile')} title="View profile" className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-sm ring-2 ring-white active:scale-95 transition-all shrink-0">
-                            {schoolName.charAt(0).toUpperCase()}
-                        </button>
+                        <ProfileButton size={36} />
                     </div>
                 </div>
                 <div className="flex items-center gap-4 md:w-auto justify-end">
@@ -103,9 +102,7 @@ const Dashboard = () => {
                         <button onClick={() => navigate('/notifications')} title="Notifications" className="hover:bg-[#e6e8ea] rounded-full p-2 transition-all active:scale-95">
                             <span className="material-symbols-outlined text-[#434655]">notifications</span>
                         </button>
-                        <button onClick={() => navigate('/profile')} title="View profile" className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shadow-sm ring-2 ring-white hover:ring-blue-100 active:scale-95 transition-all shrink-0">
-                            {schoolName.charAt(0).toUpperCase()}
-                        </button>
+                        <ProfileButton size={40} />
                     </div>
                 </div>
             </header>
