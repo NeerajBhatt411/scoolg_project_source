@@ -7,7 +7,7 @@ const PendingApprovals = () => {
     const fetchSchools = async () => {
         try {
             setLoading(true);
-            const res = await fetch('https://scoolg-backend.netlify.app/api/superadmin/schools');
+            const res = await fetch('https://api.scoolg.com/api/superadmin/schools');
             const data = await res.json();
             setSchools(data.filter(s => s.status === 'PENDING'));
         } catch (error) {
@@ -23,7 +23,7 @@ const PendingApprovals = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`https://scoolg-backend.netlify.app/api/superadmin/schools/${id}/approve`, {
+            const res = await fetch(`https://api.scoolg.com/api/superadmin/schools/${id}/approve`, {
                 method: 'POST'
             });
             if (res.ok) {

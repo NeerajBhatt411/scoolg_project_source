@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Phone, MessageSquare, Loader2, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 
-const API = 'https://scoolg-backend.netlify.app/api';
+const API = 'https://api.scoolg.com/api';
 
 export default function ContactModal({ open, onClose }) {
     const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });

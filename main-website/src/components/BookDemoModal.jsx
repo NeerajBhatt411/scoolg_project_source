@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Phone, Building2, Loader2, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 
-const API = 'https://scoolg-backend.netlify.app/api';
+const API = 'https://api.scoolg.com/api';
 const TIME_SLOTS = ['10:00 AM', '11:00 AM', '12:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'];
 const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

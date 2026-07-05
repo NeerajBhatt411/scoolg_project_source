@@ -9,8 +9,8 @@ const Dashboard = () => {
         try {
             setLoading(true);
             const [statsRes, schoolsRes] = await Promise.all([
-                fetch('https://scoolg-backend.netlify.app/api/superadmin/dashboard'),
-                fetch('https://scoolg-backend.netlify.app/api/superadmin/schools')
+                fetch('https://api.scoolg.com/api/superadmin/dashboard'),
+                fetch('https://api.scoolg.com/api/superadmin/schools')
             ]);
             
             const statsData = await statsRes.json();
@@ -31,7 +31,7 @@ const Dashboard = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`https://scoolg-backend.netlify.app/api/superadmin/schools/${id}/approve`, {
+            const res = await fetch(`https://api.scoolg.com/api/superadmin/schools/${id}/approve`, {
                 method: 'POST'
             });
             if (res.ok) {

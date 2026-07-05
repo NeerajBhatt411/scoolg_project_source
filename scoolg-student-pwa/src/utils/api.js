@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://scoolg-backend.netlify.app/api',
+  baseURL: 'https://api.scoolg.com/api',
   // Don't hang forever on a cold/slow serverless start — fail after 30s so the
   // cache layer can fall back to the last known data instead of a stuck screen.
   timeout: 30000,

@@ -7,8 +7,8 @@ const SchoolProfile = () => {
 
     // AUTO-DETECT API BASE URL
     const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'https://scoolg-backend.netlify.app/api' 
-        : 'https://scoolg-backend.netlify.app/api';
+        ? 'https://api.scoolg.com/api' 
+        : 'https://api.scoolg.com/api';
 
     const [school, setSchool] = useState(location.state?.school);
     const [activeTab, setActiveTab] = useState('Overview');

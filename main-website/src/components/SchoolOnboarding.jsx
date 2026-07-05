@@ -15,7 +15,7 @@ const SchoolOnboarding = () => {
   const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
 
   // --- Safe URL Builder ---
-  const API_BASE_URL = 'https://scoolg-backend.netlify.app/api';
+  const API_BASE_URL = 'https://api.scoolg.com/api';
   const SCHOOL_WEBSITE_URL = import.meta.env.VITE_SCHOOL_WEBSITE_URL || '';
 
   const joinURL = (base, endpoint) => {

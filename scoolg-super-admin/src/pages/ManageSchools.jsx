@@ -10,7 +10,7 @@ const ManageSchools = () => {
     useEffect(() => {
         const fetchSchools = async () => {
             try {
-                const res = await fetch('https://scoolg-backend.netlify.app/api/superadmin/schools');
+                const res = await fetch('https://api.scoolg.com/api/superadmin/schools');
                 const data = await res.json();
                 setSchools(data);
             } catch (error) {

@@ -3,7 +3,7 @@ import { clearCache } from './cache';
 
 // Always use the live backend (no local dependency).
 const api = axios.create({
-  baseURL: 'https://scoolg-backend.netlify.app/api',
+  baseURL: 'https://api.scoolg.com/api',
   // Fail after 30s instead of hanging on a cold/slow serverless start, so the
   // cache layer can fall back to the last known data.
   timeout: 30000,

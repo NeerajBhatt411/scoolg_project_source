@@ -3,7 +3,7 @@ import * as Icons from 'lucide-react';
 import { schoolData } from './data/mockData';
 import './index.css';
 
-const API_BASE = 'https://scoolg-backend.netlify.app/api';
+const API_BASE = 'https://api.scoolg.com/api';
 
 // Small helper so we can render a lucide icon by name string.
 const LucideIcon = ({ name, ...props }) => {
