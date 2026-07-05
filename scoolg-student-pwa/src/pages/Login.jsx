@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, AlertCircle, Loader2, BadgeCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import InstallPrompt from '../components/InstallPrompt';
 import loginBg from '../assets/new_banner.jpeg';
 
 const Login = () => {
@@ -102,6 +103,7 @@ const Login = () => {
       </motion.div>
 
       <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
+      <InstallPrompt />
     </div>
   );
 };

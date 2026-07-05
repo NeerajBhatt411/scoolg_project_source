@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import InstallPrompt from '../components/InstallPrompt';
 import loginBg from '../assets/scoolg_teacher.jpeg';
 
 const Login = () => {
@@ -98,6 +99,7 @@ const Login = () => {
       </motion.div>
 
       <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
+      <InstallPrompt />
     </div>
   );
 };
