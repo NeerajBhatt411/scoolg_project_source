@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import loginBg from '../assets/new_banner.jpeg';
+import loginBg from '../assets/scoolg_teacher.jpeg';
 
 // Brief brand splash, then straight to the right place: a saved session goes
 // to the dashboard, otherwise the login screen. No onboarding detour.

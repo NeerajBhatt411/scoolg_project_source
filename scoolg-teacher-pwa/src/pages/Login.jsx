@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
-import loginBg from '../assets/new_banner.jpeg';
+import loginBg from '../assets/scoolg_teacher.jpeg';
 
 const Login = () => {
   const [teacherAppId, setTeacherAppId] = useState('');
