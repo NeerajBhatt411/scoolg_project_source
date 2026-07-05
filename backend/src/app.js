@@ -29,6 +29,7 @@ import notificationsRoutes from './features/notifications/notifications.routes.j
 import publicSiteRoutes from './features/publicSite/publicSite.routes.js';
 import messagesRoutes from './features/messages/messages.routes.js';
 import contactRoutes from './features/contact/contact.routes.js';
+import supportRoutes from './features/support/support.routes.js';
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use(notificationsRoutes);
 app.use(publicSiteRoutes);
 app.use(messagesRoutes);
 app.use(contactRoutes);
+app.use(supportRoutes);   // /api/admin support-tickets + scoolg-notices (school-facing)
 
 export default app;
 export { app };

@@ -26,6 +26,7 @@ const Login = lazy(() => import('./pages/Login'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const StudentProfile = lazy(() => import('./pages/StudentProfile'));
 const Support = lazy(() => import('./pages/Support'));
+const ScoolgNotices = lazy(() => import('./pages/ScoolgNotices'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const TeacherDiary = lazy(() => import('./pages/TeacherDiary'));
 
@@ -121,6 +122,10 @@ function App() {
                             <Route
                                 path="/support"
                                 element={<ProtectedRoute><Support /></ProtectedRoute>}
+                            />
+                            <Route
+                                path="/scoolg-notices"
+                                element={<ProtectedRoute><ScoolgNotices /></ProtectedRoute>}
                             />
                             <Route
                                 path="/dashboard"

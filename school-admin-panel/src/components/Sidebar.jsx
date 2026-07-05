@@ -107,6 +107,18 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
             </nav>
             <div className="mt-auto pt-6 border-t border-[#e0e7ff] space-y-1">
                 <NavLink
+                    to="/scoolg-notices"
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                        `w-full flex items-center justify-start gap-3 px-4 py-3 transition-all rounded-xl ${isActive
+                            ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
+                            : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`
+                    }
+                >
+                    <span className="material-symbols-outlined">notifications_active</span>
+                    <span className="text-[0.875rem]">From Scoolg</span>
+                </NavLink>
+                <NavLink
                     to="/support"
                     onClick={onClose}
                     className={({ isActive }) =>

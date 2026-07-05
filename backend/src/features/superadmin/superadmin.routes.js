@@ -96,4 +96,19 @@ router.patch('/api/superadmin/schools/:id/status', c.patchSuperadminSchoolsByIdS
  */
 router.delete('/api/superadmin/schools/:id', c.deleteSuperadminSchoolsById);
 
+// --- Support tickets (schools -> super-admin) ---
+router.get('/api/superadmin/support', c.getSuperadminSupport);
+router.get('/api/superadmin/support/:id', c.getSuperadminSupportById);
+router.post('/api/superadmin/support/:id/reply', c.postSuperadminSupportReply);
+router.patch('/api/superadmin/support/:id/status', c.patchSuperadminSupportStatus);
+
+// --- Notices / broadcasts (super-admin -> schools) ---
+router.get('/api/superadmin/notices', c.getSuperadminNotices);
+router.post('/api/superadmin/notices', c.postSuperadminNotices);
+router.delete('/api/superadmin/notices/:id', c.deleteSuperadminNotices);
+
+// --- Settings (account + platform status + password change) ---
+router.get('/api/superadmin/settings', c.getSuperadminSettings);
+router.post('/api/superadmin/change-password', c.postSuperadminChangePassword);
+
 export default router;
