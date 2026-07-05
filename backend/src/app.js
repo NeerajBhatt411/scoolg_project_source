@@ -7,6 +7,7 @@ import { connectToDB } from './config/db.js';
 import { mountSwagger } from './config/swagger.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { adminGuard } from './middleware/adminGuard.js';
+import { superAdminGuard } from './middleware/superAdminGuard.js';
 
 // Feature routers (each feature = its own folder with routes + controller)
 import onboardingRoutes from './features/onboarding/onboarding.routes.js';
@@ -63,6 +64,10 @@ app.use('/api', async (req, res, next) => {
 
 // School-admin role/module access guard (must run before admin routers).
 app.use('/api/admin', adminGuard);
+
+// Super-admin guard — every /api/superadmin/* route requires a super-admin token
+// (only /login is public). Blocks the previously-open destructive endpoints.
+app.use('/api/superadmin', superAdminGuard);
 
 // --- Mount domain routers ---
 app.use(onboardingRoutes);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saFetch } from '../lib/api';
 
 const ManageSchools = () => {
     const [schools, setSchools] = useState([]);
@@ -10,7 +11,7 @@ const ManageSchools = () => {
     useEffect(() => {
         const fetchSchools = async () => {
             try {
-                const res = await fetch('https://api.scoolg.com/api/superadmin/schools');
+                const res = await saFetch('/superadmin/schools');
                 const data = await res.json();
                 setSchools(data);
             } catch (error) {
@@ -29,9 +30,9 @@ const ManageSchools = () => {
                     <h2 className="text-2xl font-extrabold text-on-surface">Manage Schools</h2>
                     <p className="text-sm text-on-surface-variant font-medium mt-1">View and manage all active schools on the platform.</p>
                 </div>
-                <button className="primary-gradient text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20">
-                    <span className="material-symbols-outlined text-[20px]">add</span>
-                    Add School
+                <button onClick={() => navigate('/approvals')} className="primary-gradient text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20">
+                    <span className="material-symbols-outlined text-[20px]">pending_actions</span>
+                    Pending Approvals
                 </button>
             </div>
 

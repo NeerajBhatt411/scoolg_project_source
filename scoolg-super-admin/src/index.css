@@ -48,9 +48,18 @@
   --color-error-container: #ffdad6;
   --color-secondary-fixed-dim: #b4c5ff;
   --color-on-tertiary-fixed: #360f00;
+  /* Tokens the UI uses everywhere (text-text, text-text-muted, border-border,
+     text-accent). In Tailwind v4 only --color-* names generate utilities, so
+     these were missing before -> ~105 classes silently did nothing (borders
+     vanished, muted text rendered near-black). */
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #f59e0b;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
+/* (Google font @import removed — the fonts are already <link>ed in index.html,
+   and an @import after @theme is invalid/ignored anyway.) */
 
 :root {
   --primary: #2563eb;

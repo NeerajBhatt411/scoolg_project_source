@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { saFetch } from '../lib/api';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({ schools: 0, students: 0, revenue: 0, pending: 0 });
     const [recentSchools, setRecentSchools] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,8 +12,8 @@ const Dashboard = () => {
         try {
             setLoading(true);
             const [statsRes, schoolsRes] = await Promise.all([
-                fetch('https://api.scoolg.com/api/superadmin/dashboard'),
-                fetch('https://api.scoolg.com/api/superadmin/schools')
+                saFetch('/superadmin/dashboard'),
+                saFetch('/superadmin/schools')
             ]);
             
             const statsData = await statsRes.json();
@@ -31,9 +34,7 @@ const Dashboard = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`https://api.scoolg.com/api/superadmin/schools/${id}/approve`, {
-                method: 'POST'
-            });
+            const res = await saFetch(`/superadmin/schools/${id}/approve`, { method: 'POST' });
             if (res.ok) {
                 fetchData(); // Refresh data after approval
                 alert('School Approved Successfully!');
@@ -128,19 +129,19 @@ const Dashboard = () => {
                 </h5>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <button className="primary-gradient text-on-primary font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all shadow-lg shadow-primary/20 overflow-hidden">
-                        <span className="material-symbols-outlined text-[20px] sm:text-[24px]">add_business</span>
-                        <span className="text-[11px] sm:text-sm whitespace-nowrap">Add School</span>
+                    <button onClick={() => navigate('/approvals')} className="primary-gradient text-on-primary font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all shadow-lg shadow-primary/20 overflow-hidden">
+                        <span className="material-symbols-outlined text-[20px] sm:text-[24px]">pending_actions</span>
+                        <span className="text-[11px] sm:text-sm whitespace-nowrap">Approvals</span>
                     </button>
-                    <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
+                    <button onClick={() => navigate('/notices')} className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
                         <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">send</span>
                         <span className="text-[11px] sm:text-sm whitespace-nowrap">Global Notice</span>
                     </button>
-                    <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
-                        <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">analytics</span>
-                        <span className="text-[11px] sm:text-sm whitespace-nowrap">View Reports</span>
+                    <button onClick={() => navigate('/schools')} className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
+                        <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">account_balance</span>
+                        <span className="text-[11px] sm:text-sm whitespace-nowrap">All Schools</span>
                     </button>
-                    <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
+                    <button onClick={() => navigate('/settings')} className="bg-surface-container-low hover:bg-surface-container-high text-on-surface font-bold py-3.5 sm:py-4 px-3 sm:px-6 rounded-xl flex items-center justify-center gap-2 sm:gap-3 scale-98 active:scale-95 transition-all overflow-hidden border border-outline-variant/30">
                         <span className="material-symbols-outlined text-primary text-[20px] sm:text-[24px]">settings</span>
                         <span className="text-[11px] sm:text-sm whitespace-nowrap">App Settings</span>
                     </button>

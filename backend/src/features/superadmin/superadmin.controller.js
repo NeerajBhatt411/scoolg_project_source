@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { School } from '../../../models/School.js';
 import { Student } from '../../../models/Student.js';
 import { Teacher } from '../../../models/Teacher.js';
@@ -7,7 +8,42 @@ import { Section } from '../../../models/Section.js';
 import { Attendance } from '../../../models/Attendance.js';
 import { Homework } from '../../../models/Homework.js';
 import { CalendarEvent } from '../../../models/CalendarEvent.js';
+import { Subject } from '../../../models/Subject.js';
+import { Timetable } from '../../../models/Timetable.js';
+import { StaffUser } from '../../../models/StaffUser.js';
 import { transporter, esc, renderEmail } from '../../utils/email.js';
+
+// --- Super-admin login. A single platform-level account, credentials from env
+// (SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD) — never hardcoded in source. Issues a
+// JWT with type:'superadmin' which superAdminGuard requires for every route. ---
+export const postSuperadminLogin = async (req, res) => {
+    try {
+        const email = String(req.body.email || '').toLowerCase().trim();
+        const password = String(req.body.password || '');
+        if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
+
+        const SA_EMAIL = String(process.env.SUPERADMIN_EMAIL || 'scoolg.dev@gmail.com').toLowerCase().trim();
+        const SA_PASSWORD = process.env.SUPERADMIN_PASSWORD;
+
+        // Fail-closed: if no password is configured on the server, nobody gets in.
+        if (!SA_PASSWORD) {
+            console.error("SUPERADMIN_PASSWORD is not set — super-admin login disabled.");
+            return res.status(503).json({ error: "Super-admin login is not configured." });
+        }
+        if (email !== SA_EMAIL || password !== SA_PASSWORD) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        const token = jwt.sign(
+            { email, type: 'superadmin' },
+            process.env.JWT_SECRET || 'scoolg_secret_99',
+            { expiresIn: '30d' }
+        );
+        res.json({ token, email });
+    } catch (err) {
+        res.status(500).json({ error: "Login failed" });
+    }
+};
 
 // Full per-school operational data for the super-admin drill-down ("see each
 // school's own students/teachers/classes/attendance in one place").
@@ -145,9 +181,22 @@ export const deleteSuperadminSchoolsById = async (req, res) => {
         if (!school) {
             return res.status(404).json({ error: "School not found" });
         }
+        const sid = school._id;
 
-        // Delete all students associated with the school
-        await Student.deleteMany({ schoolId: school._id });
+        // Cascade: remove every collection that belongs to this school so no
+        // orphaned records are left behind.
+        await Promise.all([
+            Student.deleteMany({ schoolId: sid }),
+            Teacher.deleteMany({ schoolId: sid }),
+            ClassModel.deleteMany({ schoolId: sid }),
+            Section.deleteMany({ schoolId: sid }),
+            Subject.deleteMany({ schoolId: sid }),
+            Attendance.deleteMany({ schoolId: sid }),
+            Homework.deleteMany({ schoolId: sid }),
+            CalendarEvent.deleteMany({ schoolId: sid }),
+            Timetable.deleteMany({ schoolId: sid }),
+            StaffUser.deleteMany({ schoolId: sid }),
+        ]);
 
         // Delete the school itself
         await School.deleteOne({ id: schoolId });

@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { saFetch } from '../lib/api';
 
 const SchoolProfile = () => {
     const location = useLocation();
     const navigate = useNavigate();
-
-    // AUTO-DETECT API BASE URL
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'https://api.scoolg.com/api' 
-        : 'https://api.scoolg.com/api';
+    const { id: routeId } = useParams();
 
     const [school, setSchool] = useState(location.state?.school);
     const [activeTab, setActiveTab] = useState('Overview');
@@ -18,12 +15,28 @@ const SchoolProfile = () => {
     const [editData, setEditData] = useState(school?.formData || {});
     const [overview, setOverview] = useState(null);
     const [loadingData, setLoadingData] = useState(false);
+    const [notFound, setNotFound] = useState(false);
+
+    // On refresh / deep-link there's no navigation state — fetch the school by id
+    // so the page works instead of showing "No school data found".
+    useEffect(() => {
+        if (school || !routeId) return;
+        saFetch('/superadmin/schools')
+            .then((r) => r.json())
+            .then((list) => {
+                const found = Array.isArray(list) ? list.find((s) => String(s.id) === String(routeId)) : null;
+                if (found) { setSchool(found); setEditData(found.formData || {}); }
+                else setNotFound(true);
+            })
+            .catch(() => setNotFound(true));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [school, routeId]);
 
     // Load the school's operational data when the "Data" tab is opened.
     useEffect(() => {
         if (activeTab !== 'Data' || overview || !school?.id) return;
         setLoadingData(true);
-        fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/overview`)
+        saFetch(`/superadmin/schools/${school.id}/overview`)
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => setOverview(d))
             .catch(() => {})
@@ -32,9 +45,16 @@ const SchoolProfile = () => {
     }, [activeTab, school?.id]);
 
     if (!school) {
+        if (notFound) {
+            return (
+                <div className="flex items-center justify-center min-h-[500px] text-text-muted font-bold">
+                    No school data found. <button onClick={() => navigate('/schools')} className="ml-2 text-primary underline">Go Back</button>
+                </div>
+            );
+        }
         return (
-            <div className="flex items-center justify-center min-h-[500px] text-gray-500 font-bold">
-                No school data found. <button onClick={() => navigate('/schools')} className="ml-2 text-blue-600 underline">Go Back</button>
+            <div className="flex items-center justify-center min-h-[500px] text-text-muted font-bold">
+                <span className="material-symbols-outlined animate-spin mr-2">progress_activity</span> Loading school…
             </div>
         );
     }
@@ -47,9 +67,8 @@ const SchoolProfile = () => {
         
         setIsUpdating(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/status`, {
+            const res = await saFetch(`/superadmin/schools/${school.id}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
             if (res.ok) {
@@ -68,9 +87,8 @@ const SchoolProfile = () => {
     const handleSaveProfile = async () => {
         setIsUpdating(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/onboarding/update/${school.id}`, {
+            const res = await saFetch(`/onboarding/update/${school.id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ formData: editData })
             });
             if (res.ok) {
@@ -92,9 +110,7 @@ const SchoolProfile = () => {
     const handleDelete = async () => {
         setIsUpdating(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}`, {
-                method: 'DELETE'
-            });
+            const res = await saFetch(`/superadmin/schools/${school.id}`, { method: 'DELETE' });
             if (res.ok) {
                 navigate('/schools');
             } else {
@@ -226,7 +242,7 @@ const SchoolProfile = () => {
                                 className="px-8 py-3 bg-primary text-on-primary font-black rounded-2xl shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-[20px]">{isUpdating ? 'sync' : 'save'}</span>
-                                {isUpdating ? 'Save Changes' : 'Save Changes'}
+                                {isUpdating ? 'Saving…' : 'Save Changes'}
                             </button>
                         </div>
                     </div>

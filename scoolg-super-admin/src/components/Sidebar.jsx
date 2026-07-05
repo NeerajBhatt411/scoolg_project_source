@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { clearToken } from '../lib/api';
 
 const Sidebar = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        // Clear super admin session here when ready
+        clearToken();
         navigate('/login');
     };
 
@@ -41,11 +42,6 @@ const Sidebar = () => {
                     >
                         <span className="material-symbols-outlined">{item.icon}</span>
                         <span className="text-[0.875rem] hidden md:inline">{item.name}</span>
-                        {item.name === 'Approvals' && (
-                            <span className="hidden md:inline ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                                3
-                            </span>
-                        )}
                     </NavLink>
                 ))}
             </nav>

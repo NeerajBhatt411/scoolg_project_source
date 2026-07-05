@@ -3,6 +3,9 @@ import * as c from './superadmin.controller.js';
 
 const router = Router();
 
+// Public: super-admin login (issues the token every other route requires).
+router.post('/api/superadmin/login', c.postSuperadminLogin);
+
 /**
  * @swagger
  * /api/superadmin/dashboard:

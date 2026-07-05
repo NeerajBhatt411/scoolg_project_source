@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { saFetch } from '../lib/api';
 
 const PendingApprovals = () => {
+    const navigate = useNavigate();
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchSchools = async () => {
         try {
             setLoading(true);
-            const res = await fetch('https://api.scoolg.com/api/superadmin/schools');
+            const res = await saFetch('/superadmin/schools');
             const data = await res.json();
             setSchools(data.filter(s => s.status === 'PENDING'));
         } catch (error) {
@@ -23,9 +26,7 @@ const PendingApprovals = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`https://api.scoolg.com/api/superadmin/schools/${id}/approve`, {
-                method: 'POST'
-            });
+            const res = await saFetch(`/superadmin/schools/${id}/approve`, { method: 'POST' });
             if (res.ok) {
                 alert('School Approved Successfully!');
                 fetchSchools(); // Refresh the list
@@ -89,7 +90,7 @@ const PendingApprovals = () => {
                                 <span className="material-symbols-outlined text-[18px]">check_circle</span>
                                 Approve
                             </button>
-                            <button className="px-4 bg-surface-container-high hover:bg-surface-container text-on-surface font-bold py-2 rounded-lg transition-colors">
+                            <button onClick={() => navigate(`/schools/${school.id}`, { state: { school } })} className="px-4 bg-surface-container-high hover:bg-surface-container text-on-surface font-bold py-2 rounded-lg transition-colors">
                                 View
                             </button>
                         </div>
