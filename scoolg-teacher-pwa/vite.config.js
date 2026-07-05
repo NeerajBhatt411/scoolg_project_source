@@ -12,6 +12,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      // Take control immediately so a new deploy applies on next open (auto-reload)
+      // instead of serving the stale cached app until a manual refresh.
+      workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+      },
       devOptions: { enabled: true }, // make the PWA installable during `npm run dev`
       includeAssets: ['favicon.svg', 'scoolg-logo.png'],
       manifest: {
