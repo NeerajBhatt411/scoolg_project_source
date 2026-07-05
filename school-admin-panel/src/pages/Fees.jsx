@@ -11,6 +11,15 @@ const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const CATEGORIES = ['Tuition', 'Exam', 'Transport', 'Admission', 'Arrears', 'Other'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const QUARTERS = [{ k: 'Q1', sub: 'Apr–Jun' }, { k: 'Q2', sub: 'Jul–Sep' }, { k: 'Q3', sub: 'Oct–Dec' }, { k: 'Q4', sub: 'Jan–Mar' }];
+const HALVES = [{ k: 'H1', sub: 'Apr–Sep' }, { k: 'H2', sub: 'Oct–Mar' }];
+const FREQS = [
+    { k: 'once', label: 'One-time', hint: 'Charged once (Exam, Admission)' },
+    { k: 'monthly', label: 'Monthly', hint: 'A due each month you pick' },
+    { k: 'quarterly', label: 'Quarterly', hint: 'One due per quarter' },
+    { k: 'half', label: 'Half-yearly', hint: 'One due per half' },
+    { k: 'yearly', label: 'Yearly', hint: 'One due for the year' },
+];
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
 const INV_PILL = {
@@ -116,8 +125,8 @@ const Fees = () => {
     useEffect(() => { if (feeModal) loadSectionsFor(feeModal.target, setModalSections); }, [feeModal?.target, loadSectionsFor]); // eslint-disable-line
 
     // ---- actions ----
-    const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', type: 'monthly', title: '', category: 'Tuition', amount: '', dueDate: '', months: [], year: CUR_YEAR, ...init });
-    const toggleMonth = (m) => setFeeModal((f) => ({ ...f, months: f.months.includes(m) ? f.months.filter((x) => x !== m) : [...f.months, m] }));
+    const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', freq: 'monthly', title: '', category: 'Tuition', amount: '', dueDate: '', picks: [], year: CUR_YEAR, ...init });
+    const togglePick = (k) => setFeeModal((f) => ({ ...f, picks: f.picks.includes(k) ? f.picks.filter((x) => x !== k) : [...f.picks, k] }));
 
     const verifyPayment = async (id) => {
         try { await axios.post(api(`/payments/${id}/verify`)); toast.success('Payment verified'); setProof(null); loadCollections(); }
@@ -164,8 +173,14 @@ const Fees = () => {
 
     const submitFee = async () => {
         if (!feeModal.title.trim() || !feeModal.amount) { toast.warning('Fee name and amount are required'); return; }
-        if (feeModal.type === 'monthly' && feeModal.months.length === 0) { toast.warning('Pick at least one month (or switch to One-time)'); return; }
-        const months = feeModal.type === 'monthly' ? feeModal.months.map((m) => `${m} ${feeModal.year}`) : [];
+        let months = [];
+        const y = feeModal.year;
+        if (['monthly', 'quarterly', 'half'].includes(feeModal.freq)) {
+            if (!feeModal.picks.length) { toast.warning('Pick at least one period below'); return; }
+            months = feeModal.picks.map((p) => `${p} ${y}`);
+        } else if (feeModal.freq === 'yearly') {
+            months = [`${y}`];
+        } // 'once' -> single due, no period
         setCreating(true);
         try {
             const r = await axios.post(api('/generate'), {
@@ -280,7 +295,32 @@ const Fees = () => {
                             </section>
                         )}
 
-                        <div className="flex justify-center"><CreateBtn /></div>
+                        {/* Fees the school has set up */}
+                        <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                                <h3 className="font-black text-slate-900 tracking-tight">Fees you've set</h3>
+                                <CreateBtn />
+                            </div>
+                            {!summary?.byFee || summary.byFee.length === 0 ? (
+                                <div className="py-8 text-center text-slate-400 text-sm font-bold">No fees created yet — tap "Create Fee" to add one.</div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {summary.byFee.map((f) => (
+                                        <div key={f.title} className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 grid place-items-center shrink-0"><span className="material-symbols-outlined text-[20px]">payments</span></div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-black text-slate-900 text-sm truncate">{f.title}</p>
+                                                <p className="text-xs text-slate-400 font-bold">{f.count} due(s)</p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="font-black text-slate-900 text-sm">{money(f.total)}</p>
+                                                <p className="text-[11px] text-emerald-600 font-bold">{money(f.collected)} collected</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     </>
                 )}
 
@@ -411,31 +451,50 @@ const Fees = () => {
                         {/* When */}
                         <div>
                             <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">3 · How often</p>
-                            <div className="grid grid-cols-2 gap-2 mb-3">
-                                {[['once', 'One-time', 'Exam, Admission, Arrears'], ['monthly', 'Monthly', 'Tuition — pick months']].map(([v, label, hint]) => (
-                                    <button type="button" key={v} onClick={() => setFeeModal((f) => ({ ...f, type: v }))}
-                                        className={`p-3 rounded-2xl border-2 text-left transition-all ${feeModal.type === v ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}>
-                                        <p className={`font-black text-sm ${feeModal.type === v ? 'text-blue-700' : 'text-slate-700'}`}>{label}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">{hint}</p>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {FREQS.map((fr) => (
+                                    <button type="button" key={fr.k} onClick={() => setFeeModal((f) => ({ ...f, freq: fr.k, picks: [] }))}
+                                        className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all border-2 ${feeModal.freq === fr.k ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'}`}>
+                                        {fr.label}
                                     </button>
                                 ))}
                             </div>
+                            <p className="text-[11px] text-slate-400 font-bold mb-3">{FREQS.find((f) => f.k === feeModal.freq)?.hint}</p>
 
-                            {feeModal.type === 'monthly' && (
+                            {feeModal.freq !== 'once' && (
                                 <div className="bg-slate-50 rounded-2xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Months</span>
-                                        <input type="number" value={feeModal.year} onChange={(e) => setFeeModal((f) => ({ ...f, year: e.target.value }))} className="w-20 h-8 bg-white border border-slate-200 rounded-lg px-2 font-bold text-xs text-slate-900 outline-none" />
-                                        <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [...MONTHS] }))} className="ml-auto px-3 py-1.5 rounded-lg bg-blue-100 text-blue-600 text-[11px] font-black">Whole year</button>
-                                        <button type="button" onClick={() => setFeeModal((f) => ({ ...f, months: [] }))} className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-500 text-[11px] font-black">Clear</button>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Year</span>
+                                        <input type="number" value={feeModal.year} onChange={(e) => setFeeModal((f) => ({ ...f, year: e.target.value }))} className="w-24 h-8 bg-white border border-slate-200 rounded-lg px-2 font-bold text-xs text-slate-900 outline-none" />
+                                        {feeModal.freq === 'monthly' && (
+                                            <>
+                                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, picks: [...MONTHS] }))} className="ml-auto px-3 py-1.5 rounded-lg bg-blue-100 text-blue-600 text-[11px] font-black">All 12</button>
+                                                <button type="button" onClick={() => setFeeModal((f) => ({ ...f, picks: [] }))} className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-500 text-[11px] font-black">Clear</button>
+                                            </>
+                                        )}
                                     </div>
-                                    <div className="grid grid-cols-6 gap-1.5">
-                                        {MONTHS.map((m) => (
-                                            <button type="button" key={m} onClick={() => toggleMonth(m)}
-                                                className={`h-9 rounded-lg text-xs font-black transition-colors ${feeModal.months.includes(m) ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>{m}</button>
-                                        ))}
-                                    </div>
-                                    <p className="text-[11px] text-slate-400 font-bold mt-2">Quarterly = pick 3 · Half-yearly = 6 · Yearly = Whole year. One due per selected month.</p>
+
+                                    {feeModal.freq === 'monthly' && (
+                                        <div className="grid grid-cols-6 gap-1.5">
+                                            {MONTHS.map((m) => (
+                                                <button type="button" key={m} onClick={() => togglePick(m)}
+                                                    className={`h-9 rounded-lg text-xs font-black transition-colors ${feeModal.picks.includes(m) ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>{m}</button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {(feeModal.freq === 'quarterly' ? QUARTERS : feeModal.freq === 'half' ? HALVES : []).length > 0 && (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(feeModal.freq === 'quarterly' ? QUARTERS : HALVES).map((p) => (
+                                                <button type="button" key={p.k} onClick={() => togglePick(p.k)}
+                                                    className={`p-2.5 rounded-xl text-left transition-colors ${feeModal.picks.includes(p.k) ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}>
+                                                    <span className="font-black text-sm">{p.k}</span> <span className={`text-[10px] font-bold ${feeModal.picks.includes(p.k) ? 'text-white/70' : 'text-slate-400'}`}>{p.sub}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {feeModal.freq === 'yearly' && (
+                                        <p className="text-sm font-bold text-slate-600">One due for the whole year <span className="text-blue-600 font-black">{feeModal.year}</span>.</p>
+                                    )}
                                 </div>
                             )}
                         </div>

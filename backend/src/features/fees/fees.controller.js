@@ -388,7 +388,7 @@ export const getSummary = async (req, res) => {
         const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
 
         const [invoices, paidAgg, monthAgg, pendingVerify] = await Promise.all([
-            FeeInvoice.find({ schoolId: sid }).select('amount status paidAmount className').lean(),
+            FeeInvoice.find({ schoolId: sid }).select('amount status paidAmount className title').lean(),
             FeeInvoice.aggregate([{ $match: { schoolId: sid, status: 'PAID' } }, { $group: { _id: null, total: { $sum: '$paidAmount' } } }]),
             FeePayment.aggregate([{ $match: { schoolId: sid, status: 'VERIFIED', verifiedAt: { $gte: monthStart } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
             FeePayment.countDocuments({ schoolId: sid, status: 'SUBMITTED' }),
@@ -399,14 +399,22 @@ export const getSummary = async (req, res) => {
         const totalCollected = paidAgg[0]?.total || 0;
         const totalPending = active.filter((i) => i.status === 'PENDING' || i.status === 'SUBMITTED').reduce((a, i) => a + (i.amount || 0), 0);
 
-        // Class-wise pending
+        // Class-wise pending + fee-head-wise ("the fees the school has set").
         const byClassMap = {};
+        const byFeeMap = {};
         for (const i of active) {
             const k = i.className || '—';
             byClassMap[k] = byClassMap[k] || { className: k, invoiced: 0, collected: 0, pending: 0 };
             byClassMap[k].invoiced += i.amount || 0;
             if (i.status === 'PAID') byClassMap[k].collected += i.paidAmount || 0;
             else if (i.status === 'PENDING' || i.status === 'SUBMITTED') byClassMap[k].pending += i.amount || 0;
+
+            // Group monthly dues under their base fee name ("Tuition · Apr 2026" -> "Tuition").
+            const ft = (i.title || 'Fee').split(' · ')[0];
+            byFeeMap[ft] = byFeeMap[ft] || { title: ft, count: 0, total: 0, collected: 0 };
+            byFeeMap[ft].count += 1;
+            byFeeMap[ft].total += i.amount || 0;
+            if (i.status === 'PAID') byFeeMap[ft].collected += i.paidAmount || 0;
         }
 
         res.json({
@@ -416,6 +424,7 @@ export const getSummary = async (req, res) => {
             invoiceCount: active.length,
             paidCount: active.filter((i) => i.status === 'PAID').length,
             byClass: Object.values(byClassMap).sort((a, b) => b.pending - a.pending),
+            byFee: Object.values(byFeeMap).sort((a, b) => b.total - a.total),
         });
     } catch (err) {
         console.error('summary error:', err);
