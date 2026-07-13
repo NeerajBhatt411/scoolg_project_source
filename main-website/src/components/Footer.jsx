@@ -1,4 +1,9 @@
-import { MailIcon, CallIcon, LocationOnIcon } from './Icons';
+import { MailIcon, CallIcon, LocationOnIcon, YouTubeIcon, InstagramIcon } from './Icons';
+
+const socialLinks = [
+    { name: 'YouTube', href: 'https://www.youtube.com/@scoolg-yt', Icon: YouTubeIcon },
+    { name: 'Instagram', href: 'https://www.instagram.com/scoolg.dev', Icon: InstagramIcon },
+];
 
 export default function Footer({ isDarkMode }) {
     return (
@@ -13,6 +18,20 @@ export default function Footer({ isDarkMode }) {
                         <p className="text-sm leading-relaxed">
                             Empowering education through technology. The smart choice for modern schools.
                         </p>
+                        <div className="flex gap-3 mt-6">
+                            {socialLinks.map(({ name, href, Icon }) => (
+                                <a
+                                    key={name}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`SCoolG on ${name}`}
+                                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary hover:border-primary transition-all duration-300"
+                                >
+                                    <Icon className="w-5 h-5" />
+                                </a>
+                            ))}
+                        </div>
                     </div>
                     <div>
                         <h4 className="font-bold mb-6 text-white">Platform</h4>

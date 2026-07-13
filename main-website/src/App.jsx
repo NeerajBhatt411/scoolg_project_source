@@ -16,8 +16,8 @@ function App() {
   // closes it (returns to the landing page) instead of leaving the site.
   const [showOnboarding, setShowOnboarding] = useState(() => window.location.pathname.includes('get-started'));
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme === 'dark' || (!savedTheme);
+    // Default is light; dark only when the visitor explicitly chose it.
+    return localStorage.getItem('theme') === 'dark';
   });
 
   const { scrollYProgress } = useScroll();
