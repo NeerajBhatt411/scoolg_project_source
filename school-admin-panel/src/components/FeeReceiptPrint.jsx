@@ -214,12 +214,12 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
                         {layout === 'thermal' ? (
                             <ThermalReceipt />
                         ) : layout === 'duplicate' ? (
-                            <div className="grid grid-cols-2 gap-8 w-full max-w-5xl print:gap-4 print:p-2">
+                            <div className="grid grid-cols-2 gap-8 w-full max-w-5xl print:max-w-none print:gap-4 print:p-2">
                                 <ReceiptContent typeLabel="STUDENT COPY" />
                                 <ReceiptContent typeLabel="OFFICE COPY" />
                             </div>
                         ) : (
-                            <div className="w-full max-w-xl">
+                            <div className="w-full max-w-xl print:max-w-none">
                                 <ReceiptContent typeLabel="FEE RECEIPT (SINGLE COPY)" />
                             </div>
                         )}
