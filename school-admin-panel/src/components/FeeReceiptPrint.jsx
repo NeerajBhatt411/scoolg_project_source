@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
-const FeeReceiptPrint = ({ payment, invoices = [], student = {}, onClose }) => {
+const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = '', schoolLogo = '', onClose }) => {
     const [layout, setLayout] = useState('duplicate'); // 'duplicate' | 'single' | 'thermal'
     const [showDiscount, setShowDiscount] = useState(true);
 
@@ -19,20 +19,32 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, onClose }) => {
     const ReceiptContent = ({ typeLabel }) => (
         <div className="bg-white p-6 border border-slate-200 rounded-2xl print:border-none print:p-0 print:rounded-none flex flex-col justify-between h-full">
             <div>
-                {/* Header */}
-                <div className="flex justify-between items-start border-b border-slate-100 pb-4">
-                    <div>
-                        <h4 className="text-lg font-black text-slate-900 tracking-tight">SCHOOL FEE RECEIPT</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mt-0.5">{typeLabel}</p>
+                {/* School Branding & Logo Header */}
+                <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-3">
+                    {schoolLogo ? (
+                        <img src={schoolLogo} alt="School Logo" className="w-12 h-12 object-contain rounded-lg bg-slate-50 p-0.5 shrink-0" />
+                    ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shrink-0">
+                            {schoolName ? schoolName.charAt(0).toUpperCase() : 'S'}
+                        </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-black text-slate-900 tracking-tight leading-none uppercase">{schoolName || 'School Name'}</h3>
+                        <p className="text-[9px] text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Quality Education for All · Fee Receipt</p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Receipt No.</p>
-                        <p className="font-mono font-black text-slate-900 text-sm mt-0.5">{payment.referenceNo}</p>
+                    <div className="text-right shrink-0">
+                        <span className="inline-block text-[9px] font-black uppercase tracking-wider px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg">{typeLabel}</span>
                     </div>
                 </div>
 
+                {/* Receipt Details Box */}
+                <div className="flex justify-between items-center bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-100/70 text-xs font-semibold text-slate-500 mb-3">
+                    <div>Receipt No: <span className="font-mono font-black text-slate-800">{payment.referenceNo}</span></div>
+                    <div>Date: <span className="font-bold text-slate-800">{fmtDate(payment.verifiedAt || payment.createdAt)}</span></div>
+                </div>
+
                 {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold text-slate-600 my-4">
+                <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs font-semibold text-slate-600 my-3">
                     <div>
                         <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Student Name</span>
                         <span className="font-bold text-slate-800">{student.name || payment.studentName}</span>
@@ -46,21 +58,17 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, onClose }) => {
                         <span className="font-bold text-slate-800">{student.admissionNumber || student.studentAppId || '—'}</span>
                     </div>
                     <div>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Date</span>
-                        <span className="font-bold text-slate-800">{fmtDate(payment.verifiedAt || payment.createdAt)}</span>
-                    </div>
-                    <div>
                         <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Father's Name</span>
                         <span className="font-bold text-slate-800">{student.fatherName || '—'}</span>
                     </div>
-                    <div>
+                    <div className="col-span-2">
                         <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Payment Mode</span>
                         <span className="font-bold text-slate-800">{payment.method}</span>
                     </div>
                 </div>
 
                 {/* Fees Breakdown Table */}
-                <table className="w-full text-xs text-left text-slate-500 mt-4 border-t border-b border-slate-100">
+                <table className="w-full text-xs text-left text-slate-500 mt-3 border-t border-b border-slate-100">
                     <thead>
                         <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             <th className="py-2">Fee Particulars</th>
@@ -104,8 +112,8 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, onClose }) => {
     const ThermalReceipt = () => (
         <div className="bg-white p-4 font-mono text-[11px] text-slate-800 border border-slate-200 w-[2.5in] mx-auto print:border-none print:w-full print:p-0">
             <div className="text-center border-b border-dashed border-slate-300 pb-3">
-                <h4 className="font-bold text-sm tracking-tight">SCHOOL FEE RECEIPT</h4>
-                <p className="text-[9px] uppercase mt-0.5">Verified Receipt</p>
+                <h4 className="font-bold text-sm tracking-tight uppercase">{schoolName || 'SCHOOL FEE RECEIPT'}</h4>
+                <p className="text-[9px] uppercase mt-0.5">Verified Payment</p>
             </div>
 
             <div className="my-3 space-y-1">

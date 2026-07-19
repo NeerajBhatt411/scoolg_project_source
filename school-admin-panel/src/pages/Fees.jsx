@@ -63,6 +63,7 @@ const Fees = () => {
     const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id') || '';
     const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
+    const schoolLogo = localStorage.getItem('scoolg_school_logo') || '';
     const CUR_YEAR = new Date().getFullYear();
 
     const location = useLocation();
@@ -1132,7 +1133,7 @@ const Fees = () => {
 
             {/* ===== printable receipt render ===== */}
             {printPayment && (
-                <FeeReceiptPrint payment={printPayment} invoices={printInvoices} student={printStudent} onClose={() => setPrintPayment(null)} />
+                <FeeReceiptPrint payment={printPayment} invoices={printInvoices} student={printStudent} schoolName={schoolName} schoolLogo={schoolLogo} onClose={() => setPrintPayment(null)} />
             )}
 
             <style>{`.modal-in{width:100%;height:3rem;background:#f8fafc;border:1px solid #f1f5f9;border-radius:1rem;padding:0 1rem;font-weight:700;font-size:.875rem;color:#0f172a;outline:none}.modal-in:focus{box-shadow:0 0 0 4px rgba(37,99,235,.1)}`}</style>
