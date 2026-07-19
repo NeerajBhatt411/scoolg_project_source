@@ -18,14 +18,18 @@ const FeeInvoiceSchema = new mongoose.Schema({
     category: { type: String, default: 'Tuition' },   // Tuition | Exam | Transport | Admission | Other | Arrears
     period: { type: String, default: '' },            // e.g. "2026-04" or "Term 1" (for dedup/grouping)
     amount: { type: Number, required: true, min: 0 },
+    balanceAmount: { type: Number, default: function() { return this.amount; } },
     dueDate: { type: Date },
     academicYear: { type: String, default: '' },
 
-    status: { type: String, enum: ['PENDING', 'SUBMITTED', 'PAID', 'REJECTED', 'WAIVED'], default: 'PENDING', index: true },
+    status: { type: String, enum: ['PENDING', 'SUBMITTED', 'PAID', 'PARTIALLY_PAID', 'REJECTED', 'WAIVED'], default: 'PENDING', index: true },
     paidAmount: { type: Number, default: 0 },
     paidVia: { type: String, default: '' },           // UPI | BANK | CASH | OTHER (on the verified payment)
     paidAt: { type: Date },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'FeePayment' },
+    receiptNo: { type: String, default: '', index: true },
+    voidReason: { type: String, default: '' },
+    voidedBy: { type: String, default: '' },
 
     createdByName: { type: String, default: '' },
 }, { timestamps: true });

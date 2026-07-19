@@ -26,6 +26,16 @@ router.post('/api/admin/fees/payments/:id/reject', c.postPaymentReject);
 
 router.get('/api/admin/fees/summary', c.getSummary);
 
+// Discounts
+router.get('/api/admin/fees/discounts', c.getDiscounts);
+router.post('/api/admin/fees/discounts', c.postDiscount);
+router.delete('/api/admin/fees/discounts/:id', c.deleteDiscount);
+
+// Student ledger & Deposit
+router.get('/api/admin/fees/student/:studentId/ledger', c.getStudentLedger);
+router.post('/api/admin/fees/deposit', c.postFeeDeposit);
+router.post('/api/admin/fees/payments/:id/void', c.postVoidPayment);
+
 // --- Parent / student side (inline JWT auth in the controller) ---
 router.get('/api/student/fees', c.getStudentFees);
 router.post('/api/student/fees/pay', c.postStudentFeePay);

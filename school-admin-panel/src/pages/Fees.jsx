@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -6,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import MenuButton from '../components/MenuButton';
 import ProfileButton from '../components/ProfileButton';
 import Dropdown from '../components/Dropdown';
+import FeeReceiptPrint from '../components/FeeReceiptPrint';
 
 const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -21,21 +23,31 @@ const FREQS = [
     { k: 'yearly', label: 'Yearly', hint: 'One due for the year' },
 ];
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
-// Only ever treat an http(s) URL as a real screenshot link (blocks javascript:/data: URIs).
 const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u.trim()) ? u.trim() : '');
 
 const INV_PILL = {
     PENDING: 'bg-amber-100 text-amber-700',
     SUBMITTED: 'bg-blue-100 text-blue-700',
     PAID: 'bg-emerald-100 text-emerald-700',
+    PARTIALLY_PAID: 'bg-indigo-100 text-indigo-700',
     REJECTED: 'bg-rose-100 text-rose-700',
     WAIVED: 'bg-slate-100 text-slate-500',
 };
-const INV_LABEL = { PENDING: 'Pending', SUBMITTED: 'Under review', PAID: 'Paid', REJECTED: 'Rejected', WAIVED: 'Waived' };
+const INV_LABEL = { 
+    PENDING: 'Pending', 
+    SUBMITTED: 'Under review', 
+    PAID: 'Paid', 
+    PARTIALLY_PAID: 'Partial',
+    REJECTED: 'Rejected', 
+    WAIVED: 'Waived' 
+};
 
 const TABS = [
     { k: 'collections', label: 'Collections', icon: 'insights' },
+    { k: 'deposit', label: 'Fee Deposit / Ledger', icon: 'payments' },
     { k: 'dues', label: 'Dues', icon: 'receipt_long' },
+    { k: 'slabs', label: 'Fee Slabs', icon: 'settings_accessibility' },
+    { k: 'discounts', label: 'Discounts', icon: 'percent' },
     { k: 'settings', label: 'Payment Settings', icon: 'qr_code_2' },
 ];
 
@@ -47,19 +59,32 @@ const StatCard = ({ label, value, tone }) => (
 );
 
 const Fees = () => {
-    const { classes, getSections } = useAdmin();
+    const { classes, students, getSections } = useAdmin();
     const { toast } = useToast();
     const schoolId = localStorage.getItem('scoolg_school_id') || '';
     const schoolName = localStorage.getItem('scoolg_school_name') || 'School';
     const CUR_YEAR = new Date().getFullYear();
 
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const [tab, setTab] = useState('collections');
+
+    // Parse initial tab from search params on mount or when location changes
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const t = params.get('tab');
+        if (t && TABS.some(tabObj => tabObj.k === t)) {
+            setTab(t);
+        }
+    }, [location.search]);
     const [summary, setSummary] = useState(null);
     const [payments, setPayments] = useState([]);
     const [invoices, setInvoices] = useState([]);
     const [settings, setSettings] = useState({ upiId: '', payeeName: '', bankName: '', accountNumber: '', ifsc: '', qrImageUrl: '', instructions: '', methods: ['UPI', 'BANK', 'CASH'] });
     const [loading, setLoading] = useState(true);
 
+    // Dues Filters
     const [fClass, setFClass] = useState('ALL');
     const [fSection, setFSection] = useState('All');
     const [fStatus, setFStatus] = useState('ALL');
@@ -69,11 +94,40 @@ const Fees = () => {
     const [modalSections, setModalSections] = useState([]);
     const [bulking, setBulking] = useState(false);
 
+    // Fee Modals & Structures
     const [feeModal, setFeeModal] = useState(null);
     const [proof, setProof] = useState(null);
     const [savingCfg, setSavingCfg] = useState(false);
     const [uploadingQr, setUploadingQr] = useState(false);
     const [creating, setCreating] = useState(false);
+
+    // Fee Slabs (FeeStructure)
+    const [slabs, setSlabs] = useState([]);
+    const [slabModal, setSlabModal] = useState(null);
+
+    // Discounts
+    const [discountsList, setDiscountsList] = useState([]);
+    const [discountModal, setDiscountModal] = useState(null);
+    const [discSearchText, setDiscSearchText] = useState('');
+    const [selectedDiscStudent, setSelectedDiscStudent] = useState(null);
+
+    // Fee Deposit Ledger
+    const [depSearchText, setDepSearchText] = useState('');
+    const [selectedDepStudent, setSelectedDepStudent] = useState(null);
+    const [ledger, setLedger] = useState(null);
+    const [ledgerLoading, setLedgerLoading] = useState(false);
+    const [paySel, setPaySel] = useState([]); // selected invoiceIds
+    const [amountPaid, setAmountPaid] = useState('');
+    const [payMethod, setPayMethod] = useState('CASH');
+    const [payRef, setPayRef] = useState('');
+    const [payNote, setPayNote] = useState('');
+    const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
+    const [depositing, setDepositing] = useState(false);
+
+    // Print Receipt States
+    const [printPayment, setPrintPayment] = useState(null);
+    const [printStudent, setPrintStudent] = useState(null);
+    const [printInvoices, setPrintInvoices] = useState([]);
 
     const api = (p) => `${ADMIN_API_BASE}/fees${p}`;
 
@@ -117,16 +171,34 @@ const Fees = () => {
         catch { /* ignore */ } finally { setLoading(false); }
     }, [schoolId]);
 
+    const loadSlabs = useCallback(async () => {
+        setLoading(true);
+        try {
+            const r = await axios.get(api('/structure'));
+            setSlabs(Array.isArray(r.data) ? r.data : []);
+        } catch { setSlabs([]); } finally { setLoading(false); }
+    }, []);
+
+    const loadDiscountsList = useCallback(async () => {
+        setLoading(true);
+        try {
+            const r = await axios.get(api('/discounts'));
+            setDiscountsList(Array.isArray(r.data) ? r.data : []);
+        } catch { setDiscountsList([]); } finally { setLoading(false); }
+    }, []);
+
     useEffect(() => {
         if (tab === 'collections') loadCollections();
         else if (tab === 'dues') { loadInvoices(); loadPeriods(); }
+        else if (tab === 'slabs') loadSlabs();
+        else if (tab === 'discounts') loadDiscountsList();
         else if (tab === 'settings') loadSettings();
-    }, [tab, loadCollections, loadInvoices, loadPeriods, loadSettings]);
+    }, [tab, loadCollections, loadInvoices, loadPeriods, loadSlabs, loadDiscountsList, loadSettings]);
 
     useEffect(() => { loadSectionsFor(fClass, setDuesSections); setFSection('All'); }, [fClass, loadSectionsFor]);
     useEffect(() => { if (feeModal) loadSectionsFor(feeModal.target, setModalSections); }, [feeModal?.target, loadSectionsFor]); // eslint-disable-line
 
-    // ---- actions ----
+    // Actions
     const openFee = (init) => setFeeModal({ target: 'ALL', section: 'All', freq: 'monthly', title: '', category: 'Tuition', amount: '', dueDate: '', picks: [], year: CUR_YEAR, ...init });
     const togglePick = (k) => setFeeModal((f) => ({ ...f, picks: f.picks.includes(k) ? f.picks.filter((x) => x !== k) : [...f.picks, k] }));
 
@@ -155,7 +227,22 @@ const Fees = () => {
         catch (e) { toast.error(e.response?.data?.error || 'Failed'); }
     };
 
-    // Describe the current Dues filter for the bulk confirm dialogs.
+    // Void offline/verified payments with Cancellation Trail
+    const voidPayment = async (pay) => {
+        const reason = window.prompt('Enter reason for cancelling/voiding this payment receipt:');
+        if (!reason || !reason.trim()) {
+            if (reason !== null) toast.warning('Reason is required to void payment.');
+            return;
+        }
+        try {
+            await axios.post(api(`/payments/${pay._id}/void`), { reason });
+            toast.success('Payment voided and invoices rolled back');
+            if (selectedDepStudent) loadStudentLedger(selectedDepStudent._id);
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Failed to void');
+        }
+    };
+
     const filterDesc = () => {
         const bits = [];
         bits.push(fClass === 'ALL' ? 'all classes' : fClass + (fSection !== 'All' ? `-${fSection}` : ''));
@@ -182,7 +269,7 @@ const Fees = () => {
             months = feeModal.picks.map((p) => `${p} ${y}`);
         } else if (feeModal.freq === 'yearly') {
             months = [`${y}`];
-        } // 'once' -> single due, no period
+        }
         setCreating(true);
         try {
             const r = await axios.post(api('/generate'), {
@@ -211,9 +298,166 @@ const Fees = () => {
         } catch { toast.error('Upload failed'); } finally { setUploadingQr(false); }
     };
 
+    // Slabs functions
+    const saveSlab = async () => {
+        if (!slabModal.className || !slabModal.amount) { toast.warning('Class and amount are required'); return; }
+        try {
+            await axios.post(api('/structure'), slabModal);
+            toast.success('Fee Slab Saved');
+            setSlabModal(null);
+            loadSlabs();
+        } catch { toast.error('Failed to save Slab'); }
+    };
+    const deleteSlab = async (id) => {
+        if (!window.confirm('Delete this Fee Slab?')) return;
+        try {
+            await axios.delete(api(`/structure/${id}`));
+            toast.success('Slab Deleted');
+            loadSlabs();
+        } catch { toast.error('Failed to delete Slab'); }
+    };
+
+    // Discounts functions
+    const saveDiscount = async () => {
+        if (!selectedDiscStudent || !discountModal.category || !discountModal.discountAmount) {
+            toast.warning('Please select a student, category and enter discount amount');
+            return;
+        }
+        try {
+            await axios.post(api('/discounts'), {
+                ...discountModal,
+                studentId: selectedDiscStudent._id,
+            });
+            toast.success('Discount Assigned');
+            setDiscountModal(null);
+            setSelectedDiscStudent(null);
+            setDiscSearchText('');
+            loadDiscountsList();
+        } catch { toast.error('Failed to save discount'); }
+    };
+    const deleteDiscount = async (id) => {
+        if (!window.confirm('Delete this student discount?')) return;
+        try {
+            await axios.delete(api(`/discounts/${id}`));
+            toast.success('Discount Removed');
+            loadDiscountsList();
+        } catch { toast.error('Failed to delete discount'); }
+    };
+
+    // Ledger & Deposit functions
+    const loadStudentLedger = async (studentId) => {
+        setLedgerLoading(true);
+        setPaySel([]);
+        try {
+            const r = await axios.get(api(`/student/${studentId}/ledger`));
+            setLedger(r.data);
+        } catch {
+            setLedger(null);
+            toast.error('Failed to load student ledger');
+        } finally {
+            setLedgerLoading(false);
+        }
+    };
+
+    const toggleInvoiceSelect = (invId) => {
+        setPaySel(prev => prev.includes(invId) ? prev.filter(id => id !== invId) : [...prev, invId]);
+    };
+
+    // Auto calculate calculations based on selected checkboxes and student discount ledger
+    const getCalculatedFees = () => {
+        if (!ledger || !paySel.length) return { subtotal: 0, discount: 0, net: 0, discountMap: {} };
+        let subtotal = 0;
+        let discount = 0;
+        const discountMap = {};
+
+        paySel.forEach(invId => {
+            const inv = ledger.invoices.find(i => i._id === invId);
+            if (!inv) return;
+            subtotal += inv.balanceAmount;
+
+            // Check if there is an active discount on this student profile for this category
+            const discObj = ledger.discounts.find(d => d.category === inv.category);
+            let discAmount = 0;
+            if (discObj) {
+                // discount cannot exceed outstanding invoice balance
+                discAmount = Math.min(discObj.discountAmount, inv.balanceAmount);
+                discount += discAmount;
+            }
+            discountMap[invId] = discAmount;
+        });
+
+        return { subtotal, discount, net: subtotal - discount, discountMap };
+    };
+
+    const feeCalcs = getCalculatedFees();
+
+    // Default editable pay amount to Net Payable
+    useEffect(() => {
+        if (paySel.length) {
+            setAmountPaid(String(feeCalcs.net));
+        } else {
+            setAmountPaid('');
+        }
+    }, [paySel, feeCalcs.net]);
+
+    const submitDeposit = async () => {
+        if (!selectedDepStudent || !paySel.length || !amountPaid) {
+            toast.warning('Please select invoices and enter deposit amount.');
+            return;
+        }
+        setDepositing(true);
+        try {
+            const r = await axios.post(api('/deposit'), {
+                studentId: selectedDepStudent._id,
+                invoiceIds: paySel,
+                amountPaid: Number(amountPaid),
+                method: payMethod,
+                referenceNo: payRef,
+                note: payNote,
+                discountMap: feeCalcs.discountMap,
+            });
+            toast.success('Fees Deposited Successfully!');
+            setPaySel([]);
+            setAmountPaid('');
+            setPayRef('');
+            setPayNote('');
+
+            // Open Receipt Print Screen immediately
+            setPrintPayment(r.data.payment);
+            setPrintInvoices(ledger.invoices);
+            setPrintStudent({
+                name: ledger.student.name,
+                class: ledger.student.class,
+                section: ledger.student.section,
+                studentAppId: ledger.student.studentAppId,
+                admissionNumber: ledger.student.admissionNumber,
+                fatherName: ledger.student.fatherName,
+            });
+
+            // Reload ledger
+            loadStudentLedger(selectedDepStudent._id);
+        } catch (e) {
+            toast.error(e.response?.data?.error || 'Deposit failed');
+        } finally {
+            setDepositing(false);
+        }
+    };
+
     const classOptions = [{ value: 'ALL', label: 'All classes' }, ...classes.map((c) => ({ value: c.className, label: c.className }))];
     const duesSectionOpts = [{ value: 'All', label: 'All sections' }, ...duesSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
     const modalSectionOpts = [{ value: 'All', label: 'All sections' }, ...modalSections.map((s) => ({ value: s.sectionName, label: s.sectionName }))];
+
+    // Filter local active student list for searches
+    const filterStudentList = (text) => {
+        if (!text.trim()) return [];
+        return (students || []).filter(s => {
+            const full = `${s.firstName} ${s.lastName} ${s.studentAppId} ${s.class}`.toLowerCase();
+            return full.includes(text.toLowerCase());
+        }).slice(0, 5);
+    };
+
+    const searchDepStudents = filterStudentList(depSearchText);
+    const searchDiscStudents = filterStudentList(discSearchText);
 
     const CreateBtn = ({ className = '' }) => (
         <button onClick={() => openFee({ target: fClass, section: fSection })}
@@ -227,15 +471,15 @@ const Fees = () => {
             <header className="h-16 md:h-[80px] sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 md:px-8">
                 <div className="flex items-center gap-2 min-w-0">
                     <MenuButton />
-                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees</h2>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees Dashboard</h2>
                 </div>
                 <ProfileButton size={42} />
             </header>
 
             <div className="px-4 md:px-8 pt-5">
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
                     {TABS.map((t) => (
-                        <button key={t.k} onClick={() => setTab(t.k)}
+                        <button key={t.k} onClick={() => { setTab(t.k); navigate(`/fees?tab=${t.k}`, { replace: true }); }}
                             className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${tab === t.k ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}`}>
                             <span className="material-symbols-outlined text-[19px]">{t.icon}</span>{t.label}
                         </button>
@@ -244,7 +488,7 @@ const Fees = () => {
             </div>
 
             <main className="px-4 md:px-8 pt-6 space-y-6">
-                {/* ============ COLLECTIONS ============ */}
+                {/* ============ COLLECTIONS TAB ============ */}
                 {tab === 'collections' && (
                     <>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -293,46 +537,225 @@ const Fees = () => {
                                         );
                                     })}
                                 </div>
-                                <p className="text-[11px] text-slate-400 font-bold mt-4">Tap a class to see who's pending (section-wise).</p>
                             </section>
                         )}
-
-                        {/* Fees the school has set up */}
-                        <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
-                            <div className="flex items-center justify-between gap-3 mb-4">
-                                <h3 className="font-black text-slate-900 tracking-tight">Fees you've set</h3>
-                                <CreateBtn />
-                            </div>
-                            {!summary?.byFee || summary.byFee.length === 0 ? (
-                                <div className="py-8 text-center text-slate-400 text-sm font-bold">No fees created yet — tap "Create Fee" to add one.</div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {summary.byFee.map((f) => (
-                                        <div key={f.title} className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 grid place-items-center shrink-0"><span className="material-symbols-outlined text-[20px]">payments</span></div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-black text-slate-900 text-sm truncate">{f.title}</p>
-                                                <p className="text-xs text-slate-400 font-bold">{f.count} due(s)</p>
-                                            </div>
-                                            <div className="text-right shrink-0">
-                                                <p className="font-black text-slate-900 text-sm">{money(f.total)}</p>
-                                                <p className="text-[11px] text-emerald-600 font-bold">{money(f.collected)} collected</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
                     </>
                 )}
 
-                {/* ============ DUES ============ */}
+                {/* ============ FEE DEPOSIT & LEDGER TAB ============ */}
+                {tab === 'deposit' && (
+                    <div className="space-y-6">
+                        {/* Student Search and Info Header */}
+                        <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-4">
+                            <h3 className="font-black text-slate-900 tracking-tight">Search Student for Fee Deposit</h3>
+                            <div className="relative">
+                                <input type="text" value={depSearchText} onChange={(e) => setDepSearchText(e.target.value)} placeholder="Type student name, class, Section or Admission No..."
+                                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-4 font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-600/10" />
+                                {searchDepStudents.length > 0 && (
+                                    <div className="absolute top-14 left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                        {searchDepStudents.map((s) => (
+                                            <button key={s._id} onClick={() => { setSelectedDepStudent(s); setDepSearchText(''); loadStudentLedger(s._id); }}
+                                                className="w-full text-left px-5 py-3 hover:bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                <span className="font-black text-slate-800 text-sm">{s.firstName} {s.lastName}</span>
+                                                <span className="text-xs text-slate-400 font-bold">Class {s.class}-{s.section} · Roll {s.rollNumber || '—'}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedDepStudent && ledger && (
+                                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
+                                    <div>
+                                        <span className="block text-[10px] font-black uppercase text-slate-400">Student Name</span>
+                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.name}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] font-black uppercase text-slate-400">Class & Section</span>
+                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.class} - {ledger.student.section}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] font-black uppercase text-slate-400">Admission No.</span>
+                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.admissionNumber || ledger.student.studentAppId || '—'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] font-black uppercase text-slate-400">Father's Name</span>
+                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.fatherName || '—'}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {selectedDepStudent && (
+                            <div className="grid gap-6 lg:grid-cols-3">
+                                {/* Ledger & Unpaid Invoices selection */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                                        <h4 className="font-black text-slate-900 tracking-tight mb-4">Dues & Ledger Sheet</h4>
+                                        {ledgerLoading ? (
+                                            <div className="py-12 text-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
+                                        ) : !ledger || !ledger.invoices.length ? (
+                                            <div className="py-12 text-center text-slate-400 font-bold">No invoices generated for this student.</div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-xs text-left text-slate-500">
+                                                    <thead>
+                                                        <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                                            <th className="py-3 px-2">Select</th>
+                                                            <th className="py-3">Particulars</th>
+                                                            <th className="py-3">Due Date</th>
+                                                            <th className="py-3 text-right">Amount</th>
+                                                            <th className="py-3 text-right">Balance</th>
+                                                            <th className="py-3 text-center">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {ledger.invoices.map((inv) => {
+                                                            const isPaid = inv.status === 'PAID' || inv.status === 'WAIVED';
+                                                            return (
+                                                                <tr key={inv._id} className="hover:bg-slate-50/50">
+                                                                    <td className="py-3 px-2">
+                                                                        <input type="checkbox" disabled={isPaid} checked={paySel.includes(inv._id)} onChange={() => toggleInvoiceSelect(inv._id)}
+                                                                            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 disabled:opacity-30 cursor-pointer" />
+                                                                    </td>
+                                                                    <td className="py-3 font-bold text-slate-800">{inv.title}</td>
+                                                                    <td className="py-3 font-medium text-slate-400">{fmtDate(inv.dueDate)}</td>
+                                                                    <td className="py-3 text-right font-bold text-slate-800">{money(inv.amount)}</td>
+                                                                    <td className="py-3 text-right font-black text-rose-600">{money(inv.balanceAmount)}</td>
+                                                                    <td className="py-3 text-center">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${INV_PILL[inv.status]}`}>{INV_LABEL[inv.status]}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </section>
+
+                                    {/* Processed Payments history (Receipts) */}
+                                    <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                                        <h4 className="font-black text-slate-900 tracking-tight mb-4">Paid Receipts History</h4>
+                                        {!ledger || !ledger.payments.length ? (
+                                            <div className="py-8 text-center text-slate-400 font-bold">No payments deposited yet.</div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {ledger.payments.map((pay) => (
+                                                    <div key={pay._id} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between gap-3 border border-slate-100">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-mono font-black text-slate-800 text-sm">{pay.referenceNo}</span>
+                                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${pay.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                    {pay.status === 'REJECTED' ? 'Voided' : 'Paid'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-slate-400 font-bold mt-1">{fmtDate(pay.verifiedAt || pay.createdAt)} · {pay.method}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-black text-slate-900 text-sm">{money(pay.amount)}</p>
+                                                            {pay.status !== 'REJECTED' ? (
+                                                                <div className="flex items-center gap-1.5 mt-1 justify-end">
+                                                                    <button onClick={() => { setPrintPayment(pay); setPrintInvoices(ledger.invoices); setPrintStudent({ name: ledger.student.name, class: ledger.student.class, section: ledger.student.section, studentAppId: ledger.student.studentAppId, admissionNumber: ledger.student.admissionNumber, fatherName: ledger.student.fatherName }); }}
+                                                                        className="w-7 h-7 bg-white text-slate-500 hover:text-blue-600 rounded-lg flex items-center justify-center border border-slate-200" title="Print Receipt">
+                                                                        <span className="material-symbols-outlined text-[17px]">print</span>
+                                                                    </button>
+                                                                    <button onClick={() => voidPayment(pay)}
+                                                                        className="w-7 h-7 bg-white text-rose-500 hover:bg-rose-50 rounded-lg flex items-center justify-center border border-rose-100" title="Cancel/Void Payment">
+                                                                        <span className="material-symbols-outlined text-[17px]">block</span>
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-[10px] text-rose-600 font-bold mt-1 truncate max-w-[120px]">{pay.rejectionReason}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </section>
+                                </div>
+
+                                {/* Fee Deposit Collection side-card */}
+                                <div className="space-y-6">
+                                    <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-5 sticky top-24">
+                                        <h4 className="font-black text-slate-900 tracking-tight">Deposit Form</h4>
+
+                                        {!paySel.length ? (
+                                            <div className="py-10 text-center text-slate-400 font-bold text-xs">
+                                                Select months/invoices from the ledger to collect fee.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4 text-xs font-semibold text-slate-600">
+                                                {/* Calculations */}
+                                                <div className="space-y-2 border-b border-slate-100 pb-3">
+                                                    <div className="flex justify-between">
+                                                        <span>Subtotal ({paySel.length} bills)</span>
+                                                        <span className="text-slate-800 font-bold">{money(feeCalcs.subtotal)}</span>
+                                                    </div>
+                                                    {feeCalcs.discount > 0 && (
+                                                        <div className="flex justify-between text-emerald-600">
+                                                            <span>Applied Discounts</span>
+                                                            <span>-{money(feeCalcs.discount)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between text-sm font-black text-slate-900 pt-2">
+                                                        <span>Net Payable</span>
+                                                        <span className="text-base text-blue-600">{money(feeCalcs.net)}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Deposit inputs */}
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-slate-400">Amount Received (₹)</label>
+                                                    <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)}
+                                                        className="mt-1.5 w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 font-bold text-sm text-slate-900 focus:outline-none" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-slate-400">Payment Mode</label>
+                                                    <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)}
+                                                        className="mt-1.5 w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-3 font-bold text-sm text-slate-900 focus:outline-none">
+                                                        <option value="CASH">Cash</option>
+                                                        <option value="UPI">UPI</option>
+                                                        <option value="BANK">Bank Transfer</option>
+                                                        <option value="OTHER">Other</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-slate-400">Ref / Txn No. (optional)</label>
+                                                    <input type="text" value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. UPI txn id, Cheque No"
+                                                        className="mt-1.5 w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 font-bold text-sm text-slate-900 focus:outline-none" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-slate-400">Note / Remarks (optional)</label>
+                                                    <input type="text" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="e.g. Paid by father"
+                                                        className="mt-1.5 w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 font-bold text-sm text-slate-900 focus:outline-none" />
+                                                </div>
+
+                                                <button onClick={submitDeposit} disabled={depositing || !amountPaid}
+                                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-2xl uppercase tracking-widest text-xs disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/10">
+                                                    <span className="material-symbols-outlined text-[18px]">payments</span>
+                                                    {depositing ? 'Processing…' : 'Deposit Fees & Print'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </section>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ============ DUES TAB ============ */}
                 {tab === 'dues' && (
                     <>
                         <div className="flex flex-wrap items-center gap-3">
                             <div className="w-32"><Dropdown value={fClass} onChange={setFClass} options={classOptions} buttonClassName="h-11" /></div>
                             <div className="w-32"><Dropdown value={fSection} onChange={setFSection} options={duesSectionOpts} buttonClassName="h-11" /></div>
-                            <div className="w-32"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
+                            <div className="w-32"><Dropdown value={fStatus} onChange={setFStatus} options={[{ value: 'ALL', label: 'All status' }, { value: 'PENDING', label: 'Pending' }, { value: 'SUBMITTED', label: 'Under review' }, { value: 'PAID', label: 'Paid' }, { value: 'PARTIALLY_PAID', label: 'Partial' }, { value: 'WAIVED', label: 'Waived' }]} buttonClassName="h-11" /></div>
                             <div className="w-36"><Dropdown value={fPeriod} onChange={setFPeriod} options={[{ value: 'All', label: 'All months' }, ...periods.map((p) => ({ value: p, label: p }))]} buttonClassName="h-11" /></div>
                             <CreateBtn className="ml-auto" />
                         </div>
@@ -369,7 +792,7 @@ const Fees = () => {
                                             </div>
                                             <p className="font-black text-slate-900 shrink-0 text-sm">{money(inv.amount)}</p>
                                             <span className={`shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${INV_PILL[inv.status]}`}>{INV_LABEL[inv.status]}</span>
-                                            {(inv.status === 'PENDING' || inv.status === 'REJECTED') && (
+                                            {(inv.status === 'PENDING' || inv.status === 'REJECTED' || inv.status === 'PARTIALLY_PAID') && (
                                                 <div className="shrink-0 flex items-center gap-1">
                                                     <button title="Mark cash paid" onClick={() => markCash(inv)} className="w-8 h-8 grid place-items-center rounded-lg text-emerald-600 hover:bg-emerald-50"><span className="material-symbols-outlined text-[19px]">payments</span></button>
                                                     <button title="Waive" onClick={() => waiveInvoice(inv)} className="w-8 h-8 grid place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><span className="material-symbols-outlined text-[19px]">block</span></button>
@@ -384,7 +807,114 @@ const Fees = () => {
                     </>
                 )}
 
-                {/* ============ SETTINGS ============ */}
+                {/* ============ FEE SLABS TAB ============ */}
+                {tab === 'slabs' && (
+                    <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="font-black text-slate-900 tracking-tight">Fee Masters (Slabs)</h3>
+                                <p className="text-xs text-slate-400 font-bold">Define standard monthly/yearly fee amounts per class.</p>
+                            </div>
+                            <button onClick={() => setSlabModal({ className: classes[0]?.className || '1', label: 'Tuition Fee', category: 'Tuition', amount: '', frequency: 'Monthly', academicYear: `${CUR_YEAR}-${CUR_YEAR + 1}` })}
+                                className="bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[17px]">add</span> Add Fee Slab
+                            </button>
+                        </div>
+
+                        {loading ? (
+                            <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
+                        ) : slabs.length === 0 ? (
+                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">No fee slabs configured yet.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left text-slate-500">
+                                    <thead>
+                                        <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                            <th className="py-3">Class</th>
+                                            <th className="py-3">Fee Label</th>
+                                            <th className="py-3">Category</th>
+                                            <th className="py-3">Frequency</th>
+                                            <th className="py-3 text-right">Amount</th>
+                                            <th className="py-3 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {slabs.map((sl) => (
+                                            <tr key={sl.id}>
+                                                <td className="py-3.5 font-black text-slate-900">{sl.className}</td>
+                                                <td className="py-3.5 font-bold text-slate-700">{sl.label}</td>
+                                                <td className="py-3.5 font-semibold text-slate-500">{sl.category}</td>
+                                                <td className="py-3.5 font-semibold text-slate-500">{sl.frequency}</td>
+                                                <td className="py-3.5 text-right font-black text-slate-900">{money(sl.amount)}</td>
+                                                <td className="py-3.5 text-center">
+                                                    <button onClick={() => deleteSlab(sl.id)} className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg mx-auto">
+                                                        <span className="material-symbols-outlined text-[19px]">delete</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {/* ============ DISCOUNTS TAB ============ */}
+                {tab === 'discounts' && (
+                    <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="font-black text-slate-900 tracking-tight">Student-wise Concessions (Discounts)</h3>
+                                <p className="text-xs text-slate-400 font-bold">Manage sibling, staff, merit or custom fee discounts.</p>
+                            </div>
+                            <button onClick={() => setDiscountModal({ category: 'Tuition', discountAmount: '', academicYear: `${CUR_YEAR}-${CUR_YEAR + 1}` })}
+                                className="bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[17px]">add</span> Assign Discount
+                            </button>
+                        </div>
+
+                        {loading ? (
+                            <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
+                        ) : discountsList.length === 0 ? (
+                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">No student discounts configured yet.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left text-slate-500">
+                                    <thead>
+                                        <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                            <th className="py-3">Student Name</th>
+                                            <th className="py-3">Class</th>
+                                            <th className="py-3">Fee Category</th>
+                                            <th className="py-3 text-right">Discount Amt</th>
+                                            <th className="py-3 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {discountsList.map((ds) => (
+                                            <tr key={ds.id}>
+                                                <td className="py-3.5">
+                                                    <p className="font-black text-slate-900">{ds.studentName}</p>
+                                                    <p className="text-[10px] text-slate-400 font-mono">{ds.studentAppId}</p>
+                                                </td>
+                                                <td className="py-3.5 font-bold text-slate-700">{ds.class}-{ds.section}</td>
+                                                <td className="py-3.5 font-semibold text-slate-500">{ds.category}</td>
+                                                <td className="py-3.5 text-right font-black text-emerald-600">{money(ds.discountAmount)}</td>
+                                                <td className="py-3.5 text-center">
+                                                    <button onClick={() => deleteDiscount(ds.id)} className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg mx-auto">
+                                                        <span className="material-symbols-outlined text-[19px]">delete</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {/* ============ SETTINGS TAB ============ */}
                 {tab === 'settings' && (
                     <div className="grid gap-6 lg:grid-cols-2">
                         <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-4">
@@ -425,11 +955,10 @@ const Fees = () => {
                 )}
             </main>
 
-            {/* ===== Create Fee modal (the single fee-creation flow) ===== */}
+            {/* ===== Create Fee Modal ===== */}
             {feeModal && (
                 <Modal onClose={() => setFeeModal(null)} title="Create a fee">
                     <div className="space-y-5">
-                        {/* Who */}
                         <div>
                             <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">1 · Who pays</p>
                             <div className="grid grid-cols-2 gap-3">
@@ -438,7 +967,6 @@ const Fees = () => {
                             </div>
                         </div>
 
-                        {/* What */}
                         <div>
                             <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">2 · Fee details</p>
                             <div className="space-y-3">
@@ -450,7 +978,6 @@ const Fees = () => {
                             </div>
                         </div>
 
-                        {/* When */}
                         <div>
                             <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 mb-2">3 · How often</p>
                             <div className="flex flex-wrap gap-2 mb-2">
@@ -494,9 +1021,6 @@ const Fees = () => {
                                             ))}
                                         </div>
                                     )}
-                                    {feeModal.freq === 'yearly' && (
-                                        <p className="text-sm font-bold text-slate-600">One due for the whole year <span className="text-blue-600 font-black">{feeModal.year}</span>.</p>
-                                    )}
                                 </div>
                             )}
                         </div>
@@ -506,7 +1030,74 @@ const Fees = () => {
                         <button onClick={submitFee} disabled={creating} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs disabled:opacity-60">
                             {creating ? 'Creating…' : 'Create dues'}
                         </button>
-                        <p className="text-[11px] text-slate-400 font-bold text-center">Creates one due per active student in the selection.</p>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ===== Add Slab Modal ===== */}
+            {slabModal && (
+                <Modal onClose={() => setSlabModal(null)} title="Add Fee Slab">
+                    <div className="space-y-4">
+                        <Field label="Class">
+                            <Dropdown value={slabModal.className} onChange={(v) => setSlabModal(prev => ({ ...prev, className: v }))}
+                                options={classes.map(c => ({ value: c.className, label: c.className }))} buttonClassName="h-12 bg-slate-50" />
+                        </Field>
+                        <Field label="Fee Label">
+                            <input value={slabModal.label} onChange={(e) => setSlabModal(prev => ({ ...prev, label: e.target.value }))} placeholder="e.g. Tuition Fee" className="modal-in" />
+                        </Field>
+                        <Field label="Category">
+                            <Dropdown value={slabModal.category} onChange={(v) => setSlabModal(prev => ({ ...prev, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" />
+                        </Field>
+                        <Field label="Amount (₹)">
+                            <input type="number" value={slabModal.amount} onChange={(e) => setSlabModal(prev => ({ ...prev, amount: Number(e.target.value) }))} placeholder="Amount" className="modal-in" />
+                        </Field>
+                        <Field label="Frequency">
+                            <select value={slabModal.frequency} onChange={(e) => setSlabModal(prev => ({ ...prev, frequency: e.target.value }))}
+                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-3 font-bold text-sm text-slate-900 focus:outline-none">
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Half-Yearly">Half-Yearly</option>
+                                <option value="Yearly">Yearly</option>
+                                <option value="One-Time">One-Time</option>
+                            </select>
+                        </Field>
+                        <button onClick={saveSlab} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">
+                            Save Slab
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ===== Add Discount Modal ===== */}
+            {discountModal && (
+                <Modal onClose={() => { setDiscountModal(null); setSelectedDiscStudent(null); setDiscSearchText(''); }} title="Assign Concession / Discount">
+                    <div className="space-y-4">
+                        <Field label="Search Student">
+                            <div className="relative">
+                                <input type="text" value={discSearchText} onChange={(e) => setDiscSearchText(e.target.value)} placeholder="Type name or ID to search student..."
+                                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 font-bold text-sm text-slate-900 focus:outline-none" />
+                                {searchDiscStudents.length > 0 && (
+                                    <div className="absolute top-13 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                                        {searchDiscStudents.map((s) => (
+                                            <button key={s._id} onClick={() => { setSelectedDiscStudent(s); setDiscSearchText(`${s.firstName} ${s.lastName} (${s.class}-${s.section})`); }}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
+                                                <span className="font-black text-slate-800">{s.firstName} {s.lastName}</span>
+                                                <span className="text-slate-400 font-bold">Class {s.class}-{s.section}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </Field>
+                        <Field label="Fee Category">
+                            <Dropdown value={discountModal.category} onChange={(v) => setDiscountModal(prev => ({ ...prev, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" />
+                        </Field>
+                        <Field label="Discount Amount (₹)">
+                            <input type="number" value={discountModal.discountAmount} onChange={(e) => setDiscountModal(prev => ({ ...prev, discountAmount: Number(e.target.value) }))} placeholder="e.g. 200" className="modal-in" />
+                        </Field>
+                        <button onClick={saveDiscount} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">
+                            Assign Discount
+                        </button>
                     </div>
                 </Modal>
             )}
@@ -539,6 +1130,11 @@ const Fees = () => {
                 </Modal>
             )}
 
+            {/* ===== printable receipt render ===== */}
+            {printPayment && (
+                <FeeReceiptPrint payment={printPayment} invoices={printInvoices} student={printStudent} onClose={() => setPrintPayment(null)} />
+            )}
+
             <style>{`.modal-in{width:100%;height:3rem;background:#f8fafc;border:1px solid #f1f5f9;border-radius:1rem;padding:0 1rem;font-weight:700;font-size:.875rem;color:#0f172a;outline:none}.modal-in:focus{box-shadow:0 0 0 4px rgba(37,99,235,.1)}`}</style>
         </div>
     );
@@ -549,14 +1145,14 @@ const Field = ({ label, children }) => (
 );
 
 const Modal = ({ title, onClose, children }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 print:hidden">
         <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} />
         <div className="relative z-10 bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">{title}</h3>
                 <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 grid place-items-center text-slate-400 hover:text-slate-900"><span className="material-symbols-outlined">close</span></button>
             </div>
-            <div className="p-6 overflow-y-auto">{children}</div>
+            <div className="p-6 overflow-y-auto custom-scrollbar">{children}</div>
         </div>
     </div>
 );

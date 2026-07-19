@@ -16,6 +16,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const [apiDone, setApiDone] = useState(!!cachedLogo);
     // Unread count of "From Scoolg" broadcasts -> shown as a badge on that link.
     const [scoolgUnread, setScoolgUnread] = useState(0);
+    const [feesOpen, setFeesOpen] = useState(window.location.pathname.startsWith('/fees'));
 
     useEffect(() => {
         // Always refresh the logo from the profile (the cached value paints
@@ -110,21 +111,59 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
             </div>
             <div className="border-b border-slate-200/70 mb-4"></div>
             <nav className="flex-1 space-y-1">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.name}
-                        to={item.path}
-                        onClick={onClose}
-                        className={({ isActive }) =>
-                            `flex items-center justify-start gap-3 px-4 py-3 rounded-xl active:scale-95 transition-all duration-200 ${isActive
-                                ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
-                                : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`
-                        }
-                    >
-                        <span className="material-symbols-outlined">{item.icon}</span>
-                        <span className="text-[0.875rem]">{item.name}</span>
-                    </NavLink>
-                ))}
+                {navItems.map((item) => {
+                    if (item.name === 'Fees') {
+                        return (
+                            <div key="FeesMenu" className="space-y-1">
+                                <button onClick={() => setFeesOpen(!feesOpen)}
+                                    className={`w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${window.location.pathname.startsWith('/fees') ? 'bg-[#eff6ff] text-[#2563eb] font-bold' : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`}>
+                                    <span className="material-symbols-outlined">{item.icon}</span>
+                                    <span className="text-[0.875rem]">{item.name}</span>
+                                    <span className="material-symbols-outlined ml-auto text-[18px] transition-transform duration-200" style={{ transform: feesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+                                </button>
+                                {feesOpen && (
+                                    <div className="pl-9 space-y-1">
+                                        {[
+                                            { name: 'Collections Overview', tab: 'collections' },
+                                            { name: 'Fee Deposit (Ledger)', tab: 'deposit' },
+                                            { name: 'Fee Dues List', tab: 'dues' },
+                                            { name: 'Fee Slabs (Masters)', tab: 'slabs' },
+                                            { name: 'Discounts & Concessions', tab: 'discounts' },
+                                            { name: 'Payment Settings', tab: 'settings' },
+                                        ].map((sub) => (
+                                            <NavLink key={sub.tab} to={`/fees?tab=${sub.tab}`} onClick={onClose}
+                                                className={({ isActive }) =>
+                                                    `flex items-center justify-start px-4 py-2 rounded-lg text-xs transition-all duration-200 ${
+                                                        isActive && new URLSearchParams(window.location.search).get('tab') === sub.tab
+                                                            ? 'bg-blue-50 text-blue-600 font-bold'
+                                                            : 'text-[#64748b] font-semibold hover:bg-slate-100'
+                                                    }`
+                                                }
+                                            >
+                                                {sub.name}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+                    return (
+                        <NavLink
+                            key={item.name}
+                            to={item.path}
+                            onClick={onClose}
+                            className={({ isActive }) =>
+                                `flex items-center justify-start gap-3 px-4 py-3 rounded-xl active:scale-95 transition-all duration-200 ${isActive
+                                    ? 'bg-[#eff6ff] text-[#2563eb] font-bold'
+                                    : 'text-[#64748b] font-medium hover:bg-[#f2f4f6]'}`
+                            }
+                        >
+                            <span className="material-symbols-outlined">{item.icon}</span>
+                            <span className="text-[0.875rem]">{item.name}</span>
+                        </NavLink>
+                    );
+                })}
             </nav>
             <div className="mt-auto pt-6 border-t border-[#e0e7ff] space-y-1">
                 <NavLink

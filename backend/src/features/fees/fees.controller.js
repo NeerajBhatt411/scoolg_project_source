@@ -4,6 +4,7 @@ import { Student } from '../../../models/Student.js';
 import { FeeStructure } from '../../../models/FeeStructure.js';
 import { FeeInvoice } from '../../../models/FeeInvoice.js';
 import { FeePayment } from '../../../models/FeePayment.js';
+import { FeeDiscount } from '../../../models/FeeDiscount.js';
 import { notify } from '../../utils/push.js';
 
 // ---------------------------------------------------------------------------
@@ -538,3 +539,255 @@ export const postStudentFeePay = async (req, res) => {
         res.status(500).json({ error: 'Failed to submit payment' });
     }
 };
+
+// =====================  DISCOUNTS  =====================
+export const getDiscounts = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const discounts = await FeeDiscount.find({ schoolId: school._id }).lean();
+        const studentIds = discounts.map((d) => d.studentId);
+        const students = await Student.find({ _id: { $in: studentIds } }).select('firstName lastName class section studentAppId').lean();
+        const studentMap = {};
+        for (const s of students) {
+            studentMap[s._id] = s;
+        }
+        const result = discounts.map((d) => {
+            const s = studentMap[d.studentId] || {};
+            return {
+                ...d,
+                id: d._id,
+                studentName: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+                studentAppId: s.studentAppId || '',
+                class: s.class || '',
+                section: s.section || '',
+            };
+        });
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load discounts' });
+    }
+};
+
+export const postDiscount = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const { id, studentId, category, discountAmount, academicYear } = req.body || {};
+        if (!studentId || !category || discountAmount == null) {
+            return res.status(400).json({ error: 'Student, category and discount amount are required' });
+        }
+        const doc = {
+            schoolId: school._id,
+            studentId,
+            category,
+            discountAmount: Number(discountAmount),
+            academicYear: academicYear || '',
+            active: true,
+        };
+        let row;
+        if (id) {
+            row = await FeeDiscount.findOneAndUpdate({ _id: id, schoolId: school._id }, doc, { new: true });
+        } else {
+            const existing = await FeeDiscount.findOne({ schoolId: school._id, studentId, category, active: true });
+            if (existing) {
+                row = await FeeDiscount.findOneAndUpdate({ _id: existing._id }, doc, { new: true });
+            } else {
+                row = await FeeDiscount.create(doc);
+            }
+        }
+        res.status(id ? 200 : 201).json({ message: 'Discount saved', discount: row });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save discount' });
+    }
+};
+
+export const deleteDiscount = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        await FeeDiscount.deleteOne({ _id: req.params.id, schoolId: school._id });
+        res.json({ message: 'Discount deleted' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete discount' });
+    }
+};
+
+// =====================  SINGLE STUDENT LEDGER & DEPOSIT  =====================
+
+export const getStudentLedger = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const studentId = req.params.studentId;
+        const student = await Student.findOne({ _id: studentId, schoolId: school._id }).lean();
+        if (!student) return res.status(404).json({ error: 'Student not found' });
+
+        const [invoices, discounts, payments] = await Promise.all([
+            FeeInvoice.find({ schoolId: school._id, studentId }).sort({ dueDate: 1, createdAt: 1 }).lean(),
+            FeeDiscount.find({ schoolId: school._id, studentId, active: true }).lean(),
+            FeePayment.find({ schoolId: school._id, studentId }).sort({ createdAt: -1 }).lean(),
+        ]);
+
+        res.json({
+            student: {
+                id: student._id,
+                name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+                class: student.class,
+                section: student.section,
+                rollNumber: student.rollNumber || '',
+                studentAppId: student.studentAppId || '',
+                admissionNumber: student.admissionNumber || '',
+                fatherName: student.fatherName || '',
+                primaryContact: student.primaryContact || '',
+            },
+            invoices: invoices.map((i) => ({ ...i, id: i._id })),
+            discounts: discounts.map((d) => ({ ...d, id: d._id })),
+            payments: payments.map((p) => ({ ...p, id: p._id })),
+        });
+    } catch (err) {
+        console.error('ledger error:', err);
+        res.status(500).json({ error: 'Failed to load ledger' });
+    }
+};
+
+const nextReceiptNo = async (schoolId) => {
+    const lastPayment = await FeePayment.findOne({ schoolId, referenceNo: /^REC-/ })
+        .sort({ createdAt: -1 })
+        .select('referenceNo')
+        .lean();
+    let nextNum = 1;
+    if (lastPayment && lastPayment.referenceNo) {
+        const m = lastPayment.referenceNo.match(/REC-(\d+)/);
+        if (m) {
+            nextNum = parseInt(m[1], 10) + 1;
+        }
+    }
+    return `REC-${String(nextNum).padStart(6, '0')}`;
+};
+
+export const postFeeDeposit = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const { studentId, invoiceIds, amountPaid, method, referenceNo, note, discountMap } = req.body || {};
+        if (!studentId || !Array.isArray(invoiceIds) || !invoiceIds.length || amountPaid == null) {
+            return res.status(400).json({ error: 'Student, invoices and amount are required' });
+        }
+
+        const student = await Student.findOne({ _id: studentId, schoolId: school._id });
+        if (!student) return res.status(404).json({ error: 'Student not found' });
+
+        const invoices = await FeeInvoice.find({ _id: { $in: invoiceIds }, studentId, schoolId: school._id });
+        if (!invoices.length) return res.status(404).json({ error: 'Invoices not found' });
+
+        const receipt = await nextReceiptNo(school._id);
+        const by = req.user?.role || 'Admin';
+
+        // Create the FeePayment record representing this manual deposit session
+        const payment = await FeePayment.create({
+            schoolId: school._id,
+            studentId,
+            studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+            studentAppId: student.studentAppId,
+            invoiceId: invoices[0]._id,
+            invoiceTitle: invoices.map((i) => i.title).join(', ').slice(0, 200),
+            amount: Number(amountPaid),
+            method: method || 'CASH',
+            referenceNo: referenceNo || receipt,
+            status: 'VERIFIED',
+            verifiedByName: by,
+            verifiedAt: new Date(),
+            note: note || '',
+        });
+
+        let remainingPay = Number(amountPaid);
+
+        for (const inv of invoices) {
+            if (inv.status === 'PAID' || inv.status === 'WAIVED') continue;
+
+            let discount = 0;
+            if (discountMap && discountMap[inv._id]) {
+                discount = Number(discountMap[inv._id]);
+                discount = Math.min(discount, inv.balanceAmount);
+            }
+
+            const originalDue = inv.balanceAmount;
+            const netDue = originalDue - discount;
+
+            if (netDue <= 0) {
+                inv.balanceAmount = 0;
+                inv.paidAmount += originalDue;
+                inv.status = 'PAID';
+            } else if (remainingPay >= netDue) {
+                remainingPay -= netDue;
+                inv.balanceAmount = 0;
+                inv.paidAmount += originalDue;
+                inv.status = 'PAID';
+            } else if (remainingPay > 0) {
+                inv.balanceAmount = netDue - remainingPay;
+                inv.paidAmount += (remainingPay + discount);
+                inv.status = 'PARTIALLY_PAID';
+                remainingPay = 0;
+            } else if (discount > 0) {
+                inv.balanceAmount = netDue;
+                inv.paidAmount += discount;
+                inv.status = 'PARTIALLY_PAID';
+            }
+
+            inv.paidVia = method || 'CASH';
+            inv.paidAt = new Date();
+            inv.paymentId = payment._id;
+            inv.receiptNo = receipt;
+            await inv.save();
+        }
+
+        await notifyParent(school, studentId, '✅ Fees deposited', `Received payment of ${money(amountPaid)}: receipt ${receipt}.`, { link: '/fees' });
+        res.json({ message: 'Payment deposited successfully', receiptNo: receipt, payment });
+    } catch (err) {
+        console.error('deposit error:', err);
+        res.status(500).json({ error: 'Failed to deposit fees' });
+    }
+};
+
+export const postVoidPayment = async (req, res) => {
+    try {
+        const school = await resolveSchool(req);
+        if (!school) return res.status(404).json({ error: 'School not found' });
+        const { reason } = req.body || {};
+        if (!reason?.trim()) return res.status(400).json({ error: 'Cancellation reason is required' });
+
+        const payment = await FeePayment.findOne({ _id: req.params.id, schoolId: school._id });
+        if (!payment) return res.status(404).json({ error: 'Payment record not found' });
+        if (payment.status === 'REJECTED') return res.status(400).json({ error: 'Payment is already rejected/voided' });
+
+        const by = req.user?.role || 'Admin';
+        const invoices = await FeeInvoice.find({ schoolId: school._id, paymentId: payment._id });
+
+        for (const inv of invoices) {
+            inv.balanceAmount = inv.amount;
+            inv.paidAmount = 0;
+            inv.status = 'PENDING';
+            inv.paidVia = '';
+            inv.paidAt = null;
+            inv.paymentId = null;
+            inv.receiptNo = '';
+            inv.voidReason = reason;
+            inv.voidedBy = by;
+            await inv.save();
+        }
+
+        payment.status = 'REJECTED';
+        payment.rejectionReason = `VOIDED: ${reason}`;
+        payment.verifiedByName = by;
+        payment.verifiedAt = new Date();
+        await payment.save();
+
+        await notifyParent(school, payment.studentId, '⚠️ Fee payment cancelled', `Payment of ${money(payment.amount)} was voided: ${reason}`, { link: '/fees' });
+        res.json({ message: 'Payment voided and invoices rolled back', payment });
+    } catch (err) {
+        console.error('void error:', err);
+        res.status(500).json({ error: 'Failed to void payment' });
+    }
+};
+
