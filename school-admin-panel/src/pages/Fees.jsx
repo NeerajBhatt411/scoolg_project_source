@@ -469,26 +469,28 @@ const Fees = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-24">
-            <header className="h-16 md:h-[80px] sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 md:px-8">
-                <div className="flex items-center gap-2 min-w-0">
-                    <MenuButton />
-                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees Dashboard</h2>
-                </div>
-                <ProfileButton size={42} />
-            </header>
+            <div className="print:hidden">
+                <header className="h-16 md:h-[80px] sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 md:px-8">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <MenuButton />
+                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees Dashboard</h2>
+                    </div>
+                    <ProfileButton size={42} />
+                </header>
 
-            <div id="fees-tabs-container" className="px-4 md:px-8 pt-5">
-                <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                    {TABS.map((t) => (
-                        <button key={t.k} onClick={() => { setTab(t.k); navigate(`/fees?tab=${t.k}`, { replace: true }); }}
-                            className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${tab === t.k ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}`}>
-                            <span className="material-symbols-outlined text-[19px]">{t.icon}</span>{t.label}
-                        </button>
-                    ))}
+                <div id="fees-tabs-container" className="px-4 md:px-8 pt-5">
+                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                        {TABS.map((t) => (
+                            <button key={t.k} onClick={() => { setTab(t.k); navigate(`/fees?tab=${t.k}`, { replace: true }); }}
+                                className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${tab === t.k ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}`}>
+                                <span className="material-symbols-outlined text-[19px]">{t.icon}</span>{t.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <main className="px-4 md:px-8 pt-6 space-y-6">
+            <main className="px-4 md:px-8 pt-6 space-y-6 print:hidden">
                 {/* ============ COLLECTIONS TAB ============ */}
                 {tab === 'collections' && (
                     <>
