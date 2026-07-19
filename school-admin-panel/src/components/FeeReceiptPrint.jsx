@@ -17,7 +17,7 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
     const netPaid = payment.amount;
 
     const ReceiptContent = ({ typeLabel }) => (
-        <div className="bg-white p-6 border border-slate-200 rounded-2xl print:border-none print:p-0 print:rounded-none flex flex-col justify-between h-full">
+        <div className="bg-white p-5 border border-slate-200 rounded-2xl print:border print:border-slate-300 print:p-4 print:rounded-xl flex flex-col justify-between h-[340px] max-h-[360px] print:h-[340px] print:max-h-[360px] overflow-hidden print:overflow-hidden select-none">
             <div>
                 {/* School Branding & Logo Header */}
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-3">
@@ -241,10 +241,11 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
                         left: 0;
                         top: 0;
                         width: 100%;
+                        ${layout === 'duplicate' ? 'display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 16px !important;' : ''}
                     }
                     @page {
-                        size: landscape;
-                        margin: 1cm;
+                        size: ${layout === 'duplicate' ? 'A4 landscape' : layout === 'single' ? 'A5 portrait' : 'auto'};
+                        margin: ${layout === 'thermal' ? '0.2cm' : '0.5cm'};
                     }
                 }
             `}} />
