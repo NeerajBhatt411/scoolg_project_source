@@ -17,7 +17,7 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
     const netPaid = payment.amount;
 
     const ReceiptContent = ({ typeLabel }) => (
-        <div className="bg-white p-5 border border-slate-200 rounded-2xl print:border print:border-slate-300 print:p-4 print:rounded-xl flex flex-col justify-between h-[340px] max-h-[360px] print:h-[340px] print:max-h-[360px] overflow-hidden print:overflow-hidden select-none">
+        <div className="bg-white p-6 border border-slate-200 rounded-[24px] print:border print:border-slate-300 print:p-5 print:rounded-xl flex flex-col justify-between select-none">
             <div>
                 {/* School Branding & Logo Header */}
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-3">
@@ -230,8 +230,8 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
             {/* Print-specific style block */}
             <style dangerouslySetInnerHTML={{__html: `
                 @media print {
-                    /* Hide header, sidebar, tab selector, and dashboard layout containers */
-                    header, aside, #fees-tabs-container, main > :not(.print-modal-root) {
+                    /* Hide sidebar, dashboard header and tab selector */
+                    header, aside, #fees-tabs-container {
                         display: none !important;
                     }
                     
