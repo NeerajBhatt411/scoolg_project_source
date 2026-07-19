@@ -477,7 +477,7 @@ const Fees = () => {
                 <ProfileButton size={42} />
             </header>
 
-            <div className="px-4 md:px-8 pt-5">
+            <div id="fees-tabs-container" className="px-4 md:px-8 pt-5">
                 <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
                     {TABS.map((t) => (
                         <button key={t.k} onClick={() => { setTab(t.k); navigate(`/fees?tab=${t.k}`, { replace: true }); }}

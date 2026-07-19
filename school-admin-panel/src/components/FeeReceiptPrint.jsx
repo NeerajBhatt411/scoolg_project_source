@@ -163,9 +163,9 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
     );
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 print:p-0">
+        <div className="print-modal-root fixed inset-0 z-[120] flex items-center justify-center p-4 print:p-0">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md print:hidden" onClick={onClose} />
-            <div className="relative z-10 bg-white w-full max-w-4xl rounded-[32px] shadow-2xl print:shadow-none print:rounded-none flex flex-col max-h-[90vh] print:max-h-none overflow-hidden print:overflow-visible">
+            <div className="print-modal-content relative z-10 bg-white w-full max-w-4xl rounded-[32px] shadow-2xl print:shadow-none print:rounded-none flex flex-col max-h-[90vh] print:max-h-none overflow-hidden print:overflow-visible">
                 
                 {/* Print Controls (Hidden on print) */}
                 <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -230,19 +230,55 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
             {/* Print-specific style block */}
             <style dangerouslySetInnerHTML={{__html: `
                 @media print {
-                    body * {
-                        visibility: hidden;
+                    /* Hide header, sidebar, tab selector, and dashboard layout containers */
+                    header, aside, #fees-tabs-container, main > :not(.print-modal-root) {
+                        display: none !important;
                     }
-                    #print-area, #print-area * {
-                        visibility: visible;
+                    
+                    /* Reset wrappers height and margins */
+                    html, body, #root, .min-h-screen, main {
+                        height: auto !important;
+                        min-height: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
+                        overflow: visible !important;
                     }
+
+                    /* Override modal container styles to display block in print stream */
+                    .print-modal-root {
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        display: block !important;
+                        background: white !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        z-index: auto !important;
+                    }
+
+                    .print-modal-content {
+                        border: none !important;
+                        box-shadow: none !important;
+                        width: 100% !important;
+                        max-width: none !important;
+                        height: auto !important;
+                        max-height: none !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+
                     #print-area {
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        ${layout === 'duplicate' ? 'display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 16px !important;' : ''}
+                        position: relative !important;
+                        width: 100% !important;
+                        display: ${layout === 'duplicate' ? 'grid !important' : 'block !important'};
+                        grid-template-columns: ${layout === 'duplicate' ? '1fr 1fr !important' : 'none'};
+                        gap: ${layout === 'duplicate' ? '16px !important' : '0'};
                     }
+
                     @page {
                         size: ${layout === 'duplicate' ? 'A4 landscape' : layout === 'single' ? 'A5 portrait' : 'auto'};
                         margin: ${layout === 'thermal' ? '0.2cm' : '0.5cm'};
