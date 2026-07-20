@@ -4,7 +4,7 @@ const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
 const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = '', schoolLogo = '', onClose }) => {
-    const [layout, setLayout] = useState('duplicate'); // 'duplicate' | 'single' | 'thermal'
+    const [layout, setLayout] = useState('duplicate'); // 'duplicate' (2 pages) | 'single' (1 page)
     const [showDiscount, setShowDiscount] = useState(true);
 
     const handlePrint = () => {
@@ -17,77 +17,78 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
     const netPaid = payment.amount;
 
     const ReceiptContent = ({ typeLabel }) => (
-        <div className="bg-white p-6 border border-slate-200 rounded-[24px] print:border print:border-slate-300 print:p-5 print:rounded-xl flex flex-col justify-between select-none">
-            <div>
-                {/* School Branding & Logo Header */}
-                <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-3">
-                    {schoolLogo ? (
-                        <img src={schoolLogo} alt="School Logo" className="w-12 h-12 object-contain rounded-lg bg-slate-50 p-0.5 shrink-0" />
-                    ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shrink-0">
-                            {schoolName ? schoolName.charAt(0).toUpperCase() : 'S'}
-                        </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-black text-slate-900 tracking-tight leading-none uppercase">{schoolName || 'School Name'}</h3>
-                        <p className="text-[9px] text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Quality Education for All · Fee Receipt</p>
+        <div className="receipt-page bg-white w-full max-w-[190mm] min-h-[252mm] p-8 border border-slate-200 rounded-[24px] print:rounded-none flex flex-col select-none">
+            {/* School Branding & Logo Header */}
+            <div className="flex items-center gap-4 border-b-2 border-slate-200 pb-4 mb-4">
+                {schoolLogo ? (
+                    <img src={schoolLogo} alt="School Logo" className="w-16 h-16 object-contain rounded-lg bg-slate-50 p-0.5 shrink-0" />
+                ) : (
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-2xl flex items-center justify-center shrink-0">
+                        {schoolName ? schoolName.charAt(0).toUpperCase() : 'S'}
                     </div>
-                    <div className="text-right shrink-0">
-                        <span className="inline-block text-[9px] font-black uppercase tracking-wider px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg">{typeLabel}</span>
-                    </div>
+                )}
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">{schoolName || 'School Name'}</h3>
+                    <p className="text-[11px] text-slate-400 font-bold mt-2 uppercase tracking-wider">Quality Education for All · Fee Receipt</p>
                 </div>
-
-                {/* Receipt Details Box */}
-                <div className="flex justify-between items-center bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-100/70 text-xs font-semibold text-slate-500 mb-3">
-                    <div>Receipt No: <span className="font-mono font-black text-slate-800">{payment.referenceNo}</span></div>
-                    <div>Date: <span className="font-bold text-slate-800">{fmtDate(payment.verifiedAt || payment.createdAt)}</span></div>
+                <div className="text-right shrink-0">
+                    <span className="inline-block text-[11px] font-black uppercase tracking-wider px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg border border-blue-100">{typeLabel}</span>
                 </div>
+            </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs font-semibold text-slate-600 my-3">
-                    <div>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Student Name</span>
-                        <span className="font-bold text-slate-800">{student.name || payment.studentName}</span>
-                    </div>
-                    <div>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Class & Section</span>
-                        <span className="font-bold text-slate-800">{student.class}-{student.section}</span>
-                    </div>
-                    <div>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Admission No.</span>
-                        <span className="font-bold text-slate-800">{student.admissionNumber || student.studentAppId || '—'}</span>
-                    </div>
-                    <div>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Father's Name</span>
-                        <span className="font-bold text-slate-800">{student.fatherName || '—'}</span>
-                    </div>
-                    <div className="col-span-2">
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Payment Mode</span>
-                        <span className="font-bold text-slate-800">{payment.method}</span>
-                    </div>
+            {/* Receipt Details Box */}
+            <div className="flex justify-between items-center bg-slate-50 px-4 py-3 rounded-xl border border-slate-100/70 text-sm font-semibold text-slate-500 mb-4">
+                <div>Receipt No: <span className="font-mono font-black text-slate-800">{payment.referenceNo}</span></div>
+                <div>Date: <span className="font-bold text-slate-800">{fmtDate(payment.verifiedAt || payment.createdAt)}</span></div>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm font-semibold text-slate-600 mb-5">
+                <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Student Name</span>
+                    <span className="font-bold text-slate-800">{student.name || payment.studentName}</span>
                 </div>
+                <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Class & Section</span>
+                    <span className="font-bold text-slate-800">{student.class}-{student.section}</span>
+                </div>
+                <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Admission No.</span>
+                    <span className="font-bold text-slate-800">{student.admissionNumber || student.studentAppId || '—'}</span>
+                </div>
+                <div>
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Father's Name</span>
+                    <span className="font-bold text-slate-800">{student.fatherName || '—'}</span>
+                </div>
+                <div className="col-span-2">
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Payment Mode</span>
+                    <span className="font-bold text-slate-800">{payment.method}</span>
+                </div>
+            </div>
 
-                {/* Fees Breakdown Table */}
-                <table className="w-full text-xs text-left text-slate-500 mt-3 border-t border-b border-slate-100">
+            {/* Fees Breakdown Table — grows to fill the page */}
+            <div className="flex-1 flex flex-col min-h-0">
+                <table className="w-full text-sm text-left text-slate-500 border-t-2 border-slate-100">
                     <thead>
                         <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            <th className="py-2">Fee Particulars</th>
-                            <th className="py-2 text-right">Amount</th>
+                            <th className="py-3">Fee Particulars</th>
+                            <th className="py-3 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {invoiceList.map((inv) => (
                             <tr key={inv._id} className="text-slate-800">
-                                <td className="py-2 font-bold">{inv.title}</td>
-                                <td className="py-2 text-right font-black">{money(inv.amount)}</td>
+                                <td className="py-3 font-bold">{inv.title}</td>
+                                <td className="py-3 text-right font-black">{money(inv.amount)}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                <div className="flex-1 border-t border-slate-100" />
             </div>
 
-            {/* Calculations */}
-            <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-slate-600 space-y-1.5">
+            {/* Calculations — pinned to the bottom of the page */}
+            <div className="mt-4 pt-4 border-t-2 border-slate-100 text-sm font-semibold text-slate-600 space-y-2">
                 <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="text-slate-800 font-bold">{money(subtotal)}</span>
@@ -98,66 +99,21 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
                         <span>-{money(totalDiscount)}</span>
                     </div>
                 )}
-                <div className="flex justify-between text-sm font-black text-slate-900 pt-1.5 border-t border-slate-100">
+                <div className="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-100">
                     <span>Total Paid</span>
-                    <span className="text-base text-blue-700">{money(netPaid)}</span>
+                    <span className="text-xl text-blue-700">{money(netPaid)}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 tracking-wider justify-center pt-3">
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Status: Verified & Paid
-                </div>
-            </div>
-        </div>
-    );
-
-    const ThermalReceipt = () => (
-        <div className="bg-white p-4 font-mono text-[11px] text-slate-800 border border-slate-200 w-[2.5in] mx-auto print:border-none print:w-full print:p-0">
-            <div className="text-center border-b border-dashed border-slate-300 pb-3">
-                <h4 className="font-bold text-sm tracking-tight uppercase">{schoolName || 'SCHOOL FEE RECEIPT'}</h4>
-                <p className="text-[9px] uppercase mt-0.5">Verified Payment</p>
-            </div>
-
-            <div className="my-3 space-y-1">
-                <div>Receipt: {payment.referenceNo}</div>
-                <div>Date: {fmtDate(payment.verifiedAt || payment.createdAt)}</div>
-                <div>Name: {student.name || payment.studentName}</div>
-                <div>Class: {student.class}-{student.section}</div>
-                <div>Adm No: {student.admissionNumber || student.studentAppId || '—'}</div>
-                <div>Father: {student.fatherName || '—'}</div>
-                <div>Mode: {payment.method}</div>
-            </div>
-
-            <div className="border-t border-b border-dashed border-slate-300 py-2">
-                <div className="flex justify-between font-bold mb-1">
-                    <span>Particulars</span>
-                    <span>Amount</span>
-                </div>
-                {invoiceList.map((inv) => (
-                    <div key={inv._id} className="flex justify-between">
-                        <span>{inv.title.slice(0, 18)}</span>
-                        <span>{money(inv.amount)}</span>
-                    </div>
-                ))}
-            </div>
-
-            <div className="mt-3 space-y-1 text-right">
-                <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>{money(subtotal)}</span>
-                </div>
-                {showDiscount && totalDiscount > 0 && (
-                    <div className="flex justify-between text-emerald-700">
-                        <span>Discount:</span>
-                        <span>-{money(totalDiscount)}</span>
-                    </div>
-                )}
-                <div className="flex justify-between font-bold text-xs border-t border-dashed border-slate-300 pt-1 mt-1">
-                    <span>Net Paid:</span>
-                    <span>{money(netPaid)}</span>
+                <div className="flex items-center gap-1.5 text-[11px] font-black uppercase text-emerald-600 tracking-wider justify-center pt-2">
+                    <span className="material-symbols-outlined text-[15px]">check_circle</span> Status: Verified &amp; Paid
                 </div>
             </div>
 
-            <div className="text-center mt-4 text-[9px] uppercase tracking-wider text-slate-500">
-                Thank you for the payment!
+            {/* Signature strip */}
+            <div className="flex justify-between items-end mt-8 pt-2">
+                <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">This is a computer-generated receipt.</p>
+                <div className="text-center">
+                    <div className="w-44 border-t border-slate-400 pt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-600">Authorised Signatory</div>
+                </div>
             </div>
         </div>
     );
@@ -166,21 +122,20 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
         <div className="print-modal-root fixed inset-0 z-[120] flex items-center justify-center p-4 print:p-0">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md print:hidden" onClick={onClose} />
             <div className="print-modal-content relative z-10 bg-white w-full max-w-4xl rounded-[32px] shadow-2xl print:shadow-none print:rounded-none flex flex-col max-h-[90vh] print:max-h-none overflow-hidden print:overflow-visible">
-                
+
                 {/* Print Controls (Hidden on print) */}
                 <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 print:hidden">
                     <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-blue-600 text-2xl">receipt_long</span>
                         <h3 className="text-lg font-black text-slate-900 tracking-tight">Print Fee Receipt</h3>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                         {/* Layout Selector */}
                         <div className="bg-slate-50 p-1 rounded-xl flex items-center border border-slate-200">
                             {[
-                                { k: 'duplicate', l: 'Duplicate (A4)', icon: 'view_quilt' },
-                                { k: 'single', l: 'Single (A5)', icon: 'description' },
-                                { k: 'thermal', l: 'Thermal (3")', icon: 'tune' },
+                                { k: 'duplicate', l: 'Student + Office (2 Pages)', icon: 'auto_stories' },
+                                { k: 'single', l: 'Single Copy (A4)', icon: 'description' },
                             ].map((o) => {
                                 return (
                                     <button key={o.k} onClick={() => setLayout(o.k)}
@@ -210,19 +165,17 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
 
                 {/* Print area */}
                 <div className="p-6 md:p-8 bg-slate-50 overflow-y-auto flex-1 print:bg-white print:p-0 print:overflow-visible">
-                    <div id="print-area" className="w-full flex justify-center">
-                        {layout === 'thermal' ? (
-                            <ThermalReceipt />
-                        ) : layout === 'duplicate' ? (
-                            <div className="grid grid-cols-2 gap-8 w-full max-w-5xl print:max-w-none print:gap-4 print:p-2">
-                                <ReceiptContent typeLabel="STUDENT COPY" />
-                                <ReceiptContent typeLabel="OFFICE COPY" />
-                            </div>
-                        ) : (
-                            <div className="w-full max-w-xl print:max-w-none">
-                                <ReceiptContent typeLabel="FEE RECEIPT (SINGLE COPY)" />
-                            </div>
-                        )}
+                    <div id="print-area" className="w-full">
+                        <div className="flex flex-col items-center gap-8 print:block print:gap-0">
+                            {layout === 'duplicate' ? (
+                                <>
+                                    <ReceiptContent typeLabel="STUDENT COPY" />
+                                    <ReceiptContent typeLabel="OFFICE COPY" />
+                                </>
+                            ) : (
+                                <ReceiptContent typeLabel="FEE RECEIPT" />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -234,7 +187,7 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
                     header, aside, #fees-tabs-container {
                         display: none !important;
                     }
-                    
+
                     /* Reset wrappers height and margins */
                     html, body, #root, .min-h-screen, main {
                         height: auto !important;
@@ -272,16 +225,39 @@ const FeeReceiptPrint = ({ payment, invoices = [], student = {}, schoolName = ''
                     }
 
                     #print-area {
-                        position: relative !important;
+                        display: block !important;
                         width: 100% !important;
-                        display: ${layout === 'duplicate' ? 'grid !important' : 'block !important'};
-                        grid-template-columns: ${layout === 'duplicate' ? '1fr 1fr !important' : 'none'};
-                        gap: ${layout === 'duplicate' ? '16px !important' : '0'};
+                        max-width: none !important;
+                    }
+
+                    /* Each copy = exactly one full A4 page */
+                    .receipt-page {
+                        width: 100% !important;
+                        max-width: none !important;
+                        min-height: 262mm !important;
+                        box-sizing: border-box !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        border: none !important;
+                        border-radius: 0 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        background: white !important;
+                    }
+
+                    /* Page break between the two copies, but never a trailing blank page */
+                    .receipt-page {
+                        break-after: page;
+                        page-break-after: always;
+                    }
+                    .receipt-page:last-child {
+                        break-after: auto;
+                        page-break-after: auto;
                     }
 
                     @page {
-                        size: ${layout === 'duplicate' ? 'A4 landscape' : layout === 'single' ? 'A5 portrait' : 'auto'};
-                        margin: ${layout === 'thermal' ? '0.2cm' : '0.5cm'};
+                        size: A4 portrait;
+                        margin: 12mm;
                     }
                 }
             `}} />
