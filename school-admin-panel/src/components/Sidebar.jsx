@@ -67,6 +67,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
     const allNavItems = [
         { name: 'Dashboard', icon: 'dashboard', path: '/dashboard', module: 'dashboard' },
         { name: 'Students', icon: 'group', path: '/students', module: 'students' },
+        { name: 'ID Cards', icon: 'badge', path: '/id-cards', module: 'students' },
         { name: 'Teachers', icon: 'school', path: '/teachers', module: 'teachers' },
         { name: 'Teacher Diary', icon: 'menu_book', path: '/teacher-diary', module: 'teachers' },
         { name: 'Classes', icon: 'class', path: '/classes', module: 'classes' },
