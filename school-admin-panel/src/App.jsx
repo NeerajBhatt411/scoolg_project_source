@@ -45,6 +45,7 @@ const Profile = retryLazy(() => import('./pages/Profile'));
 const Login = retryLazy(() => import('./pages/Login'));
 const ChangePassword = retryLazy(() => import('./pages/ChangePassword'));
 const StudentProfile = retryLazy(() => import('./pages/StudentProfile'));
+const IdCards = retryLazy(() => import('./pages/IdCards'));
 const Support = retryLazy(() => import('./pages/Support'));
 const ScoolgNotices = retryLazy(() => import('./pages/ScoolgNotices'));
 const Notifications = retryLazy(() => import('./pages/Notifications'));
@@ -175,6 +176,10 @@ function App() {
                             <Route
                                 path="/students/profile"
                                 element={<ModuleRoute module="students"><StudentProfile /></ModuleRoute>}
+                            />
+                            <Route
+                                path="/id-cards"
+                                element={<ModuleRoute module="students"><IdCards /></ModuleRoute>}
                             />
                             <Route
                                 path="/teachers"
