@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_BASE } from '../lib/api';
 import { useAdmin } from '../context/AdminContext';
@@ -12,6 +12,15 @@ import FeeReceiptPrint from '../components/FeeReceiptPrint';
 const UPLOAD_URL = `${ADMIN_API_BASE.replace('/admin', '')}/upload`;
 const money = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const CATEGORIES = ['Tuition', 'Exam', 'Transport', 'Admission', 'Arrears', 'Other'];
+// Fee modes that need specific months chosen (Monthly applies to every month).
+const MONTH_MODES = ['Quarterly', 'Half-Yearly', 'Yearly'];
+// Minimum months that must be selected for each mode.
+const MIN_MONTHS = { Yearly: 1, Quarterly: 3, 'Half-Yearly': 6 };
+// Academic-year month order (India: session starts in April) for the months picker.
+const SESSION_MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+const MONTH_NUM = { Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12, Jan: 1, Feb: 2, Mar: 3 };
+// 'One-Time' is the backend enum value but is shown to users as 'Once'.
+const modeLabel = (f) => (f === 'One-Time' ? 'Once' : f);
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const QUARTERS = [{ k: 'Q1', sub: 'Apr–Jun' }, { k: 'Q2', sub: 'Jul–Sep' }, { k: 'Q3', sub: 'Oct–Dec' }, { k: 'Q4', sub: 'Jan–Mar' }];
 const HALVES = [{ k: 'H1', sub: 'Apr–Sep' }, { k: 'H2', sub: 'Oct–Mar' }];
@@ -46,7 +55,8 @@ const TABS = [
     { k: 'collections', label: 'Collections', icon: 'insights' },
     { k: 'deposit', label: 'Fee Deposit / Ledger', icon: 'payments' },
     { k: 'dues', label: 'Dues', icon: 'receipt_long' },
-    { k: 'slabs', label: 'Fee Slabs', icon: 'settings_accessibility' },
+    { k: 'slabs', label: 'Fee Particulars', icon: 'settings_accessibility' },
+    { k: 'amountslab', label: 'Fee Amount Slab', icon: 'currency_rupee' },
     { k: 'discounts', label: 'Discounts', icon: 'percent' },
     { k: 'settings', label: 'Payment Settings', icon: 'qr_code_2' },
 ];
@@ -67,7 +77,6 @@ const Fees = () => {
     const CUR_YEAR = new Date().getFullYear();
 
     const location = useLocation();
-    const navigate = useNavigate();
 
     const [tab, setTab] = useState('collections');
 
@@ -102,19 +111,46 @@ const Fees = () => {
     const [uploadingQr, setUploadingQr] = useState(false);
     const [creating, setCreating] = useState(false);
 
-    // Fee Slabs (FeeStructure)
+    // Fee Slabs (FeeStructure) — inline add/edit form (id === null => adding)
     const [slabs, setSlabs] = useState([]);
-    const [slabModal, setSlabModal] = useState(null);
+    // A fee particular = a fee TYPE (name + mode + optional transport flag + months).
+    const blankSlab = () => ({ id: null, label: '', frequency: 'Monthly', transport: false, months: [] });
+    const [slabForm, setSlabForm] = useState(blankSlab());
+    const [savingSlab, setSavingSlab] = useState(false);
+    // Fee Amount Slab: per-class amounts for each particular. null = form hidden.
+    const [amountForm, setAmountForm] = useState(null);
+    const [savingAmount, setSavingAmount] = useState(false);
+    // Particular masters are stored as className='ALL'; per-class amount rows are the rest.
+    const particulars = slabs.filter((s) => s.className === 'ALL');
+    const amountRows = slabs.filter((s) => s.className !== 'ALL');
+    const amountSlabClasses = [...new Set(amountRows.map((r) => r.className))]
+        .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 
     // Discounts
     const [discountsList, setDiscountsList] = useState([]);
     const [discountModal, setDiscountModal] = useState(null);
     const [discSearchText, setDiscSearchText] = useState('');
     const [selectedDiscStudent, setSelectedDiscStudent] = useState(null);
+    // Student Fee Discount tab: class -> section -> student -> per-particular discount.
+    const [discClass, setDiscClass] = useState('');
+    const [discSection, setDiscSection] = useState('');
+    const [discStudentId, setDiscStudentId] = useState('');
+    const [discAmounts, setDiscAmounts] = useState({});
+    const [savingDisc, setSavingDisc] = useState(false);
+    const discSections = [...new Set(students.filter((s) => s.class === discClass).map((s) => s.section).filter(Boolean))].sort();
+    const discStudents = students.filter((s) => s.class === discClass && (!discSection || s.section === discSection));
 
     // Fee Deposit Ledger
     const [depSearchText, setDepSearchText] = useState('');
     const [selectedDepStudent, setSelectedDepStudent] = useState(null);
+    // Fee Deposit selection (Admission No OR Class/Section/Student) + Fee Detail view.
+    const [depAdmNo, setDepAdmNo] = useState('');
+    const [depClass, setDepClass] = useState('');
+    const [depSection, setDepSection] = useState('');
+    const [depStudentIdSel, setDepStudentIdSel] = useState('');
+    const [showFeeDetail, setShowFeeDetail] = useState(false);
+    const depSections = [...new Set(students.filter((s) => s.class === depClass).map((s) => s.section).filter(Boolean))].sort();
+    const depStudentsList = students.filter((s) => s.class === depClass && (!depSection || s.section === depSection));
     const [ledger, setLedger] = useState(null);
     const [ledgerLoading, setLedgerLoading] = useState(false);
     const [paySel, setPaySel] = useState([]); // selected invoiceIds
@@ -192,6 +228,8 @@ const Fees = () => {
         if (tab === 'collections') loadCollections();
         else if (tab === 'dues') { loadInvoices(); loadPeriods(); }
         else if (tab === 'slabs') loadSlabs();
+        else if (tab === 'amountslab') loadSlabs();
+        else if (tab === 'deposit') { loadSlabs(); loadDiscountsList(); }
         else if (tab === 'discounts') loadDiscountsList();
         else if (tab === 'settings') loadSettings();
     }, [tab, loadCollections, loadInvoices, loadPeriods, loadSlabs, loadDiscountsList, loadSettings]);
@@ -301,21 +339,105 @@ const Fees = () => {
 
     // Slabs functions
     const saveSlab = async () => {
-        if (!slabModal.className || !slabModal.amount) { toast.warning('Class and amount are required'); return; }
+        if (!slabForm.label || !slabForm.label.trim()) { toast.warning('Fee particular name is required'); return; }
+        const usesMonths = MONTH_MODES.includes(slabForm.frequency);
+        // Each mode needs a minimum number of months (Quarterly 3, Half-Yearly 6, Yearly 1).
+        const needMonths = MIN_MONTHS[slabForm.frequency] || 0;
+        if (usesMonths && slabForm.months.length < needMonths) {
+            toast.warning(`Please select at least ${needMonths} month${needMonths > 1 ? 's' : ''} for ${slabForm.frequency} fees`);
+            return;
+        }
+        setSavingSlab(true);
         try {
-            await axios.post(api('/structure'), slabModal);
-            toast.success('Fee Slab Saved');
-            setSlabModal(null);
+            // Map the UI-only fields onto the fields the live backend accepts:
+            //  transport -> category, months -> academicYear, 'Once' -> 'One-Time'.
+            const payload = {
+                id: slabForm.id,
+                className: 'ALL',
+                label: slabForm.label.trim(),
+                category: slabForm.transport ? 'Transport' : 'Tuition',
+                amount: 0,
+                frequency: slabForm.frequency === 'Once' ? 'One-Time' : slabForm.frequency,
+                academicYear: usesMonths ? slabForm.months.join(',') : '',
+            };
+            await axios.post(api('/structure'), payload);
+            toast.success(slabForm.id ? 'Fee Particular Updated' : 'Fee Particular Saved');
+            setSlabForm(blankSlab());
             loadSlabs();
-        } catch { toast.error('Failed to save Slab'); }
+        } catch { toast.error('Failed to save fee particular'); }
+        finally { setSavingSlab(false); }
     };
+    const editSlab = (sl) => setSlabForm({
+        id: sl.id,
+        label: sl.label || '',
+        frequency: sl.frequency === 'One-Time' ? 'Once' : (sl.frequency || 'Monthly'),
+        transport: sl.category === 'Transport',
+        months: (sl.academicYear || '').split(',').map((s) => s.trim()).filter(Boolean),
+    });
+    const toggleMonth = (m) => setSlabForm(prev => ({ ...prev, months: prev.months.includes(m) ? prev.months.filter((x) => x !== m) : [...prev.months, m] }));
+    const cancelSlabEdit = () => setSlabForm(blankSlab());
     const deleteSlab = async (id) => {
         if (!window.confirm('Delete this Fee Slab?')) return;
         try {
             await axios.delete(api(`/structure/${id}`));
             toast.success('Slab Deleted');
+            if (slabForm.id === id) setSlabForm(blankSlab());
             loadSlabs();
         } catch { toast.error('Failed to delete Slab'); }
+    };
+    // Wipe every configured fee slab (the "remove all existing fee data" action).
+    const clearAllSlabs = async () => {
+        if (!particulars.length) return;
+        if (!window.confirm(`Delete ALL ${particulars.length} fee particulars? This cannot be undone.`)) return;
+        try {
+            await Promise.all(particulars.map((s) => axios.delete(api(`/structure/${s.id}`))));
+            toast.success('All fee particulars deleted');
+            setSlabForm(blankSlab());
+            loadSlabs();
+        } catch { toast.error('Failed to clear all'); loadSlabs(); }
+    };
+
+    // ---- Fee Amount Slab: assign an amount to each particular, per class ----
+    const openAmountForm = () => setAmountForm({ className: '', feeCategory: 'Default', amounts: {} });
+    const editAmountSlab = (className) => {
+        const amounts = {};
+        amountRows.filter((r) => r.className === className).forEach((r) => { amounts[r.label] = r.amount; });
+        setAmountForm({ className, feeCategory: 'Default', amounts });
+    };
+    const setAmount = (label, val) => setAmountForm((f) => ({ ...f, amounts: { ...f.amounts, [label]: val } }));
+    const saveAmountSlab = async () => {
+        if (!amountForm.className) { toast.warning('Please select a class'); return; }
+        // One FeeStructure row per particular for this class (upsert by id when it exists).
+        const ops = [];
+        for (const p of particulars) {
+            const raw = amountForm.amounts[p.label];
+            const amount = raw === '' || raw == null ? 0 : Number(raw);
+            const existing = amountRows.find((r) => r.className === amountForm.className && r.label === p.label);
+            if (amount > 0 || existing) {
+                ops.push(axios.post(api('/structure'), {
+                    id: existing?.id, className: amountForm.className, label: p.label,
+                    category: p.category, amount, frequency: p.frequency, academicYear: p.academicYear || '',
+                }));
+            }
+        }
+        if (!ops.length) { toast.warning('Enter at least one amount'); return; }
+        setSavingAmount(true);
+        try {
+            await Promise.all(ops);
+            toast.success('Fee amount slab saved');
+            setAmountForm(null);
+            loadSlabs();
+        } catch { toast.error('Failed to save amount slab'); }
+        finally { setSavingAmount(false); }
+    };
+    const deleteAmountSlab = async (className) => {
+        if (!window.confirm(`Delete fee amount slab for Class ${className}?`)) return;
+        const rows = amountRows.filter((r) => r.className === className);
+        try {
+            await Promise.all(rows.map((r) => axios.delete(api(`/structure/${r.id}`))));
+            toast.success('Amount slab deleted');
+            loadSlabs();
+        } catch { toast.error('Failed to delete'); }
     };
 
     // Discounts functions
@@ -344,6 +466,35 @@ const Fees = () => {
             loadDiscountsList();
         } catch { toast.error('Failed to delete discount'); }
     };
+    // Pick a student and pre-fill any discounts they already have (stored per label).
+    const selectDiscStudent = (id) => {
+        setDiscStudentId(id);
+        const amounts = {};
+        discountsList.filter((d) => String(d.studentId) === String(id)).forEach((d) => { amounts[d.category] = d.discountAmount; });
+        setDiscAmounts(amounts);
+    };
+    const setDiscAmount = (label, val) => setDiscAmounts((a) => ({ ...a, [label]: val }));
+    const saveDiscounts = async () => {
+        if (!discStudentId) { toast.warning('Please select a student'); return; }
+        // One FeeDiscount per particular (its label goes in the `category` field, upserted).
+        const ops = [];
+        for (const p of particulars) {
+            const raw = discAmounts[p.label];
+            const amt = raw === '' || raw == null ? 0 : Number(raw);
+            const existing = discountsList.find((d) => String(d.studentId) === String(discStudentId) && d.category === p.label);
+            if (amt > 0 || existing) {
+                ops.push(axios.post(api('/discounts'), { id: existing?.id, studentId: discStudentId, category: p.label, discountAmount: amt, academicYear: '' }));
+            }
+        }
+        if (!ops.length) { toast.warning('Enter at least one discount'); return; }
+        setSavingDisc(true);
+        try {
+            await Promise.all(ops);
+            toast.success('Discounts saved');
+            loadDiscountsList();
+        } catch { toast.error('Failed to save discounts'); }
+        finally { setSavingDisc(false); }
+    };
 
     // Ledger & Deposit functions
     const loadStudentLedger = async (studentId) => {
@@ -358,6 +509,51 @@ const Fees = () => {
         } finally {
             setLedgerLoading(false);
         }
+    };
+    // Fee Deposit: resolve the student then show the month-wise Fee Detail.
+    const proceedDeposit = () => {
+        let student = null;
+        if (depAdmNo.trim()) {
+            const q = depAdmNo.trim().toLowerCase();
+            student = students.find((s) => String(s.admissionNumber || '').toLowerCase() === q || String(s.studentAppId || '').toLowerCase() === q);
+            if (!student) { toast.warning('No student found with that Admission No.'); return; }
+        } else if (depStudentIdSel) {
+            student = students.find((s) => s._id === depStudentIdSel);
+        }
+        if (!student) { toast.warning('Kindly select Class, Section, Student — OR Admission No.'); return; }
+        setSelectedDepStudent(student);
+        setShowFeeDetail(false);
+    };
+    const resetDeposit = () => {
+        setDepAdmNo(''); setDepClass(''); setDepSection(''); setDepStudentIdSel('');
+        setSelectedDepStudent(null); setShowFeeDetail(false); setLedger(null);
+    };
+    const openFeeDetail = () => setShowFeeDetail(true);
+    const payMonth = () => toast.info('Working on it — coming soon!');
+    // Build the whole-year, month-wise fee schedule from the slab amounts + discounts.
+    const buildFeeSchedule = (student) => {
+        if (!student) return [];
+        const startYear = (new Date().getMonth() >= 3) ? CUR_YEAR : CUR_YEAR - 1;
+        const discMap = {};
+        discountsList.filter((d) => String(d.studentId) === String(student._id)).forEach((d) => { discMap[d.category] = d.discountAmount; });
+        const amtMap = {};
+        amountRows.filter((r) => r.className === student.class).forEach((r) => { amtMap[r.label] = r.amount; });
+        return SESSION_MONTHS.map((m, i) => {
+            const items = [];
+            for (const p of particulars) {
+                const amt = amtMap[p.label];
+                if (amt == null || amt <= 0) continue;
+                const applies = p.frequency === 'Monthly' ? true
+                    : p.frequency === 'One-Time' ? (i === 0)
+                    : (p.academicYear || '').split(',').map((x) => x.trim()).includes(m);
+                if (!applies) continue;
+                items.push({ label: p.label, amount: amt, discount: discMap[p.label] || 0 });
+            }
+            const total = items.reduce((s, it) => s + Math.max(0, it.amount - it.discount), 0);
+            const mn = MONTH_NUM[m];
+            const yr = mn >= 4 ? startYear : startYear + 1;
+            return { month: m, dueDate: `01-${String(mn).padStart(2, '0')}-${yr}`, items, total };
+        }).filter((row) => row.items.length > 0);
     };
 
     const toggleInvoiceSelect = (invId) => {
@@ -473,21 +669,11 @@ const Fees = () => {
                 <header className="h-16 md:h-[80px] sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 md:px-8">
                     <div className="flex items-center gap-2 min-w-0">
                         <MenuButton />
-                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees Dashboard</h2>
+                        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">Fees Master</h2>
                     </div>
                     <ProfileButton size={42} />
                 </header>
 
-                <div id="fees-tabs-container" className="px-4 md:px-8 pt-5">
-                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                        {TABS.map((t) => (
-                            <button key={t.k} onClick={() => { setTab(t.k); navigate(`/fees?tab=${t.k}`, { replace: true }); }}
-                                className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${tab === t.k ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}`}>
-                                <span className="material-symbols-outlined text-[19px]">{t.icon}</span>{t.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
             </div>
 
             <main className="px-4 md:px-8 pt-6 space-y-6 print:hidden">
@@ -548,48 +734,126 @@ const Fees = () => {
                 {/* ============ FEE DEPOSIT & LEDGER TAB ============ */}
                 {tab === 'deposit' && (
                     <div className="space-y-6">
-                        {/* Student Search and Info Header */}
+                        {/* Fee Deposit — student selection (hidden once Fee Detail opens) */}
+                        {!showFeeDetail && (
                         <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-4">
-                            <h3 className="font-black text-slate-900 tracking-tight">Search Student for Fee Deposit</h3>
-                            <div className="relative">
-                                <input type="text" value={depSearchText} onChange={(e) => setDepSearchText(e.target.value)} placeholder="Type student name, class, Section or Admission No..."
-                                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-4 font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-600/10" />
-                                {searchDepStudents.length > 0 && (
-                                    <div className="absolute top-14 left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-                                        {searchDepStudents.map((s) => (
-                                            <button key={s._id} onClick={() => { setSelectedDepStudent(s); setDepSearchText(''); loadStudentLedger(s._id); }}
-                                                className="w-full text-left px-5 py-3 hover:bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                                                <span className="font-black text-slate-800 text-sm">{s.firstName} {s.lastName}</span>
-                                                <span className="text-xs text-slate-400 font-bold">Class {s.class}-{s.section} · Roll {s.rollNumber || '—'}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                            <h3 className="font-black text-slate-900 tracking-tight">Fee Deposit</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-[1.2fr_auto_1fr_1fr_1.6fr] gap-3 items-end">
+                                <Field label="Admission No.">
+                                    <input value={depAdmNo} onChange={(e) => setDepAdmNo(e.target.value)} placeholder="Enter Admission No."
+                                        className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-4 font-bold text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                                </Field>
+                                <div className="hidden md:flex items-center justify-center h-12 text-xs font-black text-slate-400">OR</div>
+                                <Field label="Class">
+                                    <Dropdown value={depClass} onChange={(v) => { setDepClass(v); setDepSection(''); setDepStudentIdSel(''); }}
+                                        options={classes.map((c) => ({ value: c.className, label: c.className }))} placeholder="Select" buttonClassName="h-12 bg-slate-50" />
+                                </Field>
+                                <Field label="Section">
+                                    <Dropdown value={depSection} onChange={(v) => { setDepSection(v); setDepStudentIdSel(''); }}
+                                        options={depSections.map((s) => ({ value: s, label: s }))} placeholder="Select" buttonClassName="h-12 bg-slate-50" />
+                                </Field>
+                                <Field label="Student">
+                                    <Dropdown value={depStudentIdSel} onChange={(v) => setDepStudentIdSel(v)}
+                                        options={depStudentsList.map((s) => ({ value: s._id, label: `${s.firstName} ${s.lastName}${s.fatherName ? ' / ' + s.fatherName : ''} (${s.rollNumber || '—'})` }))}
+                                        placeholder="Select Student" buttonClassName="h-12 bg-slate-50" />
+                                </Field>
                             </div>
-
-                            {selectedDepStudent && ledger && (
-                                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
-                                    <div>
-                                        <span className="block text-[10px] font-black uppercase text-slate-400">Student Name</span>
-                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.name}</span>
+                            <div className="flex items-center gap-3">
+                                <button onClick={proceedDeposit} className="bg-blue-600 text-white font-black px-8 py-3 rounded-2xl hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Proceed</button>
+                                <button onClick={resetDeposit} className="bg-slate-200 text-slate-600 font-black px-8 py-3 rounded-2xl hover:bg-slate-300 transition-all uppercase tracking-widest text-xs">Reset</button>
+                            </div>
+                            {!selectedDepStudent && (
+                                <p className="text-rose-500 font-bold text-sm">Kindly Select Class, Section, Student Name! OR Admission No.</p>
+                            )}
+                            {selectedDepStudent && (
+                                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-600 flex-1 min-w-0">
+                                        <div><span className="block text-[10px] font-black uppercase text-slate-400">Student Name</span><span className="text-slate-800 font-bold text-sm">{selectedDepStudent.firstName} {selectedDepStudent.lastName}</span></div>
+                                        <div><span className="block text-[10px] font-black uppercase text-slate-400">Class &amp; Section</span><span className="text-slate-800 font-bold text-sm">{selectedDepStudent.class} - {selectedDepStudent.section}</span></div>
+                                        <div><span className="block text-[10px] font-black uppercase text-slate-400">Adm No.</span><span className="text-slate-800 font-bold text-sm">{selectedDepStudent.admissionNumber || selectedDepStudent.studentAppId || '—'}</span></div>
+                                        <div><span className="block text-[10px] font-black uppercase text-slate-400">Father's Name</span><span className="text-slate-800 font-bold text-sm">{selectedDepStudent.fatherName || '—'}</span></div>
                                     </div>
-                                    <div>
-                                        <span className="block text-[10px] font-black uppercase text-slate-400">Class & Section</span>
-                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.class} - {ledger.student.section}</span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] font-black uppercase text-slate-400">Admission No.</span>
-                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.admissionNumber || ledger.student.studentAppId || '—'}</span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] font-black uppercase text-slate-400">Father's Name</span>
-                                        <span className="text-slate-800 font-bold text-sm">{ledger.student.fatherName || '—'}</span>
-                                    </div>
+                                    <button onClick={openFeeDetail} className="bg-emerald-600 text-white font-black px-6 py-3 rounded-2xl hover:bg-emerald-700 transition-all uppercase tracking-widest text-xs flex items-center gap-2 shrink-0">
+                                        <span className="material-symbols-outlined text-[18px]">receipt_long</span> Fee Detail
+                                    </button>
                                 </div>
                             )}
                         </div>
+                        )}
 
-                        {selectedDepStudent && (
+                        {/* Fee Detail — full page: student profile + month-wise fees */}
+                        {selectedDepStudent && showFeeDetail && (
+                            <div className="space-y-6">
+                                <button onClick={() => setShowFeeDetail(false)} className="flex items-center gap-1.5 text-slate-700 font-black text-xs uppercase tracking-widest bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl transition-all">
+                                    <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back
+                                </button>
+                                {/* Student profile — full width on top */}
+                                <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 flex flex-wrap items-center gap-5">
+                                    <div className="w-16 h-16 rounded-full bg-slate-100 grid place-items-center overflow-hidden shrink-0">
+                                        {selectedDepStudent.profileImageUrl ? <img src={selectedDepStudent.profileImageUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-2xl font-black text-slate-400">{(selectedDepStudent.firstName || '?').charAt(0)}</span>}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-lg font-black text-slate-900 leading-tight">{selectedDepStudent.firstName} {selectedDepStudent.lastName}{selectedDepStudent.fatherName ? ` / ${selectedDepStudent.fatherName}` : ''}</p>
+                                        <p className="text-xs font-bold text-slate-400">Category: Fee Cat: Default</p>
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-sm sm:border-l border-slate-100 sm:pl-5">
+                                        <div><span className="block text-[10px] uppercase font-black text-slate-400">Adm No.</span><span className="text-slate-900 font-black">{selectedDepStudent.admissionNumber || selectedDepStudent.studentAppId || '—'}</span></div>
+                                        <div><span className="block text-[10px] uppercase font-black text-slate-400">Class</span><span className="text-slate-900 font-black">{selectedDepStudent.class} {selectedDepStudent.section}</span></div>
+                                        <div><span className="block text-[10px] uppercase font-black text-slate-400">Roll No.</span><span className="text-slate-900 font-black">{selectedDepStudent.rollNumber || '—'}</span></div>
+                                        <div><span className="block text-[10px] uppercase font-black text-slate-400">DOB</span><span className="text-slate-900 font-black">{selectedDepStudent.dateOfBirth ? fmtDate(selectedDepStudent.dateOfBirth) : '—'}</span></div>
+                                        <div><span className="block text-[10px] uppercase font-black text-slate-400">Contact</span><span className="text-slate-900 font-black">{selectedDepStudent.primaryContact || '—'}</span></div>
+                                    </div>
+                                </div>
+                                {/* Fee table — full width */}
+                                <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                                        <h4 className="font-black text-slate-900 tracking-tight mb-4">Fee Due Details According to Slab</h4>
+                                        {(() => {
+                                            const rows = buildFeeSchedule(selectedDepStudent);
+                                            if (!rows.length) return <div className="py-12 text-center text-slate-400 font-bold">No fee amounts set for Class {selectedDepStudent.class}. Configure them in Fee Amount Slab.</div>;
+                                            return (
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-sm text-left border-collapse">
+                                                        <thead>
+                                                            <tr className="text-[10px] font-black uppercase tracking-widest text-slate-600 bg-slate-50">
+                                                                <th className="py-3 px-3 border border-slate-200">Due Date</th>
+                                                                <th className="py-3 px-3 border border-slate-200">Fee Month</th>
+                                                                <th className="py-3 px-3 border border-slate-200">Fee Particular</th>
+                                                                <th className="py-3 px-3 border border-slate-200 text-right">Amount (₹)</th>
+                                                                <th className="py-3 px-3 border border-slate-200 text-center">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {rows.map((row) => (
+                                                                <tr key={row.month} className="align-top">
+                                                                    <td className="py-3 px-3 border border-slate-200 font-bold text-slate-800 whitespace-nowrap">{row.dueDate}</td>
+                                                                    <td className="py-3 px-3 border border-slate-200 font-black text-slate-900">{row.month}</td>
+                                                                    <td className="py-3 px-3 border border-slate-200">
+                                                                        {row.items.map((it, k) => (
+                                                                            <div key={k} className="text-slate-900 font-bold leading-relaxed">
+                                                                                {it.label} <span className="text-emerald-700 font-black">₹{Number(it.amount).toFixed(2)}</span>
+                                                                                {it.discount > 0 && <span className="text-rose-600 font-black"> - Dis ₹{it.discount}</span>}
+                                                                            </div>
+                                                                        ))}
+                                                                    </td>
+                                                                    <td className="py-3 px-3 border border-slate-200 text-right font-black text-slate-900 whitespace-nowrap">{money(row.total)}</td>
+                                                                    <td className="py-3 px-3 border border-slate-200">
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                            <button onClick={payMonth} className="bg-emerald-600 text-white font-black text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-lg hover:bg-emerald-700 transition-all">Pay</button>
+                                                                            <span className="text-rose-600 font-black text-[11px] uppercase tracking-widest">Due</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            );
+                                        })()}
+                                    </section>
+                            </div>
+                        )}
+
+                        {false && selectedDepStudent && (
                             <div className="grid gap-6 lg:grid-cols-3">
                                 {/* Ledger & Unpaid Invoices selection */}
                                 <div className="lg:col-span-2 space-y-6">
@@ -812,47 +1076,221 @@ const Fees = () => {
 
                 {/* ============ FEE SLABS TAB ============ */}
                 {tab === 'slabs' && (
+                    <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        {/* LEFT — Add / Edit form */}
+                        <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="material-symbols-outlined text-blue-600">{slabForm.id ? 'edit' : 'add_circle'}</span>
+                                <h3 className="font-black text-slate-900 tracking-tight">{slabForm.id ? 'Edit Fee Particular' : 'Add Fee Particular'}</h3>
+                            </div>
+                            <p className="text-xs text-slate-400 font-bold mb-5">Create a fee type. Pick a mode and, for non-monthly fees, the months it applies.</p>
+                            <div className="space-y-4">
+                                <Field label="Fee Particular Name">
+                                    <input value={slabForm.label} onChange={(e) => setSlabForm(prev => ({ ...prev, label: e.target.value }))}
+                                        placeholder="Ex. Admission Fee, Exam Fee, Tuition Fee etc."
+                                        className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-4 font-bold text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                                </Field>
+                                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input type="checkbox" checked={slabForm.transport} onChange={(e) => setSlabForm(prev => ({ ...prev, transport: e.target.checked }))}
+                                        className="w-4 h-4 accent-blue-600" />
+                                    <span className="text-sm font-bold text-slate-700">Select if Particular for Transport</span>
+                                </label>
+                                <Field label="Fee Mode">
+                                    <select value={slabForm.frequency} onChange={(e) => setSlabForm(prev => ({ ...prev, frequency: e.target.value }))}
+                                        className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-3 font-bold text-sm text-slate-900 focus:outline-none">
+                                        <option value="Monthly">Monthly</option>
+                                        <option value="Quarterly">Quarterly</option>
+                                        <option value="Half-Yearly">Half-Yearly</option>
+                                        <option value="Yearly">Yearly</option>
+                                        <option value="Once">Once</option>
+                                    </select>
+                                </Field>
+                                {MONTH_MODES.includes(slabForm.frequency) && (
+                                    <Field label={`Select Months to Apply this Fees (min ${MIN_MONTHS[slabForm.frequency]})`}>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {SESSION_MONTHS.map((m) => {
+                                                const on = slabForm.months.includes(m);
+                                                return (
+                                                    <button key={m} type="button" onClick={() => toggleMonth(m)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${on ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                                                        {m}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className={`text-[11px] font-bold mt-2 ${slabForm.months.length < MIN_MONTHS[slabForm.frequency] ? 'text-rose-500' : 'text-emerald-600'}`}>
+                                            {slabForm.months.length} of min {MIN_MONTHS[slabForm.frequency]} selected
+                                        </p>
+                                    </Field>
+                                )}
+                                <div className="flex gap-2 pt-1">
+                                    <button onClick={saveSlab} disabled={savingSlab} className="flex-1 bg-blue-600 text-white font-black py-3.5 rounded-2xl hover:bg-blue-700 transition-all uppercase tracking-widest text-xs disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                        {savingSlab ? (
+                                            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
+                                        ) : (slabForm.id ? 'Update' : 'Submit')}
+                                    </button>
+                                    {slabForm.id && (
+                                        <button onClick={cancelSlabEdit} className="px-5 bg-slate-100 text-slate-600 font-black py-3.5 rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest text-xs">
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT — list */}
+                        <div className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <h3 className="font-black text-slate-900 tracking-tight">Fee Particulars</h3>
+                                    <p className="text-xs text-slate-400 font-bold">{particulars.length} configured</p>
+                                </div>
+                                {particulars.length > 0 && (
+                                    <button onClick={clearAllSlabs} className="text-rose-600 bg-rose-50 hover:bg-rose-100 font-black text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-[16px]">delete_sweep</span> Clear all
+                                    </button>
+                                )}
+                            </div>
+
+                            {loading ? (
+                                <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
+                            ) : particulars.length === 0 ? (
+                                <div className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest">No fee particulars yet.<br /><span className="text-[11px] normal-case tracking-normal">Add one using the form on the left.</span></div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs text-left text-slate-500">
+                                        <thead>
+                                            <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                                                <th className="py-3 w-10">Sr.</th>
+                                                <th className="py-3">Particular</th>
+                                                <th className="py-3">Fee Mode</th>
+                                                <th className="py-3 text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {particulars.map((sl, i) => (
+                                                <tr key={sl.id} className={slabForm.id === sl.id ? 'bg-blue-50/50' : ''}>
+                                                    <td className="py-3.5 font-bold text-slate-400">{i + 1}</td>
+                                                    <td className="py-3.5 font-black text-slate-900">
+                                                        {sl.label}
+                                                        {sl.category === 'Transport' && <span className="text-amber-600 font-bold"> [for Transport]</span>}
+                                                        {sl.academicYear && <span className="text-blue-500 font-bold"> ({sl.academicYear.split(',').join(' ')})</span>}
+                                                    </td>
+                                                    <td className="py-3.5 font-semibold text-slate-500">{modeLabel(sl.frequency)}</td>
+                                                    <td className="py-3.5">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button onClick={() => editSlab(sl)} title="Edit" className="w-8 h-8 grid place-items-center text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                            </button>
+                                                            <button onClick={() => deleteSlab(sl.id)} title="Delete" className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg">
+                                                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                )}
+
+                {/* ============ FEE AMOUNT SLAB TAB ============ */}
+                {tab === 'amountslab' && (
                     <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-6">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <h3 className="font-black text-slate-900 tracking-tight">Fee Masters (Slabs)</h3>
-                                <p className="text-xs text-slate-400 font-bold">Define standard monthly/yearly fee amounts per class.</p>
+                                <h3 className="font-black text-slate-900 tracking-tight">Fee Amount Slab</h3>
+                                <p className="text-xs text-slate-400 font-bold">Set the amount of each fee particular for a class.</p>
                             </div>
-                            <button onClick={() => setSlabModal({ className: classes[0]?.className || '1', label: 'Tuition Fee', category: 'Tuition', amount: '', frequency: 'Monthly', academicYear: `${CUR_YEAR}-${CUR_YEAR + 1}` })}
-                                className="bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[17px]">add</span> Add Fee Slab
-                            </button>
+                            {!amountForm && (
+                                <button onClick={openAmountForm} disabled={particulars.length === 0}
+                                    className="bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <span className="material-symbols-outlined text-[17px]">add</span> Add Fee Amount Slab
+                                </button>
+                            )}
                         </div>
 
+                        {particulars.length === 0 && (
+                            <div className="py-6 text-center text-amber-600 bg-amber-50 rounded-2xl font-bold text-sm">
+                                Create Fee Particulars first — then set their amounts here.
+                            </div>
+                        )}
+
+                        {/* Add / Edit form */}
+                        {amountForm && (
+                            <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/40 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Field label="Fee Category">
+                                        <select value={amountForm.feeCategory} onChange={(e) => setAmountForm((f) => ({ ...f, feeCategory: e.target.value }))}
+                                            className="w-full h-12 bg-white border border-slate-100 rounded-2xl px-3 font-bold text-sm text-slate-900 focus:outline-none">
+                                            <option value="Default">Default</option>
+                                        </select>
+                                    </Field>
+                                    <Field label="Class *">
+                                        <Dropdown value={amountForm.className} onChange={(v) => setAmountForm((f) => ({ ...f, className: v }))}
+                                            options={classes.map((c) => ({ value: c.className, label: c.className }))} placeholder="Select class" buttonClassName="h-12 bg-white" />
+                                    </Field>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {particulars.map((p) => (
+                                        <div key={p.id} className="space-y-1">
+                                            <label className="text-[11px] font-black text-slate-600 block truncate">
+                                                {p.label} <span className="text-slate-400 font-bold">({modeLabel(p.frequency)})</span>
+                                            </label>
+                                            <input type="number" min="0" value={amountForm.amounts[p.label] ?? ''}
+                                                onChange={(e) => setAmount(p.label, e.target.value)} placeholder="0"
+                                                className="w-full h-11 bg-white border border-slate-100 rounded-xl px-3 font-bold text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex gap-2 pt-1">
+                                    <button onClick={saveAmountSlab} disabled={savingAmount}
+                                        className="bg-blue-600 text-white font-black px-8 py-3 rounded-2xl hover:bg-blue-700 transition-all uppercase tracking-widest text-xs disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                        {savingAmount ? (<><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>) : 'Submit'}
+                                    </button>
+                                    <button onClick={() => setAmountForm(null)} className="bg-slate-200 text-slate-600 font-black px-8 py-3 rounded-2xl hover:bg-slate-300 transition-all uppercase tracking-widest text-xs">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* List of saved slabs, grouped by class */}
                         {loading ? (
                             <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
-                        ) : slabs.length === 0 ? (
-                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">No fee slabs configured yet.</div>
+                        ) : amountSlabClasses.length === 0 ? (
+                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">No fee amount slabs yet.</div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-xs text-left text-slate-500">
                                     <thead>
                                         <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                                            <th className="py-3">Class</th>
-                                            <th className="py-3">Fee Label</th>
-                                            <th className="py-3">Category</th>
-                                            <th className="py-3">Frequency</th>
-                                            <th className="py-3 text-right">Amount</th>
+                                            <th className="py-3 w-10">Sr.</th>
+                                            <th className="py-3">Fee Category</th>
+                                            <th className="py-3">Class Name</th>
                                             <th className="py-3 text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {slabs.map((sl) => (
-                                            <tr key={sl.id}>
-                                                <td className="py-3.5 font-black text-slate-900">{sl.className}</td>
-                                                <td className="py-3.5 font-bold text-slate-700">{sl.label}</td>
-                                                <td className="py-3.5 font-semibold text-slate-500">{sl.category}</td>
-                                                <td className="py-3.5 font-semibold text-slate-500">{sl.frequency}</td>
-                                                <td className="py-3.5 text-right font-black text-slate-900">{money(sl.amount)}</td>
-                                                <td className="py-3.5 text-center">
-                                                    <button onClick={() => deleteSlab(sl.id)} className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg mx-auto">
-                                                        <span className="material-symbols-outlined text-[19px]">delete</span>
-                                                    </button>
+                                        {amountSlabClasses.map((cn, i) => (
+                                            <tr key={cn} className={amountForm?.className === cn ? 'bg-blue-50/50' : ''}>
+                                                <td className="py-3.5 font-bold text-slate-400">{i + 1}</td>
+                                                <td className="py-3.5 font-bold text-slate-700">Default</td>
+                                                <td className="py-3.5 font-black text-slate-900">{cn}</td>
+                                                <td className="py-3.5">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button onClick={() => editAmountSlab(cn)} title="Edit" className="w-8 h-8 grid place-items-center text-blue-600 hover:bg-blue-50 rounded-lg">
+                                                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                        </button>
+                                                        <button onClick={() => deleteAmountSlab(cn)} title="Delete" className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg">
+                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -866,53 +1304,61 @@ const Fees = () => {
                 {/* ============ DISCOUNTS TAB ============ */}
                 {tab === 'discounts' && (
                     <section className="bg-white rounded-[28px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] p-6 space-y-6">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <h3 className="font-black text-slate-900 tracking-tight">Student-wise Concessions (Discounts)</h3>
-                                <p className="text-xs text-slate-400 font-bold">Manage sibling, staff, merit or custom fee discounts.</p>
-                            </div>
-                            <button onClick={() => setDiscountModal({ category: 'Tuition', discountAmount: '', academicYear: `${CUR_YEAR}-${CUR_YEAR + 1}` })}
-                                className="bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[17px]">add</span> Assign Discount
-                            </button>
+                        <div>
+                            <h3 className="font-black text-slate-900 tracking-tight">Student Fee Discount</h3>
+                            <p className="text-xs text-slate-400 font-bold">Pick a student, then set a discount against each fee.</p>
                         </div>
 
-                        {loading ? (
-                            <div className="py-20 text-center"><div className="animate-spin rounded-full h-9 w-9 border-t-2 border-b-2 border-blue-600 mx-auto" /></div>
-                        ) : discountsList.length === 0 ? (
-                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">No student discounts configured yet.</div>
+                        {/* Class / Section / Student selectors */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <Field label="Class">
+                                <Dropdown value={discClass} onChange={(v) => { setDiscClass(v); setDiscSection(''); setDiscStudentId(''); setDiscAmounts({}); }}
+                                    options={classes.map((c) => ({ value: c.className, label: c.className }))} placeholder="Select class" buttonClassName="h-12 bg-slate-50" />
+                            </Field>
+                            <Field label="Section">
+                                <Dropdown value={discSection} onChange={(v) => { setDiscSection(v); setDiscStudentId(''); setDiscAmounts({}); }}
+                                    options={discSections.map((s) => ({ value: s, label: s }))} placeholder="Select section" buttonClassName="h-12 bg-slate-50" />
+                            </Field>
+                            <Field label="Student">
+                                <Dropdown value={discStudentId} onChange={selectDiscStudent}
+                                    options={discStudents.map((s) => ({ value: s._id, label: `${s.firstName} ${s.lastName}${s.fatherName ? ' / ' + s.fatherName : ''} (${s.rollNumber || '—'})` }))}
+                                    placeholder="Select student" buttonClassName="h-12 bg-slate-50" />
+                            </Field>
+                        </div>
+
+                        {/* Per-fee discount rows */}
+                        {!discStudentId ? (
+                            <div className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest">Select a class, section &amp; student to set discounts.</div>
+                        ) : particulars.length === 0 ? (
+                            <div className="py-6 text-center text-amber-600 bg-amber-50 rounded-2xl font-bold text-sm">Create Fee Particulars first.</div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left text-slate-500">
-                                    <thead>
-                                        <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
-                                            <th className="py-3">Student Name</th>
-                                            <th className="py-3">Class</th>
-                                            <th className="py-3">Fee Category</th>
-                                            <th className="py-3 text-right">Discount Amt</th>
-                                            <th className="py-3 text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {discountsList.map((ds) => (
-                                            <tr key={ds.id}>
-                                                <td className="py-3.5">
-                                                    <p className="font-black text-slate-900">{ds.studentName}</p>
-                                                    <p className="text-[10px] text-slate-400 font-mono">{ds.studentAppId}</p>
-                                                </td>
-                                                <td className="py-3.5 font-bold text-slate-700">{ds.class}-{ds.section}</td>
-                                                <td className="py-3.5 font-semibold text-slate-500">{ds.category}</td>
-                                                <td className="py-3.5 text-right font-black text-emerald-600">{money(ds.discountAmount)}</td>
-                                                <td className="py-3.5 text-center">
-                                                    <button onClick={() => deleteDiscount(ds.id)} className="w-8 h-8 grid place-items-center text-rose-500 hover:bg-rose-50 rounded-lg mx-auto">
-                                                        <span className="material-symbols-outlined text-[19px]">delete</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <>
+                                <div className="space-y-4 border-t border-slate-100 pt-5">
+                                    {particulars.map((p) => {
+                                        const amt = amountRows.find((r) => r.className === discClass && r.label === p.label)?.amount;
+                                        return (
+                                            <div key={p.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 items-end">
+                                                <div>
+                                                    <label className="text-sm font-black text-slate-800 block mb-1.5">
+                                                        {p.label} <span className="text-slate-400 font-bold text-xs">({modeLabel(p.frequency)})</span>
+                                                    </label>
+                                                    <input readOnly value={amt != null ? Number(amt).toFixed(2) : ''} placeholder="—"
+                                                        className="w-full h-12 bg-slate-100 border border-slate-200 rounded-xl px-4 font-bold text-sm text-slate-500 cursor-not-allowed" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-bold text-slate-500 block mb-1.5">Discount</label>
+                                                    <input type="number" min="0" value={discAmounts[p.label] ?? ''} onChange={(e) => setDiscAmount(p.label, e.target.value)} placeholder="0"
+                                                        className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 font-bold text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <button onClick={saveDiscounts} disabled={savingDisc}
+                                    className="bg-blue-600 text-white font-black px-8 py-3 rounded-2xl hover:bg-blue-700 transition-all uppercase tracking-widest text-xs disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                    {savingDisc ? (<><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>) : 'Submit'}
+                                </button>
+                            </>
                         )}
                     </section>
                 )}
@@ -1032,40 +1478,6 @@ const Fees = () => {
 
                         <button onClick={submitFee} disabled={creating} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs disabled:opacity-60">
                             {creating ? 'Creating…' : 'Create dues'}
-                        </button>
-                    </div>
-                </Modal>
-            )}
-
-            {/* ===== Add Slab Modal ===== */}
-            {slabModal && (
-                <Modal onClose={() => setSlabModal(null)} title="Add Fee Slab">
-                    <div className="space-y-4">
-                        <Field label="Class">
-                            <Dropdown value={slabModal.className} onChange={(v) => setSlabModal(prev => ({ ...prev, className: v }))}
-                                options={classes.map(c => ({ value: c.className, label: c.className }))} buttonClassName="h-12 bg-slate-50" />
-                        </Field>
-                        <Field label="Fee Label">
-                            <input value={slabModal.label} onChange={(e) => setSlabModal(prev => ({ ...prev, label: e.target.value }))} placeholder="e.g. Tuition Fee" className="modal-in" />
-                        </Field>
-                        <Field label="Category">
-                            <Dropdown value={slabModal.category} onChange={(v) => setSlabModal(prev => ({ ...prev, category: v }))} options={CATEGORIES} buttonClassName="h-12 bg-slate-50" />
-                        </Field>
-                        <Field label="Amount (₹)">
-                            <input type="number" value={slabModal.amount} onChange={(e) => setSlabModal(prev => ({ ...prev, amount: Number(e.target.value) }))} placeholder="Amount" className="modal-in" />
-                        </Field>
-                        <Field label="Frequency">
-                            <select value={slabModal.frequency} onChange={(e) => setSlabModal(prev => ({ ...prev, frequency: e.target.value }))}
-                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-3 font-bold text-sm text-slate-900 focus:outline-none">
-                                <option value="Monthly">Monthly</option>
-                                <option value="Quarterly">Quarterly</option>
-                                <option value="Half-Yearly">Half-Yearly</option>
-                                <option value="Yearly">Yearly</option>
-                                <option value="One-Time">One-Time</option>
-                            </select>
-                        </Field>
-                        <button onClick={saveSlab} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 uppercase tracking-widest text-xs">
-                            Save Slab
                         </button>
                     </div>
                 </Modal>

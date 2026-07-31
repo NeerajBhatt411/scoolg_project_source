@@ -76,7 +76,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
         { name: 'Homework', icon: 'assignment', path: '/homework', module: 'homework' },
         { name: 'Attendance', icon: 'fact_check', path: '/attendance', module: 'attendance' },
         { name: 'Exams', icon: 'description', path: '/exams', module: 'exams' },
-        { name: 'Fees', icon: 'payments', path: '/fees', module: 'fees' },
+        { name: 'Fees Master', icon: 'payments', path: '/fees', module: 'fees' },
         { name: 'Notices', icon: 'campaign', path: '/notices', module: 'notices' },
         { name: 'Roles', icon: 'verified_user', path: '/roles', module: 'roles' },
     ];
@@ -113,7 +113,7 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
             <div className="border-b border-slate-200/70 mb-4"></div>
             <nav className="flex-1 space-y-1">
                 {navItems.map((item) => {
-                    if (item.name === 'Fees') {
+                    if (item.name === 'Fees Master') {
                         return (
                             <div key="FeesMenu" className="space-y-1">
                                 <button onClick={() => setFeesOpen(!feesOpen)}
@@ -125,11 +125,12 @@ const Sidebar = ({ mobileOpen = false, onClose = () => { } }) => {
                                 {feesOpen && (
                                     <div className="pl-9 space-y-1">
                                         {[
+                                            { name: 'Fee Particulars', tab: 'slabs' },
+                                            { name: 'Fee Amount Slab', tab: 'amountslab' },
+                                            { name: 'Student Fee Discount', tab: 'discounts' },
+                                            { name: 'Fee Deposit', tab: 'deposit' },
                                             { name: 'Collections Overview', tab: 'collections' },
-                                            { name: 'Fee Deposit (Ledger)', tab: 'deposit' },
                                             { name: 'Fee Dues List', tab: 'dues' },
-                                            { name: 'Fee Slabs (Masters)', tab: 'slabs' },
-                                            { name: 'Discounts & Concessions', tab: 'discounts' },
                                             { name: 'Payment Settings', tab: 'settings' },
                                         ].map((sub) => (
                                             <NavLink key={sub.tab} to={`/fees?tab=${sub.tab}`} onClick={onClose}
